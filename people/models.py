@@ -1,16 +1,5 @@
 from django.db import models
 
-# Age_Status model: represents different types of age status (adult or child)
-# This is reference data.
-class Age_Status(models.Model):
-	age_status = models.CharField(max_length=50)
-	# define the function that will return the person name as the object reference
-	def __str__(self):
-		return self.age_status
-	# set the name to be used in the admin console
-	class Meta:
-		verbose_name_plural = 'age statuses'
-
 # Family model: represents a family.
 # Has a many to many relationship with Person
 class Family(models.Model):

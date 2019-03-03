@@ -144,7 +144,7 @@ class Event(models.Model):
 		verbose_name_plural = 'events'
 
 # Person model: represents a participant in the Betterstart scheme.
-# A person may abe an adult or a child.
+# A person may be an adult or a child.
 class Person(models.Model):
 	first_name = models.CharField(max_length=50)
 	last_name = models.CharField(max_length=50)

@@ -1,0 +1,17 @@
+{% extends "volunteering/base.html" %}
+
+<!-- Registration page for new users -->
+ 
+ {% block title %}Update profile{% endblock %}
+
+ {% block content %}
+
+<div class = "container">
+	<form action ="{% url 'update_profile' %}" method="post">
+		{% csrf_token %}
+		{% include "volunteering/form_snippet.html" with form=update_profile_form %}
+	</form>
+</div>
+
+ {% endblock %}
+

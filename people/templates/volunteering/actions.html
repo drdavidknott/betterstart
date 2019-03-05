@@ -1,0 +1,186 @@
+{% extends "volunteering/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}SAVS Volunteering{% endblock %}
+
+ {% block content %}
+
+<!-- script to deal with dynamic behaviour of form -->
+<script type="text/javascript">
+$(document).ready(function() {
+	$(".details_row").hide();
+	$(".details-trigger").click(function() {
+		var button = $(this);
+		var details_target = button.data('details-target');
+		$(details_target).toggle()
+	});
+	$(".modal-trigger").click(function() {
+		var button = $(this);
+		var title = button.data('title');
+		var action = button.data('action');
+		var id = button.data('id');
+		$('#submitModal').find('.modal-title').text(title);
+		$('#modal_form_submit').val(action)
+		$('#opportunity_action_id').val(id);
+		$('#submitModal').modal('show');
+	});
+	$("#modal_submit_button").click(function() {
+		$("#modal_form_submit").click();
+	})
+});
+</script>
+
+<!-- Modal -->
+<div id="submitModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+     	<div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">&times;</button>
+	        <h4 class="modal-title">Modal Title</h4>
+      	</div>
+		<div class="modal-body">
+			<form action="{% url 'actions' %}" method="post">
+				{% csrf_token %}
+				<label for="comments">Comments:</label>
+				<textarea name="comments" class="form-control" maxlength="1000" required id="comments"></textarea>
+				<input type="submit" name="action" value="default" id="modal_form_submit" style="display:none">
+				<input type="hidden" name="opportunity_action_id" id="opportunity_action_id" value="default_value">
+				<input type="hidden" name="page" value="{{ page }}">
+				<input type="hidden" name="action_type" value="{{ action_type }}">
+			</form>
+		</div>
+      <div class="modal-footer">
+         <button type="button" class="btn btn-default" id="modal_submit_button">Submit</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+ <div class="container">
+
+	<div class="row">
+		<div class="col-md-12">
+			<table class="table table-striped panel panel-default">
+				<thead><tr>
+					<th>Volunteer</th>
+					<th>Organisation</th>
+					<th>Opportunity</th>
+					<th>Actions</th>
+					<th></th>
+				</tr></thead>
+				<tbody>
+					{% for action in actions %}
+						<tr>
+							<td>
+								<span class="glyphicon glyphicon-user"></span>
+								<a href="{% url 'volunteer' action.user.pk %}">
+									{{ action.user.first_name }} {{ action.user.last_name }}
+								</a>
+							</td>
+							<td>
+								<span class="glyphicon glyphicon-home"></span>
+								<a href="{% url 'organisation' action.opportunity.organisation.pk %}">
+									{{ action.opportunity.organisation.name }}
+								</a>
+							</td>
+							<td>
+								<a href="{% url 'opportunity' action.opportunity.pk %}">
+									{{ action.opportunity.title }}
+								</a>
+							</td>
+							<td>
+								{{ action.opportunity_action_type.name|capfirst }} on {{ action.date_time_from.date }} at {{ action.date_time_from.time }}
+							</td>
+							<td>
+								<button type="button" class="btn btn-sm details-trigger" data-details-target="#{{ action.pk }}_details" >Details</button>
+							</td>
+						</tr>
+						<tr class="details_row" id="{{ action.pk }}_details">
+							<td colspan=5>
+								<div class="row">
+									<div class="col-md-4">
+										<h5><strong>Volunteer Details</strong></h5>
+										Email: {{ action.user.email }}<br>
+										{% if action.user.volunteer.address_line_1 %}
+											{{ action.user.volunteer.address_line_1 }}<br>
+										{% endif %}
+										{% if action.user.volunteer.address_line_2 %}
+											{{ action.user.volunteer.address_line_2 }}<br>
+										{% endif %}
+										{% if action.user.volunteer.address_town %}
+											{{ action.user.volunteer.address_town }}<br>
+										{% endif %}
+										{% if action.user.volunteer.address_county %}
+											{{ action.user.volunteer.address_county }}<br>
+										{% endif %}
+										{% if action.user.volunteer.phone_number %}
+											{{ action.user.volunteer.phone_number }}<br>
+										{% endif %}
+									</div>
+									<div class="col-md-8">
+										<h5><strong>Opportunity Details</strong></h5>
+										Organisation: {{ action.opportunity.organisation.name }}<br>
+										{{ action.opportunity.short_desc }}<br>
+										{{ action.opportunity.description}}<br>
+										From {{ action.opportunity.start_date }} to {{ action.opportunity.end_date }}<br>
+										Timing: {{ action.opportunity.timing }}<br>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<h5><strong>History</strong></h5>
+										{% for action in action.all_actions %}
+											<div>
+												{{ action.opportunity_action_type.name|capfirst }} on {{ action.date_time_from.date }}
+												{% if action.comments %}
+													- {{ action.message_route }} - <em>{{ action.comments }}</em>
+												{% else %}
+													- No comments
+												{% endif %}
+											</div>
+										{% endfor %}
+									</div>
+								</div>
+								{% if action.allowed_actions %}
+									<div class="row">
+										<div class="col-md-12">
+											<h5><strong>Available Actions:</strong></h5>
+											{% for allowed_action in action.allowed_actions %}
+												<input type="button" name="action" value="{{ allowed_action|capfirst }}" id="{{ allowed_action }}" class="btn btn-sm modal-trigger" data-title="{{ allowed_action|capfirst }}" data-action="{{ allowed_action }}" data-id="{{ action.pk }}">
+											{% endfor %}
+										</div>
+									</div>
+								{% endif %}
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+			{% if not actions %}
+				<h4>No matching actions.</h4>
+			{% endif %}
+		</div>
+	</div>
+
+ 	{% if page_list %}
+	 	<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<form action="{% url search_url %}" method="POST">
+					{% csrf_token %}
+					{% for target_page in page_list %}
+							<input type="submit" value="{{ target_page }}" name="page" class="btn btn-sm">
+					{% endfor %}
+							<input type="hidden" value="{{ action_type }}" name="action_type">
+					</form>
+				</div>
+			</div>
+		</div>
+	{% endif %}
+
+ </div>
+
+ {% endblock %}
+

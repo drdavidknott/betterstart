@@ -146,6 +146,7 @@ class Person(models.Model):
 	english_is_second_language = models.BooleanField()
 	ethnicity = models.ForeignKey(Ethnicity, default=1, on_delete=models.SET_DEFAULT)
 	families = models.ManyToManyField(Family, blank=True)
+	savs_id = models.IntegerField(blank=True, null=True)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.first_name + ' ' + self.last_name

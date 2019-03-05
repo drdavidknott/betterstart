@@ -1,0 +1,30 @@
+{% extends "volunteering/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Test Volunteering Site{% endblock %}
+
+ {% block content %}
+
+ 	{% include "volunteering/top_opps.html" with top_opps=top_opps %}
+
+	 {% if page_list %}
+	 	<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<form action="{% url 'search' %}" method="POST">
+					{% csrf_token %}
+					{% for target_page in page_list %}
+							<input type="submit" value="{{ target_page }}" name="page" class="btn btn-sm savs-pink-button">
+					{% endfor %}
+							<input type="hidden" value="" name="keyword">
+							<input type="hidden" value="A" name="timing">
+							<input type="hidden" value="X" name="status">
+					</form>
+				</div>
+			</div>
+		</div>
+	{% endif %}
+
+ {% endblock %}
+

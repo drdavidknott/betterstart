@@ -1,0 +1,33 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Betterstart Data Load{% endblock %}
+
+ {% block content %}
+
+ <div class="container">
+
+	<div class="row">
+		<div class="col-md-12">
+			<table class="table table-striped panel panel-default">
+				<thead><tr>
+					<th>Messages</th>
+				</tr></thead>
+				<tbody>
+					{% for message in messages %}
+						<tr>
+							<td>
+								{{ message }}
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+ </div>
+
+ {% endblock %}
+

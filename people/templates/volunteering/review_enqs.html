@@ -1,0 +1,136 @@
+{% extends "volunteering/base.html" %}
+
+<!-- Registration page for new users -->
+ 
+ {% block title %}Review Enquiries{% endblock %}
+
+ {% block content %}
+
+<!-- script to set up the modal for each action -->
+<script type="text/javascript">
+$(document).ready(function() {
+	$(".modal-trigger").click(function() {
+		var button = $(this);
+		var title = button.data('title');
+		var action = button.data('action');
+		var id = button.data('id');
+		$('#submitModal').find('.modal-title').text(title);
+		$('#modal_form_submit').val(action)
+		$('#opportunity_action_id').val(id);
+		$('#submitModal').modal('show');
+	});
+	$("#modal_submit_button").click(function() {
+		$("#modal_form_submit").click();
+	})
+});
+</script>
+
+
+<!-- Modal -->
+<div id="submitModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+     	<div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">&times;</button>
+	        <h4 class="modal-title">Modal Title</h4>
+      	</div>
+		<div class="modal-body">
+			<form action="{% url 'review_enqs' %}" method="post">
+				{% csrf_token %}
+				<label for="comments">Comments:</label>
+				<textarea name="comments" class="form-control" maxlength="1000" required id="comments"></textarea>
+				<input type="submit" name="action" value="default" id="modal_form_submit" style="display:none">
+				<input type="hidden" name="opportunity_action_id" id="opportunity_action_id" value="default_value">
+			</form>
+		</div>
+      <div class="modal-footer">
+         <button type="button" class="btn btn-default" id="modal_submit_button">Submit</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class = "container">
+	{% if message %}
+		<div class="row">
+			{% if success %}
+				<div class = "col-md-12 alert alert-success">{{ message }}</div>
+			{% else %}
+				<div class = "col-md-12 alert alert-danger">{{ message }}</div>
+			{% endif %}
+		</div>
+	{% endif %}
+
+	{% if enquiries %}
+
+		{% for opportunity_action in enquiries %}
+
+			<div class = "panel panel-default">
+				<div class="panel-heading">
+					<h4 class="panel-title"><a href="{% url 'volunteer' opportunity_action.user.pk %}">{{ opportunity_action.user.first_name }} {{ opportunity_action.user.last_name }}</a> enquired about <a href="{% url 'opportunity' opportunity_action.opportunity.pk %}">{{ opportunity_action.opportunity.title }}</a> on {{ opportunity_action.date_time_from.date }}</h4>
+				</div>
+					<div class="panel-body">
+						<div class="row">
+							<div class="col-md-12">
+								{% for action in opportunity_action.all_actions %}
+									{% if action.comments %}
+										<div>{{ action.opportunity_action_type.display_name }}: {{ action.comments }}</div>
+									{% endif %}
+								{% endfor %}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-4">
+								<h5>Volunteer details</h5>
+								Email: {{ opportunity_action.user.email }}<br>
+								{% if opportunity_action.user.volunteer.address_line_1 %}
+									{{ opportunity_action.user.volunteer.address_line_1 }}<br>
+								{% endif %}
+								{% if opportunity_action.user.volunteer.address_line_2 %}
+									{{ opportunity_action.user.volunteer.address_line_2 }}<br>
+								{% endif %}
+								{% if opportunity_action.user.volunteer.address_town %}
+									{{ opportunity_action.user.volunteer.address_town }}<br>
+								{% endif %}
+								{% if opportunity_action.user.volunteer.address_county %}
+									{{ opportunity_action.user.volunteer.address_county }}<br>
+								{% endif %}
+								{% if opportunity_action.user.volunteer.phone_number %}
+									{{ opportunity_action.user.volunteer.phone_number }}<br>
+								{% endif %}
+							</div>
+							<div class="col-md-8">
+								<h5>Opportunity details</h5>
+								Organisation: {{ opportunity_action.opportunity.organisation.name }}<br>
+								{{ opportunity_action.opportunity.short_desc }}<br>
+								{{ opportunity_action.opportunity.description}}<br>
+								From {{ opportunity_action.opportunity.start_date }} to {{ opportunity_action.opportunity.end_date }}<br>
+								Timing: {{ opportunity_action.opportunity.timing }}<br>
+							</div>
+						</div>
+					</div>
+				<div class="panel-footer">
+					{% if opportunity_action.opportunity_action_type.name == 'enquired' %}
+					 	<input type="button" name="action" value="Refer" id="refer" class="btn modal-trigger" data-title="Refer" data-action="Refer" data-id="{{ opportunity_action.pk }}">
+					{% endif %}
+					<input type="button" name="action" value="Close" id="close" class="btn modal-trigger" data-title="Close" data-action="Close" data-id="{{ opportunity_action.pk }}">
+					<input type="button" name="action" value="Accept" id="accept" class="btn modal-trigger" data-title="Accept" data-action="Accept" data-id="{{ opportunity_action.pk }}">
+					<input type="button" name="action" value="Participation" id="participation" class="btn modal-trigger" data-title="Participation" data-action="Participation" data-id="{{ opportunity_action.pk }}">
+					<input type="hidden" name="opportunity_action_id" value="{{ opportunity_action.pk }}">
+				</div>
+			</div>
+
+			
+		{% endfor %}
+
+	{% else %}
+
+		<div class="row"><h4>There are no active enquiries.</h4>
+
+	{% endif %}
+
+</div>
+
+ {% endblock %}
+

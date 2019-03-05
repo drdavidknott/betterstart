@@ -1,0 +1,118 @@
+{% load staticfiles %}
+
+<!-- script to deal with search button and modal -->
+<script type="text/javascript">
+$(document).ready(function() {
+	$(".search-trigger").click(function() {
+		$('#searchModal').modal('show');
+	});
+	$("#search_form_submit_button").click(function() {
+		$("#search_form_submit").click();
+	})
+});
+</script>
+
+<!-- Search Form Modal -->
+<div id="searchModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+     	<div class="modal-header savs-modal-header">
+	        <button type="button" class="close" data-dismiss="modal">&times;</button>
+	        <h4 class="modal-title">Search</h4>
+      	</div>
+		<div class="modal-body savs-modal-body">
+		   	<form action ="{% url search_url %}" method="post">
+	      		<div class="form-group">
+	      			{% csrf_token %}
+      				{% if search_type == 'volunteer' %}
+      					<div class="row">
+      						<div class="col-xs-3">Volunteer Name: </div>
+      						<div class="col-xs-9">{{ search_form.keyword }}</div>
+      					</div>
+      				{% elif search_type == 'organisation' %}
+      				     <div class="row">
+      						<div class="col-xs-3">Organisation Name: </div>
+      						<div class="col-xs-9">{{ search_form.keyword }}</div>
+      					</div>
+      				{% elif search_type == 'action' %}
+      				      <div class="row">
+      						<div class="col-xs-3">Action Type: </div>
+      						<div class="col-xs-9">{{ search_form.action_type }}</div>
+      					</div>
+      				{% else %}
+      				     <div class="row">
+      						<div class="col-xs-3">Opportunity: </div>
+      						<div class="col-xs-9">{{ search_form.keyword }}</div>
+      					</div>
+      					<div class="row">
+      						<div class="col-xs-3">Timing: </div>
+      						<div class="col-xs-9">{{ search_form.timing }}</div>
+      					</div>
+						{% if user_role.is_org_staff or user_role.is_vc_staff %}
+						     <div class="row">
+	      						<div class="col-xs-3">Status: </div>
+	      						<div class="col-xs-9">{{ search_form.status }}</div>
+	      					</div>
+						{% else %}
+							<input type="hidden" name="status" id="id_status" value="X">
+						{% endif %}
+					{% endif %}
+					<input type="hidden" name="page" id="id_page" value="1">
+					<input type="submit" value="Search" id="search_form_submit" class="btn" style="display:none">
+				</div>
+			</form>
+		</div>
+      <div class="modal-footer savs-modal-footer">
+        <button type="button" class="btn savs-pink-button" id="search_form_submit_button">Submit</button>
+        <button type="button" class="btn savs-pink-button" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-default">
+	<div class="container-fluid savs-background-pink">
+	 	<div class="navbar-header">
+	      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#Navbar">
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>
+	        <span class="icon-bar"></span>                        
+	      </button>
+	    </div>
+		<div>
+			<!-- <a href="{% url 'index' %}"><img src="{% static 'images/logo-small-white.png' %}"></a> -->
+			<ul class="nav navbar-nav navbar-left">
+				<li><a href="{% url 'index' %}">TEST VOLUNTEERING SITE</a></li>
+			</ul>
+		</div>
+		<div class="collapse navbar-collapse" id="Navbar">
+			<div>
+			    <ul class="nav navbar-nav navbar-right">
+			    	<li><a href='#'><span class="glyphicon glyphicon-search search-trigger"></span></a></li>
+					<li><a href="{% url 'index' %}">OPPORTUNITIES</a></li>
+					{% if user_role.is_org_staff %}
+						<li><a href="{% url 'manage_opp' %}">NEW OPPORTUNITY</a></li>
+					{% endif %}
+					{% if user_role.is_vc_staff %}
+						<li><a href="{% url 'volunteers' %}">VOLUNTEERS</a></li>
+						<li><a href="{% url 'organisations' %}">ORGANISATIONS</a></li>
+					{% endif %}
+					{% if user_role.is_org_staff or user_role.is_vc_staff %}
+						<li><a href="{% url 'actions' %}">ACTIONS</a></li>
+					{% endif %}
+			    	{% if user_name %}
+						{% if user_role.is_volunteer %}
+							<li><a href="{% url 'dashboard' %}">YOUR PAGE</a></li>
+							<li><a href="{% url 'update_profile' %}">UPDATE PROFILE</a></li>
+						{% endif %}
+						<li><a href="{% url 'logout' %}">LOG OUT</a></li>
+					{% else %}
+						<li><a href="{% url 'login' %}">LOGIN</a></li>
+						<li><a href="{% url 'registration' %}">REGISTER</a></li>
+					{% endif %}
+			    </ul>
+			</div>
+		</div>
+	</div>
+</nav>

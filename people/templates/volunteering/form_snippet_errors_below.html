@@ -1,0 +1,20 @@
+
+
+		{% for field in form %}
+
+			<div class = "row form-group">
+				<div class = "col-xs-3">{{ field.label_tag }}</b></div>
+				<div class = "col-xs-9">{{ field }}</div>
+				<div class = "col-xs-12" text-danger">{{ field.errors }}</div>
+			</div>
+
+		{% endfor %}
+
+		 <div class = "row">
+		 	<div class = "col-xs-2">
+		 		<input type="submit" value="Submit" class="btn savs-pink-button"><div>
+		 	</div>
+		 </div>
+
+
+

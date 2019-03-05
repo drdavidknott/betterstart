@@ -1,0 +1,36 @@
+{% extends "volunteering/base.html" %}
+
+<!-- Login page -->
+ 
+ {% block title %}Interview{% endblock %}
+
+ {% block content %}
+
+ <div class="container">
+ 	<div class="row">
+ 		<div class="col-xs-12">
+	 		<div class="panel panel-primary">
+	 			<div class="panel-heading panel-heading-savs-pink">
+	 				<h4 class="panel-title">Interview for {{ interview.volunteer.user.first_name }} {{ interview.volunteer.user.last_name }} by {{ interview.interviewer.user.first_name }} {{ interview.interviewer.user.last_name }} on {{ interview.date_time.date }} at {{ interview.date_time.time }}</h4>
+	 			</div>
+		 		<div class="panel-body panel-body-light-pink">
+		 			<div><h4>Notes:</h4></div>
+		 			<div> {{ interview.notes|linebreaks }}</div>
+		 			{% if opportunity_actions %}
+		 				<div><h4>Opportunities discussed:</h4></div>
+		 				{% for opportunity_action in opportunity_actions %}
+		 					<div><a href="{% url 'opportunity' opportunity_action.opportunity.pk %}">{{ opportunity_action.opportunity.title }}</a> - <a href="{% url 'organisation' opportunity_action.opportunity.organisation.pk %}">{{ opportunity_action.opportunity.organisation.name }}</a> - <em>{{ opportunity_action.comments }}</em> - {{ opportunity_action.latest_action.opportunity_action_type.display_name }} on {{ opportunity_action.latest_action.date_time_from.date }}</div>
+		 				{% endfor %}
+		 			{% endif %}
+				</div>
+				<div class="panel-footer panel-footer-mid-pink">
+					<a href='{% url "add_opps_to_interview" interview.pk %}' class="btn btn-default" role="button">Add Opportunities</a>
+					<a href='{% url "edit_interview_notes" interview.pk %}' class="btn btn-default" role="button">Edit Notes</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+ {% endblock %}
+

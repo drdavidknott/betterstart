@@ -247,6 +247,9 @@ def load_reference_data(directory):
 		# then relationship type
 		elif data_type == 'relationship_type':
 			messages.append(load_relationship_type(value))
+		# then children centres
+		elif data_type == 'children_centre':
+			messages.append(load_children_centre(value))
 		# and finally role type
 		elif data_type == 'role_type':
 			messages.append(load_role_type(value))
@@ -268,7 +271,7 @@ def load_capture_type(value):
 	except (Capture_Type.DoesNotExist):
 		# the capture type does not exist, so create it
 		capture_type = Capture_Type(capture_type_name=value)
-		# save the area
+		# save the capture type
 		capture_type.save()
 		# set the message
 		message = capture_type_label + ' created.'
@@ -286,7 +289,7 @@ def load_ethnicity(value):
 	except (Ethnicity.DoesNotExist):
 		# the capture type does not exist, so create it
 		ethnicity = Ethnicity(description=value)
-		# save the area
+		# save the ethnicity
 		ethnicity.save()
 		# set the message
 		message = ethnicity_label + ' created.'
@@ -304,7 +307,7 @@ def load_role_type(value):
 	except (Role_Type.DoesNotExist):
 		# the capture type does not exist, so create it
 		role_type = Role_Type(role_type_name=value)
-		# save the area
+		# save the role type
 		role_type.save()
 		# set the message
 		message = role_type_label + ' created.'
@@ -316,16 +319,34 @@ def load_relationship_type(value):
 	relationship_type_label = 'Relationship type: ' + value
 	# check whether the capture type already exists
 	try:
-		rel_type = Relationship_Type.objects.get(relationship_type=value)
+		relationship_type = Relationship_Type.objects.get(relationship_type=value)
 		# set the message to show that it exists
 		message = relationship_type_label + ' not created: relationship type already exists.'
 	except (Relationship_Type.DoesNotExist):
 		# the capture type does not exist, so create it
-		rel_type = Relationship_Type(relationship_type=value)
-		# save the area
-		rel_type.save()
+		relationship_type = Relationship_Type(relationship_type=value)
+		# save the relationship type
+		relationship_type.save()
 		# set the message
 		message = relationship_type_label + ' created.'
+	# return the messages
+	return message
+
+def load_children_centre(value):
+	# create a label for use in messages
+	children_centre_label = 'Children centre: ' + value
+	# check whether the capture type already exists
+	try:
+		children_centre = Children_Centre.objects.get(children_centre_name=value)
+		# set the message to show that it exists
+		message = children_centre_label + ' not created: children centre already exists.'
+	except (Children_Centre.DoesNotExist):
+		# the capture type does not exist, so create it
+		children_centre = Children_Centre(children_centre_name=value)
+		# save the children centre
+		children_centre.save()
+		# set the message
+		message = children_centre_label + ' created.'
 	# return the messages
 	return message
 

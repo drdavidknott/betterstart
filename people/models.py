@@ -33,6 +33,16 @@ class Role_Type(models.Model):
 	class Meta:
 		verbose_name_plural = 'role types'
 
+# Capture Type model: represents the way in which the person's details were captured
+class Capture_Type(models.Model):
+	capture_type_name = models.CharField(max_length=50)
+	# define the function that will return the person name as the object reference
+	def __str__(self):
+		return self.capture_type_name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'capture types'
+
 # Children Centre model: represents Children Centres
 # This is reference data.
 class Children_Centre(models.Model):
@@ -109,7 +119,7 @@ class Event_Type(models.Model):
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=500)
 	event_category = models.ForeignKey(Event_Category, default=1, on_delete=models.SET_DEFAULT)
-	# define the function that will return the person name as the object reference
+	# define the function that will return the event name and the owning category as the object reference
 	def __str__(self):
 		return self.name + ' (' + str(self.event_category.name) + ')'
 	# set the name to be used in the admin console
@@ -124,13 +134,34 @@ class Event(models.Model):
 	date = models.DateField()
 	start_time = models.TimeField()
 	end_time = models.TimeField()
-	# define the function that will return the person name as the object reference
+	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name + ' at ' + str(self.start_time) + ' on '  + str(self.date) + \
 				' (' + self.event_type.name + ')'
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'events'
+
+# Question model: represents questions
+class Question(models.Model):
+	question_text = models.CharField(max_length=150)
+	# define the function that will return the question text as the object reference
+	def __str__(self):
+		return self.question_text
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'questions'
+
+# Option model: represents the options which can be used to answer a question
+class Option(models.Model):
+	option_label = models.CharField(max_length=50)
+	question = models.ForeignKey(Question, on_delete=models.CASCADE)
+	# define the function that will return the option label as the object reference
+	def __str__(self):
+		return self.question.question_text + ' ' + self.option_label
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'options'
 
 # Person model: represents a participant in the Betterstart scheme.
 # A person may be an adult or a child.
@@ -143,8 +174,10 @@ class Person(models.Model):
 	children_centres = models.ManyToManyField(Children_Centre, through='CC_Registration')
 	addresses = models.ManyToManyField(Address, through='Residence')
 	events = models.ManyToManyField(Event, through='Event_Registration')
+	answers = models.ManyToManyField(Option, through='Answer')
 	english_is_second_language = models.BooleanField()
 	ethnicity = models.ForeignKey(Ethnicity, default=1, on_delete=models.SET_DEFAULT)
+	capture_type = models.ForeignKey(Capture_Type, default=1, on_delete=models.SET_DEFAULT)
 	families = models.ManyToManyField(Family, blank=True)
 	savs_id = models.IntegerField(blank=True, null=True)
 	# define the function that will return the person name as the object reference
@@ -256,3 +289,14 @@ class Event_Registration(models.Model):
 	class Meta:
 		verbose_name_plural = 'event registrations'
 
+# Answer model: represents the answer to a question, using an option
+class Answer(models.Model):
+	option = models.ForeignKey(Option, on_delete=models.CASCADE)
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	# define the function that will return the option label as the object reference
+	def __str__(self):
+		return self.person.first_name + ' ' + self.person.last_name + ': ' + \
+		self.option.question.question_text + ' ' + self.option.option_label
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'answers'

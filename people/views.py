@@ -358,6 +358,7 @@ def get_people():
 	# return the list of people
 	return people
 
+@login_required
 def people(request):
 	# get the list of people
 	people = get_people()

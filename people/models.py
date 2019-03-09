@@ -167,7 +167,9 @@ class Option(models.Model):
 # A person may be an adult or a child.
 class Person(models.Model):
 	first_name = models.CharField(max_length=50)
+	middle_names = models.CharField(max_length=50, default='', blank=True)
 	last_name = models.CharField(max_length=50)
+	email_address = models.CharField(max_length=50, default='', blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	relationships = models.ManyToManyField('self', through='Relationship', symmetrical=False)
 	roles = models.ManyToManyField(Role_Type, through='Role')

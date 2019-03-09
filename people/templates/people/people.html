@@ -1,0 +1,35 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+	<div class="container">
+
+	<div class="row">
+		<div class="col-md-12">
+			<table class="table table-striped panel panel-default">
+				<thead><tr>
+					<th>NAME:</th>
+				</tr></thead>
+				<tbody>
+			 		{% for person in people %}
+			 				<tr>
+			 					<td>
+									{{ person.first_name }} {{person.middle_names }} {{ person.last_name }}
+								</td>
+							</tr>
+						</div>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+ </div>
+
+
+ {% endblock %}
+

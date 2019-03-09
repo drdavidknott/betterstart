@@ -5,6 +5,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type
 import os
 import csv
+from django.contrib.auth.decorators import login_required
 
 def index(request):
 	# get the template
@@ -12,6 +13,7 @@ def index(request):
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=None, request=request))
 
+@login_required
 def dataload(request):
 	# get the template
 	index_template = loader.get_template('people/dataload.html')
@@ -349,4 +351,22 @@ def load_children_centre(value):
 		message = children_centre_label + ' created.'
 	# return the messages
 	return message
+
+def get_people():
+	# get a list of people
+	people = Person.objects.order_by('last_name', 'first_name')
+	# return the list of people
+	return people
+
+def people(request):
+	# get the list of people
+	people = get_people()
+	# get the template
+	people_template = loader.get_template('people/people.html')
+	# set the context
+	context = {
+				'people' : people
+				}
+	# return the HttpResponse
+	return HttpResponse(people_template.render(context=context, request=request))
 

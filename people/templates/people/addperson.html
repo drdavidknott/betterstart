@@ -1,0 +1,32 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+ <div class="container">
+ 	<div class="row">
+ 		<div class="col-md-1">
+ 		</div>
+ 		<div class="col-md-10">
+	 		<div class="panel panel-primary">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">Add Person</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'addperson' %}" method="post">
+						{% csrf_token %}
+						{% include "people/form_snippet_errors.html" with form=addpersonform %}
+					</form>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-1">
+		</div>
+	</div>
+</div>
+
+{% endblock %}
+

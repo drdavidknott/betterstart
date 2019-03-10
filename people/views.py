@@ -6,6 +6,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 import os
 import csv
 from django.contrib.auth.decorators import login_required
+from .forms import AddPersonForm
+from .utilities import get_page_list
 
 def index(request):
 	# get the template
@@ -370,4 +372,23 @@ def people(request):
 				}
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
+
+@login_required
+def addperson(request):
+	# see whether we got a post or not
+	if request.method == 'POST':
+		# create a form from the POST to retain data and trigger validation
+		addpersonform = AddPersonForm(request.POST)
+	# otherwise create a fresh form
+	else:
+		# create the fresh form
+		addpersonform = AddPersonForm()
+	# get the template
+	addperson_template = loader.get_template('people/addperson.html')
+	# set the context
+	context = {
+				'addpersonform' : addpersonform
+				}
+	# return the HttpResponse
+	return HttpResponse(addperson_template.render(context=context, request=request))
 

@@ -20,6 +20,3 @@ class AddPersonForm(forms.Form):
 												label="Surname",
 												max_length=50,
 												widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	confirm = forms.CharField(
-												max_length=50,
-												widget=forms.HiddenInput())

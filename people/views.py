@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
@@ -8,6 +8,8 @@ import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm
 from .utilities import get_page_list
+from django.contrib import messages
+from django.urls import reverse
 
 def index(request):
 	# get the template
@@ -360,6 +362,24 @@ def get_people():
 	# return the list of people
 	return people
 
+def get_people_by_name(first_name,last_name):
+	# try to get people with the matching name
+	people = Person.objects.filter(first_name=first_name,last_name=last_name)
+	# return the people
+	return people
+
+def create_person(first_name,middle_names,last_name):
+	# create a person
+	person = Person(
+					first_name = first_name,
+					middle_names = middle_names,
+					last_name = last_name
+						)
+	# save the record
+	person.save()
+	# and return the person
+	return person
+
 @login_required
 def people(request):
 	# get the list of people
@@ -375,10 +395,35 @@ def people(request):
 
 @login_required
 def addperson(request):
+	# create a blank list of matching people
+	matching_people = []
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
 		addpersonform = AddPersonForm(request.POST)
+		# check whether the form is valid
+		if addpersonform.is_valid():
+			# get the names
+			first_name = addpersonform.cleaned_data['first_name']
+			middle_names = addpersonform.cleaned_data['middle_names']
+			last_name = addpersonform.cleaned_data['last_name']
+			# see whether this is a confirmation action
+			# get the action from the request
+			action = request.POST.get('action','')
+			# see if there is an action
+			if action == 'CONFIRM':
+				# create the person
+				person = create_person(first_name,middle_names,last_name)
+				# go to the profile of the person
+				return redirect('index')
+		# otherwise see whether the person matches an existing person by name
+		matching_people = get_people_by_name(first_name,last_name)
+		# if there aren't any matching people, also create the person
+		if not matching_people:
+			# create the person
+			person = create_person(first_name,middle_names,last_name)
+			# go to the profile of the person
+			return redirect('index')
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
@@ -387,8 +432,10 @@ def addperson(request):
 	addperson_template = loader.get_template('people/addperson.html')
 	# set the context
 	context = {
-				'addpersonform' : addpersonform
+				'addpersonform' : addpersonform,
+				'matching_people' : matching_people
 				}
 	# return the HttpResponse
 	return HttpResponse(addperson_template.render(context=context, request=request))
+
 

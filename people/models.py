@@ -177,7 +177,7 @@ class Person(models.Model):
 	addresses = models.ManyToManyField(Address, through='Residence')
 	events = models.ManyToManyField(Event, through='Event_Registration')
 	answers = models.ManyToManyField(Option, through='Answer')
-	english_is_second_language = models.BooleanField()
+	english_is_second_language = models.BooleanField(default=False)
 	ethnicity = models.ForeignKey(Ethnicity, default=1, on_delete=models.SET_DEFAULT)
 	capture_type = models.ForeignKey(Capture_Type, default=1, on_delete=models.SET_DEFAULT)
 	families = models.ManyToManyField(Family, blank=True)

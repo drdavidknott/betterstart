@@ -1,0 +1,44 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+{% if person %}
+
+	<div class="row">
+		<div class="col-md-12">
+			<table class="table table-striped panel panel-default">
+				<thead><tr>
+					<th>{{ person.first_name }} {{ person.last_name }}</th>
+					<th></th>
+				</tr></thead>
+				<tbody>
+	 				<tr><td>Email</td><td>{{ person.email_address }}</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+{% else %}
+
+	<div class="row">
+		<div class="col-md-12">
+			<table class="table table-striped panel panel-default">
+				<thead><tr>
+					<th>Person does not exist</th>
+				</tr></thead>
+			</table>
+		</div>
+	</div>
+
+{% endif %}
+
+</div>
+
+{% endblock %}
+

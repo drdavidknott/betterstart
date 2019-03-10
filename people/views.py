@@ -414,16 +414,24 @@ def addperson(request):
 			if action == 'CONFIRM':
 				# create the person
 				person = create_person(first_name,middle_names,last_name)
+				# set a success message
+				messages.success(request,
+									'Another ' + first_name + ' ' + last_name + ' created.'
+ 									)
 				# go to the profile of the person
-				return redirect('index')
+				return redirect('/person/' + str(person.pk))
 		# otherwise see whether the person matches an existing person by name
 		matching_people = get_people_by_name(first_name,last_name)
 		# if there aren't any matching people, also create the person
 		if not matching_people:
 			# create the person
 			person = create_person(first_name,middle_names,last_name)
+			# set a success message
+			messages.success(request,
+								first_name + ' ' + last_name + ' created.'
+ 								)
 			# go to the profile of the person
-			return redirect('index')
+			return redirect('/person/' + str(person.pk))
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
@@ -438,4 +446,22 @@ def addperson(request):
 	# return the HttpResponse
 	return HttpResponse(addperson_template.render(context=context, request=request))
 
+@login_required
+def person(request, person_id):
+	# load the template
+	person_template = loader.get_template('people/person.html')
+	# try to get the person
+	try:
+		# do the database call
+		person = Person.objects.get(pk=person_id)
+	# handle the exception
+	except Person.DoesNotExist:
+		# set the person to false
+		person = False
+	# set the context
+	context = {
+				'person' : person
+				}
+	# return the response
+	return HttpResponse(person_template.render(context=context, request=request))
 

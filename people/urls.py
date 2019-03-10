@@ -8,4 +8,5 @@ urlpatterns = [
     url(r'^dataload$', views.dataload, name='dataload'),
     url(r'^listpeople$', views.people, name='listpeople'),
     url(r'^addperson$', views.addperson, name='addperson'),
+    url(r'^person/(?P<person_id>[0-9]+)$', views.person, name='person'),
 ]

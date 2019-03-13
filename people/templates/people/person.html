@@ -10,17 +10,42 @@
 
 {% if person %}
 
-	<div class="row">
-		<div class="col-md-12">
-			<table class="table table-striped panel panel-default">
-				<thead><tr>
-					<th>{{ person.first_name }} {{ person.last_name }}</th>
-					<th></th>
-				</tr></thead>
-				<tbody>
-	 				<tr><td>Email</td><td>{{ person.email_address }}</td></tr>
-				</tbody>
-			</table>
+ 	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-primary">
+	 			<div class="panel-heading col-md-9">
+	 				<h4 class="panel-title">{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}</h4>
+	 			</div>
+	 			<div class="panel-heading col-md-3">
+	 				<h4 class="panel-title" align="right">
+	 					<a href="{% url 'profile' person.pk %}">Edit Profile</a>
+	 				</h4>
+	 			</div>
+		 		<div class="panel-body">
+		 			<div>
+			 			<div class="col-md-3">Email:</div>
+			 			<div class="col-md-9">
+							{% if person.email_address %}
+								{{ person.email_address }}
+							{% else %}
+								None
+							{% endif %}
+			 			</div>
+			 		</div>
+			 		<div>
+			 			<div class="col-md-3">Date of birth:</div>
+			 			<div class="col-md-9">{{ person.date_of_birth }}</div>
+			 		</div>
+			 		<div>
+			 			<div class="col-md-3">Ethnicity:</div>
+			 			<div class="col-md-9">{{ person.ethnicity }}</div>
+					</div>
+			 		<div>
+			 			<div class="col-md-3">English is a second language:</div>
+			 			<div class="col-md-9">{{ person.english_is_second_language }}</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 

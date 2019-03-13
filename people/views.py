@@ -6,8 +6,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 import os
 import csv
 from django.contrib.auth.decorators import login_required
-from .forms import AddPersonForm
-from .utilities import get_page_list
+from .forms import AddPersonForm, ProfileForm
+from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
 
@@ -356,6 +356,18 @@ def load_children_centre(value):
 	# return the messages
 	return message
 
+def get_person(person_id):
+	# try to get a person using the person id
+	try:
+		# do the database call
+		person = Person.objects.get(pk=person_id)
+	# handle the exception
+	except Person.DoesNotExist:
+		# set the person to false
+		person = False
+	# return the result
+	return person
+
 def get_people():
 	# get a list of people
 	people = Person.objects.order_by('last_name', 'first_name')
@@ -367,6 +379,33 @@ def get_people_by_name(first_name,last_name):
 	people = Person.objects.filter(first_name=first_name,last_name=last_name)
 	# return the people
 	return people
+
+def get_ethnicity(ethnicity_id):
+	# try to get ethnicity
+	try:
+		ethnicity = Ethnicity.objects.get(pk=ethnicity_id)
+	# handle the exception
+	except Ethnicity.DoesNotExist:
+		# set a false value
+		ethnicity = false
+	# return the ethnicity
+	return ethnicity
+
+def get_ethnicities():
+	# return a list of all the ethnicity objects
+	return Ethnicity.objects.all()
+
+def get_ethnicity_list():
+	# return a list containing all of the ethnicity descriptions
+	ethnicity_list = []
+	# get the ethnicities
+	ethnicities = Ethnicity.objects.all()
+	# go through them all
+	for ethnicity in ethnicities:
+		# append to the list
+		ethnicity_list.append(ethnicity.description)
+	# return the list
+	return ethnicity_list
 
 def create_person(first_name,middle_names,last_name):
 	# create a person
@@ -450,18 +489,69 @@ def addperson(request):
 def person(request, person_id):
 	# load the template
 	person_template = loader.get_template('people/person.html')
-	# try to get the person
-	try:
-		# do the database call
-		person = Person.objects.get(pk=person_id)
-	# handle the exception
-	except Person.DoesNotExist:
-		# set the person to false
-		person = False
-	# set the context
+	# set the context from the person based on person id
 	context = {
-				'person' : person
+				'person' : get_person(person_id)
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
+
+@login_required
+def profile(request, person_id):
+	# try to get the person
+	person = get_person(person_id)
+	# if there isn't a person, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a form
+		profileform = ProfileForm(request.POST, ethnicities=get_ethnicities())
+		# check whether the entry is valid
+		if profileform.is_valid():
+			# update the person record
+			person.first_name = profileform.cleaned_data['first_name']
+			person.middle_names = profileform.cleaned_data['middle_names']
+			person.last_name = profileform.cleaned_data['last_name']
+			person.email_address = profileform.cleaned_data['email_address']
+			person.date_of_birth = profileform.cleaned_data['date_of_birth']
+			# attempt to get the ethnicity
+			ethnicity = get_ethnicity(profileform.cleaned_data['ethnicity'])
+			# set the value for the person
+			if ethnicity:
+				# set the value
+				person.ethnicity = ethnicity
+			# otherwise crash out to a banner
+			else:
+				# set the banner
+				return make_banner(request, 'Ethnicity does not exist.')
+			# save the record
+			person.save()
+			# set a success message
+			messages.success(request, person.first_name + ' ' + person.last_name + ' profile updated.')
+			# send the user back to the main person page
+			return redirect('/person/' + str(person.pk))
+	else:
+		# there is a person, so build a dictionary of initial values we want to set
+		profile_dict = {
+						'first_name' : person.first_name,
+						'middle_names' : person.middle_names,
+						'last_name' : person.last_name,
+						'email_address' : person.email_address,
+						'date_of_birth' : person.date_of_birth,
+						'ethnicity' : person.ethnicity.pk
+						}
+		# create the form
+		profileform = ProfileForm(profile_dict, ethnicities=get_ethnicities())
+	# load the template
+	profile_template = loader.get_template('people/profile.html')
+	# set the context
+	context = {
+				'profileform' : profileform,
+				'person' : person,
+				}
+	# return the response
+	return HttpResponse(profile_template.render(context, request))
+
+
 

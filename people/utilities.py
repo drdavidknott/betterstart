@@ -1,5 +1,8 @@
 # a bunch of utilities to help manage page layouts etc.
 
+from django.template import loader
+from django.shortcuts import render, HttpResponse, redirect
+
 def get_page_list(objects, page_length):
 	# take a list of objects and a page length, and build a list of pages
 	object_number = len(objects)
@@ -23,3 +26,13 @@ def get_page_list(objects, page_length):
 			object_number -= page_length
 	# return the result
 	return page_list
+
+def make_banner(request, banner_text):
+	# load the banner template
+	banner_template = loader.get_template('people/banner.html')
+	# set the context
+	context = {"banner" : banner_text }
+	# set the banner
+	banner = HttpResponse(banner_template.render(context, request))
+	# return the output
+	return banner

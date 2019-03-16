@@ -369,6 +369,24 @@ def get_person(person_id):
 	# return the result
 	return person
 
+def get_relationships_to(person):
+	# this function gets all the Person objects via the relationship_to relationship from Perso
+	# it returns a list of people with realtionship type added
+	# create an empty list
+	relationships_to = []
+	# get the relationships using the foreign key
+	relationships = Relationship.objects.filter(relationship_from=person.pk)
+	# now go through the list and get the person
+	for relationship in relationships:
+		# get the person
+		person = Person.objects.get(pk=relationship.relationship_to.pk)
+		# add the relationship type to the person object
+		person.relationship_type = relationship.relationship_type.relationship_type
+		# append the person to the list
+		relationships_to.append(person)
+	# return the relationships
+	return relationships_to
+
 def get_people():
 	# get a list of people
 	people = Person.objects.order_by('last_name', 'first_name')
@@ -487,18 +505,26 @@ def addperson(request):
 	return HttpResponse(addperson_template.render(context=context, request=request))
 
 @login_required
-def person(request, person_id):
+def person(request, person_id=0):
 	# load the template
 	person_template = loader.get_template('people/person.html')
+	# get the person
+	person = get_person(person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# get the relationships for the person
+	relationships_to = get_relationships_to(person)
 	# set the context from the person based on person id
 	context = {
-				'person' : get_person(person_id)
+				'person' : person,
+				'relationships_to' : relationships_to
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
 
 @login_required
-def profile(request, person_id):
+def profile(request, person_id=0):
 	# try to get the person
 	person = get_person(person_id)
 	# if there isn't a person, crash to a banner

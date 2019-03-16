@@ -7,63 +7,77 @@
  {% block content %}
 
 <div class="container">
+	
+	<div class="row">
+		<div class="col-md-12">
+			<h2>{{ person.first_name }} {{ person.last_name }}</h2>
+		</div>
+	</div>
 
-{% if person %}
-
- 	<div class="row">
- 		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading col-md-9">
-	 				<h4 class="panel-title">{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}</h4>
-	 			</div>
-	 			<div class="panel-heading col-md-3">
-	 				<h4 class="panel-title" align="right">
-	 					<a href="{% url 'profile' person.pk %}">Edit Profile</a>
-	 				</h4>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div>
-			 			<div class="col-md-3">Email:</div>
-			 			<div class="col-md-9">
-							{% if person.email_address %}
-								{{ person.email_address }}
-							{% else %}
-								None
-							{% endif %}
-			 			</div>
-			 		</div>
-			 		<div>
-			 			<div class="col-md-3">Date of birth:</div>
-			 			<div class="col-md-9">{{ person.date_of_birth }}</div>
-			 		</div>
-			 		<div>
-			 			<div class="col-md-3">Ethnicity:</div>
-			 			<div class="col-md-9">{{ person.ethnicity }}</div>
-					</div>
-			 		<div>
-			 			<div class="col-md-3">English is a second language:</div>
-			 			<div class="col-md-9">{{ person.english_is_second_language }}</div>
-					</div>
+ 	<div class="row col-md-12">
+ 		<div class="panel panel-default">
+ 			<div class="panel-heading col-md-9">
+ 				<h4 class="panel-title">PROFILE</h4>
+ 			</div>
+ 			<div class="panel-heading col-md-3">
+ 				<h4 class="panel-title" align="right">
+ 					<a href="{% url 'profile' person.pk %}">Edit Profile</a>
+ 				</h4>
+ 			</div>
+	 		<div class="panel-body">
+	 			<div>
+		 			<div class="col-md-3">First name:</div>
+		 			<div class="col-md-9">{{ person.first_name }}</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-3">Middle names:</div>
+		 			<div class="col-md-9">{{ person.middle_names }}&nbsp</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-3">Last name:</div>
+		 			<div class="col-md-9">{{ person.last_name }}</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-3">Email:</div>
+		 			<div class="col-md-9">{{ person.email_address}}&nbsp</div>
+		 		</div>
+		 		<div>
+		 			<div class="col-md-3">Date of birth:</div>
+		 			<div class="col-md-9">{{ person.date_of_birth }}</div>
+		 		</div>
+		 		<div>
+		 			<div class="col-md-3">Ethnicity:</div>
+		 			<div class="col-md-9">{{ person.ethnicity }}</div>
 				</div>
+		 		<div>
+		 			<div class="col-md-3">English is a second language:</div>
+		 			<div class="col-md-9">{{ person.english_is_second_language }}</div>
+				</div>
+			</div>
+			<div class="panel-heading col-md-9">
+	 				<h4 class="panel-title">RELATIONSHIPS</h4>
+ 			</div>
+ 			<div class="panel-heading col-md-3">
+ 				<h4 class="panel-title" align="right">
+ 					<a href="{% url 'profile' person.pk %}">Edit Relationships</a>
+ 				</h4>
+ 			</div>
+	 		<div class="panel-body">
+			 		{% for relationship_to in relationships_to %}
+		 				<div class="col-md-12">
+							{{ person.first_name }} {{ person.last_name }} is the 
+							{{ relationship_to.relationship_type }} of
+							<a href="{% url 'person' relationship_to.pk %}"> 
+								{{ relationship_to.first_name }} {{ relationship_to.last_name }}
+							</a>
+						</div>
+					{% endfor %}
 			</div>
 		</div>
 	</div>
 
-{% else %}
-
-	<div class="row">
-		<div class="col-md-12">
-			<table class="table table-striped panel panel-default">
-				<thead><tr>
-					<th>Person does not exist</th>
-				</tr></thead>
-			</table>
-		</div>
-	</div>
-
-{% endif %}
-
 </div>
+
 
 {% endblock %}
 

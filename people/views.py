@@ -10,6 +10,7 @@ from .forms import AddPersonForm, ProfileForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
+import datetime
 
 def index(request):
 	# get the template
@@ -38,7 +39,7 @@ def dataload(request):
 	# load post codes and get the results as messages
 	messages = messages + load_post_code(directory)
 	# add the messages to the context
-	context = {'messages' : messages}
+	context = {'load_messages' : messages}
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
 
@@ -515,6 +516,7 @@ def profile(request, person_id):
 			person.last_name = profileform.cleaned_data['last_name']
 			person.email_address = profileform.cleaned_data['email_address']
 			person.date_of_birth = profileform.cleaned_data['date_of_birth']
+			person.english_is_second_language = profileform.cleaned_data['english_is_second_language']
 			# attempt to get the ethnicity
 			ethnicity = get_ethnicity(profileform.cleaned_data['ethnicity'])
 			# set the value for the person
@@ -539,7 +541,8 @@ def profile(request, person_id):
 						'last_name' : person.last_name,
 						'email_address' : person.email_address,
 						'date_of_birth' : person.date_of_birth,
-						'ethnicity' : person.ethnicity.pk
+						'ethnicity' : person.ethnicity.pk,
+						'english_is_second_language' : person.english_is_second_language
 						}
 		# create the form
 		profileform = ProfileForm(profile_dict, ethnicities=get_ethnicities())

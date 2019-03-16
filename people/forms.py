@@ -47,6 +47,10 @@ class ProfileForm(forms.Form):
 	ethnicity = forms.ChoiceField(
 									label = "Ethnicity",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	english_is_second_language = forms.BooleanField(
+									label = "English is a second language",
+									required = False,
+									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices

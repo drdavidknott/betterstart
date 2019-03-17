@@ -22,6 +22,12 @@ class AddPersonForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 
 class ProfileForm(forms.Form):
+	# Define the choices for gender
+	gender_choices = (
+					('Not specified','Not specified'),
+					('Male' , 'Male'),
+					('Female' , 'Female'),
+					)
 	# Define the fields that we need in the form to capture the basics of the person's profile
 	first_name = forms.CharField(
 									label="First name",
@@ -43,9 +49,16 @@ class ProfileForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	date_of_birth = forms.DateField(
 									label="Date of birth",
+									required=False,
 									widget=forms.DateInput(attrs={'class' : 'form-control datepicker'}))
 	ethnicity = forms.ChoiceField(
-									label = "Ethnicity",
+									label="Ethnicity",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	gender = forms.ChoiceField(
+									label="Gender",
+									required=False,
+									choices=gender_choices,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	english_is_second_language = forms.BooleanField(
 									label = "English is a second language",

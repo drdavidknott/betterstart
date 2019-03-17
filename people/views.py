@@ -28,6 +28,8 @@ def dataload(request):
 	directory = os.path.dirname(__file__)
 	# load simple reference data
 	messages = messages + load_reference_data(directory)
+	# load relationship types
+	messages = messages + load_relationship_types(directory)
 	# load event categories
 	messages = messages + load_event_categories(directory)
 	# load event types
@@ -321,24 +323,6 @@ def load_role_type(value):
 	# return the messages
 	return message
 
-def load_relationship_type(value):
-	# create a label for use in messages
-	relationship_type_label = 'Relationship type: ' + value
-	# check whether the capture type already exists
-	try:
-		relationship_type = Relationship_Type.objects.get(relationship_type=value)
-		# set the message to show that it exists
-		message = relationship_type_label + ' not created: relationship type already exists.'
-	except (Relationship_Type.DoesNotExist):
-		# the capture type does not exist, so create it
-		relationship_type = Relationship_Type(relationship_type=value)
-		# save the relationship type
-		relationship_type.save()
-		# set the message
-		message = relationship_type_label + ' created.'
-	# return the messages
-	return message
-
 def load_children_centre(value):
 	# create a label for use in messages
 	children_centre_label = 'Children centre: ' + value
@@ -356,6 +340,43 @@ def load_children_centre(value):
 		message = children_centre_label + ' created.'
 	# return the messages
 	return message
+
+def load_relationship_types(directory):
+	# set a blank messages lists
+	messages = []
+	# set the file name
+	relationship_types_file_name = os.path.join(directory, 'data/relationship_types.csv')
+	# open the relationship types file
+	relationship_types_file = open(relationship_types_file_name,'r')
+	# read it as a csv file
+	relationship_type_records = csv.DictReader(relationship_types_file)
+	# go through the csv file and process it
+	for relationship_type_record in relationship_type_records:
+		# get the values
+		relationship_type = relationship_type_record['relationship_type']
+		relationship_counterpart = relationship_type_record['relationship_counterpart']
+		# create a label for use in messages
+		relationship_type_label = 'Relationship type: ' + relationship_type
+		# check whether the relationship type already exists
+		try:
+			this_relationship_type = Relationship_Type.objects.get(relationship_type=relationship_type)
+			# set the message to show that it exists
+			message = relationship_type_label + ' not created: relationship type already exists.'
+		# handle the exception (which is what we expect)
+		except (Relationship_Type.DoesNotExist):
+			# the relationship type does not exist, so create it
+			this_relationship_type = Relationship_Type(
+														relationship_type=relationship_type,
+														relationship_counterpart=relationship_counterpart
+														)
+			# save the relationship type
+			this_relationship_type.save()
+			# set the message
+			message = relationship_type_label + ' created.'
+		# append the message
+		messages.append(message)
+	# return the messages
+	return messages
 
 def get_person(person_id):
 	# try to get a person using the person id
@@ -542,6 +563,7 @@ def profile(request, person_id=0):
 			person.last_name = profileform.cleaned_data['last_name']
 			person.email_address = profileform.cleaned_data['email_address']
 			person.date_of_birth = profileform.cleaned_data['date_of_birth']
+			person.gender = profileform.cleaned_data['gender']
 			person.english_is_second_language = profileform.cleaned_data['english_is_second_language']
 			# attempt to get the ethnicity
 			ethnicity = get_ethnicity(profileform.cleaned_data['ethnicity'])
@@ -568,6 +590,7 @@ def profile(request, person_id=0):
 						'email_address' : person.email_address,
 						'date_of_birth' : person.date_of_birth,
 						'ethnicity' : person.ethnicity.pk,
+						'gender' : person.gender,
 						'english_is_second_language' : person.english_is_second_language
 						}
 		# create the form

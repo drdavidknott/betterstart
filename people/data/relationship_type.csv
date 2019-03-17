@@ -1,0 +1,8 @@
+relationship_type,relationship_counterpart
+sibling,sibling
+parent,child
+child,parent
+grandparent,grandchild
+grandchild,grandparent
+other carer,cared for child
+cared for child,other carer

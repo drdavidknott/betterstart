@@ -1,14 +1,6 @@
 data_type,value
 capture_type,UNKNOWN
 ethnicity,Prefer not to say
-relationship_type,UNKNOWN
-relationship_type,Father
-relationship_type,Mother
-relationship_type,Grandparent
-relationship_type,Childminder
-relationship_type,Childcare Practitioner
-relationship_type,Sibling
-relationship_type,Other Carer
 children_centre,UNKNOWN
 children_centre,Blenheim
 children_centre,Cambridge Road

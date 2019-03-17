@@ -171,6 +171,7 @@ class Person(models.Model):
 	last_name = models.CharField(max_length=50)
 	email_address = models.CharField(max_length=50, default='', blank=True)
 	date_of_birth = models.DateField(null=True, blank=True)
+	gender = models.CharField(max_length=12, default='', blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	relationships = models.ManyToManyField('self', through='Relationship', symmetrical=False)
 	roles = models.ManyToManyField(Role_Type, through='Role')
@@ -194,6 +195,7 @@ class Person(models.Model):
 # This is reference data.
 class Relationship_Type(models.Model):
 	relationship_type = models.CharField(max_length=50)
+	relationship_counterpart = models.CharField(max_length=50)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.relationship_type

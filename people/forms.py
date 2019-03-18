@@ -50,7 +50,10 @@ class ProfileForm(forms.Form):
 	date_of_birth = forms.DateField(
 									label="Date of birth",
 									required=False,
-									widget=forms.DateInput(attrs={'class' : 'form-control datepicker'}))
+									widget=forms.DateInput(attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}))
 	ethnicity = forms.ChoiceField(
 									label="Ethnicity",
 									required=False,
@@ -80,4 +83,15 @@ class ProfileForm(forms.Form):
 		# set the choices
 		self.fields['ethnicity'].choices = ethnicity_list
 
-
+class RelationshipSearchForm(forms.Form):
+	# Define the fields that we need in the form.
+	first_name = forms.CharField(
+									label="First name",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	last_name = forms.CharField(
+									label="Surname",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))

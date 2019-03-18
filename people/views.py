@@ -6,7 +6,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 import os
 import csv
 from django.contrib.auth.decorators import login_required
-from .forms import AddPersonForm, ProfileForm
+from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -420,6 +420,20 @@ def get_people_by_name(first_name,last_name):
 	# return the people
 	return people
 
+def get_people_by_names(first_name,last_name):
+	# get all people
+	people = Person.objects.all()
+	# check whether we have a first name
+	if first_name:
+		# filter by the name
+		people = people.filter(first_name=first_name)
+	# check whether we have a last name
+	if last_name:
+		# filter by the name
+		people = people.filter(last_name=last_name)
+	# return the list of people
+	return people
+
 def get_ethnicity(ethnicity_id):
 	# try to get ethnicity
 	try:
@@ -605,5 +619,52 @@ def profile(request, person_id=0):
 	# return the response
 	return HttpResponse(profile_template.render(context, request))
 
-
-
+def add_relationship(request,person_id=0):
+	# load the template
+	person_template = loader.get_template('people/add_relationship.html')
+	# get the person
+	person = get_person(person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# get the relationships for the person
+	relationships_to = get_relationships_to(person)
+	# set the search results
+	search_results = []
+	# set a blank search_error
+	search_error = ''
+	# check whether this is a post
+	if request.method == 'POST':
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# create a search form
+			relationshipsearchform = RelationshipSearchForm(request.POST)
+			# validate the form
+			relationshipsearchform.is_valid()
+			# get the names
+			first_name = relationshipsearchform.cleaned_data['first_name']
+			last_name = relationshipsearchform.cleaned_data['last_name']
+			# if neither name is blank, do the search
+			if first_name or last_name:
+				# conduct a search
+				people = get_people_by_names(first_name,last_name)
+				# for now, just use that list
+				search_results = people
+			# otherwise we have a blank form
+			else:
+				# set the message
+				search_error = 'First name or last name must be entered.'
+	# otherwise we didn't get a post
+	else:
+		# create the form
+		relationshipsearchform = RelationshipSearchForm()
+	# set the context from the person based on person id
+	context = {
+				'relationshipsearchform' : relationshipsearchform,
+				'search_results' : search_results,
+				'search_error' : search_error,
+				'person' : person,
+				'relationships_to' : relationships_to
+				}
+	# return the response
+	return HttpResponse(person_template.render(context=context, request=request))

@@ -426,11 +426,11 @@ def get_people_by_names(first_name,last_name):
 	# check whether we have a first name
 	if first_name:
 		# filter by the name
-		people = people.filter(first_name=first_name)
+		people = people.filter(first_name__contains=first_name)
 	# check whether we have a last name
 	if last_name:
 		# filter by the name
-		people = people.filter(last_name=last_name)
+		people = people.filter(last_name__contains=last_name)
 	# return the list of people
 	return people
 

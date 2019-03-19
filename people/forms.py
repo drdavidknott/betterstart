@@ -95,3 +95,51 @@ class RelationshipSearchForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+
+class AddRelationshipForm(forms.Form):
+	# Define the choices for gender
+	gender_choices = (
+					('Not specified','Not specified'),
+					('Male' , 'Male'),
+					('Female' , 'Female'),
+					)
+	# Define the fields that we need in the form to capture the basics of the person's profile
+	first_name = forms.CharField(
+									label="First name",
+									max_length=50, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	last_name = forms.CharField(
+									label="Last name",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	date_of_birth = forms.DateField(
+									label="Date of birth",
+									widget=forms.DateInput(attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}))
+	gender = forms.ChoiceField(
+									label="Gender",
+									choices=gender_choices,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	relationship_type = forms.ChoiceField(
+									label="Relationship",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	def __init__(self, *args, **kwargs):
+		# over-ride the __init__ method to set the choices
+		# pull the choices field out of the parameters
+		relationship_types = kwargs.pop('relationship_types')
+		# call the built in constructor
+		super(AddRelationshipForm, self).__init__(*args, **kwargs)
+		# set the choice field for ethnicities
+		relationship_type_list = []
+		# go through the ethnicities
+		for relationship_type in relationship_types:
+			# append a list of value and display value to the list
+			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
+			# if we have the child relationship type, set initial
+			if relationship_type.relationship_type == 'child':
+				# set the value
+				self.fields['relationship_type'].initial = relationship_type.pk
+		# set the choices
+		self.fields['relationship_type'].choices = relationship_type_list

@@ -6,7 +6,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 import os
 import csv
 from django.contrib.auth.decorators import login_required
-from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm
+from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm, AddRelationshipForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -461,6 +461,10 @@ def get_ethnicity_list():
 	# return the list
 	return ethnicity_list
 
+def get_relationship_types():
+	# return a list of all the relationship type objects
+	return Relationship_Type.objects.all()
+
 def create_person(first_name,middle_names,last_name):
 	# create a person
 	person = Person(
@@ -635,10 +639,11 @@ def add_relationship(request,person_id=0):
 	search_error = ''
 	# check whether this is a post
 	if request.method == 'POST':
+		# create a search form
+		relationshipsearchform = RelationshipSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
-			# create a search form
-			relationshipsearchform = RelationshipSearchForm(request.POST)
+
 			# validate the form
 			relationshipsearchform.is_valid()
 			# get the names
@@ -650,17 +655,21 @@ def add_relationship(request,person_id=0):
 				people = get_people_by_names(first_name,last_name)
 				# for now, just use that list
 				search_results = people
+				# create a form to add the relationship
+				addrelationshipform = AddRelationshipForm(request.POST,relationship_types=get_relationship_types())
 			# otherwise we have a blank form
 			else:
 				# set the message
 				search_error = 'First name or last name must be entered.'
 	# otherwise we didn't get a post
 	else:
-		# create the form
+		# create the forms
 		relationshipsearchform = RelationshipSearchForm()
+		addrelationshipform = ''
 	# set the context from the person based on person id
 	context = {
 				'relationshipsearchform' : relationshipsearchform,
+				'addrelationshipform' : addrelationshipform,
 				'search_results' : search_results,
 				'search_error' : search_error,
 				'person' : person,

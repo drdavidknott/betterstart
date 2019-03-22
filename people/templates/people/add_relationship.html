@@ -14,7 +14,7 @@
  		<div class="col-md-12">
 	 		<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">Find Person</h4>
+	 				<h4 class="panel-title">FIND PERSON:</h4>
 	 			</div>
 		 		<div class="panel-body">
 					<form action ="{% url 'add_relationship' person.pk %}" method="post">
@@ -37,13 +37,54 @@
 		</div>
 	</div>
 
+	{% if search_results %}
+
+		<div class="row">
+			<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">ADD A RELATIONSHIP TO AN EXISTING PERSON:</h4>
+		 			</div>
+		 			<div class="panel-body">
+						<table class="table table-striped">
+							<thead><tr>
+								<th>NAME:</th>
+								<th>DATE OF BIRTH:</th>
+								<th>GENDER:</th>
+							</tr></thead>
+							<tbody>
+						 		{% for result in search_results %}
+						 				<tr>
+						 					<td>
+						 						<a href="{% url 'person' person.pk %}">
+													{{ result.first_name }} {{ result.middle_names }} {{ result.last_name }}
+												</a>
+											</td>
+											<td>
+												{{ result.date_of_birth }}
+											</td>
+											<td>
+												{{ result.gender }}
+											</td>
+										</tr>
+									</div>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
 	{% if addrelationshipform %}
 
 		 <div class="row">
 	 		<div class="col-md-12">
 		 		<div class="panel panel-default">
 		 			<div class="panel-heading">
-		 				<h4 class="panel-title">Add Relationship</h4>
+		 				<h4 class="panel-title">ADD A RELATIONSHIP WITH A NEW PERSON:</h4>
 		 			</div>
 			 		<div class="panel-body">
 						<form action ="{% url 'add_relationship' person.pk %}" method="post">
@@ -58,9 +99,10 @@
 										<div class = "row form-group">
 											<div class = "col-md-2"><b>Relationship:</b></div>
 											<div class = "col-md-2">
-												{{ person.first_name }} {{ person.last_name }} is the 
+												{{ person.first_name }} {{ person.last_name }} is the
 											</div>
-											<div class = "col-md-2">{{ field }}</div>
+											<div class = "col-md-2">
+												{{ field }}</div>
 											<div class = "col-md-3"> of this person.</div>
 										</div>
 									{% else %}
@@ -89,7 +131,7 @@
  		<div class="col-md-12">
  			<div class="panel panel-default">
 				<div class="panel-heading">
-		 				<h4 class="panel-title">EXISTING RELATIONSHIPS</h4>
+		 				<h4 class="panel-title">EXISTING RELATIONSHIPS:</h4>
 	 			</div>
 		 		<div class="panel-body">
 			 		{% for relationship_to in relationships_to %}
@@ -103,28 +145,6 @@
 					{% endfor %}
 				</div>
 			</div>
-		</div>
-	</div>
-
-	<div class="row">
-		<div class="col-md-12">
-			<table class="table table-striped panel panel-default">
-				<thead><tr>
-					<th>NAME:</th>
-				</tr></thead>
-				<tbody>
-			 		{% for result in search_results %}
-			 				<tr>
-			 					<td>
-			 						<a href="{% url 'person' person.pk %}">
-										{{ result.first_name }} {{ result.middle_names }} {{ result.last_name }}
-									</a>
-								</td>
-							</tr>
-						</div>
-					{% endfor %}
-				</tbody>
-			</table>
 		</div>
 	</div>
 

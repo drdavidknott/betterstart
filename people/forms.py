@@ -124,7 +124,7 @@ class AddRelationshipForm(forms.Form):
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	relationship_type = forms.ChoiceField(
 									label="Relationship",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
+									widget=forms.Select())
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
 		# pull the choices field out of the parameters

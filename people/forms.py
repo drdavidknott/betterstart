@@ -108,6 +108,11 @@ class AddRelationshipForm(forms.Form):
 									label="First name",
 									max_length=50, 
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	middle_names = forms.CharField(
+									label="Middle names",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	last_name = forms.CharField(
 									label="Last name",
 									max_length=50,

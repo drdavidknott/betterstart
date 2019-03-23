@@ -445,6 +445,28 @@ def get_ethnicity(ethnicity_id):
 	# return the ethnicity
 	return ethnicity
 
+def get_relationship_type(relationship_type_id):
+	# try to get relationship type
+	try:
+		relationship_type = Relationship_Type.objects.get(pk=relationship_type_id)
+	# handle the exception
+	except Relationship_Type.DoesNotExist:
+		# set a false value
+		relationship_type = false
+	# return the ethnicity
+	return relationship_type
+
+def get_relationship_type_by_type(relationship_type):
+	# try to get relationship type using the name of the relationship type
+	try:
+		relationship_type = Relationship_Type.objects.get(relationship_type=relationship_type)
+	# handle the exception
+	except Relationship_Type.DoesNotExist:
+		# set a false value
+		relationship_type = false
+	# return the ethnicity
+	return relationship_type
+
 def get_ethnicities():
 	# return a list of all the ethnicity objects
 	return Ethnicity.objects.all()
@@ -465,17 +487,41 @@ def get_relationship_types():
 	# return a list of all the relationship type objects
 	return Relationship_Type.objects.all()
 
-def create_person(first_name,middle_names,last_name):
+def create_person(first_name,middle_names,last_name,date_of_birth=None,gender='',ethnicity=1):
 	# create a person
 	person = Person(
 					first_name = first_name,
 					middle_names = middle_names,
-					last_name = last_name
+					last_name = last_name,
+					date_of_birth = date_of_birth,
+					gender = gender,
+					ethnicity = get_ethnicity(ethnicity)
 						)
 	# save the record
 	person.save()
 	# and return the person
 	return person
+
+def create_relationship(person_from, person_to, relationship_type_from):
+	# create a symmetrical relationship between two people
+	# start by getting the other half of the relationship
+	relationship_type_to = get_relationship_type_by_type(relationship_type_from.relationship_counterpart)
+	# now create the from part of the relationship
+	relationship_from = Relationship(
+									relationship_from = person_from,
+									relationship_to = person_to,
+									relationship_type = relationship_type_from)
+	# now save it
+	relationship_from.save()
+	# now create the to part of the relationship
+	relationship_to = Relationship(
+									relationship_from = person_to,
+									relationship_to = person_from,
+									relationship_type = relationship_type_to)
+	# now save it
+	relationship_to.save()
+	# that's it!
+	return
 
 @login_required
 def people(request):
@@ -631,8 +677,6 @@ def add_relationship(request,person_id=0):
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
-	# get the relationships for the person
-	relationships_to = get_relationships_to(person)
 	# set the search results
 	search_results = []
 	# set a blank search_error
@@ -643,7 +687,6 @@ def add_relationship(request,person_id=0):
 		relationshipsearchform = RelationshipSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
-
 			# validate the form
 			relationshipsearchform.is_valid()
 			# get the names
@@ -661,11 +704,43 @@ def add_relationship(request,person_id=0):
 			else:
 				# set the message
 				search_error = 'First name or last name must be entered.'
+		# check whether we have been asked to add a relationship to a new person
+		elif request.POST['action'] == 'addrelationshiptonewperson':
+			# create the form
+			addrelationshipform = AddRelationshipForm(request.POST,relationship_types=get_relationship_types())
+			# check whether the form is valid
+			if addrelationshipform.is_valid():
+				# we now need to create the person
+				new_person = create_person(
+											first_name = addrelationshipform.cleaned_data['first_name'],
+											middle_names = addrelationshipform.cleaned_data['middle_names'],
+											last_name = addrelationshipform.cleaned_data['last_name'],
+											date_of_birth = addrelationshipform.cleaned_data['date_of_birth'],
+											gender = addrelationshipform.cleaned_data['gender']
+											)
+				# set a message to say that we have create a new person
+				messages.success(request, new_person.first_name + ' ' + new_person.last_name + ' created.')
+				# now get the relationship type
+				relationship_type = get_relationship_type(addrelationshipform.cleaned_data['relationship_type'])
+				# now create the relationship
+				create_relationship(
+									 person_from = person,
+									 person_to = new_person,
+									 relationship_type_from = relationship_type
+									)
+				# set the message
+				messages.success(request,
+					'Relationship created: ' + person.first_name + ' ' + person.last_name + ' is the ' + 
+					relationship_type.relationship_type + ' of ' + new_person.first_name + ' ' + new_person.last_name)
+				# clear the add relationship form so that it doesn't display
+				addrelationshipform = ''
 	# otherwise we didn't get a post
 	else:
 		# create the forms
 		relationshipsearchform = RelationshipSearchForm()
 		addrelationshipform = ''
+	# get the relationships for the person
+	relationships_to = get_relationships_to(person)
 	# set the context from the person based on person id
 	context = {
 				'relationshipsearchform' : relationshipsearchform,

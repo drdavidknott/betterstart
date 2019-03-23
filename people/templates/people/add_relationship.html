@@ -84,12 +84,12 @@
 	 		<div class="col-md-12">
 		 		<div class="panel panel-default">
 		 			<div class="panel-heading">
-		 				<h4 class="panel-title">ADD A RELATIONSHIP WITH A NEW PERSON:</h4>
+		 				<h4 class="panel-title">ADD A RELATIONSHIP TO A NEW PERSON:</h4>
 		 			</div>
 			 		<div class="panel-body">
 						<form action ="{% url 'add_relationship' person.pk %}" method="post">
 							{% csrf_token %}
-							<input type="hidden" name="action" value="addrelationship">
+							<input type="hidden" name="action" value="addrelationshiptonewperson">
 							{% csrf_token %}
 							{% for field in addrelationshipform %}
 								{% if field.is_hidden %}
@@ -127,26 +127,30 @@
 
 	{% endif %}
 
- 	<div class="row">
- 		<div class="col-md-12">
- 			<div class="panel panel-default">
-				<div class="panel-heading">
-		 				<h4 class="panel-title">EXISTING RELATIONSHIPS:</h4>
-	 			</div>
-		 		<div class="panel-body">
-			 		{% for relationship_to in relationships_to %}
-		 				<div class="col-md-12">
-							{{ person.first_name }} {{ person.last_name }} is the 
-							{{ relationship_to.relationship_type }} of
-							<a href="{% url 'person' relationship_to.pk %}"> 
-								{{ relationship_to.first_name }} {{ relationship_to.last_name }}
-							</a>
-						</div>
-					{% endfor %}
+	{% if relationships_to %}
+
+	 	<div class="row">
+	 		<div class="col-md-12">
+	 			<div class="panel panel-default">
+					<div class="panel-heading">
+			 				<h4 class="panel-title">EXISTING RELATIONSHIPS:</h4>
+		 			</div>
+			 		<div class="panel-body">
+				 		{% for relationship_to in relationships_to %}
+			 				<div class="col-md-12">
+								{{ person.first_name }} {{ person.last_name }} is the 
+								{{ relationship_to.relationship_type }} of
+								<a href="{% url 'person' relationship_to.pk %}"> 
+									{{ relationship_to.first_name }} {{ relationship_to.last_name }}
+								</a>
+							</div>
+						{% endfor %}
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
+
+	{% endif %}
 
 </div>
 

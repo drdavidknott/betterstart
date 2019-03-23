@@ -130,8 +130,8 @@ class AddRelationshipForm(forms.Form):
 	relationship_type = forms.ChoiceField(
 									label="Relationship",
 									widget=forms.Select())
+	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# over-ride the __init__ method to set the choices
 		# pull the choices field out of the parameters
 		relationship_types = kwargs.pop('relationship_types')
 		# call the built in constructor
@@ -148,3 +148,32 @@ class AddRelationshipForm(forms.Form):
 				self.fields['relationship_type'].initial = relationship_type.pk
 		# set the choices
 		self.fields['relationship_type'].choices = relationship_type_list
+
+
+class AddRelationshipToExistingPersonForm(forms.Form):
+	# over-ride the built in __init__ method so that we can add fields dynamically
+	def __init__(self, *args, **kwargs):
+		# pull the relationship types list out of the parameters
+		relationship_types = kwargs.pop('relationship_types')
+		# pull the person list out of the parameter
+		people = kwargs.pop('people')
+		# call the built in constructor
+		super(AddRelationshipForm, self).__init__(*args, **kwargs)
+		# set the choice field for relationship types
+		relationship_type_list = []
+		# add an initial option
+		relation.append(0,'none')
+		# go through the relationship types to build the options
+		for relationship_type in relationship_types:
+			# append a list of value and display value to the list
+			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
+		# now go through the people and build fields
+		for person in people:
+			# set the field name
+			field_name = 'relationship_type_' + str(person.pk)
+			# create the field
+			self.fields[field_name]= forms.ChoiceField(
+														label="Relationship",
+														widget=forms.Select(),
+														choices=relationship_type_list
+														)

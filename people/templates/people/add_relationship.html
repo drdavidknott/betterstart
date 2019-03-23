@@ -46,30 +46,47 @@
 		 				<h4 class="panel-title">ADD A RELATIONSHIP TO AN EXISTING PERSON:</h4>
 		 			</div>
 		 			<div class="panel-body">
-						<table class="table table-striped">
-							<thead><tr>
-								<th>NAME:</th>
-								<th>DATE OF BIRTH:</th>
-								<th>GENDER:</th>
-							</tr></thead>
-							<tbody>
-						 		{% for result in search_results %}
-						 				<tr>
-						 					<td>
-						 						<a href="{% url 'person' person.pk %}">
-													{{ result.first_name }} {{ result.middle_names }} {{ result.last_name }}
-												</a>
-											</td>
-											<td>
-												{{ result.date_of_birth }}
-											</td>
-											<td>
-												{{ result.gender }}
-											</td>
-										</tr>
-								{% endfor %}
-							</tbody>
-						</table>
+		 				<form action ="{% url 'add_relationship' person.pk %}" method="post">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="addrelationshiptoexistingpeople">
+							<table class="table table-striped">
+								<thead><tr>
+									<th>NAME:</th>
+									<th>DATE OF BIRTH:</th>
+									<th>GENDER:</th>
+									<th>{{ person.first_name }} {{ person.last_name }} is this person's:</th>
+								</tr></thead>
+								<tbody>
+							 		{% for result in search_results %}
+							 				<tr>
+							 					<td>
+							 						<a href="{% url 'person' result.pk %}">
+														{{ result.first_name }} {{ result.middle_names }} {{ result.last_name }}
+													</a>
+												</td>
+												<td>
+													{{ result.date_of_birth }}
+												</td>
+												<td>
+													{{ result.gender }}
+												</td>
+												<td>
+													{% for field in addrelationshiptoexistingpersonform %}
+														{% if field.name == result.field_name %}
+															{{ field }}
+														{% endif %}
+													{% endfor %}
+												</td>
+											</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+							<div class = "row">
+		 						<div class = "col-xs-2">
+		 							<input type="submit" value="Submit">
+		 						</div>
+		 					</div>
+	 					</form>
 					</div>
 				</div>
 			</div>

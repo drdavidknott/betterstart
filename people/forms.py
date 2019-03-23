@@ -158,11 +158,11 @@ class AddRelationshipToExistingPersonForm(forms.Form):
 		# pull the person list out of the parameter
 		people = kwargs.pop('people')
 		# call the built in constructor
-		super(AddRelationshipForm, self).__init__(*args, **kwargs)
+		super(AddRelationshipToExistingPersonForm, self).__init__(*args, **kwargs)
 		# set the choice field for relationship types
 		relationship_type_list = []
 		# add an initial option
-		relation.append(0,'none')
+		relationship_type_list.append((0,'none'))
 		# go through the relationship types to build the options
 		for relationship_type in relationship_types:
 			# append a list of value and display value to the list

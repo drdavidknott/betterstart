@@ -142,10 +142,6 @@ class AddRelationshipForm(forms.Form):
 		for relationship_type in relationship_types:
 			# append a list of value and display value to the list
 			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
-			# if we have the child relationship type, set initial
-			if relationship_type.relationship_type == 'child':
-				# set the value
-				self.fields['relationship_type'].initial = relationship_type.pk
 		# set the choices
 		self.fields['relationship_type'].choices = relationship_type_list
 
@@ -175,5 +171,9 @@ class AddRelationshipToExistingPersonForm(forms.Form):
 			self.fields[field_name]= forms.ChoiceField(
 														label="Relationship",
 														widget=forms.Select(),
-														choices=relationship_type_list
+														choices=relationship_type_list,
 														)
+
+
+
+

@@ -770,6 +770,8 @@ def add_relationship(request,person_id=0):
 	search_error = ''
 	# check whether this is a post
 	if request.method == 'POST':
+		# create a copy of the post: we need an mutable copy for some form handling later
+		request_post_copy = request.POST.copy()
 		# create a search form
 		relationshipsearchform = RelationshipSearchForm(request.POST)
 		# check what type of submission we got
@@ -789,7 +791,7 @@ def add_relationship(request,person_id=0):
 				if search_results:
 					# create the form
 					addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
-															request.POST,
+															request_post_copy,
 															relationship_types=get_relationship_types(),
 															people=search_results
 															)
@@ -798,7 +800,7 @@ def add_relationship(request,person_id=0):
 						# add the field
 						result.field_name = 'relationship_type_' + str(result.pk)
 				# create a form to add the relationship
-				addrelationshipform = AddRelationshipForm(request.POST,relationship_types=get_relationship_types())
+				addrelationshipform = AddRelationshipForm(request_post_copy,relationship_types=get_relationship_types())
 			# otherwise we have a blank form
 			else:
 				# set the message

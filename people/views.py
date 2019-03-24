@@ -7,7 +7,7 @@ import os
 import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm, AddRelationshipForm, \
-					AddRelationshipToExistingPersonForm
+					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -411,6 +411,8 @@ def get_relationships_to(person):
 		person = Person.objects.get(pk=relationship.relationship_to.pk)
 		# add the relationship type to the person object
 		person.relationship_type = relationship.relationship_type.relationship_type
+		# and the key
+		person.relationship_type_pk = relationship.relationship_type.pk
 		# append the person to the list
 		relationships_to.append(person)
 	# return the relationships
@@ -847,11 +849,23 @@ def add_relationship(request,person_id=0):
 		relationshipsearchform = RelationshipSearchForm()
 	# get the relationships for the person
 	relationships_to = get_relationships_to(person)
+	# if there are existing relationships, create an edit form
+	if relationships_to:
+		# build the form
+		editexistingrelationshipsform = EditExistingRelationshipsForm(
+																		relationships=relationships_to,
+																		relationship_types=get_relationship_types())
+		# and go through the relationships, adding the name of the select field and the hidden field
+		for relationship_to in relationships_to:
+			# set the values
+			relationship_to.select_name = 'relationship_type_' + str(relationship_to.pk)
+			relationship_to.hidden_name = 'original_relationship_type_' + str(relationship_to.pk)
 	# set the context from the person based on person id
 	context = {
 				'relationshipsearchform' : relationshipsearchform,
 				'addrelationshipform' : addrelationshipform,
 				'addrelationshiptoexistingpersonform' : addrelationshiptoexistingpersonform,
+				'editexistingrelationshipsform' : editexistingrelationshipsform,
 				'search_results' : search_results,
 				'search_error' : search_error,
 				'person' : person,

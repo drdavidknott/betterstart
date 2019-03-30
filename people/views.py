@@ -497,28 +497,29 @@ def get_relationship_types():
 	# return a list of all the relationship type objects
 	return Relationship_Type.objects.all()
 
-def remove_existing_relationships(person_from, people):
-	# this function takes a person and a list of people, and returns a list of only those people who do
-	# not have an existing relationship
-	# create an empty list
-	people_without_existing_relationships = []
-	# now got through the list
-	for person_to in people:
-		# check that we haven't got the person themselves
-		if person_to != person_from:
-			# try to get a relationship
-			try:
-				# do the database query
-				relationship = Relationship.objects.get(
-														relationship_from=person_from.pk,
-														relationship_to=person_to.pk
-														)
-			# handle the exception
-			except Relationship.DoesNotExist:
-				# add the person to the list
-				people_without_existing_relationships.append(person_to)
-	# return the list
-	return people_without_existing_relationships
+def get_relationship(person_from, person_to):
+	# try to get a relationship
+	try:
+		# do the database query
+		relationship = Relationship.objects.get(
+												relationship_from=person_from.pk,
+												relationship_to=person_to.pk
+												)
+	# handle the exception
+	except Relationship.DoesNotExist:
+		# set a false value
+		relationship = False
+	# return the value
+	return relationship
+
+def get_relationship_from_and_to(person_from, person_to):
+	# get both sides of a relationship
+	# start with the from side
+	relationship_from = get_relationship(person_from, person_to)
+	# and the to side
+	relationship_to = get_relationship(person_to, person_from)
+	# return the results
+	return relationship_from, relationship_to
 
 def create_person(first_name,middle_names,last_name,date_of_birth=None,gender='',ethnicity=1):
 	# create a person
@@ -571,14 +572,42 @@ def create_relationship(person_from, person_to, relationship_type_from):
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
 # setting messsages.
 
-def build_relationship(request, person_from, person_to, relationship_type_id):
+def edit_relationship(request, person_from, person_to, relationship_type_id):
+	# edit a relationship: this includes deletion of existing relationships and creation of new relationships
+	# if we have been passed a relationship type id of zero of False, we just do the deletion
 	# set a flag
 	success = False
-	# get the relationship type
-	relationship_type_from = get_relationship_type(relationship_type_id)
-	# if we got a relationship_type, create the relationship
-	if relationship_type_from:
-		# finally, try to create the relatonship
+	# check whether we either have a valid relationship type or a zero
+	if relationship_type_id:
+		# get the relationship type
+		relationship_type_from = get_relationship_type(relationship_type_id)
+		# if we didn't get one, set an error message and crash out
+		if not relationship_type_from:
+			# set the messages
+			messages.error(request, 'Relationship type ' + str(relationship_type_id) + ' does not exist.')
+			# crash out
+			return success
+	# see whether we have an existing relationship
+	relationship_from, relationship_to = get_relationship_from_and_to(person_from, person_to)
+	# if there is an existing relationship, check whether it is different from the one we have been passed
+	if relationship_from:
+		# check whether the relationship has changed
+		if (relationship_from.relationship_type.pk != relationship_type_id):
+			# delete the existing relationships
+			relationship_from.delete()
+			relationship_to.delete()
+			# set a message
+			messages.success(request,'Relationship between ' + person_from.name() + ' and ' 
+								+ person_to.name() + ' deleted.')
+		# if nothing has changed, we are done, so we can return success
+		else:
+			# set the flag
+			success = True
+			# return the value
+			return success
+	# if we have a valid realtionship type, create the relationship
+	if relationship_type_id:
+		# try to create the relationship
 		if create_relationship(
 							 person_from = person_from,
 							 person_to = person_to,
@@ -586,14 +615,12 @@ def build_relationship(request, person_from, person_to, relationship_type_id):
 							):
 			# set the success message
 			messages.success(request,
-				'Relationship created: ' + person_from.first_name + ' ' + person_from.last_name + 
-				' is the ' + relationship_type_from.relationship_type + ' of ' + person_to.first_name + 
-				' ' + person_to.last_name)
+				'Relationship created: ' + person_from.name() + 
+				' is the ' + relationship_type_from.relationship_type + ' of ' + person_to.name())
 			# and the other success message
 			messages.success(request,
-				'Relationship created: ' + person_to.first_name + ' ' + person_to.last_name + 
-				' is the ' + relationship_type_from.relationship_counterpart + ' of ' + person_from.first_name + 
-				' ' + person_from.last_name)
+				'Relationship created: ' + person_to.name() + 
+				' is the ' + relationship_type_from.relationship_counterpart + ' of ' + person_from.name())
 			# set the success flag
 			success = True
 		# otherwise set the failure message
@@ -602,6 +629,39 @@ def build_relationship(request, person_from, person_to, relationship_type_id):
 			messages.error(request, 'Relationship could not be created.')
 	# return the result
 	return success
+
+# UTILITY FUNCTIONS
+# A set of functions which perform basic utility tasks such as string handling and list editing
+
+# function to extract an id number from the end of an underscore delimited string
+def extract_id(field_name):
+	# build a list from the string
+	name_elements = field_name.split('_')
+	# now return the final element
+	return name_elements[-1]
+
+def remove_existing_relationships(person_from, people):
+	# this function takes a person and a list of people, and returns a list of only those people who do
+	# not have an existing relationship
+	# create an empty list
+	people_without_existing_relationships = []
+	# now got through the list
+	for person_to in people:
+		# check that we haven't got the person themselves
+		if person_to != person_from:
+			# try to get a relationship
+			try:
+				# do the database query
+				relationship = Relationship.objects.get(
+														relationship_from=person_from.pk,
+														relationship_to=person_to.pk
+														)
+			# handle the exception
+			except Relationship.DoesNotExist:
+				# add the person to the list
+				people_without_existing_relationships.append(person_to)
+	# return the list
+	return people_without_existing_relationships
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -759,6 +819,7 @@ def add_relationship(request,person_id=0):
 	# initalise the forms which we might not need
 	addrelationshipform = ''
 	addrelationshiptoexistingpersonform = ''
+	editexistingrelationshipsform = ''
 	# load the template
 	person_template = loader.get_template('people/add_relationship.html')
 	# get the person
@@ -766,14 +827,16 @@ def add_relationship(request,person_id=0):
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
+	# get existing relationships
+	relationships_to = get_relationships_to(person)
+	# get relationship types
+	relationship_types = get_relationship_types()
 	# set the search results
 	search_results = []
 	# set a blank search_error
 	search_error = ''
 	# check whether this is a post
 	if request.method == 'POST':
-		# create a copy of the post: we need an mutable copy for some form handling later
-		request_post_copy = request.POST.copy()
 		# create a search form
 		relationshipsearchform = RelationshipSearchForm(request.POST)
 		# check what type of submission we got
@@ -793,8 +856,8 @@ def add_relationship(request,person_id=0):
 				if search_results:
 					# create the form
 					addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
-															request_post_copy,
-															relationship_types=get_relationship_types(),
+															request.POST,
+															relationship_types=relationship_types,
 															people=search_results
 															)
 					# go through the search results and add a field name to the object
@@ -802,31 +865,28 @@ def add_relationship(request,person_id=0):
 						# add the field
 						result.field_name = 'relationship_type_' + str(result.pk)
 				# create a form to add the relationship
-				addrelationshipform = AddRelationshipForm(request_post_copy,relationship_types=get_relationship_types())
+				addrelationshipform = AddRelationshipForm(request.POST,relationship_types=relationship_types)
 			# otherwise we have a blank form
 			else:
 				# set the message
 				search_error = 'First name or last name must be entered.'
-		# check whether we have been asked ot add relatonships to existing people
-		elif request.POST['action'] == 'addrelationshiptoexistingpeople':
+		# check whether we have been asked to edit relationships
+		# note that we get this action for editing existing relationships and creating new relationships
+		elif request.POST['action'] == 'editrelationships':
 			# go through the post
 			for field_name, field_value in request.POST.items():
 				# check whether this is a relevant field
 				if field_name.startswith('relationship_type'):
-					# check whether a selection was made
-					if field_value:
-						# split the string
-						first_part, second_part, person_id = field_name.split('_')
-						# now get the person
-						person_to = get_person(int(person_id))
-						# if we got a person, create the relationship
-						if person_to:
-							# get the relationship_type
-							build_relationship(request, person, person_to, field_value)
+					# try to find a person using the id at the end of the field name
+					person_to = get_person(int(extract_id(field_name)))
+					# if we got a person, edit the relationship
+					if person_to:
+						# edit the relationship
+						edit_relationship(request, person, person_to, int(field_value))
 		# check whether we have been asked to add a relationship to a new person
 		elif request.POST['action'] == 'addrelationshiptonewperson':
 			# create the form
-			addrelationshipform = AddRelationshipForm(request.POST,relationship_types=get_relationship_types())
+			addrelationshipform = AddRelationshipForm(request.POST,relationship_types=relationship_types)
 			# check whether the form is valid
 			if addrelationshipform.is_valid():
 				# we now need to create the person
@@ -840,14 +900,14 @@ def add_relationship(request,person_id=0):
 				# set a message to say that we have create a new person
 				messages.success(request, person_to.first_name + ' ' + person_to.last_name + ' created.')
 				# now create the relationship
-				build_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
+				edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
 				# clear the add relationship form so that it doesn't display
 				addrelationshipform = ''
 	# otherwise we didn't get a post
 	else:
-		# create the forms
+		# create a blank form
 		relationshipsearchform = RelationshipSearchForm()
-	# get the relationships for the person
+	# update the existing relationships: there may be new ones
 	relationships_to = get_relationships_to(person)
 	# if there are existing relationships, create an edit form
 	if relationships_to:

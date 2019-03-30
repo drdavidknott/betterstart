@@ -48,7 +48,7 @@
 		 			<div class="panel-body">
 		 				<form action ="{% url 'add_relationship' person.pk %}" method="post">
 							{% csrf_token %}
-							<input type="hidden" name="action" value="addrelationshiptoexistingpeople">
+							<input type="hidden" name="action" value="editrelationships">
 							<table class="table table-striped">
 								<thead><tr>
 									<th>NAME:</th>
@@ -175,7 +175,7 @@
 		 			<div class="panel-body">
 		 				<form action ="{% url 'add_relationship' person.pk %}" method="post">
 							{% csrf_token %}
-							<input type="hidden" name="action" value="editexistingrelationships">
+							<input type="hidden" name="action" value="editrelationships">
 							<table class="table table-striped">
 								<thead><tr>
 									<th>NAME:</th>

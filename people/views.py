@@ -445,6 +445,18 @@ def get_people_by_names(first_name,last_name):
 	# return the list of people
 	return people
 
+def get_address(address_id):
+	# try to get a address using the address id
+	try:
+		# do the database call
+		address = Address.objects.get(pk=address_id)
+	# handle the exception
+	except Address.DoesNotExist:
+		# set the address to false
+		address = False
+	# return the result
+	return address
+
 def get_addresses_by_number_or_street(house_name_or_number,street):
 	# try to get addresses with the matching properties
 	addresses = Address.objects.filter(
@@ -675,12 +687,12 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 							):
 			# set the success message
 			messages.success(request,
-				'Relationship created: ' + person_from.name() + 
-				' is the ' + relationship_type_from.relationship_type + ' of ' + person_to.name())
+				'Relationship created: ' + str(person_from) + 
+				' is the ' + relationship_type_from.relationship_type + ' of ' + str(person_to))
 			# and the other success message
 			messages.success(request,
-				'Relationship created: ' + person_to.name() + 
-				' is the ' + relationship_type_from.relationship_counterpart + ' of ' + person_from.name())
+				'Relationship created: ' + str(person_to) + 
+				' is the ' + relationship_type_from.relationship_counterpart + ' of ' + str(person_from))
 			# set the success flag
 			success = True
 		# otherwise set the failure message
@@ -689,6 +701,40 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 			messages.error(request, 'Relationship could not be created.')
 	# return the result
 	return success
+
+def build_residence(request, person, address):
+	# attempt to create a new residence record, checking first that the residence does not exist
+	residence = get_residence(person,address)
+	# check whether we got a residence or not
+	if not residence:
+		# create the residence
+		residence = create_residence(person,address)
+		# set the success message
+		messages.success(request,'New residence (' + str(residence) + ') created.')
+	# otherwise set a warning message
+	else:
+		# set the warning that the residence already exists
+		messages.error(request,'Residence (' + str(residence) + ') already exists.')
+	# return the residence
+	return residence
+
+def remove_residence(request, person, address):
+	# attempt to remove a residence record, checking first that the residence exists
+	residence = get_residence(person,address)
+	# check whether we got the residence or not
+	if residence:
+		# preserve the name
+		residence_name = str(residence)
+		# delete the residence
+		residence.delete()
+		# set the success message
+		messages.success(request,'Residence (' + residence_name + ') deleted.')
+	# otherwise set a warning message
+	else:
+		# set the warning that the residence already exists
+		messages.error(request,'Residence does not exist.')
+	# return with no parameters
+	return
 
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
@@ -1071,18 +1117,49 @@ def add_address(request,person_id=0):
 					# set the message
 					messages.success(request, 'Address ' + str(address) + ' created.')
 					# create a residence
-					residence = create_residence(
+					residence = build_residence(
+												request,
 												person = person,
 												address = address
 												)
-					# set the message
-					messages.success(request, 'Residence ' + str(residence) + ' created.')
 					# clear the add address form so that it doesn't display
 					addaddressform = ''
 				# otherwise deal with an invalid post code
 				else:
 					# set the error message
 					addaddressform.add_error('post_code','Invalid post code.')
+		# check whether we have been asked to add an existing address
+		elif request.POST['action'] == 'addexistingaddress':
+			# get the address
+			address = get_address(int(request.POST['address_id']))
+			# if we got an address, build the residence
+			if address:
+				# build the residence
+				residence = build_residence(
+											request,
+											person = person,
+											address = address
+											)
+			# otherwise set an error message
+			else:
+				# set the message
+				messages.error('Address does not exist.')
+		# check whether we have been asked to remove an existing address
+		elif request.POST['action'] == 'removeaddress':
+			# get the address
+			address = get_address(int(request.POST['address_id']))
+			# if we got an address, build the residence
+			if address:
+				# build the residence
+				residence = remove_residence(
+											request,
+											person = person,
+											address = address
+											)
+			# otherwise set an error message
+			else:
+				# set the message
+				messages.error('Address does not exist.')
 	# otherwise we didn't get a post
 	else:
 		# create a blank form

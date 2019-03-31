@@ -203,3 +203,34 @@ class EditExistingRelationshipsForm(forms.Form):
 														initial=person.relationship_type_pk
 														)
 
+class AddressSearchForm(forms.Form):
+	# Define the fields that we need in the form to capture the address
+	house_name_or_number = forms.CharField(
+									label="House name or number",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	street = forms.CharField(
+									label="Street",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+
+class AddAddressForm(forms.Form):
+	# Define the fields that we need in the form to capture the address
+	house_name_or_number = forms.CharField(
+									label="House name or number",
+									max_length=50, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	street = forms.CharField(
+									label="Street",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	town = forms.CharField(
+									label="Town",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	post_code = forms.CharField(
+									label="Post code",
+									max_length=10,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))

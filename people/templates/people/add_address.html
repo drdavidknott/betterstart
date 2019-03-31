@@ -1,0 +1,186 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	{% include "people/person_header.html" %}
+
+ 	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">FIND ADDRESS:</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'add_address' person.pk %}" method="post">
+						{% csrf_token %}
+						<input type="hidden" name="action" value="search">
+						<div class = "row form-group">
+							{% for field in addresssearchform %}
+								<div class = "col-md-4">{{ field.label_tag }} {{ field }}</div>
+							{% endfor %}
+							<div class = "col-md-4">{{ search_error }}</div>
+						</div>
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{% if search_results %}
+
+		<div class="row">
+			<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">ADD AN EXISTING ADDRESS:</h4>
+		 			</div>
+		 			<div class="panel-body">
+						<table class="table table-striped">
+							<thead><tr>
+								<th>NAME/NUMBER:</th>
+								<th>STREET:</th>
+								<th>TOWN:</th>
+								<th>ADD:</th>
+							</tr></thead>
+							<tbody>
+						 		{% for result in search_results %}
+						 				<tr>
+						 					<td>
+						 						<a href="{% url 'person' result.pk %}">
+													{{ result.house_name_or_number }}
+												</a>
+											</td>
+											<td>
+												{{ result.street }}
+											</td>
+											<td>
+												{{ result.town }}
+											</td>
+											<td>
+								 				<form action ="{% url 'add_address' person.pk %}" method="post">
+													{% csrf_token %}
+													<input type="hidden" name="action" value="addexistingaddress">
+													<input type="hidden" name="address" value="{{ result.pk }}">
+													<input type="submit" value="Add">
+												</form>
+											</td>
+										</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
+	{% if addaddressform %}
+
+		<div class="row">
+	 		<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">ADD A NEW ADDRESS:</h4>
+		 			</div>
+			 		<div class="panel-body">
+						<form action ="{% url 'add_address' person.pk %}" method="post">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="addnewaddress">
+							{% csrf_token %}
+							{% for field in addaddressform %}
+								{% if field.is_hidden %}
+									{{ field }}
+								{% else %}
+									<div class = "row form-group">
+										<div class = "col-md-2">{{ field.label_tag }}</b></div>
+										<div class = "col-md-7">{{ field }}</div>
+										<div class = "col-md-3 text-danger">{{ field.errors }}</div>
+									</div>
+								{% endif %}
+							{% endfor %}
+							<div class = "row">
+		 						<div class = "col-xs-2">
+		 							<input type="submit" value="Submit">
+		 						</div>
+		 					</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
+	{% if addresses %}
+
+	 	<div class="row">
+	 		<div class="col-md-12">
+	 			<div class="panel panel-default">
+					<div class="panel-heading">
+			 				<h4 class="panel-title">EXISTING ADDRESSES:</h4>
+		 			</div>
+			 		<div class="panel-body">
+				 		{% for address in addresses %}
+			 				<div class="col-md-12">
+								{{ address }}
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">EDIT AN EXISTING ADDRESS:</h4>
+		 			</div>
+		 			<div class="panel-body">
+						<table class="table table-striped">
+							<thead><tr>
+								<th>ADDRESS:</th>
+								<th>REMOVE:</th>
+							</tr></thead>
+							<tbody>
+						 		{% for address in addresses %}
+					 				<tr>
+					 					<td>
+					 						{{ address }}
+										</td>
+										<td>
+											<form action ="{% url 'add_relationship' person.pk %}" method="post">
+												{% csrf_token %}
+												<input type="hidden" name="action" value="removeaddress">
+												<input type="hidden" name="address_id" value="{{ address.pk }}">
+												<input type="submit" value="Remove">
+											</form>
+										</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+
+{% endblock %}
+

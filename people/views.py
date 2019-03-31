@@ -7,7 +7,8 @@ import os
 import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm, AddRelationshipForm, \
-					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm
+					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
+					AddAddressForm, AddressSearchForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -444,6 +445,41 @@ def get_people_by_names(first_name,last_name):
 	# return the list of people
 	return people
 
+def get_addresses_by_number_or_street(house_name_or_number,street):
+	# try to get addresses with the matching properties
+	addresses = Address.objects.filter(
+										house_name_or_number__contains=house_name_or_number,
+										street__contains=street)
+	# return the people
+	return addresses
+
+def get_post_code_by_code(code):
+	# try to get a post code using the code
+	try:
+		# do the database call
+		post_code = Post_Code.objects.get(post_code=code)
+	# handle the exception
+	except Post_Code.DoesNotExist:
+		# set the post code to false
+		post_code = False
+	# return the result
+	return post_code
+
+def get_residence(person, address):
+	# try to get a residence
+	try:
+		# do the database query
+		residence = Residence.objects.get(
+											person=person,
+											address=address
+											)
+	# handle the exception
+	except Residence.DoesNotExist:
+		# set a false value
+		residence = False
+	# return the value
+	return residence
+
 def get_ethnicity(ethnicity_id):
 	# try to get ethnicity
 	try:
@@ -535,6 +571,30 @@ def create_person(first_name,middle_names,last_name,date_of_birth=None,gender=''
 	person.save()
 	# and return the person
 	return person
+
+def create_address(house_name_or_number,street,town,post_code):
+	# create an address
+	address = Address(
+					house_name_or_number = house_name_or_number,
+					street = street,
+					town = town,
+					post_code = post_code
+						)
+	# save the record
+	address.save()
+	# and return the person
+	return address
+
+def create_residence(person, address):
+	# create a residence
+	residence = Residence(
+					person = person,
+					address = address
+							)
+	# save the residence
+	residence.save()
+	# return the residence
+	return residence
 
 def create_relationship(person_from, person_to, relationship_type_from):
 	# create a symmetrical relationship between two people
@@ -663,6 +723,20 @@ def remove_existing_relationships(person_from, people):
 	# return the list
 	return people_without_existing_relationships
 
+def remove_existing_addresses(person, addresses):
+	# this function takes a person and a list of addresses, and returns a list of only those addresses where
+	# the person does not have an existing residence
+	# create an empty list
+	addresses_without_existing_residences = []
+	# now got through the list
+	for address in addresses:
+		# attempt to get the residence
+		if not get_residence(person,address):
+			# add the address to the list
+			addresses_without_existing_residences.append(address)
+	# return the list
+	return addresses_without_existing_residences
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -746,7 +820,8 @@ def person(request, person_id=0):
 	# set the context from the person based on person id
 	context = {
 				'person' : person,
-				'relationships_to' : relationships_to
+				'relationships_to' : relationships_to,
+				'addresses' : person.addresses.all()
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -930,6 +1005,98 @@ def add_relationship(request,person_id=0):
 				'search_error' : search_error,
 				'person' : person,
 				'relationships_to' : relationships_to
+				}
+	# return the response
+	return HttpResponse(person_template.render(context=context, request=request))
+
+@login_required
+def add_address(request,person_id=0):
+	# this view is used to add an address to a person, either by performing a search and adding an address which 
+	# has been found, or by adding a new address
+	# load the template
+	person_template = loader.get_template('people/add_address.html')
+	# get the person
+	person = get_person(person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# initialise blank forms in case we don't need them (but need to pass them in the context)
+	addaddressform = ''
+	# get existing addresses
+	addresses = person.addresses.all()
+	# set the search results
+	search_results = []
+	# set a blank search_error
+	search_error = ''
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		addresssearchform = AddressSearchForm(request.POST)
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# validate the form
+			addresssearchform.is_valid()
+			# get the house name or number and street name
+			house_name_or_number = addresssearchform.cleaned_data['house_name_or_number']
+			street = addresssearchform.cleaned_data['street']
+			# if neither field is blank, do the search
+			if house_name_or_number or street:
+				# conduct a search
+				search_addresses = get_addresses_by_number_or_street(house_name_or_number,street)
+				# remove the people who already have a relationship
+				search_results = remove_existing_addresses(person, search_addresses)
+				# if there are search results, create a form to create relationships from the search results
+				addaddressform = AddAddressForm(request.POST)
+			# otherwise we have a blank form
+			else:
+				# set the message
+				search_error = 'Street name or house name or number must be entered.'
+		# check whether we have been asked to add a relationship to a new person
+		elif request.POST['action'] == 'addnewaddress':
+			# create the form
+			addaddressform = AddAddressForm(request.POST)
+			# check whether the form is valid
+			if addaddressform.is_valid():
+				# attempt to get the post code
+				post_code = get_post_code_by_code(addaddressform.cleaned_data['post_code'])
+				# check whether that was successful
+				if post_code:
+					# create the address
+					address = create_address(
+											house_name_or_number = addaddressform.cleaned_data['house_name_or_number'],
+											street = addaddressform.cleaned_data['street'],
+											town = addaddressform.cleaned_data['town'],
+											post_code = post_code
+											)
+					# set the message
+					messages.success(request, 'Address ' + str(address) + ' created.')
+					# create a residence
+					residence = create_residence(
+												person = person,
+												address = address
+												)
+					# set the message
+					messages.success(request, 'Residence ' + str(residence) + ' created.')
+					# clear the add address form so that it doesn't display
+					addaddressform = ''
+				# otherwise deal with an invalid post code
+				else:
+					# set the error message
+					addaddressform.add_error('post_code','Invalid post code.')
+	# otherwise we didn't get a post
+	else:
+		# create a blank form
+		addresssearchform = AddressSearchForm()
+	# get the addresses: there may be new ones
+	addresses = person.addresses.all()
+	# set the context from the person based on person id
+	context = {
+				'addresssearchform' : addresssearchform,
+				'addaddressform' : addaddressform,
+				'addresses' : addresses,
+				'search_results' : search_results,
+				'search_error' : search_error,
+				'person' : person,
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))

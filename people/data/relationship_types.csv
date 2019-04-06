@@ -12,3 +12,5 @@ parent-in-law,child-in-law
 child-in-law,parent-in-law
 aunt or uncle,nephew or niece
 nephew or niece,aunt or uncle
+step-parent,step-child
+step-child,step-parent

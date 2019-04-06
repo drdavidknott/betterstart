@@ -1,0 +1,112 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	{% include "people/event_header.html" %}
+ 	
+ 	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">FIND PERSON:</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'event_registration' event.pk %}" method="post">
+						{% csrf_token %}
+						<input type="hidden" name="action" value="search">
+						<div class = "row form-group">
+							{% for field in personsearchform %}
+								<div class = "col-md-4">{{ field.label_tag }} {{ field }}</div>
+							{% endfor %}
+							<div class = "col-md-4">{{ search_error }}</div>
+						</div>
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{% if search_results %}
+
+		<div class="row">
+			<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">ADD A REGISTRATION:</h4>
+		 			</div>
+		 			<div class="panel-body">
+		 				<form action ="{% url 'event_registration' event.pk %}" method="post">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="addregistration">
+							<table class="table table-striped">
+								<thead><tr>
+									<th>NAME:</th>
+									<th>ENGAGEMENT:</th>
+								</tr></thead>
+								<tbody>
+							 		{% for result in search_results %}
+							 				<tr>
+							 					<td>
+							 						<a href="{% url 'person' result.pk %}">
+														{{ result }}
+													</a>
+												</td>
+												<td>
+													{% for field in addregistrationform %}
+														{% if field.name == result.registered_field_name %}
+															<div class="col-md-2">
+																Registered:
+															</div>
+															<div class="col-md-1">
+																{{ field }}
+															</div>
+														{% elif field.name == result.participated_field_name %}
+															<div class="col-md-2">
+																Participated:
+															</div>
+															<div class="col-md-1">
+																{{ field }}
+															</div>
+														{% elif field.name == result.role_type_field_name %}
+															<div class="col-md-1">
+																Role:
+															</div>
+															<div class="col-md-3">
+																{{ field }}
+															</div>
+														{% endif %}
+													{% endfor %}
+												</td>
+											</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+							<div class = "row">
+		 						<div class = "col-xs-2">
+		 							<input type="submit" value="Submit">
+		 						</div>
+		 					</div>
+	 					</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+
+{% endblock %}
+

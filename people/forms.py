@@ -83,7 +83,7 @@ class ProfileForm(forms.Form):
 		# set the choices
 		self.fields['ethnicity'].choices = ethnicity_list
 
-class RelationshipSearchForm(forms.Form):
+class PersonSearchForm(forms.Form):
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(
 									label="First name",
@@ -274,3 +274,43 @@ class AddEventForm(forms.Form):
 			event_type_list.append((event_type.pk, event_type.name))
 		# set the choices
 		self.fields['event_type'].choices = event_type_list
+
+class AddRegistrationForm(forms.Form):
+	# over-ride the built in __init__ method so that we can add fields dynamically
+	def __init__(self, *args, **kwargs):
+		# pull the role types list out of the parameters
+		role_types = kwargs.pop('role_types')
+		# pull the people list out of the parameter
+		people = kwargs.pop('people')
+		# call the built in constructor
+		super(AddRegistrationForm, self).__init__(*args, **kwargs)
+		# set the choice field for role types
+		role_type_list = []
+		# go through the role types to build the options
+		for role_type in role_types:
+			# append a list of value and display value to the list
+			role_type_list.append((role_type.pk, role_type.role_type_name))
+		# now go through the people and build fields
+		for person in people:
+			# set the field name for registration
+			field_name = 'registered_' + str(person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Registered",
+														required = False,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+			# set the field name for participation
+			field_name = 'participated_' + str(person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Participated",
+														required = False,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+			# set the field name for role
+			field_name = 'role_type_' + str(person.pk)
+			# create the field
+			self.fields[field_name]= forms.ChoiceField(
+														label="Role",
+														widget=forms.Select(),
+														choices=role_type_list,
+														)

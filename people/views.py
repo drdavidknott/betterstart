@@ -6,9 +6,9 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 import os
 import csv
 from django.contrib.auth.decorators import login_required
-from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm, AddRelationshipForm, \
+from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
-					AddAddressForm, AddressSearchForm, AddEventForm
+					AddAddressForm, AddressSearchForm, AddEventForm, AddRegistrationForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -539,7 +539,7 @@ def get_event(event_id):
 
 def get_events():
 	# get a list of events
-	events = Event.objects.order_by('date', 'start_time')
+	events = Event.objects.order_by('-date', '-start_time')
 	# return the list of people
 	return events
 
@@ -557,6 +557,29 @@ def get_event_type(event_type_id):
 def get_event_types():
 	# return a list of all the event type objects
 	return Event_Type.objects.all()
+
+def get_event_registrations(event):
+	# return a list of registrations for an event
+	return event.event_registration_set.all()
+
+def get_registration(person, event):
+	# try to get a residence
+	try:
+		# do the database query
+		event_registrations = Event_Registration.objects.get(
+																person=person,
+																event=event
+															)
+	# handle the exception
+	except Event_Registration.DoesNotExist:
+		# set a false value
+		event_registration = False
+	# return the value
+	return event_registration
+
+def get_role_types():
+	# return a list of all the role type objects
+	return Role_Type.objects.all()
 
 def get_ethnicities():
 	# return a list of all the ethnicity objects
@@ -807,24 +830,6 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 	# return the event
 	return event
 
-def remove_residence(request, person, address):
-	# attempt to remove a residence record, checking first that the residence exists
-	residence = get_residence(person,address)
-	# check whether we got the residence or not
-	if residence:
-		# preserve the name
-		residence_name = str(residence)
-		# delete the residence
-		residence.delete()
-		# set the success message
-		messages.success(request,'Residence (' + residence_name + ') deleted.')
-	# otherwise set a warning message
-	else:
-		# set the warning that the residence already exists
-		messages.error(request,'Residence does not exist.')
-	# return with no parameters
-	return
-
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -871,6 +876,20 @@ def remove_existing_addresses(person, addresses):
 			addresses_without_existing_residences.append(address)
 	# return the list
 	return addresses_without_existing_residences
+
+def remove_existing_registrations(event, people):
+	# this function takes an and a list of people, and returns a list of only those events where
+	# the person does not have an existing registration for that event
+	# create an empty list
+	people_without_existing_registrations = []
+	# now got through the list
+	for person in people:
+		# attempt to get the residence
+		if not get_registration(person,event):
+			# add the address to the list
+			people_without_existing_registrations.append(person)
+	# return the list
+	return people_without_existing_registrations
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -1048,14 +1067,14 @@ def add_relationship(request,person_id=0):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		relationshipsearchform = RelationshipSearchForm(request.POST)
+		personsearchform = PersonSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
-			relationshipsearchform.is_valid()
+			personsearchform.is_valid()
 			# get the names
-			first_name = relationshipsearchform.cleaned_data['first_name']
-			last_name = relationshipsearchform.cleaned_data['last_name']
+			first_name = personsearchform.cleaned_data['first_name']
+			last_name = personsearchform.cleaned_data['last_name']
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
@@ -1116,7 +1135,7 @@ def add_relationship(request,person_id=0):
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
-		relationshipsearchform = RelationshipSearchForm()
+		personsearchform = PersonSearchForm()
 	# update the existing relationships: there may be new ones
 	relationships_to = get_relationships_to(person)
 	# if there are existing relationships, create an edit form
@@ -1132,7 +1151,7 @@ def add_relationship(request,person_id=0):
 			relationship_to.hidden_name = 'original_relationship_type_' + str(relationship_to.pk)
 	# set the context from the person based on person id
 	context = {
-				'relationshipsearchform' : relationshipsearchform,
+				'personsearchform' : personsearchform,
 				'addrelationshipform' : addrelationshipform,
 				'addrelationshiptoexistingpersonform' : addrelationshiptoexistingpersonform,
 				'editexistingrelationshipsform' : editexistingrelationshipsform,
@@ -1316,3 +1335,78 @@ def events(request):
 				}
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))
+
+@login_required
+def event_registration(request,event_id=0):
+	# this is one of the most complex views on the site, which allows the user to search for people and to 
+	# edit the registration and participation in an event
+	# initalise the forms which we might not need
+	addregistrationform = ''
+	editregistrationform = ''
+	# load the template
+	event_registration_template = loader.get_template('people/event_registration.html')
+	# get the event
+	event = get_event(event_id)
+	# if the event doesn't exist, crash to a banner
+	if not event:
+		return make_banner(request, 'Event does not exist.')
+	# get existing registrations
+	registrations = get_event_registrations(event)
+	# get the role types
+	role_types = get_role_types()
+	# set the search results
+	search_results = []
+	# set a blank search_error
+	search_error = ''
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		personsearchform = PersonSearchForm(request.POST)
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# validate the form
+			personsearchform.is_valid()
+			# get the names
+			first_name = personsearchform.cleaned_data['first_name']
+			last_name = personsearchform.cleaned_data['last_name']
+			# if neither name is blank, do the search
+			if first_name or last_name:
+				# conduct a search
+				people = get_people_by_names(first_name,last_name)
+				# remove the people who already have a relationship
+				search_results = remove_existing_registrations(event, people)
+				# if there are search results, create a form to create relationships from the search results
+				if search_results:
+					# create the form
+					addregistrationform = AddRegistrationForm(
+															request.POST,
+															role_types=role_types,
+															people=search_results
+															)
+				# add field names to each result, so that we know when to display them
+				for result in search_results:
+					# add the three field names
+					result.role_type_field_name = 'role_type_' + str(result.pk)
+					result.registered_field_name = 'registered_' + str(result.pk)
+					result.participated_field_name = 'participated_' + str(result.pk)
+			# otherwise we have a blank form
+			else:
+				# set the message
+				search_error = 'First name or last name must be entered.'
+	# otherwise we didn't get a post
+	else:
+		# create a blank form
+		personsearchform = PersonSearchForm()
+	# update the existing registrations: there may be new ones
+	registrations = get_event_registrations(event)
+	# set the context from the person based on person id
+	context = {
+				'personsearchform' : personsearchform,
+				'addregistrationform' : addregistrationform,
+				'search_results' : search_results,
+				'search_error' : search_error,
+				'event' : event,
+				'registrations' : registrations
+				}
+	# return the response
+	return HttpResponse(event_registration_template.render(context=context, request=request))

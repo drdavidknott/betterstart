@@ -30,7 +30,9 @@
 			 		{% for event in events %}
 		 				<tr>
 		 					<td>
-								{{ event.name }}
+		 						<a href="{% url 'event_registration' event.pk %}">
+									{{ event.name }}
+								</a>
 							</td>
 							<td>
 								{{ event.date }}

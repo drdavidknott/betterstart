@@ -11,7 +11,7 @@
 	<div class="row">
 		<div class="col-md-12">
 			<h2>
-				PEOPLE
+				EVENTS
 			</h2>
 		</div>
 	</div>
@@ -21,22 +21,28 @@
 			<table class="table table-striped panel panel-default">
 				<thead><tr>
 					<th>NAME:</th>
-					<th>DATE OF BIRTH:</th>
-					<th>GENDER:</th>
+					<th>DATE:</th>
+					<th>START TIME:</th>
+					<th>END TIME:</th>
+					<th>DESCRIPTION</th>
 				</tr></thead>
 				<tbody>
-			 		{% for person in people %}
+			 		{% for event in events %}
 		 				<tr>
 		 					<td>
-		 						<a href="{% url 'person' person.pk %}">
-									{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}
-								</a>
+								{{ event.name }}
 							</td>
 							<td>
-								{{ person.date_of_birth }}
+								{{ event.date }}
 							</td>
 							<td>
-								{{ person.gender }}
+								{{ event.start_time }}
+							</td>
+							<td>
+								{{ event.end_time }}
+							</td>
+							<td>
+								{{ event.description }}
 							</td>
 						</tr>
 					{% endfor %}

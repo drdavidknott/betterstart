@@ -8,7 +8,7 @@ import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, RelationshipSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
-					AddAddressForm, AddressSearchForm
+					AddAddressForm, AddressSearchForm, AddEventForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -511,7 +511,7 @@ def get_relationship_type(relationship_type_id):
 	except Relationship_Type.DoesNotExist:
 		# set a false value
 		relationship_type = False
-	# return the ethnicity
+	# return the relationship_type
 	return relationship_type
 
 def get_relationship_type_by_type(relationship_type):
@@ -522,8 +522,41 @@ def get_relationship_type_by_type(relationship_type):
 	except Relationship_Type.DoesNotExist:
 		# set a false value
 		relationship_type = false
-	# return the ethnicity
+	# return the relationship type
 	return relationship_type
+
+def get_event(event_id):
+	# try to get an event using the event id
+	try:
+		# do the database call
+		event = Event.objects.get(pk=event_id)
+	# handle the exception
+	except Event.DoesNotExist:
+		# set the address to false
+		event = False
+	# return the result
+	return event
+
+def get_events():
+	# get a list of events
+	events = Event.objects.order_by('date', 'start_time')
+	# return the list of people
+	return events
+
+def get_event_type(event_type_id):
+	# try to get event type
+	try:
+		event_type = Event_Type.objects.get(pk=event_type_id)
+	# handle the exception
+	except Event_Type.DoesNotExist:
+		# set a false value
+		event_type = False
+	# return the event type
+	return event_type
+
+def get_event_types():
+	# return a list of all the event type objects
+	return Event_Type.objects.all()
 
 def get_ethnicities():
 	# return a list of all the ethnicity objects
@@ -594,7 +627,7 @@ def create_address(house_name_or_number,street,town,post_code):
 						)
 	# save the record
 	address.save()
-	# and return the person
+	# and return the address
 	return address
 
 def create_residence(person, address):
@@ -639,6 +672,21 @@ def create_relationship(person_from, person_to, relationship_type_from):
 		success = True
 	# that's it!
 	return success
+
+def create_event(name, description, date, start_time, end_time, event_type):
+	# create an event
+	event = Event(
+					name = name,
+					description = description,
+					date = date,
+					start_time = start_time,
+					end_time = end_time,
+					event_type = event_type
+						)
+	# save the record
+	event.save()
+	# and return the event
+	return event
 
 # BUILD FUNCTIONS
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
@@ -717,6 +765,47 @@ def build_residence(request, person, address):
 		messages.error(request,'Residence (' + str(residence) + ') already exists.')
 	# return the residence
 	return residence
+
+def remove_residence(request, person, address):
+	# attempt to remove a residence record, checking first that the residence exists
+	residence = get_residence(person,address)
+	# check whether we got the residence or not
+	if residence:
+		# preserve the name
+		residence_name = str(residence)
+		# delete the residence
+		residence.delete()
+		# set the success message
+		messages.success(request,'Residence (' + residence_name + ') deleted.')
+	# otherwise set a warning message
+	else:
+		# set the warning that the residence already exists
+		messages.error(request,'Residence does not exist.')
+	# return with no parameters
+	return
+
+def build_event(request, name, description, date, start_time, end_time, event_type_id):
+	# get the event type
+	event_type = get_event_type(event_type_id)
+	# if we got an event type, create the event
+	if event_type:
+		# create the event
+		event = create_event(
+								name = name,
+								description = description,
+								date = date,
+								start_time = start_time,
+								end_time = end_time,
+								event_type = event_type
+							)
+		# set a message
+		messages.success(request, 'New event (' + str(event) + ') created.')
+	# otherwise set a message
+	else:
+		# set the failed creation message
+		messages.error(request, 'Event (' + name + ') could not be created: event type does not exist.')
+	# return the event
+	return event
 
 def remove_residence(request, person, address):
 	# attempt to remove a residence record, checking first that the residence exists
@@ -822,7 +911,7 @@ def addperson(request):
 				person = create_person(first_name,middle_names,last_name)
 				# set a success message
 				messages.success(request,
-									'Another ' + first_name + ' ' + last_name + ' created.'
+									'Another ' + str(person) + ' created.'
  									)
 				# go to the profile of the person
 				return redirect('/person/' + str(person.pk))
@@ -834,7 +923,7 @@ def addperson(request):
 			person = create_person(first_name,middle_names,last_name)
 			# set a success message
 			messages.success(request,
-								first_name + ' ' + last_name + ' created.'
+								str(person) + ' created.'
  								)
 			# go to the profile of the person
 			return redirect('/person/' + str(person.pk))
@@ -906,7 +995,7 @@ def profile(request, person_id=0):
 			# save the record
 			person.save()
 			# set a success message
-			messages.success(request, person.first_name + ' ' + person.last_name + ' profile updated.')
+			messages.success(request, str(person) + ' profile updated.')
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
 	else:
@@ -1019,7 +1108,7 @@ def add_relationship(request,person_id=0):
 											gender = addrelationshipform.cleaned_data['gender']
 											)
 				# set a message to say that we have create a new person
-				messages.success(request, person_to.first_name + ' ' + person_to.last_name + ' created.')
+				messages.success(request, str(person) + ' created.')
 				# now create the relationship
 				edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
 				# clear the add relationship form so that it doesn't display
@@ -1177,3 +1266,53 @@ def add_address(request,person_id=0):
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
+
+@login_required
+def addevent(request):
+	# get the event types
+	event_types = get_event_types()
+	# see whether we got a post or not
+	if request.method == 'POST':
+		# create a form from the POST to retain data and trigger validation
+		addeventform = AddEventForm(request.POST, event_types=event_types)
+		# check whether the form is valid
+		if addeventform.is_valid():
+			# create the event
+			event = build_event(
+								request,
+								name = addeventform.cleaned_data['name'],
+								description = addeventform.cleaned_data['description'],
+								date = addeventform.cleaned_data['date'],
+								start_time = addeventform.cleaned_data['start_time'],
+								end_time = addeventform.cleaned_data['end_time'],
+								event_type_id = addeventform.cleaned_data['event_type']
+								)
+			# if we were successful, clear the form
+			if event:
+				# create a fresh form
+				addeventform = AddEventForm(event_types=event_types)
+	# otherwise create a fresh form
+	else:
+		# create the fresh form
+		addeventform = AddEventForm(event_types=event_types)
+	# get the template
+	addevent_template = loader.get_template('people/addevent.html')
+	# set the context
+	context = {
+				'addeventform' : addeventform,
+				}
+	# return the HttpResponse
+	return HttpResponse(addevent_template.render(context=context, request=request))
+
+@login_required
+def events(request):
+	# get the list of events
+	events = get_events()
+	# get the template
+	events_template = loader.get_template('people/events.html')
+	# set the context
+	context = {
+				'events' : events
+				}
+	# return the HttpResponse
+	return HttpResponse(events_template.render(context=context, request=request))

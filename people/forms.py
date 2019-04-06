@@ -234,3 +234,43 @@ class AddAddressForm(forms.Form):
 									label="Post code",
 									max_length=10,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+
+class AddEventForm(forms.Form):
+	# Define the fields that we need in the form to capture the event
+	name = forms.CharField(
+									label="Name",
+									max_length=50, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	description = forms.CharField(
+									label="Description",
+									max_length=1000,
+									widget=forms.Textarea(attrs={'class' : 'form-control', 'cols' : 100, 'rows' : 6}))
+	event_type = forms.ChoiceField(
+									label="Event Type",
+									widget=forms.Select())
+	date = forms.DateField(
+									label="Date",
+									widget=forms.DateInput(attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}))
+	start_time = forms.TimeField(
+									label="Start Time",
+									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
+	end_time = forms.TimeField(
+									label="Start Time",
+									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull the choices field out of the parameters
+		event_types = kwargs.pop('event_types')
+		# call the built in constructor
+		super(AddEventForm, self).__init__(*args, **kwargs)
+		# set the choice field for event types
+		event_type_list = []
+		# go through the event types
+		for event_type in event_types:
+			# append a list of value and display value to the list
+			event_type_list.append((event_type.pk, event_type.name))
+		# set the choices
+		self.fields['event_type'].choices = event_type_list

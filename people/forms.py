@@ -290,6 +290,8 @@ class AddRegistrationForm(forms.Form):
 		for role_type in role_types:
 			# append a list of value and display value to the list
 			role_type_list.append((role_type.pk, role_type.role_type_name))
+		# set an empty comma string
+		add_comma = ''
 		# now go through the people and build fields
 		for person in people:
 			# set the field name for registration

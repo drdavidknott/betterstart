@@ -49,6 +49,7 @@
 		 				<form action ="{% url 'event_registration' event.pk %}" method="post">
 							{% csrf_token %}
 							<input type="hidden" name="action" value="addregistration">
+							<input type="hidden" name="search_keys" value="{{ search_keys }}">
 							<table class="table table-striped">
 								<thead><tr>
 									<th>NAME:</th>
@@ -98,6 +99,50 @@
 		 						</div>
 		 					</div>
 	 					</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
+	{% if registrations %}
+
+	 	<div class="row">
+	 		<div class="col-md-12">
+	 			<div class="panel panel-default">
+					<div class="panel-heading">
+			 				<h4 class="panel-title">EXISTING REGISTRATIONS:</h4>
+		 			</div>
+			 		<div class="panel-body">
+						<table class="table table-striped panel panel-default">
+							<thead><tr>
+								<th>NAME:</th>
+								<th>ROLE:</th>
+								<th>REGISTERED:</th>
+								<th>PARTICIPATED:</th>
+							</tr></thead>
+							<tbody>
+						 		{% for registration in registrations %}
+					 				<tr>
+					 					<td>
+					 						<a href="{% url 'person' registration.person.pk %}">
+												{{ registration.person }}
+											</a>
+										</td>
+										<td>
+											{{ registration.role_type.role_type_name }}
+										</td>
+										<td>
+											{{ registration.registered }}
+										</td>
+										<td>
+											{{ registration.participated }}
+										</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>

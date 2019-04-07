@@ -563,10 +563,10 @@ def get_event_registrations(event):
 	return event.event_registration_set.all()
 
 def get_registration(person, event):
-	# try to get a residence
+	# try to get a registration
 	try:
 		# do the database query
-		event_registrations = Event_Registration.objects.get(
+		event_registration = Event_Registration.objects.get(
 																person=person,
 																event=event
 															)
@@ -580,6 +580,17 @@ def get_registration(person, event):
 def get_role_types():
 	# return a list of all the role type objects
 	return Role_Type.objects.all()
+
+def get_role_type(role_type_id):
+	# try to get role type
+	try:
+		role_type = Role_Type.objects.get(pk=role_type_id)
+	# handle the exception
+	except Role_Type.DoesNotExist:
+		# set a false value
+		role_type = False
+	# return the role type
+	return role_type
 
 def get_ethnicities():
 	# return a list of all the ethnicity objects
@@ -711,6 +722,20 @@ def create_event(name, description, date, start_time, end_time, event_type):
 	# and return the event
 	return event
 
+def create_registration(event, person, registered, participated, role_type):
+	# create a registration
+	registration = Event_Registration(
+								event = event,
+								person = person,
+								registered = registered,
+								participated = participated,
+								role_type = role_type
+						)
+	# save the record
+	registration.save()
+	# and return the registration
+	return registration
+
 # BUILD FUNCTIONS
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
 # setting messsages.
@@ -830,6 +855,45 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 	# return the event
 	return event
 
+def build_registration(request, event, person_id, registered, participated, role_type_id):
+	# attempt to create a new registration, checking first that the registration does not exit
+	# first get the person
+	person = get_person(person_id)
+	# if that didn't work, set an error and return
+	if not person:
+		# set the message
+		messages.error(request,'Registration for person ' + str(person_id) + ' failed: person does not exist.')
+		# and return
+		return False
+	# now attempt to get the role type
+	role_type = get_role_type(role_type_id)
+	# if that didn't work, set an error and return
+	if not role_type:
+		# set the message
+		messages.error(request,'Registration for person ' + str(person_id) + ' failed: role type does not exist.')
+		# and return
+		return False
+	# now attempt to get the registration
+	registration = get_registration(person,event)
+	# check whether we got a registration or not
+	if not registration:
+		# create the registration
+		registration = create_registration(
+											event = event,
+											person = person,
+											registered = registered,
+											participated = participated,
+											role_type = role_type
+											)
+		# set the success message
+		messages.success(request,'New registration (' + str(registration) + ') created.')
+	# otherwise set a warning message
+	else:
+		# set the warning that the registration already exists
+		messages.error(request,'Registration (' + str(registration) + ') already exists.')
+	# return the residence
+	return registration
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -890,6 +954,18 @@ def remove_existing_registrations(event, people):
 			people_without_existing_registrations.append(person)
 	# return the list
 	return people_without_existing_registrations
+
+def check_checkbox(field_dict, field_name):
+	# take a dictionary of fields and a field name, and return true if a checkbox of that field name is marked 'on',
+	# otherwise return false
+	# set the result
+	result = False
+	# check the value
+	if field_dict.get(field_name, False) == 'on':
+		# set the result
+		result = True
+	# return the result
+	return result
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -1356,10 +1432,16 @@ def event_registration(request,event_id=0):
 	role_types = get_role_types()
 	# set the search results
 	search_results = []
+	# and a blank string of search result keys
+	search_keys = ''
+	# and a blank delimiter
+	search_key_delimiter = ''
 	# set a blank search_error
 	search_error = ''
 	# check whether this is a post
 	if request.method == 'POST':
+		for item in request.POST.items():
+			print(item)
 		# create a search form
 		personsearchform = PersonSearchForm(request.POST)
 		# check what type of submission we got
@@ -1389,10 +1471,35 @@ def event_registration(request,event_id=0):
 					result.role_type_field_name = 'role_type_' + str(result.pk)
 					result.registered_field_name = 'registered_' + str(result.pk)
 					result.participated_field_name = 'participated_' + str(result.pk)
+					# add the key of the search result to the string of keys
+					search_keys += search_key_delimiter + str(result.pk)
+					# and set the delimiter
+					search_key_delimiter = ','
 			# otherwise we have a blank form
 			else:
 				# set the message
 				search_error = 'First name or last name must be entered.'
+		# check whether we have been asked to add registrations
+		elif request.POST['action'] == 'addregistration':
+			# get the list of search keys from the hidden field
+			search_keys = request.POST['search_keys'].split(',')
+			# go through the search keys
+			for search_key in search_keys:
+				# get the indicators of whether the person registered or participated, as well as the role type
+				registered = check_checkbox(request.POST, 'registered_' + search_key)
+				participated = check_checkbox(request.POST, 'participated_' + search_key)
+				role_type_id = request.POST.get('role_type_' + search_key, False)
+				# if the person participated or registered, we need to build a registration
+				if registered or participated:
+					# build the registration
+					registration = build_registration(
+														request = request,
+														event = event,
+														person_id = int(search_key),
+														registered = registered,
+														participated = participated,
+														role_type_id = int(role_type_id)
+														)
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
@@ -1404,6 +1511,7 @@ def event_registration(request,event_id=0):
 				'personsearchform' : personsearchform,
 				'addregistrationform' : addregistrationform,
 				'search_results' : search_results,
+				'search_keys' : search_keys,
 				'search_error' : search_error,
 				'event' : event,
 				'registrations' : registrations

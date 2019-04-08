@@ -2,51 +2,101 @@
 
 <!-- Home page -->
  
- {% block title %}Better Start{% endblock %}
+{% block title %}Better Start{% endblock %}
 
- {% block content %}
+{% block content %}
 
-	<div class="container">
+<div class="container">
 
 	<div class="row">
 		<div class="col-md-12">
 			<h2>
-				PEOPLE
+				People
 			</h2>
 		</div>
 	</div>
 
-	<div class="row">
-		<div class="col-md-12">
-			<table class="table table-striped panel panel-default">
-				<thead><tr>
-					<th>NAME:</th>
-					<th>DATE OF BIRTH:</th>
-					<th>GENDER:</th>
-				</tr></thead>
-				<tbody>
-			 		{% for person in people %}
-		 				<tr>
-		 					<td>
-		 						<a href="{% url 'person' person.pk %}">
-									{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}
-								</a>
-							</td>
-							<td>
-								{{ person.date_of_birth }}
-							</td>
-							<td>
-								{{ person.gender }}
-							</td>
-						</tr>
-					{% endfor %}
-				</tbody>
-			</table>
+	 <div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">FIND PERSON:</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'listpeople' %}" method="post">
+						{% csrf_token %}
+						<input type="hidden" name="action" value="search">
+						<input type="hidden" name="page" value="1">
+						<div class = "row form-group">
+							{% for field in personsearchform %}
+								<div class = "col-md-4">{{ field.label_tag }} {{ field }}</div>
+							{% endfor %}
+							<div class = "col-md-4">{{ search_error }}</div>
+						</div>
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
 		</div>
 	</div>
 
- </div>
+	{% if people %}
+
+		<div class="row">
+			<div class="col-md-12">
+				<table class="table table-striped panel panel-default">
+					<thead><tr>
+						<th>NAME:</th>
+						<th>DATE OF BIRTH:</th>
+						<th>GENDER:</th>
+					</tr></thead>
+					<tbody>
+				 		{% for person in people %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'person' person.pk %}">
+										{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}
+									</a>
+								</td>
+								<td>
+									{{ person.date_of_birth }}
+								</td>
+								<td>
+									{{ person.gender }}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% if page_list %}
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<form action ="{% url 'listpeople' %}" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="search">
+					<input type="hidden" name="first_name" value="{{ first_name }}">
+					<input type="hidden" name="last_name" value="{{ last_name }}">
+					{% for target_page in page_list %}
+						<input type="submit" name="page" value="{{ target_page }}">
+					{% endfor %}
+				</form>
+			</div>
+		</div>
+	</div>
+{% endif %}
 
 
- {% endblock %}
+{% endblock %}
 

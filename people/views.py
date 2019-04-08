@@ -8,11 +8,14 @@ import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
-					AddAddressForm, AddressSearchForm, AddEventForm, AddRegistrationForm
+					AddAddressForm, AddressSearchForm, AddEventForm, AddRegistrationForm, \
+					EditRegistrationForm, LoginForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
 import datetime
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 
 def index(request):
 	# get the template
@@ -736,6 +739,16 @@ def create_registration(event, person, registered, participated, role_type):
 	# and return the registration
 	return registration
 
+def update_registration(registration, registered, participated, role_type):
+	# update the registration
+	registration.registered = registered
+	registration.participated = participated
+	registration.role_type = role_type
+	# save the record
+	registration.save()
+	# and return the record
+	return registration
+
 # BUILD FUNCTIONS
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
 # setting messsages.
@@ -889,10 +902,50 @@ def build_registration(request, event, person_id, registered, participated, role
 		messages.success(request,'New registration (' + str(registration) + ') created.')
 	# otherwise set a warning message
 	else:
-		# set the warning that the registration already exists
-		messages.error(request,'Registration (' + str(registration) + ') already exists.')
+		# check whether there is any change
+		if registration.registered != registered \
+		or registration.participated != participated \
+		or registration.role_type != role_type:
+			# edit the registration
+			registration = update_registration(
+												registration = registration,
+												registered = registered,
+												participated = participated,
+												role_type = role_type)
+			# set the success message
+			messages.success(request,'Registration (' + str(registration) + ') updated.')
 	# return the residence
 	return registration
+
+def remove_registration(request, event, person_id):
+	# attempt to remove a registration record, checking first that the registration exists
+	# first get the person
+	person = get_person(person_id)
+	# if that didn't work, set an error and return
+	if not person:
+		# set the message
+		messages.error(request,'Deletion of registration for person ' + str(person_id) + ' failed: person does not exist.')
+		# and return
+		return False
+	# now attempt to get the registration
+	registration = get_registration(
+									person=person,
+									event=event
+									)
+	# check whether we got the registration or not
+	if registration:
+		# preserve the name
+		registration_name = str(registration)
+		# delete the registration
+		registration.delete()
+		# set the success message
+		messages.success(request,'Registration (' + registration_name + ') deleted.')
+	# otherwise set a warning message
+	else:
+		# set the warning that the registration does not exist
+		messages.error(request,'Registration does not exist.')
+	# return with no parameters
+	return
 
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
@@ -970,15 +1023,108 @@ def check_checkbox(field_dict, field_name):
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
+def log_user_in(request):
+	# set a flag to indicate whether this is a successful login
+	successful_login = False
+	# check whether user is already logged in
+	if request.user.is_authenticated:
+		# the user is already logged in
+		successful_login = True
+	else:
+		# handle the login request
+		# get the template
+		login_template = loader.get_template('people/login.html')
+		# check whether this is a form submission
+		if request.method == 'POST':
+			# get the form from the request object
+			login_form = LoginForm(request.POST)
+			# check whether it has basic validity
+			if login_form.is_valid():
+				# attempt to authenticate the user
+				user = authenticate(
+									request,
+									username=login_form.cleaned_data['email_address'],
+									password=login_form.cleaned_data['password']
+									)
+				# login the user if successful
+				if user is not None:
+					# log the user in
+					login(request, user)
+					# set the login flag
+					successful_login = True
+				else:
+					# set an error for the login failure
+					messages.error(request, 'Email address or password not recognised.')
+		else:
+			# this is a first time submission, so create an empty form
+			login_form = LoginForm()
+	# see if we logged in succssfully
+	if successful_login:
+		# set a success message
+		messages.success(request, 'Successfully logged in. Welcome back ' + str(request.user.first_name) + '!')
+		# redirect to the home page
+		return redirect('index')
+	# otherwsise, set the context and output a form
+	context = {
+				'login_form' : login_form
+				}
+	# set the output
+	return HttpResponse(login_template.render(context, request))
+
 @login_required
 def people(request):
-	# get the list of people
-	people = get_people()
+	# set a blank list
+	people = []
+	# and a blank page_list
+	page_list = []
+	# and blank search terms
+	first_name = ''
+	last_name = ''
+	# set a blank search_error
+	search_error = ''
+	# set the results per page
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		personsearchform = PersonSearchForm(request.POST)
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# validate the form
+			personsearchform.is_valid()
+			# get the names
+			first_name = personsearchform.cleaned_data['first_name']
+			last_name = personsearchform.cleaned_data['last_name']
+			# if neither name is blank, do the search
+			if first_name or last_name:
+				# conduct a search
+				people = get_people_by_names(first_name,last_name)
+				# get the page number
+				page = int(request.POST['page'])
+				# figure out how many pages we have
+				page_list = get_page_list(people, results_per_page)
+				# set the previous page
+				previous_page = page - 1
+				# sort and truncate the list of people
+				people = people.order_by('last_name','first_name')[previous_page*results_per_page:page*results_per_page]
+			# otherwise we have a blank form
+			else:
+				# set the message
+				search_error = 'First name or last name must be entered.'
+	# otherwise set a bank form
+	else:
+		# create the blank form
+		personsearchform = PersonSearchForm()
 	# get the template
 	people_template = loader.get_template('people/people.html')
 	# set the context
 	context = {
-				'people' : people
+				'personsearchform' : personsearchform,
+				'people' : people,
+				'page_list' : page_list,
+				'first_name' : first_name,
+				'last_name' : last_name,
+				'search_error' : search_error
 				}
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
@@ -1051,7 +1197,8 @@ def person(request, person_id=0):
 	context = {
 				'person' : person,
 				'relationships_to' : relationships_to,
-				'addresses' : person.addresses.all()
+				'addresses' : person.addresses.all(),
+				'registrations' : person.events.all()
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -1077,6 +1224,8 @@ def profile(request, person_id=0):
 			person.date_of_birth = profileform.cleaned_data['date_of_birth']
 			person.gender = profileform.cleaned_data['gender']
 			person.english_is_second_language = profileform.cleaned_data['english_is_second_language']
+			person.pregnant = profileform.cleaned_data['pregnant']
+			person.due_date = profileform.cleaned_data['due_date']
 			# attempt to get the ethnicity
 			ethnicity = get_ethnicity(profileform.cleaned_data['ethnicity'])
 			# set the value for the person
@@ -1103,7 +1252,9 @@ def profile(request, person_id=0):
 						'date_of_birth' : person.date_of_birth,
 						'ethnicity' : person.ethnicity.pk,
 						'gender' : person.gender,
-						'english_is_second_language' : person.english_is_second_language
+						'english_is_second_language' : person.english_is_second_language,
+						'pregnant' : person.pregnant,
+						'due_date' : person.due_date
 						}
 		# create the form
 		profileform = ProfileForm(profile_dict, ethnicities=get_ethnicities())
@@ -1400,6 +1551,25 @@ def addevent(request):
 	return HttpResponse(addevent_template.render(context=context, request=request))
 
 @login_required
+def event(request, event_id=0):
+	# load the template
+	event_template = loader.get_template('people/event.html')
+	# get the event
+	event = get_event(event_id)
+	# if the event doesn't exist, crash to a banner
+	if not event:
+		return make_banner(request, 'Event does not exist.')
+	# get the registrations for the event
+	registrations = get_event_registrations(event)
+	# set the context
+	context = {
+				'event' : event,
+				'registrations' : registrations
+				}
+	# return the response
+	return HttpResponse(event_template.render(context=context, request=request))
+
+@login_required
 def events(request):
 	# get the list of events
 	events = get_events()
@@ -1438,6 +1608,10 @@ def event_registration(request,event_id=0):
 	search_key_delimiter = ''
 	# set a blank search_error
 	search_error = ''
+	# set a blank set of registration keys
+	registration_keys = ''
+	# and a blank delimiter
+	registration_key_delimiter = ''
 	# check whether this is a post
 	if request.method == 'POST':
 		for item in request.POST.items():
@@ -1500,21 +1674,72 @@ def event_registration(request,event_id=0):
 														participated = participated,
 														role_type_id = int(role_type_id)
 														)
+		# check whether we have been asked to edit registations
+		elif request.POST['action'] == 'editregistration' :
+			# get the list of registration keys from the hidden field
+			registration_keys = request.POST['registration_keys'].split(',')
+			# go through the keys
+			for registration_key in registration_keys:
+				# get the indicators and role type
+					# get the indicators of whether the person registered or participated, as well as the role type
+					registered = check_checkbox(request.POST, 'registered_' + registration_key)
+					participated = check_checkbox(request.POST, 'participated_' + registration_key)
+					role_type_id = request.POST.get('role_type_' + registration_key, False)
+					# if the person participated or registered, we need to build a registration
+					if registered or participated:
+						# build the registration
+						registration = build_registration(
+															request = request,
+															event = event,
+															person_id = int(registration_key),
+															registered = registered,
+															participated = participated,
+															role_type_id = int(role_type_id)
+															)
+					# otherwise we need to remove the registration
+					else:
+						# remove the registration
+						remove_registration(
+											request = request,
+											event = event,
+											person_id = int(registration_key)
+										)
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
 		personsearchform = PersonSearchForm()
 	# update the existing registrations: there may be new ones
 	registrations = get_event_registrations(event)
+	# if there are registrations, create the form
+	if registrations:
+		# clear the registration keys
+		registration_keys = ''
+		# create the form
+		editregistrationform = EditRegistrationForm(
+													role_types = role_types,
+													registrations = registrations
+													)
+		# add field names to each registration, so that we know when to display them
+		for registration in registrations:
+			# add the three field names
+			registration.role_type_field_name = 'role_type_' + str(registration.person.pk)
+			registration.registered_field_name = 'registered_' + str(registration.person.pk)
+			registration.participated_field_name = 'participated_' + str(registration.person.pk)
+			# add the key of the registered person to the string of keys
+			registration_keys += registration_key_delimiter + str(registration.person.pk)
+			# and set the delimiter
+			registration_key_delimiter = ','
 	# set the context from the person based on person id
 	context = {
 				'personsearchform' : personsearchform,
 				'addregistrationform' : addregistrationform,
+				'editregistrationform' : editregistrationform,
 				'search_results' : search_results,
 				'search_keys' : search_keys,
 				'search_error' : search_error,
 				'event' : event,
-				'registrations' : registrations
+				'registrations' : registrations,
+				'registration_keys' : registration_keys
 				}
 	# return the response
 	return HttpResponse(event_registration_template.render(context=context, request=request))

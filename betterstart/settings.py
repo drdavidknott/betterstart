@@ -143,4 +143,4 @@ STATIC_URL = '/static/'
 
 # Authentication
 
-LOGIN_URL = '/people/'
+LOGIN_URL = '/people/login'

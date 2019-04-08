@@ -51,45 +51,108 @@
 							<input type="hidden" name="action" value="addregistration">
 							<input type="hidden" name="search_keys" value="{{ search_keys }}">
 							<table class="table table-striped">
-								<thead><tr>
-									<th>NAME:</th>
-									<th>ENGAGEMENT:</th>
-								</tr></thead>
+								<thead>
+									<tr>
+										<th>NAME:</th>
+										<th>REGISTERED:</th>
+										<th>PARTICIPATED:</th>
+										<th>ROLE:</th>
+									</tr>
+								</thead>
 								<tbody>
 							 		{% for result in search_results %}
-							 				<tr>
-							 					<td>
-							 						<a href="{% url 'person' result.pk %}">
-														{{ result }}
-													</a>
-												</td>
-												<td>
-													{% for field in addregistrationform %}
-														{% if field.name == result.registered_field_name %}
-															<div class="col-md-2">
-																Registered:
-															</div>
-															<div class="col-md-1">
-																{{ field }}
-															</div>
-														{% elif field.name == result.participated_field_name %}
-															<div class="col-md-2">
-																Participated:
-															</div>
-															<div class="col-md-1">
-																{{ field }}
-															</div>
-														{% elif field.name == result.role_type_field_name %}
-															<div class="col-md-1">
-																Role:
-															</div>
-															<div class="col-md-3">
-																{{ field }}
-															</div>
-														{% endif %}
-													{% endfor %}
-												</td>
-											</tr>
+						 				<tr>
+						 					<td>
+						 						<a href="{% url 'person' result.pk %}">
+													{{ result }}
+												</a>
+											</td>
+											<td>
+												{% for field in addregistrationform %}
+													{% if field.name == result.registered_field_name %}
+														{{ field }}
+													{% endif %}
+												{% endfor %}
+											</td>
+											<td>
+												{% for field in addregistrationform %}
+													{% if field.name == result.participated_field_name %}
+														{{ field }}
+													{% endif %}
+												{% endfor %}
+											</td>
+											<td>
+												{% for field in addregistrationform %}
+													{% if field.name == result.role_type_field_name %}
+														{{ field }}
+													{% endif %}
+												{% endfor %}
+											</td>
+										</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+		 					<input type="submit" value="Submit">
+	 					</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	{% endif %}
+
+	{% if editregistrationform %}
+
+		<div class="row">
+			<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">EDIT EXISTING REGISTRATIONS:</h4>
+		 			</div>
+		 			<div class="panel-body">
+		 				<form action ="{% url 'event_registration' event.pk %}" method="post">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="editregistration">
+							<input type="hidden" name="registration_keys" value="{{ registration_keys }}">
+							<table class="table table-striped">
+								<thead>
+									<tr>
+										<th>NAME:</th>
+										<th>REGISTERED:</th>
+										<th>PARTICIPATED:</th>
+										<th>ROLE:</th>
+									</tr>
+								</thead>
+								<tbody>
+							 		{% for registration in registrations %}
+						 				<tr>
+						 					<td>
+						 						<a href="{% url 'person' registration.person.pk %}">
+													{{ registration.person }}
+												</a>
+											</td>
+											<td>
+												{% for field in editregistrationform %}
+													{% if field.name == registration.registered_field_name %}
+														{{ field }}
+													{% endif %}
+												{% endfor %}
+											</td>
+											<td>
+												{% for field in editregistrationform %}
+													{% if field.name == registration.participated_field_name %}
+														{{ field }}
+													{% endif %}
+												{% endfor %}
+											</td>
+											<td>
+												{% for field in editregistrationform %}
+													{% if field.name == registration.role_type_field_name %}
+														{{ field }}
+													{% endif %}
+												{% endfor %}
+											</td>
+										</tr>
 									{% endfor %}
 								</tbody>
 							</table>
@@ -99,50 +162,6 @@
 		 						</div>
 		 					</div>
 	 					</form>
-					</div>
-				</div>
-			</div>
-		</div>
-
-	{% endif %}
-
-	{% if registrations %}
-
-	 	<div class="row">
-	 		<div class="col-md-12">
-	 			<div class="panel panel-default">
-					<div class="panel-heading">
-			 				<h4 class="panel-title">EXISTING REGISTRATIONS:</h4>
-		 			</div>
-			 		<div class="panel-body">
-						<table class="table table-striped panel panel-default">
-							<thead><tr>
-								<th>NAME:</th>
-								<th>ROLE:</th>
-								<th>REGISTERED:</th>
-								<th>PARTICIPATED:</th>
-							</tr></thead>
-							<tbody>
-						 		{% for registration in registrations %}
-					 				<tr>
-					 					<td>
-					 						<a href="{% url 'person' registration.person.pk %}">
-												{{ registration.person }}
-											</a>
-										</td>
-										<td>
-											{{ registration.role_type.role_type_name }}
-										</td>
-										<td>
-											{{ registration.registered }}
-										</td>
-										<td>
-											{{ registration.participated }}
-										</td>
-									</tr>
-								{% endfor %}
-							</tbody>
-						</table>
 					</div>
 				</div>
 			</div>

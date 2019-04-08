@@ -1,0 +1,107 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+	
+	<div class="row">
+		<div class="col-md-12">
+			<h2>{{ event.name }}</h2>
+		</div>
+	</div>
+
+ 	<div class="row col-md-12">
+ 		<div class="panel panel-default">
+ 			<div class="panel-heading col-md-9">
+ 				<h4 class="panel-title">EVENT DETAILS</h4>
+ 			</div>
+ 			<div class="panel-heading col-md-3">
+ 				<h4 class="panel-title" align="right">
+ 					<a href="{% url 'event' event.pk %}">Edit Event Details</a>
+ 				</h4>
+ 			</div>
+	 		<div class="panel-body">
+	 			<div>
+		 			<div class="col-md-2">Name:</div>
+		 			<div class="col-md-10">{{ event.name }}</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-2">Description:</div>
+		 			<div class="col-md-10">{{ event.description }}&nbsp</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-2">Type:</div>
+		 			<div class="col-md-10">{{ event.event_type.name }}</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-2">Date:</div>
+		 			<div class="col-md-10">{{ event.date }}</div>
+		 		</div>
+		 		<div>
+		 			<div class="col-md-2">Start Time:</div>
+		 			<div class="col-md-10">{{ event.start_time }}</div>
+		 		</div>
+		 		<div>
+		 			<div class="col-md-2">End Time:</div>
+		 			<div class="col-md-10">{{ event.end_time }}</div>
+				</div>
+			</div>
+			<div class="panel-heading col-md-9">
+	 				<h4 class="panel-title">REGISTRATIONS</h4>
+ 			</div>
+ 			<div class="panel-heading col-md-3">
+ 				<h4 class="panel-title" align="right">
+ 					<a href="{% url 'event_registration' event.pk %}">Edit Registrations</a>
+ 				</h4>
+ 			</div>
+	 		<div class="panel-body">
+		 		{% if registrations %}
+	 				<div class="col-md-12">
+	 					<table class="table table-striped">
+	 						<thead>
+	 							<tr>
+	 								<th>NAME</th>
+	 								<th>REGISTERED</th>
+	 								<th>PARTICIPATED</th>
+	 								<th>ROLE</th>
+	 							</tr>
+	 						</thead>
+	 						<tbody>
+	 							{% for registration in registrations %}
+	 								<tr>
+	 									<td>
+	 										<a href="{% url 'person' registration.person.pk %}"> 
+	 											{{ registration.person }}
+	 										</a>
+	 									</td>
+	 									<td>
+	 										{% if registration.registered %}
+	 											<span class="glyphicon glyphicon-ok"></span>
+	 										{% endif %}
+	 									</td>
+	 									<td>
+	 										{% if registration.participated %}
+	 											<span class="glyphicon glyphicon-ok"></span>
+	 										{% endif %}
+	 									</td>
+	 									<td>
+	 										{{ registration.role_type.role_type_name }}
+	 									</td>
+	 								</tr>
+	 							{% endfor %}
+	 						</tbody>
+	 					</table>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% endblock %}
+

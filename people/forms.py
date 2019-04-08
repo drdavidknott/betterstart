@@ -5,6 +5,17 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 import datetime
 
+class LoginForm(forms.Form):
+	# Define the fields that we need in the form.
+	email_address = forms.EmailField(
+										label="Email address",
+										max_length=100,
+										widget=forms.EmailInput(attrs={'class' : 'form-control'}))
+	password = forms.CharField(
+										label="Password",
+										max_length=30,
+										widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
+
 class AddPersonForm(forms.Form):
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(
@@ -67,6 +78,17 @@ class ProfileForm(forms.Form):
 									label = "English is a second language",
 									required = False,
 									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+	pregnant = forms.BooleanField(
+									label = "Pregnant (or partner is pregnant)",
+									required = False,
+									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+	due_date = forms.DateField(
+									label="Pregnancy due date",
+									required=False,
+									widget=forms.DateInput(attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}))
 	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
@@ -290,8 +312,6 @@ class AddRegistrationForm(forms.Form):
 		for role_type in role_types:
 			# append a list of value and display value to the list
 			role_type_list.append((role_type.pk, role_type.role_type_name))
-		# set an empty comma string
-		add_comma = ''
 		# now go through the people and build fields
 		for person in people:
 			# set the field name for registration
@@ -314,5 +334,49 @@ class AddRegistrationForm(forms.Form):
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
 														widget=forms.Select(),
+														choices=role_type_list,
+														)
+
+class EditRegistrationForm(forms.Form):
+	# over-ride the built in __init__ method so that we can add fields dynamically
+	def __init__(self, *args, **kwargs):
+		# pull the role types list out of the parameters
+		role_types = kwargs.pop('role_types')
+		# pull the registrations list out of the parameter
+		registrations = kwargs.pop('registrations')
+		# call the built in constructor
+		super(EditRegistrationForm, self).__init__(*args, **kwargs)
+		# set the choice field for role types
+		role_type_list = []
+		# go through the role types to build the options
+		for role_type in role_types:
+			# append a list of value and display value to the list
+			role_type_list.append((role_type.pk, role_type.role_type_name))
+		# now go through the registrations and build fields
+		for registration in registrations:
+			# set the field name for registration
+			field_name = 'registered_' + str(registration.person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Registered",
+														required = False,
+														initial = registration.registered,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'})
+														)
+			# set the field name for participation
+			field_name = 'participated_' + str(registration.person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Participated",
+														required = False,
+														initial = registration.participated,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+			# set the field name for role
+			field_name = 'role_type_' + str(registration.person.pk)
+			# create the field
+			self.fields[field_name]= forms.ChoiceField(
+														label="Role",
+														widget=forms.Select(),
+														initial = registration.role_type.pk,
 														choices=role_type_list,
 														)

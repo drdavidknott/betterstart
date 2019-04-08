@@ -180,6 +180,8 @@ class Person(models.Model):
 	events = models.ManyToManyField(Event, through='Event_Registration')
 	answers = models.ManyToManyField(Option, through='Answer')
 	english_is_second_language = models.BooleanField(default=False)
+	pregnant = models.BooleanField(default=False)
+	due_date = models.DateField(null=True, blank=True)
 	ethnicity = models.ForeignKey(Ethnicity, default=1, on_delete=models.SET_DEFAULT)
 	capture_type = models.ForeignKey(Capture_Type, default=1, on_delete=models.SET_DEFAULT)
 	families = models.ManyToManyField(Family, blank=True)

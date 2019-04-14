@@ -20,9 +20,15 @@ from django.contrib.auth import authenticate, login, logout
 def index(request):
 	# get the template
 	index_template = loader.get_template('people/index.html')
+	# get the role types
+	role_types = get_role_types_with_counts()
+	# go through the role typ
 	# set the context
-	context = {'site_name': os.getenv('BETTERSTART_NAME', None) }
-	print(context)
+	context = {
+				'role_types' : role_types,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
+				}
+	print(role_types)
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
 
@@ -589,6 +595,16 @@ def get_registration(person, event):
 def get_role_types():
 	# return a list of all the role type objects
 	return Role_Type.objects.all()
+
+def get_role_types_with_counts():
+	# return a list of all the role type objects, supplemented with counts
+	role_types = get_role_types()
+	# now go through the role types
+	for role_type in role_types:
+		# get the count
+		role_type.count = Person.objects.filter(default_role=role_type).count()
+	# return the results
+	return role_types
 
 def get_role_type(role_type_id):
 	# try to get role type

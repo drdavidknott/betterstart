@@ -6,5 +6,37 @@
 
  {% block content %}
 
+  	<div class="row col-md-12">
+  		<div class="col-md-3"></div>
+  		<div class="col-md-6">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">PEOPLE</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<table class="table table-striped panel panel-default">
+						<thead><tr>
+							<th>ROLE:</th>
+							<th>NUMBER:</th>
+						</tr></thead>
+						<tbody>
+					 		{% for role_type in role_types %}
+				 				<tr>
+									<td>
+										{{ role_type.role_type_name }}
+									</td>
+									<td>
+										{{ role_type.count }}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-3"></div>
+	</div>
+
  {% endblock %}
 

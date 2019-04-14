@@ -31,6 +31,31 @@ class AddPersonForm(forms.Form):
 									label="Surname",
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	role_type = forms.ChoiceField(
+									label="Role",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull the choices field out of the parameters
+		role_types = kwargs.pop('role_types')
+		# call the built in constructor
+		super(AddPersonForm, self).__init__(*args, **kwargs)
+		# set the choice field for role types
+		role_type_list = []
+		# set an initial value
+		initial = 1
+		# go through the role types
+		for role_type in role_types:
+			# append a list of value and display value to the list
+			role_type_list.append((role_type.pk, role_type.role_type_name))
+			# also see whether we have the UNKKNOWN role type
+			if role_type.role_type_name == 'UNKNOWN':
+				# set the initial value
+				initial = role_type.pk
+		# set the choices
+		self.fields['role_type'].choices = role_type_list
+		# set the initial value
+		self.fields['role_type'].initial = initial
 
 class ProfileForm(forms.Form):
 	# Define the choices for gender
@@ -65,6 +90,9 @@ class ProfileForm(forms.Form):
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
 																	}))
+	role_type = forms.ChoiceField(
+									label="Role",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	ethnicity = forms.ChoiceField(
 									label="Ethnicity",
 									required=False,
@@ -92,8 +120,9 @@ class ProfileForm(forms.Form):
 	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
-		# pull the choices field out of the parameters
+		# pull the choices fields out of the parameters
 		ethnicities = kwargs.pop('ethnicities')
+		role_types = kwargs.pop('role_types')
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice field for ethnicities
@@ -104,6 +133,14 @@ class ProfileForm(forms.Form):
 			ethnicity_list.append((ethnicity.pk, ethnicity.description))
 		# set the choices
 		self.fields['ethnicity'].choices = ethnicity_list
+		# set the choice field for role types
+		role_type_list = []
+		# go through the role types
+		for role_type in role_types:
+			# append a list of value and display value to the list
+			role_type_list.append((role_type.pk, role_type.role_type_name))
+		# set the choices
+		self.fields['role_type'].choices = role_type_list
 
 class PersonSearchForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -149,6 +186,9 @@ class AddRelationshipForm(forms.Form):
 									label="Gender",
 									choices=gender_choices,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	role_type = forms.ChoiceField(
+									label="Role",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	relationship_type = forms.ChoiceField(
 									label="Relationship",
 									widget=forms.Select())
@@ -156,6 +196,7 @@ class AddRelationshipForm(forms.Form):
 	def __init__(self, *args, **kwargs):
 		# pull the choices field out of the parameters
 		relationship_types = kwargs.pop('relationship_types')
+		role_types = kwargs.pop('role_types')
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choice field for ethnicities
@@ -166,6 +207,14 @@ class AddRelationshipForm(forms.Form):
 			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
 		# set the choices
 		self.fields['relationship_type'].choices = relationship_type_list
+		# set the choice field for role types
+		role_type_list = []
+		# go through the role types
+		for role_type in role_types:
+			# append a list of value and display value to the list
+			role_type_list.append((role_type.pk, role_type.role_type_name))
+		# set the choices
+		self.fields['role_type'].choices = role_type_list
 
 
 class AddRelationshipToExistingPersonForm(forms.Form):

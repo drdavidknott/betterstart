@@ -174,7 +174,7 @@ class Person(models.Model):
 	gender = models.CharField(max_length=25, default='', blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	relationships = models.ManyToManyField('self', through='Relationship', symmetrical=False)
-	roles = models.ManyToManyField(Role_Type, through='Role')
+	default_role = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
 	children_centres = models.ManyToManyField(Children_Centre, through='CC_Registration')
 	addresses = models.ManyToManyField(Address, through='Residence')
 	events = models.ManyToManyField(Event, through='Event_Registration')

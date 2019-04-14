@@ -645,7 +645,14 @@ def get_relationship_from_and_to(person_from, person_to):
 	# return the results
 	return relationship_from, relationship_to
 
-def create_person(first_name,middle_names,last_name,date_of_birth=None,gender='',ethnicity=1):
+def create_person(
+					first_name,
+					middle_names,
+					last_name,
+					default_role=8,
+					date_of_birth=None,
+					gender='',
+					ethnicity=1):
 	# create a person
 	person = Person(
 					first_name = first_name,
@@ -653,6 +660,7 @@ def create_person(first_name,middle_names,last_name,date_of_birth=None,gender=''
 					last_name = last_name,
 					date_of_birth = date_of_birth,
 					gender = gender,
+					default_role = get_role_type(default_role),
 					ethnicity = get_ethnicity(ethnicity)
 						)
 	# save the record
@@ -1144,20 +1152,21 @@ def addperson(request):
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
-		addpersonform = AddPersonForm(request.POST)
+		addpersonform = AddPersonForm(request.POST, role_types = get_role_types())
 		# check whether the form is valid
 		if addpersonform.is_valid():
 			# get the names
 			first_name = addpersonform.cleaned_data['first_name']
 			middle_names = addpersonform.cleaned_data['middle_names']
 			last_name = addpersonform.cleaned_data['last_name']
+			role_type = addpersonform.cleaned_data['role_type']
 			# see whether this is a confirmation action
 			# get the action from the request
 			action = request.POST.get('action','')
 			# see if there is an action
 			if action == 'CONFIRM':
 				# create the person
-				person = create_person(first_name,middle_names,last_name)
+				person = create_person(first_name,middle_names,last_name,role_type)
 				# set a success message
 				messages.success(request,
 									'Another ' + str(person) + ' created.'
@@ -1179,7 +1188,9 @@ def addperson(request):
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		addpersonform = AddPersonForm()
+		addpersonform = AddPersonForm(
+										role_types = get_role_types()
+										)
 	# get the template
 	addperson_template = loader.get_template('people/addperson.html')
 	# set the context
@@ -1223,7 +1234,11 @@ def profile(request, person_id=0):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a form
-		profileform = ProfileForm(request.POST, ethnicities=get_ethnicities())
+		profileform = ProfileForm(
+									request.POST,
+									ethnicities=get_ethnicities(),
+									role_types=get_role_types()
+									)
 		# check whether the entry is valid
 		if profileform.is_valid():
 			# update the person record
@@ -1246,6 +1261,16 @@ def profile(request, person_id=0):
 			else:
 				# set the banner
 				return make_banner(request, 'Ethnicity does not exist.')
+			# attempt to get the role type
+			default_role = get_role_type(profileform.cleaned_data['role_type'])
+			# set the value for the person
+			if default_role:
+				# set the value
+				person.default_role = default_role
+			# otherwise crash out to a banner
+			else:
+				# set the banner
+				return make_banner(request, 'Role type does not exist.')
 			# save the record
 			person.save()
 			# set a success message
@@ -1260,6 +1285,7 @@ def profile(request, person_id=0):
 						'last_name' : person.last_name,
 						'email_address' : person.email_address,
 						'date_of_birth' : person.date_of_birth,
+						'role_type' : person.default_role.pk,
 						'ethnicity' : person.ethnicity.pk,
 						'gender' : person.gender,
 						'english_is_second_language' : person.english_is_second_language,
@@ -1267,7 +1293,11 @@ def profile(request, person_id=0):
 						'due_date' : person.due_date
 						}
 		# create the form
-		profileform = ProfileForm(profile_dict, ethnicities=get_ethnicities())
+		profileform = ProfileForm(
+									profile_dict,
+									ethnicities=get_ethnicities(),
+									role_types=get_role_types()
+									)
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
 	# set the context
@@ -1298,6 +1328,8 @@ def add_relationship(request,person_id=0):
 	relationships_to = get_relationships_to(person)
 	# get relationship types
 	relationship_types = get_relationship_types()
+	# get role types
+	role_types = get_role_types()
 	# set the search results
 	search_results = []
 	# set a blank search_error
@@ -1332,7 +1364,11 @@ def add_relationship(request,person_id=0):
 						# add the field
 						result.field_name = 'relationship_type_' + str(result.pk)
 				# create a form to add the relationship
-				addrelationshipform = AddRelationshipForm(request.POST,relationship_types=relationship_types)
+				addrelationshipform = AddRelationshipForm(
+															request.POST,
+															relationship_types=relationship_types,
+															role_types = role_types
+															)
 			# otherwise we have a blank form
 			else:
 				# set the message
@@ -1353,7 +1389,11 @@ def add_relationship(request,person_id=0):
 		# check whether we have been asked to add a relationship to a new person
 		elif request.POST['action'] == 'addrelationshiptonewperson':
 			# create the form
-			addrelationshipform = AddRelationshipForm(request.POST,relationship_types=relationship_types)
+			addrelationshipform = AddRelationshipForm(
+														request.POST,
+														relationship_types = relationship_types,
+														role_types = role_types
+														)
 			# check whether the form is valid
 			if addrelationshipform.is_valid():
 				# we now need to create the person
@@ -1362,10 +1402,11 @@ def add_relationship(request,person_id=0):
 											middle_names = addrelationshipform.cleaned_data['middle_names'],
 											last_name = addrelationshipform.cleaned_data['last_name'],
 											date_of_birth = addrelationshipform.cleaned_data['date_of_birth'],
+											default_role = addrelationshipform.cleaned_data['role_type'],
 											gender = addrelationshipform.cleaned_data['gender']
 											)
 				# set a message to say that we have create a new person
-				messages.success(request, str(person) + ' created.')
+				messages.success(request, str(person_to) + ' created.')
 				# now create the relationship
 				edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
 				# clear the add relationship form so that it doesn't display

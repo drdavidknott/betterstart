@@ -13,3 +13,9 @@ children_centre,Summercourt
 children_centre,Temple Sutton
 children_centre,None of these
 role_type,UNKNOWN
+role_type,Parent
+role_type,Child
+role_type,Ambassador
+role_type,Parent Champion
+role_type,Volunteer
+role_type,Staff

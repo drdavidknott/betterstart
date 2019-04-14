@@ -20,8 +20,11 @@ from django.contrib.auth import authenticate, login, logout
 def index(request):
 	# get the template
 	index_template = loader.get_template('people/index.html')
+	# set the context
+	context = {'site_name': os.getenv('BETTERSTART_NAME', None) }
+	print(context)
 	# return the HttpResponse
-	return HttpResponse(index_template.render(context=None, request=request))
+	return HttpResponse(index_template.render(context=context, request=request))
 
 @login_required
 def dataload(request):
@@ -46,7 +49,10 @@ def dataload(request):
 	# load post codes and get the results as messages
 	messages = messages + load_post_code(directory)
 	# add the messages to the context
-	context = {'load_messages' : messages}
+	context = {
+				'load_messages' : messages,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
+				}
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
 
@@ -440,11 +446,11 @@ def get_people_by_names(first_name,last_name):
 	# check whether we have a first name
 	if first_name:
 		# filter by the name
-		people = people.filter(first_name__contains=first_name)
+		people = people.filter(first_name__icontains=first_name)
 	# check whether we have a last name
 	if last_name:
 		# filter by the name
-		people = people.filter(last_name__contains=last_name)
+		people = people.filter(last_name__icontains=last_name)
 	# return the list of people
 	return people
 
@@ -1066,7 +1072,8 @@ def log_user_in(request):
 		return redirect('index')
 	# otherwsise, set the context and output a form
 	context = {
-				'login_form' : login_form
+				'login_form' : login_form,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# set the output
 	return HttpResponse(login_template.render(context, request))
@@ -1124,7 +1131,8 @@ def people(request):
 				'page_list' : page_list,
 				'first_name' : first_name,
 				'last_name' : last_name,
-				'search_error' : search_error
+				'search_error' : search_error,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
@@ -1177,7 +1185,8 @@ def addperson(request):
 	# set the context
 	context = {
 				'addpersonform' : addpersonform,
-				'matching_people' : matching_people
+				'matching_people' : matching_people,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the HttpResponse
 	return HttpResponse(addperson_template.render(context=context, request=request))
@@ -1198,7 +1207,8 @@ def person(request, person_id=0):
 				'person' : person,
 				'relationships_to' : relationships_to,
 				'addresses' : person.addresses.all(),
-				'registrations' : person.events.all()
+				'registrations' : person.events.all(),
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -1264,6 +1274,7 @@ def profile(request, person_id=0):
 	context = {
 				'profileform' : profileform,
 				'person' : person,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the response
 	return HttpResponse(profile_template.render(context, request))
@@ -1385,7 +1396,8 @@ def add_relationship(request,person_id=0):
 				'search_results' : search_results,
 				'search_error' : search_error,
 				'person' : person,
-				'relationships_to' : relationships_to
+				'relationships_to' : relationships_to,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -1509,6 +1521,7 @@ def add_address(request,person_id=0):
 				'search_results' : search_results,
 				'search_error' : search_error,
 				'person' : person,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -1546,6 +1559,7 @@ def addevent(request):
 	# set the context
 	context = {
 				'addeventform' : addeventform,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the HttpResponse
 	return HttpResponse(addevent_template.render(context=context, request=request))
@@ -1564,7 +1578,8 @@ def event(request, event_id=0):
 	# set the context
 	context = {
 				'event' : event,
-				'registrations' : registrations
+				'registrations' : registrations,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the response
 	return HttpResponse(event_template.render(context=context, request=request))
@@ -1577,7 +1592,8 @@ def events(request):
 	events_template = loader.get_template('people/events.html')
 	# set the context
 	context = {
-				'events' : events
+				'events' : events,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))
@@ -1739,7 +1755,8 @@ def event_registration(request,event_id=0):
 				'search_error' : search_error,
 				'event' : event,
 				'registrations' : registrations,
-				'registration_keys' : registration_keys
+				'registration_keys' : registration_keys,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the response
 	return HttpResponse(event_registration_template.render(context=context, request=request))

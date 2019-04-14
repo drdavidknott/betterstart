@@ -649,7 +649,7 @@ def create_person(
 					first_name,
 					middle_names,
 					last_name,
-					default_role=8,
+					default_role,
 					date_of_birth=None,
 					gender='',
 					ethnicity=1):
@@ -1159,14 +1159,19 @@ def addperson(request):
 			first_name = addpersonform.cleaned_data['first_name']
 			middle_names = addpersonform.cleaned_data['middle_names']
 			last_name = addpersonform.cleaned_data['last_name']
-			role_type = addpersonform.cleaned_data['role_type']
+			default_role = addpersonform.cleaned_data['role_type']
 			# see whether this is a confirmation action
 			# get the action from the request
 			action = request.POST.get('action','')
 			# see if there is an action
 			if action == 'CONFIRM':
 				# create the person
-				person = create_person(first_name,middle_names,last_name,role_type)
+				person = create_person(
+										first_name = first_name,
+										middle_name = middle_names,
+										last_name = last_name,
+										default_role = default_role
+										)
 				# set a success message
 				messages.success(request,
 									'Another ' + str(person) + ' created.'
@@ -1178,7 +1183,12 @@ def addperson(request):
 		# if there aren't any matching people, also create the person
 		if not matching_people:
 			# create the person
-			person = create_person(first_name,middle_names,last_name)
+			person = create_person(
+									first_name = first_name,
+									middle_names = middle_names,
+									last_name = last_name,
+									default_role = default_role
+									)
 			# set a success message
 			messages.success(request,
 								str(person) + ' created.'

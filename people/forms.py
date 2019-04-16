@@ -384,6 +384,7 @@ class AddRegistrationForm(forms.Form):
 														label="Role",
 														widget=forms.Select(),
 														choices=role_type_list,
+														initial=person.default_role.pk
 														)
 
 class EditRegistrationForm(forms.Form):
@@ -426,6 +427,6 @@ class EditRegistrationForm(forms.Form):
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
 														widget=forms.Select(),
-														initial = registration.role_type.pk,
+														initial=registration.role_type.pk,
 														choices=role_type_list,
 														)

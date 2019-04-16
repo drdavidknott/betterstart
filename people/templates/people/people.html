@@ -53,6 +53,7 @@
 						<th>NAME:</th>
 						<th>DATE OF BIRTH:</th>
 						<th>GENDER:</th>
+						<th>ROLE:</th>
 					</tr></thead>
 					<tbody>
 				 		{% for person in people %}
@@ -67,6 +68,9 @@
 								</td>
 								<td>
 									{{ person.gender }}
+								</td>
+								<td>
+									{{ person.default_role.role_type_name }}
 								</td>
 							</tr>
 						{% endfor %}

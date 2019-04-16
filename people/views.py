@@ -1718,7 +1718,6 @@ def event_registration(request,event_id=0):
 				if search_results:
 					# create the form
 					addregistrationform = AddRegistrationForm(
-															request.POST,
 															role_types=role_types,
 															people=search_results
 															)

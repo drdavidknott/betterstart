@@ -430,3 +430,44 @@ class EditRegistrationForm(forms.Form):
 														initial=registration.role_type.pk,
 														choices=role_type_list,
 														)
+
+class EventSearchForm(forms.Form):
+	# Define the fields that we need in the form.
+	name = forms.CharField(
+									label="Event name",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	event_type = forms.ChoiceField(
+									label="Event Type",
+									widget=forms.Select())
+	date_from = forms.DateField(
+									label="From",
+									required=False,
+									widget=forms.DateInput(attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}))
+	date_to = forms.DateField(
+									label="To",
+									required=False,
+									widget=forms.DateInput(attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull the choices field out of the parameters
+		event_types = kwargs.pop('event_types')
+		# call the built in constructor
+		super(EventSearchForm, self).__init__(*args, **kwargs)
+		# set the choice field for event types
+		event_type_list = []
+		# add the default choice
+		event_type_list.append((0,'Any'))
+		# go through the event types
+		for event_type in event_types:
+			# append a list of value and display value to the list
+			event_type_list.append((event_type.pk, event_type.name))
+		# set the choices
+		self.fields['event_type'].choices = event_type_list

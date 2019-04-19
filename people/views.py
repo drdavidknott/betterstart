@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddEventForm, AddRegistrationForm, \
-					EditRegistrationForm, LoginForm
+					EditRegistrationForm, LoginForm, EventSearchForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -556,6 +556,29 @@ def get_events():
 	# get a list of events
 	events = Event.objects.order_by('-date', '-start_time')
 	# return the list of people
+	return events
+
+def get_events_by_name_dates_and_type(name,event_type,date_from,date_to):
+	# check whether we have any search terms, otherwise return all events
+	# start by getting all the events
+	events = Event.objects.all()
+	# now filter by name if we have a name
+	if name:
+		# filter by name
+		events = events.filter(name__icontains=name)
+	# if we have a from date, filter by that date
+	if date_from != None:
+		# filter by date
+		events = events.filter(date__gte=date_from)
+	# if we have a to date, filter by that date
+	if date_to != None:
+		# filter by date
+		events = events.filter(date__lte=date_to)
+	# if we have a type, filter by that
+	if event_type != 0:
+		# filter by type
+		events = events.filter(event_type_id=event_type)
+	# return the list of events
 	return events
 
 def get_event_type(event_type_id):
@@ -1126,22 +1149,16 @@ def people(request):
 			# get the names
 			first_name = personsearchform.cleaned_data['first_name']
 			last_name = personsearchform.cleaned_data['last_name']
-			# if neither name is blank, do the search
-			if first_name or last_name:
-				# conduct a search
-				people = get_people_by_names(first_name,last_name)
-				# get the page number
-				page = int(request.POST['page'])
-				# figure out how many pages we have
-				page_list = get_page_list(people, results_per_page)
-				# set the previous page
-				previous_page = page - 1
-				# sort and truncate the list of people
-				people = people.order_by('last_name','first_name')[previous_page*results_per_page:page*results_per_page]
-			# otherwise we have a blank form
-			else:
-				# set the message
-				search_error = 'First name or last name must be entered.'
+			# conduct a search
+			people = get_people_by_names(first_name,last_name)
+			# get the page number
+			page = int(request.POST['page'])
+			# figure out how many pages we have
+			page_list = get_page_list(people, results_per_page)
+			# set the previous page
+			previous_page = page - 1
+			# sort and truncate the list of people
+			people = people.order_by('last_name','first_name')[previous_page*results_per_page:page*results_per_page]
 	# otherwise set a bank form
 	else:
 		# create the blank form
@@ -1653,13 +1670,67 @@ def event(request, event_id=0):
 
 @login_required
 def events(request):
-	# get the list of events
-	events = get_events()
+	# set a blank list
+	events = []
+	# and a blank page_list
+	page_list = []
+	# and blank search terms
+	name = ''
+	event_type = 0,
+	date_from = 0,
+	date_to = 0
+	# set a blank search_error
+	search_error = ''
+	# set the results per page
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		eventsearchform = EventSearchForm(request.POST, event_types=get_event_types())
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# validate the form
+			eventsearchform.is_valid()
+			# get the values
+			name = eventsearchform.cleaned_data['name']
+			date_from = eventsearchform.cleaned_data['date_from']
+			date_to = eventsearchform.cleaned_data['date_to']
+			event_type = eventsearchform.cleaned_data['event_type']
+			# conduct a search - placeholder for now
+			events = get_events_by_name_dates_and_type(
+														name=name,
+														date_from=date_from,
+														date_to=date_to,
+														event_type=int(event_type)
+														)
+			# get the page number
+			page = int(request.POST['page'])
+			# figure out how many pages we have
+			page_list = get_page_list(events, results_per_page)
+			# set the previous page
+			previous_page = page - 1
+			# sort and truncate the list of events
+			events = events.order_by('-date')[previous_page*results_per_page:page*results_per_page]
+			# otherwise we have a blank form
+		else:
+			# set the message
+			search_error = 'Search terms must be entered.'
+	# otherwise set a bank form
+	else:
+		# create the blank form
+		eventsearchform = EventSearchForm(event_types=get_event_types())
 	# get the template
 	events_template = loader.get_template('people/events.html')
 	# set the context
 	context = {
 				'events' : events,
+				'eventsearchform' : eventsearchform,
+				'name' : name,
+				'event_type' : event_type,
+				'date_from' : date_from,
+				'date_to' : date_to,
+				'page_list' : page_list,
+				'search_error' : search_error,
 				'site_name': os.getenv('BETTERSTART_NAME', None)
 				}
 	# return the HttpResponse

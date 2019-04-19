@@ -16,12 +16,9 @@
 
  	<div class="row col-md-12">
  		<div class="panel panel-default">
- 			<div class="panel-heading col-md-9">
- 				<h4 class="panel-title">EVENT DETAILS</h4>
- 			</div>
- 			<div class="panel-heading col-md-3">
- 				<h4 class="panel-title" align="right">
- 					<a href="{% url 'event' event.pk %}">Edit Event Details</a>
+ 			<div class="panel-heading">
+ 				<h4 class="panel-title">
+ 					<a href="{% url 'event' event.pk %}">EVENT DETAILS</a>
  				</h4>
  			</div>
 	 		<div class="panel-body">
@@ -50,13 +47,13 @@
 		 			<div class="col-md-10">{{ event.end_time }}</div>
 				</div>
 			</div>
-			<div class="panel-heading col-md-9">
-	 				<h4 class="panel-title">REGISTRATIONS</h4>
- 			</div>
- 			<div class="panel-heading col-md-3">
- 				<h4 class="panel-title" align="right">
- 					<a href="{% url 'event_registration' event.pk %}">Edit Registrations</a>
- 				</h4>
+		</div>
+
+		<div class="panel panel-default">
+			<div class="panel-heading">
+	 				<h4 class="panel-title">
+	 					<a href="{% url 'event_registration' event.pk %}">REGISTRATIONS</a>
+	 				</h4>
  			</div>
 	 		<div class="panel-body">
 		 		{% if registrations %}
@@ -99,6 +96,7 @@
 				{% endif %}
 			</div>
 		</div>
+
 	</div>
 </div>
 

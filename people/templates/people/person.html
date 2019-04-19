@@ -16,12 +16,9 @@
 
  	<div class="row col-md-12">
  		<div class="panel panel-default">
- 			<div class="panel-heading col-md-9">
- 				<h4 class="panel-title">PROFILE</h4>
- 			</div>
- 			<div class="panel-heading col-md-3">
- 				<h4 class="panel-title" align="right">
- 					<a href="{% url 'profile' person.pk %}">Edit Profile</a>
+ 			<div class="panel-heading">
+ 				<h4 class="panel-title">
+ 					<a href="{% url 'profile' person.pk %}">PROFILE</a>
  				</h4>
  			</div>
 	 		<div class="panel-body">
@@ -62,32 +59,32 @@
 		 			<div class="col-md-9">{{ person.english_is_second_language }}</div>
 				</div>
 			</div>
-			<div class="panel-heading col-md-9">
-	 				<h4 class="panel-title">RELATIONSHIPS</h4>
- 			</div>
- 			<div class="panel-heading col-md-3">
- 				<h4 class="panel-title" align="right">
- 					<a href="{% url 'add_relationship' person.pk %}">Edit Relationships</a>
- 				</h4>
+		</div>
+
+ 		<div class="panel panel-default">
+			<div class="panel-heading">
+	 				<h4 class="panel-title">
+	 					<a href="{% url 'add_relationship' person.pk %}">RELATIONSHIPS</a>
+	 				</h4>
  			</div>
 	 		<div class="panel-body">
-		 		{% for relationship_to in relationships_to %}
-	 				<div class="col-md-12">
-						{{ person.first_name }} {{ person.last_name }} is the 
+	 			<div class="col-md-12">
+		 			{% for relationship_to in relationships_to %}
+						{{ person }} is the 
 						{{ relationship_to.relationship_type }} of
 						<a href="{% url 'person' relationship_to.pk %}"> 
-							{{ relationship_to.first_name }} {{ relationship_to.last_name }}
+							{{ relationship_to }}
 						</a>
-					</div>
-				{% endfor %}
+					{% endfor %}
+				</div>
 			</div>
-			<div class="panel-heading col-md-9">
-	 				<h4 class="panel-title">ADDRESSES</h4>
- 			</div>
- 			<div class="panel-heading col-md-3">
- 				<h4 class="panel-title" align="right">
- 					<a href="{% url 'add_address' person.pk %}">Edit Addresses</a>
- 				</h4>
+		</div>
+
+ 		<div class="panel panel-default">
+			<div class="panel-heading">
+	 				<h4 class="panel-title">
+	 					<a href="{% url 'add_address' person.pk %}">ADDRESSES</a>
+	 				</h4>
  			</div>
 	 		<div class="panel-body">
 		 		{% for address in addresses %}
@@ -96,7 +93,10 @@
 					</div>
 				{% endfor %}
 			</div>
-					<div class="panel-heading col-md-12">
+		</div>
+
+ 		<div class="panel panel-default">
+			<div class="panel-heading">
 	 				<h4 class="panel-title">EVENT REGISTRATIONS</h4>
  			</div>
 	 		<div class="panel-body">

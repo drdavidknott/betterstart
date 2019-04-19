@@ -1073,6 +1073,17 @@ def check_checkbox(field_dict, field_name):
 	# return the result
 	return result
 
+def build_context(context_dict):
+	# take a context dictionary and add additional items
+	# check whether we have a default date
+	if not context_dict.get('default_date', False):
+		# set the default date to the default
+		context_dict['default_date'] = '2010-01-01'
+	# set the site name from the environment variable
+	context_dict['site_name'] = os.getenv('BETTERSTART_NAME', None)
+	# return the dictionary
+	return context_dict
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -1118,10 +1129,7 @@ def log_user_in(request):
 		# redirect to the home page
 		return redirect('index')
 	# otherwsise, set the context and output a form
-	context = {
-				'login_form' : login_form,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+	context = build_context({'login_form' : login_form})
 	# set the output
 	return HttpResponse(login_template.render(context, request))
 
@@ -1166,15 +1174,14 @@ def people(request):
 	# get the template
 	people_template = loader.get_template('people/people.html')
 	# set the context
-	context = {
+	context = build_context({
 				'personsearchform' : personsearchform,
 				'people' : people,
 				'page_list' : page_list,
 				'first_name' : first_name,
 				'last_name' : last_name,
-				'search_error' : search_error,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'search_error' : search_error
+				})
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
 
@@ -1237,11 +1244,10 @@ def addperson(request):
 	# get the template
 	addperson_template = loader.get_template('people/addperson.html')
 	# set the context
-	context = {
+	context = build_context({
 				'addpersonform' : addpersonform,
-				'matching_people' : matching_people,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'matching_people' : matching_people
+				})
 	# return the HttpResponse
 	return HttpResponse(addperson_template.render(context=context, request=request))
 
@@ -1257,13 +1263,12 @@ def person(request, person_id=0):
 	# get the relationships for the person
 	relationships_to = get_relationships_to(person)
 	# set the context from the person based on person id
-	context = {
+	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
 				'addresses' : person.addresses.all(),
-				'registrations' : person.events.all(),
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'registrations' : person.events.all()
+				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
 
@@ -1344,11 +1349,10 @@ def profile(request, person_id=0):
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
 	# set the context
-	context = {
+	context = build_context({
 				'profileform' : profileform,
-				'person' : person,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'person' : person
+				})
 	# return the response
 	return HttpResponse(profile_template.render(context, request))
 
@@ -1472,7 +1476,7 @@ def add_relationship(request,person_id=0):
 			relationship_to.select_name = 'relationship_type_' + str(relationship_to.pk)
 			relationship_to.hidden_name = 'original_relationship_type_' + str(relationship_to.pk)
 	# set the context from the person based on person id
-	context = {
+	context = build_context({
 				'personsearchform' : personsearchform,
 				'addrelationshipform' : addrelationshipform,
 				'addrelationshiptoexistingpersonform' : addrelationshiptoexistingpersonform,
@@ -1480,9 +1484,8 @@ def add_relationship(request,person_id=0):
 				'search_results' : search_results,
 				'search_error' : search_error,
 				'person' : person,
-				'relationships_to' : relationships_to,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'relationships_to' : relationships_to
+				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
 
@@ -1598,15 +1601,14 @@ def add_address(request,person_id=0):
 	# get the addresses: there may be new ones
 	addresses = person.addresses.all()
 	# set the context from the person based on person id
-	context = {
+	context = build_context({
 				'addresssearchform' : addresssearchform,
 				'addaddressform' : addaddressform,
 				'addresses' : addresses,
 				'search_results' : search_results,
 				'search_error' : search_error,
-				'person' : person,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'person' : person
+				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
 
@@ -1641,10 +1643,9 @@ def addevent(request):
 	# get the template
 	addevent_template = loader.get_template('people/addevent.html')
 	# set the context
-	context = {
-				'addeventform' : addeventform,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+	context = build_context({
+				'addeventform' : addeventform
+				})
 	# return the HttpResponse
 	return HttpResponse(addevent_template.render(context=context, request=request))
 
@@ -1660,11 +1661,10 @@ def event(request, event_id=0):
 	# get the registrations for the event
 	registrations = get_event_registrations(event)
 	# set the context
-	context = {
+	context = build_context({
 				'event' : event,
-				'registrations' : registrations,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'registrations' : registrations
+				})
 	# return the response
 	return HttpResponse(event_template.render(context=context, request=request))
 
@@ -1682,7 +1682,7 @@ def events(request):
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
-	results_per_page = 25
+	results_per_page = 5
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
@@ -1690,31 +1690,31 @@ def events(request):
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
-			eventsearchform.is_valid()
-			# get the values
-			name = eventsearchform.cleaned_data['name']
-			date_from = eventsearchform.cleaned_data['date_from']
-			date_to = eventsearchform.cleaned_data['date_to']
-			event_type = eventsearchform.cleaned_data['event_type']
-			# conduct a search - placeholder for now
-			events = get_events_by_name_dates_and_type(
-														name=name,
-														date_from=date_from,
-														date_to=date_to,
-														event_type=int(event_type)
-														)
-			# get the page number
-			page = int(request.POST['page'])
-			# figure out how many pages we have
-			page_list = get_page_list(events, results_per_page)
-			# set the previous page
-			previous_page = page - 1
-			# sort and truncate the list of events
-			events = events.order_by('-date')[previous_page*results_per_page:page*results_per_page]
-			# otherwise we have a blank form
-		else:
-			# set the message
-			search_error = 'Search terms must be entered.'
+			if eventsearchform.is_valid():
+				# get the values
+				name = eventsearchform.cleaned_data['name']
+				date_from = eventsearchform.cleaned_data['date_from']
+				date_to = eventsearchform.cleaned_data['date_to']
+				event_type = eventsearchform.cleaned_data['event_type']
+				# conduct a search
+				events = get_events_by_name_dates_and_type(
+															name=name,
+															date_from=date_from,
+															date_to=date_to,
+															event_type=int(event_type)
+															)
+				# get the page number
+				page = int(request.POST['page'])
+				# figure out how many pages we have
+				page_list = get_page_list(events, results_per_page)
+				# set the previous page
+				previous_page = page - 1
+				# sort and truncate the list of events
+				events = events.order_by('-date')[previous_page*results_per_page:page*results_per_page]
+			# otherwise we have incorrect dates
+			else:
+				# set a search error
+				search_error = 'Dates must be entered in YYYY-MM-DD format.'
 	# otherwise set a bank form
 	else:
 		# create the blank form
@@ -1722,7 +1722,7 @@ def events(request):
 	# get the template
 	events_template = loader.get_template('people/events.html')
 	# set the context
-	context = {
+	context = build_context({
 				'events' : events,
 				'eventsearchform' : eventsearchform,
 				'name' : name,
@@ -1730,9 +1730,8 @@ def events(request):
 				'date_from' : date_from,
 				'date_to' : date_to,
 				'page_list' : page_list,
-				'search_error' : search_error,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'search_error' : search_error
+				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))
 
@@ -1883,7 +1882,7 @@ def event_registration(request,event_id=0):
 			# and set the delimiter
 			registration_key_delimiter = ','
 	# set the context from the person based on person id
-	context = {
+	context = build_context({
 				'personsearchform' : personsearchform,
 				'addregistrationform' : addregistrationform,
 				'editregistrationform' : editregistrationform,
@@ -1892,8 +1891,10 @@ def event_registration(request,event_id=0):
 				'search_error' : search_error,
 				'event' : event,
 				'registrations' : registrations,
-				'registration_keys' : registration_keys,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
+				'registration_keys' : registration_keys
+				})
 	# return the response
 	return HttpResponse(event_registration_template.render(context=context, request=request))
+
+
+

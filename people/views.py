@@ -24,11 +24,7 @@ def index(request):
 	role_types = get_role_types_with_counts()
 	# go through the role typ
 	# set the context
-	context = {
-				'role_types' : role_types,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
-	print(role_types)
+	context = build_context({'role_types' : role_types})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
 
@@ -1079,8 +1075,9 @@ def build_context(context_dict):
 	if not context_dict.get('default_date', False):
 		# set the default date to the default
 		context_dict['default_date'] = '2010-01-01'
-	# set the site name from the environment variable
+	# set the site details from the environment variables
 	context_dict['site_name'] = os.getenv('BETTERSTART_NAME', None)
+	context_dict['nav_background'] = os.getenv('BETTERSTART_NAV','betterstart-background-local-test')
 	# return the dictionary
 	return context_dict
 

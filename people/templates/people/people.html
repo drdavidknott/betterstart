@@ -53,6 +53,7 @@
 						<th>DATE OF BIRTH:</th>
 						<th>GENDER:</th>
 						<th>ROLE:</th>
+						<th>RELATIONSHIPS:</th>
 					</tr></thead>
 					<tbody>
 				 		{% for person in people %}
@@ -70,6 +71,13 @@
 								</td>
 								<td>
 									{{ person.default_role.role_type_name }}
+								</td>
+								<td>
+									{% for rel_from in person.rel_from.all %}
+										<div>
+											{{ rel_from }}
+										</div>
+									{% endfor %}
 								</td>
 							</tr>
 						{% endfor %}

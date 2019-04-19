@@ -1,0 +1,73 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-md-12">
+			<h2>
+				Parents Without Children
+			</h2>
+		</div>
+	</div>
+
+	{% if parents_with_no_children %}
+
+		<div class="row">
+			<div class="col-md-12">
+				<table class="table table-striped panel panel-default">
+					<thead><tr>
+						<th>NAME:</th>
+						<th>DATE OF BIRTH:</th>
+						<th>GENDER:</th>
+						<th>ROLE:</th>
+					</tr></thead>
+					<tbody>
+				 		{% for person in parents_with_no_children %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'person' person.pk %}">
+										{{ person }}
+									</a>
+								</td>
+								<td>
+									{{ person.date_of_birth }}
+								</td>
+								<td>
+									{{ person.gender }}
+								</td>
+								<td>
+									{{ person.default_role.role_type_name }}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% if page_list %}
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				{% for target_page in page_list %}
+					<a href="{% url 'parents_without_children' target_page %}">
+						<button type="button" class="btn btn-secondary">{{ target_page }}</button>
+					</a>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+{% endif %}
+
+{% endblock %}
+

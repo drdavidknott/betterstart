@@ -70,11 +70,13 @@
 	 		<div class="panel-body">
 	 			<div class="col-md-12">
 		 			{% for relationship_to in relationships_to %}
-						{{ person }} is the 
-						{{ relationship_to.relationship_type }} of
-						<a href="{% url 'person' relationship_to.pk %}"> 
-							{{ relationship_to }}
-						</a>
+		 				<div>
+							{{ person }} is the 
+							{{ relationship_to.relationship_type }} of
+							<a href="{% url 'person' relationship_to.pk %}"> 
+								{{ relationship_to }}
+							</a>
+						</div>
 					{% endfor %}
 				</div>
 			</div>

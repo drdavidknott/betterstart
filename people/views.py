@@ -22,9 +22,15 @@ def index(request):
 	index_template = loader.get_template('people/index.html')
 	# get the role types
 	role_types = get_role_types_with_counts()
-	# go through the role typ
+	# get the exceptions
+	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
+	# parents_with_overdue_pregnancies = get_parents_with_overdue_pregnancies()
 	# set the context
-	context = build_context({'role_types' : role_types})
+	context = build_context({
+								'role_types' : role_types,
+								'parents_with_no_children' : len(parents_with_no_children),
+								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
+								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
 
@@ -455,6 +461,51 @@ def get_people_by_names(first_name,last_name):
 		people = people.filter(last_name__icontains=last_name)
 	# return the list of people
 	return people
+
+def get_parents_without_children():
+	# create an empty list
+	parents_with_no_children = []
+	parents_with_no_children_under_four = []
+	# get today's date
+	today = datetime.date.today()
+	# get the date four years ago
+	today_four_years_ago = today.replace(year=today.year-4)
+	# attempt to get parents with no children
+	parents = Person.objects.filter(default_role__role_type_name='Parent')
+	# exclude those with pregnancy dates in the future
+	parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
+	# order the list
+	parents = parents.order_by('last_name','first_name')
+	# now exclude those where we can find a child relationship
+	for parent in parents:
+		# attempt to get parent relationships
+		parent_relationships = parent.rel_from.filter(relationship_type__relationship_type='parent')
+		print(parent_relationships)
+		print(parent.rel_from.all())
+		for rel in parent.rel_from.all():
+			print(rel.relationship_type.relationship_type)
+		# if we didn't get a parent relationship, add the parent to the no children list
+		if not parent_relationships:
+			# append to the no children list
+			parents_with_no_children.append(parent)
+		# otherwise check how old the children are
+		else:
+			# set a flag
+			child_under_four = False
+			# go through the relationships
+			for relationship in parent_relationships:
+				# check whether the child has a date of birth
+				if relationship.relationship_to.date_of_birth != None:
+					# and whether the date is less than four years ago
+					if relationship.relationship_to.date_of_birth >= today_four_years_ago:
+						# set the flag
+						child_under_four = True
+			# see whether we got a child
+			if not child_under_four:
+				# add the parent to the list
+				parents_with_no_children_under_four.append(parent)
+	# return the results
+	return parents_with_no_children, parents_with_no_children_under_four
 
 def get_address(address_id):
 	# try to get a address using the address id
@@ -1181,6 +1232,64 @@ def people(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
+
+@login_required
+def parents_without_children(request, page=1):
+	# set a blank list
+	people = []
+	# and a blank page_list
+	page_list = []
+	# set the results per page
+	results_per_page = 25
+	# get people
+	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
+	# get the page number
+	page = int(page)
+	# figure out how many pages we have
+	page_list = get_page_list(parents_with_no_children, results_per_page)
+	# set the previous page
+	previous_page = page - 1
+	# sort and truncate the list of people
+	parents_with_no_children = parents_with_no_children[previous_page*results_per_page:page*results_per_page]
+	# get the template
+	parents_without_children_template = loader.get_template('people/parents_without_children.html')
+	# set the context
+	context = build_context({
+				'parents_with_no_children' : parents_with_no_children,
+				'page_list' : page_list,
+				})
+	# return the HttpResponse
+	return HttpResponse(parents_without_children_template.render(context=context, request=request))
+
+@login_required
+def parents_without_children_under_four(request, page=1):
+	# set a blank list
+	people = []
+	# and a blank page_list
+	page_list = []
+	# set the results per page
+	results_per_page = 25
+	# get people
+	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
+	# get the page number
+	page = int(page)
+	# figure out how many pages we have
+	page_list = get_page_list(parents_with_no_children_under_four, results_per_page)
+	# set the previous page
+	previous_page = page - 1
+	# sort and truncate the list of people
+	parents_with_no_children_under_four = \
+		parents_with_no_children_under_four[previous_page*results_per_page:page*results_per_page]
+	# get the template
+	parents_without_children_under_four_template = \
+		loader.get_template('people/parents_without_children_under_four.html')
+	# set the context
+	context = build_context({
+				'parents_with_no_children_under_four' : parents_with_no_children_under_four,
+				'page_list' : page_list,
+				})
+	# return the HttpResponse
+	return HttpResponse(parents_without_children_under_four_template.render(context=context, request=request))
 
 @login_required
 def addperson(request):

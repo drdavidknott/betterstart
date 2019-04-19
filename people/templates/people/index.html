@@ -31,6 +31,26 @@
 								</tr>
 							{% endfor %}
 						</tbody>
+						<thead><tr>
+							<th>EXCEPTION:</th>
+							<th>NUMBER:</th>
+						</tr></thead>
+						<tbody>
+							<tr>
+								<td>
+									<a href="{% url 'parents_without_children' 1 %}">Parents with no children</a>
+								</td>
+								<td>{{ parents_with_no_children }}</td>
+							</tr>
+							<tr>
+								<td>
+									<a href="{% url 'parents_without_children_under_four' 1 %}">
+										Parents with no children under four
+									</a>
+								</td>
+								<td>{{ parents_with_no_children_under_four }}</td>
+							</tr>
+						</tbody>
 					</table>
 				</div>
 			</div>

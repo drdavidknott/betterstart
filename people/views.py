@@ -1682,7 +1682,7 @@ def events(request):
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
-	results_per_page = 5
+	results_per_page = 25
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form

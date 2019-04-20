@@ -16,7 +16,7 @@
 		</div>
 	</div>
 
-	{% if parents_with_no_children %}
+	{% if parents %}
 
 		<div class="row">
 			<div class="col-md-12">
@@ -28,7 +28,7 @@
 						<th>ROLE:</th>
 					</tr></thead>
 					<tbody>
-				 		{% for person in parents_with_no_children %}
+				 		{% for person in parents %}
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'person' person.pk %}">
@@ -51,6 +51,14 @@
 			</div>
 		</div>
 
+	{% else %}
+
+		<div class="row">
+			<div class="col-md-12">
+				No parents without children under four.
+			</div>
+		</div>
+
 	{% endif %}
 
 </div>
@@ -60,7 +68,7 @@
 		<div class="row">
 			<div class="col-md-12">
 				{% for target_page in page_list %}
-					<a href="{% url 'parents_without_children' target_page %}">
+					<a href="{% url 'parents_with_no_children' target_page %}">
 						<button type="button" class="btn btn-secondary">{{ target_page }}</button>
 					</a>
 				{% endfor %}

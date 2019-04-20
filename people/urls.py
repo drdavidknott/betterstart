@@ -17,10 +17,10 @@ urlpatterns = [
     url(r'^add_relationship/(?P<person_id>[0-9]+)$', views.add_relationship, name='add_relationship'),
     url(r'^add_address/(?P<person_id>[0-9]+)$', views.add_address, name='add_address'),
     url(r'^event_registration/(?P<event_id>[0-9]+)$', views.event_registration, name='event_registration'),
-    url(r'^parents_without_children/(?P<page>[0-9]+)$',
-    	views.parents_without_children, name='parents_without_children'),
+    url(r'^parents_with_no_children/(?P<page>[0-9]+)$',
+    	views.parent_exceptions, name='parents_with_no_children'),
     url(r'^parents_without_children_under_four/(?P<page>[0-9]+)$', 
-    	views.parents_without_children_under_four, name='parents_without_children_under_four'),
+    	views.parent_exceptions, name='parents_without_children_under_four'),
     url(r'^parents_with_overdue_children/(?P<page>[0-9]+)$', 
-    	views.parents_with_overdue_children, name='parents_with_overdue_children')
+    	views.parent_exceptions, name='parents_with_overdue_children')
 ]

@@ -18,8 +18,9 @@
 			 				<div class="col-md-8">
 								{{ role_type.role_type_name }}
 							</div>
-							<div class="col-md-4">
+							<div class="col-md-2" align="right">
 									{{ role_type.count }}
+							<div class="col-md-2"></div>
 							</div>
 						{% endfor %}
 					</div>
@@ -36,26 +37,35 @@
 		 				<h4 class="panel-title">EXCEPTIONS</h4>
 		 			</div>
 			 		<div class="panel-body">
-		 				<div class="col-md-8">
-							<a href="{% url 'parents_without_children' 1 %}">Parents with no children</a>
-						</div>
-						<div class="col-md-4">
-							{{ parents_with_no_children }}
-						</div>
-						<div class="col-md-8">
-							<a href="{% url 'parents_without_children_under_four' 1 %}">
-								Parents with no children under four
-							</a>
-						</div>
-						<div class="col-md-4">
-							{{ parents_with_no_children_under_four }}
-						</div>
-						<div class="col-md-8">
-							<a href="{% url 'parents_with_overdue_children' 1 %}">Parents with overdue children</a>
-						</div>
-						<div class="col-md-4">
-							{{ parents_with_overdue_children }}
-						</div>
+			 			{% if parents_with_no_children %}
+			 				<div class="col-md-8">
+								<a href="{% url 'parents_with_no_children' 1 %}">Parents with no children</a>
+							</div>
+							<div class="col-md-2" align="right">
+								{{ parents_with_no_children }}
+							</div>
+							<div class="col-md-2"></div>
+						{% endif %}
+						{% if parents_with_no_children_under_four %}
+							<div class="col-md-8">
+								<a href="{% url 'parents_without_children_under_four' 1 %}">
+									Parents with no children under four
+								</a>
+							</div>
+							<div class="col-md-2" align="right">
+								{{ parents_with_no_children_under_four }}
+							</div>
+							<div class="col-md-2"></div>
+						{% endif %}
+						{% if parents_with_overdue_children %}
+							<div class="col-md-8">
+								<a href="{% url 'parents_with_overdue_children' 1 %}">Parents with overdue children</a>
+							</div>
+							<div class="col-md-2" align="right">
+								{{ parents_with_overdue_children }}
+							</div>
+							<div class="col-md-2"></div>
+						{% endif %}
 					</div>
 				</div>
 			</div>

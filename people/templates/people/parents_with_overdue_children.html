@@ -16,7 +16,7 @@
 		</div>
 	</div>
 
-	{% if parents_with_overdue_children %}
+	{% if parents %}
 
 		<div class="row">
 			<div class="col-md-12">
@@ -29,7 +29,7 @@
 						<th>RELATIONSHIPS:</th>
 					</tr></thead>
 					<tbody>
-				 		{% for person in parents_with_overdue_children %}
+				 		{% for person in parents %}
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'person' person.pk %}">
@@ -59,6 +59,14 @@
 						{% endfor %}
 					</tbody>
 				</table>
+			</div>
+		</div>
+
+	{% else %}
+
+		<div class="row">
+			<div class="col-md-12">
+				No parents with overdue children.
 			</div>
 		</div>
 

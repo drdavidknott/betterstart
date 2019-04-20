@@ -1239,92 +1239,46 @@ def people(request):
 	return HttpResponse(people_template.render(context=context, request=request))
 
 @login_required
-def parents_without_children(request, page=1):
-	# set a blank list
-	people = []
+def parent_exceptions(request, page=1):
+	# get the path, and figure out what we have been called as
+	path = request.get_full_path()
+	# set variables based on the type of call
+	if 'parents_with_no_children' in path:
+		# set the variables, starting with the relevant list of parents
+		parents, parents_with_no_children_under_four = get_parents_without_children()
+		# set the url
+		parent_exceptions_template = loader.get_template('people/parents_without_children.html')
+	# otherwise check for parents with no children under four
+	elif 'parents_without_children_under_four' in path:
+		# set the variables, starting with the relevant list of parents
+		parents_with_no_children, parents = get_parents_without_children()
+		# set the url
+		parent_exceptions_template = loader.get_template('people/parents_without_children_under_four.html')
+	# otherwise check for parents with overdue children
+	elif 'parents_with_overdue_children' in path:
+		# set the variables, starting with the relevant list of parents
+		parents = get_parents_with_overdue_children()
+		# set the url
+		parent_exceptions_template = loader.get_template('people/parents_with_overdue_children.html')
 	# and a blank page_list
 	page_list = []
 	# set the results per page
 	results_per_page = 25
-	# get people
-	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
 	# get the page number
 	page = int(page)
 	# figure out how many pages we have
-	page_list = get_page_list(parents_with_no_children, results_per_page)
+	page_list = get_page_list(parents, results_per_page)
 	# set the previous page
 	previous_page = page - 1
 	# sort and truncate the list of people
-	parents_with_no_children = parents_with_no_children[previous_page*results_per_page:page*results_per_page]
-	# get the template
-	parents_without_children_template = loader.get_template('people/parents_without_children.html')
+	parents = parents[previous_page*results_per_page:page*results_per_page]
 	# set the context
 	context = build_context({
-				'parents_with_no_children' : parents_with_no_children,
+				'parents' : parents,
 				'page_list' : page_list,
 				})
 	# return the HttpResponse
-	return HttpResponse(parents_without_children_template.render(context=context, request=request))
-
-@login_required
-def parents_without_children_under_four(request, page=1):
-	# set a blank list
-	people = []
-	# and a blank page_list
-	page_list = []
-	# set the results per page
-	results_per_page = 25
-	# get people
-	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
-	# get the page number
-	page = int(page)
-	# figure out how many pages we have
-	page_list = get_page_list(parents_with_no_children_under_four, results_per_page)
-	# set the previous page
-	previous_page = page - 1
-	# sort and truncate the list of people
-	parents_with_no_children_under_four = \
-		parents_with_no_children_under_four[previous_page*results_per_page:page*results_per_page]
-	# get the template
-	parents_without_children_under_four_template = \
-		loader.get_template('people/parents_without_children_under_four.html')
-	# set the context
-	context = build_context({
-				'parents_with_no_children_under_four' : parents_with_no_children_under_four,
-				'page_list' : page_list,
-				})
-	# return the HttpResponse
-	return HttpResponse(parents_without_children_under_four_template.render(context=context, request=request))
-
-@login_required
-def parents_with_overdue_children(request, page=1):
-	# set a blank list
-	people = []
-	# and a blank page_list
-	page_list = []
-	# set the results per page
-	results_per_page = 25
-	# get people
-	parents_with_overdue_children = get_parents_with_overdue_children()
-	# get the page number
-	page = int(page)
-	# figure out how many pages we have
-	page_list = get_page_list(parents_with_overdue_children, results_per_page)
-	# set the previous page
-	previous_page = page - 1
-	# sort and truncate the list of people
-	parents_with_overdue_children = \
-		parents_with_overdue_children[previous_page*results_per_page:page*results_per_page]
-	# get the template
-	parents_with_overdue_children_template = \
-		loader.get_template('people/parents_with_overdue_children.html')
-	# set the context
-	context = build_context({
-				'parents_with_overdue_children' : parents_with_overdue_children,
-				'page_list' : page_list,
-				})
-	# return the HttpResponse
-	return HttpResponse(parents_with_overdue_children_template.render(context=context, request=request))
+	return HttpResponse(parent_exceptions_template.render(context=context, request=request))
 
 @login_required
 def addperson(request):

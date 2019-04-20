@@ -16,7 +16,7 @@
 		</div>
 	</div>
 
-	{% if parents_with_no_children_under_four %}
+	{% if parents %}
 
 		<div class="row">
 			<div class="col-md-12">
@@ -28,7 +28,7 @@
 						<th>RELATIONSHIPS:</th>
 					</tr></thead>
 					<tbody>
-				 		{% for person in parents_with_no_children_under_four %}
+				 		{% for person in parents %}
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'person' person.pk %}">
@@ -55,6 +55,14 @@
 						{% endfor %}
 					</tbody>
 				</table>
+			</div>
+		</div>
+
+	{% else %}
+
+		<div class="row">
+			<div class="col-md-12">
+				No parents without children under four.
 			</div>
 		</div>
 

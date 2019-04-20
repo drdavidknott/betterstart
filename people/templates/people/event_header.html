@@ -2,7 +2,7 @@
 		<div class="col-md-12">
 			<h2>
 				<a href="{% url 'event_registration' event.pk %}">
-					{{ event }}
+					{{ event.name }} at {{ event.start_time }} on {{ event.date }}
 				</a>
 			</h2>
 		</div>

@@ -174,6 +174,19 @@ class PersonSearchForm(forms.Form):
 		# set the choices
 		self.fields['role_type'].choices = role_type_list
 
+class PersonNameSearchForm(forms.Form):
+	# Define the fields that we need in the form.
+	first_name = forms.CharField(
+									label="First name",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	last_name = forms.CharField(
+									label="Surname",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+
 class AddRelationshipForm(forms.Form):
 	# Define the choices for gender
 	gender_choices = (

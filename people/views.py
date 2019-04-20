@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
-					EditRegistrationForm, LoginForm, EventSearchForm, EventForm
+					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -1520,7 +1520,7 @@ def add_relationship(request,person_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = get_people_by_names(first_name,last_name)
+				people = get_people_by_names_and_role(first_name,last_name)
 				# remove the people who already have a relationship
 				search_results = remove_existing_relationships(person, people)
 				# if there are search results, create a form to create relationships from the search results
@@ -1758,10 +1758,10 @@ def addevent(request):
 								end_time = addeventform.cleaned_data['end_time'],
 								event_type_id = addeventform.cleaned_data['event_type']
 								)
-			# if we were successful, clear the form
+			# if we were successful, redirect to the registration page
 			if event:
 				# create a fresh form
-				addeventform = EventForm(event_types=event_types)
+				return redirect('/event_registration/' + str(event.pk))
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
@@ -1770,7 +1770,8 @@ def addevent(request):
 	addevent_template = loader.get_template('people/addevent.html')
 	# set the context
 	context = build_context({
-				'addeventform' : addeventform
+				'addeventform' : addeventform,
+				'default_date' : datetime.date.today().strftime('%Y-%m-%d')
 				})
 	# return the HttpResponse
 	return HttpResponse(addevent_template.render(context=context, request=request))
@@ -1959,7 +1960,7 @@ def event_registration(request,event_id=0):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(request.POST)
+		personsearchform = PersonNameSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
@@ -1970,8 +1971,8 @@ def event_registration(request,event_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = get_people_by_names(first_name,last_name)
-				# remove the people who already have a relationship
+				people = get_people_by_names_and_role(first_name,last_name)
+				# remove the people who already have a registration
 				search_results = remove_existing_registrations(event, people)
 				# if there are search results, create a form to create relationships from the search results
 				if search_results:
@@ -2048,7 +2049,7 @@ def event_registration(request,event_id=0):
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
-		personsearchform = PersonSearchForm()
+		personsearchform = PersonNameSearchForm()
 	# update the existing registrations: there may be new ones
 	registrations = get_event_registrations(event)
 	# if there are registrations, create the form

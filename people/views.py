@@ -24,12 +24,14 @@ def index(request):
 	role_types = get_role_types_with_counts()
 	# get the exceptions
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
-	# parents_with_overdue_pregnancies = get_parents_with_overdue_pregnancies()
+	# get parents with overdue children
+	parents_with_overdue_children = get_parents_with_overdue_children()
 	# set the context
 	context = build_context({
 								'role_types' : role_types,
 								'parents_with_no_children' : len(parents_with_no_children),
 								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
+								'parents_with_overdue_children' : len(parents_with_overdue_children)
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
@@ -480,10 +482,6 @@ def get_parents_without_children():
 	for parent in parents:
 		# attempt to get parent relationships
 		parent_relationships = parent.rel_from.filter(relationship_type__relationship_type='parent')
-		print(parent_relationships)
-		print(parent.rel_from.all())
-		for rel in parent.rel_from.all():
-			print(rel.relationship_type.relationship_type)
 		# if we didn't get a parent relationship, add the parent to the no children list
 		if not parent_relationships:
 			# append to the no children list
@@ -506,6 +504,13 @@ def get_parents_without_children():
 				parents_with_no_children_under_four.append(parent)
 	# return the results
 	return parents_with_no_children, parents_with_no_children_under_four
+
+def get_parents_with_overdue_children():
+	# return a list of parents with a pregnancy flag and a due date before today
+	return Person.objects.filter(
+									pregnant=True,
+									due_date__lt=datetime.date.today()
+									)
 
 def get_address(address_id):
 	# try to get a address using the address id
@@ -1292,6 +1297,36 @@ def parents_without_children_under_four(request, page=1):
 	return HttpResponse(parents_without_children_under_four_template.render(context=context, request=request))
 
 @login_required
+def parents_with_overdue_children(request, page=1):
+	# set a blank list
+	people = []
+	# and a blank page_list
+	page_list = []
+	# set the results per page
+	results_per_page = 25
+	# get people
+	parents_with_overdue_children = get_parents_with_overdue_children()
+	# get the page number
+	page = int(page)
+	# figure out how many pages we have
+	page_list = get_page_list(parents_with_overdue_children, results_per_page)
+	# set the previous page
+	previous_page = page - 1
+	# sort and truncate the list of people
+	parents_with_overdue_children = \
+		parents_with_overdue_children[previous_page*results_per_page:page*results_per_page]
+	# get the template
+	parents_with_overdue_children_template = \
+		loader.get_template('people/parents_with_overdue_children.html')
+	# set the context
+	context = build_context({
+				'parents_with_overdue_children' : parents_with_overdue_children,
+				'page_list' : page_list,
+				})
+	# return the HttpResponse
+	return HttpResponse(parents_with_overdue_children_template.render(context=context, request=request))
+
+@login_required
 def addperson(request):
 	# create a blank list of matching people
 	matching_people = []
@@ -1873,8 +1908,6 @@ def event_registration(request,event_id=0):
 	registration_key_delimiter = ''
 	# check whether this is a post
 	if request.method == 'POST':
-		for item in request.POST.items():
-			print(item)
 		# create a search form
 		personsearchform = PersonSearchForm(request.POST)
 		# check what type of submission we got

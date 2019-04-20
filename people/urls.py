@@ -21,4 +21,6 @@ urlpatterns = [
     	views.parents_without_children, name='parents_without_children'),
     url(r'^parents_without_children_under_four/(?P<page>[0-9]+)$', 
     	views.parents_without_children_under_four, name='parents_without_children_under_four'),
+    url(r'^parents_with_overdue_children/(?P<page>[0-9]+)$', 
+    	views.parents_with_overdue_children, name='parents_with_overdue_children')
 ]

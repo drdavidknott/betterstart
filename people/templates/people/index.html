@@ -6,56 +6,60 @@
 
  {% block content %}
 
-  	<div class="row col-md-12">
-  		<div class="col-md-3"></div>
-  		<div class="col-md-6">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">PEOPLE</h4>
-	 			</div>
-		 		<div class="panel-body">
-					<table class="table table-striped panel panel-default">
-						<thead><tr>
-							<th>ROLE:</th>
-							<th>NUMBER:</th>
-						</tr></thead>
-						<tbody>
-					 		{% for role_type in role_types %}
-				 				<tr>
-									<td>
-										{{ role_type.role_type_name }}
-									</td>
-									<td>
-										{{ role_type.count }}
-									</td>
-								</tr>
-							{% endfor %}
-						</tbody>
-						<thead><tr>
-							<th>EXCEPTION:</th>
-							<th>NUMBER:</th>
-						</tr></thead>
-						<tbody>
-							<tr>
-								<td>
-									<a href="{% url 'parents_without_children' 1 %}">Parents with no children</a>
-								</td>
-								<td>{{ parents_with_no_children }}</td>
-							</tr>
-							<tr>
-								<td>
-									<a href="{% url 'parents_without_children_under_four' 1 %}">
-										Parents with no children under four
-									</a>
-								</td>
-								<td>{{ parents_with_no_children_under_four }}</td>
-							</tr>
-						</tbody>
-					</table>
+ 	<div class="row col-md-12">
+ 		<div class="col-md-3"></div>
+ 			<div class="col-md-6">
+	 			<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">ROLES</h4>
+		 			</div>
+			 		<div class="panel-body">
+			 			{% for role_type in role_types %}
+			 				<div class="col-md-8">
+								{{ role_type.role_type_name }}
+							</div>
+							<div class="col-md-4">
+									{{ role_type.count }}
+							</div>
+						{% endfor %}
+					</div>
 				</div>
 			</div>
-		</div>
-		<div class="col-md-3"></div>
+		 <div class="col-md-3"></div>
+	</div>
+
+	 <div class="row col-md-12">
+ 		<div class="col-md-3"></div>
+ 			<div class="col-md-6">
+	 			<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">EXCEPTIONS</h4>
+		 			</div>
+			 		<div class="panel-body">
+		 				<div class="col-md-8">
+							<a href="{% url 'parents_without_children' 1 %}">Parents with no children</a>
+						</div>
+						<div class="col-md-4">
+							{{ parents_with_no_children }}
+						</div>
+						<div class="col-md-8">
+							<a href="{% url 'parents_without_children_under_four' 1 %}">
+								Parents with no children under four
+							</a>
+						</div>
+						<div class="col-md-4">
+							{{ parents_with_no_children_under_four }}
+						</div>
+						<div class="col-md-8">
+							<a href="{% url 'parents_with_overdue_children' 1 %}">Parents with overdue children</a>
+						</div>
+						<div class="col-md-4">
+							{{ parents_with_overdue_children }}
+						</div>
+					</div>
+				</div>
+			</div>
+		 <div class="col-md-3"></div>
 	</div>
 
  {% endblock %}

@@ -15,13 +15,15 @@
 		 			</div>
 			 		<div class="panel-body">
 			 			{% for role_type in role_types %}
-			 				<div class="col-md-8">
-								{{ role_type.role_type_name }}
-							</div>
-							<div class="col-md-2" align="right">
-									{{ role_type.count }}
-							<div class="col-md-2"></div>
-							</div>
+			 				{% if role_type.count != 0 %}
+				 				<div class="col-md-8">
+									<a href="{% url 'people_type' role_type.pk %}">{{ role_type.role_type_name }}</a>
+								</div>
+								<div class="col-md-2" align="right">
+										{{ role_type.count }}
+								<div class="col-md-2"></div>
+								</div>
+							{% endif %}
 						{% endfor %}
 					</div>
 				</div>

@@ -8,17 +8,13 @@
 
 <div class="container">
 	
-	<div class="row">
-		<div class="col-md-12">
-			<h2>{{ event.name }}</h2>
-		</div>
-	</div>
+	{% include "people/event_header.html" %}
 
  	<div class="row col-md-12">
  		<div class="panel panel-default">
  			<div class="panel-heading">
  				<h4 class="panel-title">
- 					<a href="{% url 'event' event.pk %}">EVENT DETAILS</a>
+ 					<a href="{% url 'edit_event' event.pk %}">EVENT DETAILS</a>
  				</h4>
  			</div>
 	 		<div class="panel-body">
@@ -29,6 +25,10 @@
 	 			<div>
 		 			<div class="col-md-2">Description:</div>
 		 			<div class="col-md-10">{{ event.description }}&nbsp</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-md-2">Location:</div>
+		 			<div class="col-md-10">{{ event.location }}&nbsp</div>
 		 		</div>
 	 			<div>
 		 			<div class="col-md-2">Type:</div>

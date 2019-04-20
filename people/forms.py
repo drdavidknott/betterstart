@@ -154,6 +154,25 @@ class PersonSearchForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	role_type = forms.ChoiceField(
+									label="Role",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull the choices field out of the parameters
+		role_types = kwargs.pop('role_types')
+		# call the built in constructor
+		super(PersonSearchForm, self).__init__(*args, **kwargs)
+		# set the choice field for role types
+		role_type_list = []
+		# add in a default value
+		role_type_list.append((0,'Any'))
+		# go through the role types
+		for role_type in role_types:
+			# append a list of value and display value to the list
+			role_type_list.append((role_type.pk, role_type.role_type_name))
+		# set the choices
+		self.fields['role_type'].choices = role_type_list
 
 class AddRelationshipForm(forms.Form):
 	# Define the choices for gender
@@ -306,7 +325,7 @@ class AddAddressForm(forms.Form):
 									max_length=10,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 
-class AddEventForm(forms.Form):
+class EventForm(forms.Form):
 	# Define the fields that we need in the form to capture the event
 	name = forms.CharField(
 									label="Name",
@@ -316,6 +335,11 @@ class AddEventForm(forms.Form):
 									label="Description",
 									max_length=1000,
 									widget=forms.Textarea(attrs={'class' : 'form-control', 'cols' : 100, 'rows' : 6}))
+	location = forms.CharField(
+									label="Location",
+									max_length=50,
+									required=False, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	event_type = forms.ChoiceField(
 									label="Event Type",
 									widget=forms.Select())
@@ -336,7 +360,7 @@ class AddEventForm(forms.Form):
 		# pull the choices field out of the parameters
 		event_types = kwargs.pop('event_types')
 		# call the built in constructor
-		super(AddEventForm, self).__init__(*args, **kwargs)
+		super(EventForm, self).__init__(*args, **kwargs)
 		# set the choice field for event types
 		event_type_list = []
 		# go through the event types

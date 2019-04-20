@@ -8,8 +8,8 @@ import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
-					AddAddressForm, AddressSearchForm, AddEventForm, AddRegistrationForm, \
-					EditRegistrationForm, LoginForm, EventSearchForm
+					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
+					EditRegistrationForm, LoginForm, EventSearchForm, EventForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -450,7 +450,7 @@ def get_people_by_name(first_name,last_name):
 	# return the people
 	return people
 
-def get_people_by_names(first_name,last_name):
+def get_people_by_names_and_role(first_name='',last_name='',role_type=0):
 	# get all people
 	people = Person.objects.all()
 	# check whether we have a first name
@@ -461,6 +461,10 @@ def get_people_by_names(first_name,last_name):
 	if last_name:
 		# filter by the name
 		people = people.filter(last_name__icontains=last_name)
+	# if we have a role type, filter by the role type
+	if role_type != 0:
+		# apply the filter
+		people = people.filter(default_role_id=role_type)
 	# return the list of people
 	return people
 
@@ -815,11 +819,12 @@ def create_relationship(person_from, person_to, relationship_type_from):
 	# that's it!
 	return success
 
-def create_event(name, description, date, start_time, end_time, event_type):
+def create_event(name, description, date, start_time, end_time, event_type, location):
 	# create an event
 	event = Event(
 					name = name,
 					description = description,
+					location = location,
 					date = date,
 					start_time = start_time,
 					end_time = end_time,
@@ -950,7 +955,7 @@ def remove_residence(request, person, address):
 	# return with no parameters
 	return
 
-def build_event(request, name, description, date, start_time, end_time, event_type_id):
+def build_event(request, name, description, date, start_time, end_time, event_type_id, location):
 	# get the event type
 	event_type = get_event_type(event_type_id)
 	# if we got an event type, create the event
@@ -959,6 +964,7 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 		event = create_event(
 								name = name,
 								description = description,
+								location = location,
 								date = date,
 								start_time = start_time,
 								end_time = end_time,
@@ -1195,6 +1201,7 @@ def people(request):
 	# and blank search terms
 	first_name = ''
 	last_name = ''
+	role_type = 0
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1202,7 +1209,7 @@ def people(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(request.POST)
+		personsearchform = PersonSearchForm(request.POST,role_types=get_role_types())
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
@@ -1210,8 +1217,13 @@ def people(request):
 			# get the names
 			first_name = personsearchform.cleaned_data['first_name']
 			last_name = personsearchform.cleaned_data['last_name']
+			role_type = personsearchform.cleaned_data['role_type']
 			# conduct a search
-			people = get_people_by_names(first_name,last_name)
+			people = get_people_by_names_and_role(
+													first_name=first_name,
+													last_name=last_name,
+													role_type=int(role_type)
+													)
 			# get the page number
 			page = int(request.POST['page'])
 			# figure out how many pages we have
@@ -1223,7 +1235,7 @@ def people(request):
 	# otherwise set a bank form
 	else:
 		# create the blank form
-		personsearchform = PersonSearchForm()
+		personsearchform = PersonSearchForm(role_types=get_role_types())
 	# get the template
 	people_template = loader.get_template('people/people.html')
 	# set the context
@@ -1233,10 +1245,28 @@ def people(request):
 				'page_list' : page_list,
 				'first_name' : first_name,
 				'last_name' : last_name,
+				'role_type' : role_type,
 				'search_error' : search_error
 				})
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
+
+@login_required
+def people_type(request, role_type):
+	# copy the request
+	copy_POST = request.POST.copy()
+	# set search terms for a people search
+	copy_POST['action'] = 'search'
+	copy_POST['role_type'] = role_type
+	copy_POST['first_name'] = ''
+	copy_POST['last_name'] = ''
+	copy_POST['page'] = '1'
+	# now copy it back
+	request.POST = copy_POST
+	# and set the method
+	request.method = 'POST'
+	# now call the people view
+	return people(request)
 
 @login_required
 def parent_exceptions(request, page=1):
@@ -1714,7 +1744,7 @@ def addevent(request):
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
-		addeventform = AddEventForm(request.POST, event_types=event_types)
+		addeventform = EventForm(request.POST, event_types=event_types)
 		# check whether the form is valid
 		if addeventform.is_valid():
 			# create the event
@@ -1722,6 +1752,7 @@ def addevent(request):
 								request,
 								name = addeventform.cleaned_data['name'],
 								description = addeventform.cleaned_data['description'],
+								location = addeventform.cleaned_data['location'],
 								date = addeventform.cleaned_data['date'],
 								start_time = addeventform.cleaned_data['start_time'],
 								end_time = addeventform.cleaned_data['end_time'],
@@ -1730,11 +1761,11 @@ def addevent(request):
 			# if we were successful, clear the form
 			if event:
 				# create a fresh form
-				addeventform = AddEventForm(event_types=event_types)
+				addeventform = EventForm(event_types=event_types)
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		addeventform = AddEventForm(event_types=event_types)
+		addeventform = EventForm(event_types=event_types)
 	# get the template
 	addevent_template = loader.get_template('people/addevent.html')
 	# set the context
@@ -1829,6 +1860,71 @@ def events(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))
+
+@login_required
+def edit_event(request, event_id=0):
+	# try to get the event
+	event = get_event(event_id)
+	# if there isn't an event, crash to a banner
+	if not event:
+		return make_banner(request, 'Event does not exist.')
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a form
+		editeventform = EventForm(
+									request.POST,
+									event_types=get_event_types()
+									)
+		# check whether the entry is valid
+		if editeventform.is_valid():
+			# update the event object
+			event.name = editeventform.cleaned_data['name']
+			event.description = editeventform.cleaned_data['description']
+			event.location = editeventform.cleaned_data['location']
+			event.date = editeventform.cleaned_data['date']
+			event.start_time = editeventform.cleaned_data['start_time']
+			event.end_time = editeventform.cleaned_data['end_time']
+			# attempt to get the event type
+			event_type = get_event_type(editeventform.cleaned_data['event_type'])
+			# set the value for the event
+			if event_type:
+				# set the value
+				event.event_type = event_type
+			# otherwise crash out to a banner
+			else:
+				# set the banner
+				return make_banner(request, 'Event type does not exist.')
+			# save the record
+			event.save()
+			# set a success message
+			messages.success(request, str(event) + ' updated.')
+			# send the user back to the main person page
+			return redirect('/event/' + str(event.pk))
+	else:
+		# there is an event, so build a dictionary of initial values we want to set
+		event_dict = {
+						'name' : event.name,
+						'description' : event.description,
+						'location' : event.location,
+						'date' : event.date,
+						'start_time' : event.start_time,
+						'end_time' : event.end_time,
+						'event_type' : event.event_type.pk
+						}
+		# create the form
+		editeventform = EventForm(
+									event_dict,
+									event_types=get_event_types()
+									)
+	# load the template
+	edit_event_template = loader.get_template('people/edit_event.html')
+	# set the context
+	context = build_context({
+				'editeventform' : editeventform,
+				'event' : event
+				})
+	# return the response
+	return HttpResponse(edit_event_template.render(context, request))
 
 @login_required
 def event_registration(request,event_id=0):

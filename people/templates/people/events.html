@@ -55,6 +55,7 @@
 				<table class="table table-striped panel panel-default">
 					<thead><tr>
 						<th>NAME:</th>
+						<th>LOCATION:</th>
 						<th>DATE:</th>
 						<th>START TIME:</th>
 						<th>END TIME:</th>
@@ -67,6 +68,9 @@
 			 						<a href="{% url 'event' event.pk %}">
 										{{ event.name }}
 									</a>
+								</td>
+								<td>
+									{{ event.location }}
 								</td>
 								<td>
 									{{ event.date }}

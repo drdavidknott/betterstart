@@ -307,10 +307,10 @@ class Event_Registration(models.Model):
 class Answer(models.Model):
 	option = models.ForeignKey(Option, on_delete=models.CASCADE)
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	question = models.ForeignKey(Question, on_delete=models.CASCADE)
 	# define the function that will return the option label as the object reference
 	def __str__(self):
-		return self.person.first_name + ' ' + self.person.last_name + ': ' + \
-		self.option.question.question_text + ' ' + self.option.option_label
+		return self.question.question_text + ': ' + self.option.option_label
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'answers'

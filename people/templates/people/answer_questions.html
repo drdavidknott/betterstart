@@ -1,0 +1,46 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+	{% include "people/person_header.html" %}
+
+ 	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">Answer Questions</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'answer_questions' person.pk %}" method="post">
+						{% csrf_token %}
+						{% for field in answerquestionsform %}
+							{% if field.is_hidden %}
+								{{ field }}
+							{% else %}
+								<div class = "row form-group">
+									<div class = "col-md-8">{{ field.label }}</b></div>
+									<div class = "col-md-4">{{ field }}</div>
+								</div>
+							{% endif %}
+						{% endfor %}
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+{% endblock %}
+

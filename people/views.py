@@ -2,14 +2,15 @@ from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
-					Event_Category, Event_Registration, Capture_Type
+					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option
 import os
 import csv
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
-					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm
+					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
+					AnswerQuestionsForm
 from .utilities import get_page_list, make_banner
 from django.contrib import messages
 from django.urls import reverse
@@ -740,6 +741,65 @@ def get_relationship_from_and_to(person_from, person_to):
 	# return the results
 	return relationship_from, relationship_to
 
+def get_question(question_id):
+	# try to get a question
+	try:
+		question = Question.objects.get(pk=question_id)
+	# handle the exception
+	except Question.DoesNotExist:
+		# set a false value
+		question = False
+	# return the role type
+	return question
+
+def get_option(option_id):
+	# try to get a option
+	try:
+		option = Option.objects.get(pk=option_id)
+	# handle the exception
+	except Option.DoesNotExist:
+		# set a false value
+		option = False
+	# return the role type
+	return option
+
+def get_questions_and_answers(person):
+	# this function gets a list of questions, and adds the answers relevant to the person
+	# get the list of questions
+	questions = Question.objects.all()
+	# get the options for each question
+	for question in questions:
+		# get the answers and stash it in the object
+		question.options = question.option_set.all()
+		# set a default answer
+		question.answer = 0
+		# now try to get an answer
+		answer = get_answer(
+							person=person,
+							question=question
+							)
+		# check whether we got an answer
+		if answer:
+			# set the answer
+			question.answer = answer.option.pk
+	# return the results
+	return questions
+
+def get_answer(person,question):
+	# try to get an answer
+	try:
+		# do the database query
+		answer = Answer.objects.get(
+									person=person,
+									question=question
+									)
+	# handle the exception
+	except Answer.DoesNotExist:
+		# set a false value
+		answer = False
+	# return the value
+	return answer
+
 def create_person(
 					first_name,
 					middle_names,
@@ -1057,6 +1117,60 @@ def remove_registration(request, event, person_id):
 		messages.error(request,'Registration does not exist.')
 	# return with no parameters
 	return
+
+def build_answer(request, person, question_id, option_id):
+	# attempt to get the question
+	question = get_question(question_id)
+	# deal with exceptions if we didn't get a question
+	if not question:
+		# set the error
+		messages.error(request,'Could not create answer: question' + str(question_id) + ' does not exist.')
+		# and crash out
+		return False
+	# check that we have a valid option
+	if option_id != 0:
+		# get the option
+		option = get_option(option_id)
+		# deal with exceptions if we didn't get an option
+		if not option:
+			# set the error
+			messages.error(request,'Could not create answer: option ' + str(option_id) + ' does not exist.')
+			# and crash out
+			return False
+	# see whether we have an answer
+	answer = get_answer(person,question)
+	# if we got an answer, check what we have been asked to do to it
+	if answer:
+		# see whether we have an option id
+		if option_id == 0:
+			# save the answer text
+			answer_text = str(answer)
+			# we have been asked to delete the answer
+			answer.delete()
+			# and set the message
+			messages.success(request,answer_text + ' - deleted successfully.')
+		# otherwise we have been asked to set an option
+		elif answer.option.pk != option_id:
+			# we have been asked to update the answer
+			answer.option = option
+			# save the answer
+			answer.save()
+			# and set the message
+			messages.success(request,str(answer) + ' - updated successfully.')
+	# otherwise we have to do a creation if we have an option id
+	elif option_id != 0:
+		# create the answer
+		answer = Answer(
+						person = person,
+						option = option,
+						question = question
+						)
+		# save the answer
+		answer.save()
+		# and set the message
+		messages.success(request,str(answer) + ' - created successfully.')
+	# and we're done
+	return answer
 
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
@@ -1392,7 +1506,8 @@ def person(request, person_id=0):
 				'person' : person,
 				'relationships_to' : relationships_to,
 				'addresses' : person.addresses.all(),
-				'registrations' : person.events.all()
+				'registrations' : person.events.all(),
+				'answers' : person.answers.all()
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -2085,6 +2200,42 @@ def event_registration(request,event_id=0):
 				})
 	# return the response
 	return HttpResponse(event_registration_template.render(context=context, request=request))
+
+@login_required
+def answer_questions(request,person_id=0):
+	# this view enables people to answer a dynamic set of questions from the database
+	# load the template
+	answer_questions_template = loader.get_template('people/answer_questions.html')
+	# get the person
+	person = get_person(person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# get the questions, with the answers included as an attribute
+	questions = get_questions_and_answers(person)
+	# build the form
+	if request.method == 'POST':
+		# build the form
+		answerquestionsform = AnswerQuestionsForm(request.POST,questions=questions)
+		# go through the fields
+		for field in answerquestionsform.fields:
+			# get the question id from the field name
+			question_id = int(extract_id(field))
+			# get the option id from the value of the field
+			option_id = int(answerquestionsform.data[field])
+			# build the answer
+			build_answer(request,person,question_id,option_id)
+	# otherwise create an empty form
+	else:
+		# create the empty form
+		answerquestionsform = AnswerQuestionsForm(questions=questions)
+	# set the context from the person based on person id
+	context = build_context({
+				'person' : person,
+				'answerquestionsform' : answerquestionsform
+				})
+	# return the response
+	return HttpResponse(answer_questions_template.render(context=context, request=request))
 
 
 

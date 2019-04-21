@@ -508,3 +508,30 @@ class EventSearchForm(forms.Form):
 			event_type_list.append((event_type.pk, event_type.name))
 		# set the choices
 		self.fields['event_type'].choices = event_type_list
+
+class AnswerQuestionsForm(forms.Form):
+	# over-ride the built in __init__ method so that we can add fields dynamically
+	def __init__(self, *args, **kwargs):
+		# pull the questions out of the parameters
+		questions = kwargs.pop('questions')
+		# call the built in constructor
+		super(AnswerQuestionsForm, self).__init__(*args, **kwargs)
+		# now through the questions and build fields
+		for question in questions:
+			# set the field name
+			field_name = 'question_' + str(question.pk)
+			# set an empty option list
+			option_list = []
+			# set the non-answer
+			option_list.append((0,'No answer'))
+			# now build the options
+			for option in question.options:
+				# set the value
+				option_list.append((option.pk,option.option_label))
+				# create the field
+				self.fields[field_name]= forms.ChoiceField(
+															label=question.question_text,
+															widget=forms.Select(),
+															choices=option_list,
+															initial=question.answer
+															)

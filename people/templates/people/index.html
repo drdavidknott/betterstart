@@ -23,10 +23,19 @@
 							</div>
 							<div class="col-md-2" align="right">
 									{{ role_type.count }}
-							<div class="col-md-2"></div>
 							</div>
+							<div class="col-md-2"></div>
 						{% endif %}
 					{% endfor %}
+					<strong>
+						<div class="col-md-8">
+							TOTAL:
+						</div>
+						<div class="col-md-2" align="right">
+							{{ total_people }}
+						</div>
+						<div class="col-md-2"></div>
+					</strong>
 				</div>
 			</div>
  			<div class="panel panel-default">
@@ -70,7 +79,10 @@
 		<div class="col-md-4">
  			<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">EVENTS: {{ dashboard_dates.first_day_of_this_month|date:'F' }}</h4>
+	 				<h4 class="panel-title">
+	 					<a href="{% url 'event_type_this_month' 0 %}">
+	 						EVENTS: {{ dashboard_dates.first_day_of_this_month|date:'F' }}</h4>
+	 					</a>
 	 			</div>
 		 		<div class="panel-body">
 					<div class="col-md-5"></div>
@@ -89,11 +101,25 @@
 							</div>
 						{% endif %}
 					{% endfor %}
+					<strong>
+						<div class="col-md-5">
+							TOTAL:
+						</div>
+						<div class="col-md-3" align="right">
+							{{ event_dashboard.this_month_registered_total }}
+						</div>
+						<div class="col-md-4" align="right">
+							{{ event_dashboard.this_month_participated_total }}
+						</div>
+					</strong>
 				</div>
 			</div>
  			<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">EVENTS: {{ dashboard_dates.first_day_of_last_month|date:'F' }}</h4>
+	 				<h4 class="panel-title">
+	 					<a href="{% url 'event_type_last_month' 0 %}">
+	 						EVENTS: {{ dashboard_dates.first_day_of_last_month|date:'F' }}</h4>
+	 					</a>
 	 			</div>
 		 		<div class="panel-body">
 					<div class="col-md-5"></div>
@@ -112,11 +138,25 @@
 							</div>
 						{% endif %}
 					{% endfor %}
+					<strong>
+						<div class="col-md-5">
+							TOTAL:
+						</div>
+						<div class="col-md-3" align="right">
+							{{ event_dashboard.last_month_registered_total }}
+						</div>
+						<div class="col-md-4" align="right">
+							{{ event_dashboard.last_month_participated_total }}
+						</div>
+					</strong>
 				</div>
 			</div>
  			<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">EVENTS: Since {{ dashboard_dates.first_day_of_this_year|date:'d M Y' }}</h4>
+	 				<h4 class="panel-title">
+	 					<a href="{% url 'event_type_this_year' 0 %}">
+	 						EVENTS: Since {{ dashboard_dates.first_day_of_this_year|date:'d M Y' }}</h4>
+	 					</a>
 	 			</div>
 		 		<div class="panel-body">
 					<div class="col-md-5"></div>
@@ -135,11 +175,22 @@
 							</div>
 						{% endif %}
 					{% endfor %}
+					<strong>
+						<div class="col-md-5">
+							TOTAL:
+						</div>
+						<div class="col-md-3" align="right">
+							{{ event_dashboard.this_year_registered_total }}
+						</div>
+						<div class="col-md-4" align="right">
+							{{ event_dashboard.this_year_participated_total }}
+						</div>
+					</strong>
 				</div>
 			</div>
  			<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">EVENTS: ALL TIME</h4>
+	 				<h4 class="panel-title"><a href="{% url 'event_type' 0 %}">EVENTS: ALL TIME</a></h4>
 	 			</div>
 		 		<div class="panel-body">
 					<div class="col-md-5"></div>
@@ -158,6 +209,17 @@
 							</div>
 						{% endif %}
 					{% endfor %}
+					<strong>
+						<div class="col-md-5">
+							TOTAL:
+						</div>
+						<div class="col-md-3" align="right">
+							{{ event_dashboard.all_time_registered_total }}
+						</div>
+						<div class="col-md-4" align="right">
+							{{ event_dashboard.all_time_participated_total }}
+						</div>
+					</strong>
 				</div>
 			</div>
 		</div>

@@ -33,6 +33,7 @@ def index(request):
 	# set the context
 	context = build_context({
 								'role_types' : role_types,
+								'total_people' : Person.objects.all().count(),
 								'parents_with_no_children' : len(parents_with_no_children),
 								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
 								'parents_with_overdue_children' : len(parents_with_overdue_children),
@@ -662,15 +663,34 @@ def get_dashboard_event_counts(
 								):
 	# create the empty dictionary
 	dashboard_dict = {}
-	# get the event counts for use on the dashboard
+	# get the event counts and totals for use on the dashboard
 	dashboard_dict['all_time'] = get_event_types_with_counts()
+	dashboard_dict = get_dashboard_totals(dashboard_dict, 'all_time')
 	dashboard_dict['this_year'] = get_event_types_with_counts(date_from=first_day_of_this_year)
+	dashboard_dict = get_dashboard_totals(dashboard_dict, 'this_year')
 	dashboard_dict['last_month'] = get_event_types_with_counts(
 																date_from=first_day_of_last_month,
 																date_to=last_day_of_last_month
 																)
+	dashboard_dict = get_dashboard_totals(dashboard_dict, 'last_month')
 	dashboard_dict['this_month'] = get_event_types_with_counts(date_from=first_day_of_this_month)
+	dashboard_dict = get_dashboard_totals(dashboard_dict, 'this_month')
 	# now return the dictionary
+	return dashboard_dict
+
+def get_dashboard_totals(dashboard_dict,dashboard_name):
+	# create 0 values
+	registered_total = 0
+	participated_total = 0
+	# go through the list
+	for event_type_with_counts in dashboard_dict[dashboard_name]:
+		# update the totals
+		registered_total += event_type_with_counts.registered_count
+		participated_total += event_type_with_counts.participated_count
+	# set the values in the dictionary
+	dashboard_dict[dashboard_name + '_registered_total'] = registered_total
+	dashboard_dict[dashboard_name + '_participated_total'] = participated_total
+	# return the result
 	return dashboard_dict
 
 def get_event_type(event_type_id):

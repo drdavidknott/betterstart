@@ -59,7 +59,8 @@
 						<th>DATE:</th>
 						<th>START TIME:</th>
 						<th>END TIME:</th>
-						<th>DESCRIPTION</th>
+						<th>REGISTERED:</th>
+						<th>PARTICIPATED:</th>
 					</tr></thead>
 					<tbody>
 				 		{% for event in events %}
@@ -78,11 +79,14 @@
 								<td>
 									{{ event.start_time }}
 								</td>
-								<td>
+								<td> 
 									{{ event.end_time }}
 								</td>
 								<td>
-									{{ event.description }}
+									{{ event.registered_count }}
+								</td>
+								<td>
+									{{ event.participated_count }}
 								</td>
 							</tr>
 						{% endfor %}

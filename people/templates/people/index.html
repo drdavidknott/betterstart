@@ -7,71 +7,93 @@
  {% block content %}
 
  	<div class="row col-md-12">
- 		<div class="col-md-3"></div>
- 			<div class="col-md-6">
-	 			<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">ROLES</h4>
-		 			</div>
-			 		<div class="panel-body">
-			 			{% for role_type in role_types %}
-			 				{% if role_type.count != 0 %}
-				 				<div class="col-md-8">
-									<a href="{% url 'people_type' role_type.pk %}">{{ role_type.role_type_name }}</a>
-								</div>
-								<div class="col-md-2" align="right">
-										{{ role_type.count }}
-								<div class="col-md-2"></div>
-								</div>
-							{% endif %}
-						{% endfor %}
-					</div>
-				</div>
-			</div>
-		 <div class="col-md-3"></div>
-	</div>
 
-	 <div class="row col-md-12">
- 		<div class="col-md-3"></div>
- 			<div class="col-md-6">
-	 			<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">EXCEPTIONS</h4>
-		 			</div>
-			 		<div class="panel-body">
-			 			{% if parents_with_no_children %}
+ 		<div class="col-md-2"></div>
+
+		<div class="col-md-4">
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">ROLES</h4>
+	 			</div>
+		 		<div class="panel-body">
+		 			{% for role_type in role_types %}
+		 				{% if role_type.count != 0 %}
 			 				<div class="col-md-8">
-								<a href="{% url 'parents_with_no_children' 1 %}">Parents with no children</a>
+								<a href="{% url 'people_type' role_type.pk %}">{{ role_type.role_type_name }}</a>
 							</div>
 							<div class="col-md-2" align="right">
-								{{ parents_with_no_children }}
-							</div>
+									{{ role_type.count }}
 							<div class="col-md-2"></div>
+							</div>
 						{% endif %}
-						{% if parents_with_no_children_under_four %}
-							<div class="col-md-8">
-								<a href="{% url 'parents_without_children_under_four' 1 %}">
-									Parents with no children under four
-								</a>
-							</div>
-							<div class="col-md-2" align="right">
-								{{ parents_with_no_children_under_four }}
-							</div>
-							<div class="col-md-2"></div>
-						{% endif %}
-						{% if parents_with_overdue_children %}
-							<div class="col-md-8">
-								<a href="{% url 'parents_with_overdue_children' 1 %}">Parents with overdue children</a>
-							</div>
-							<div class="col-md-2" align="right">
-								{{ parents_with_overdue_children }}
-							</div>
-							<div class="col-md-2"></div>
-						{% endif %}
-					</div>
+					{% endfor %}
 				</div>
 			</div>
-		 <div class="col-md-3"></div>
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">EXCEPTIONS</h4>
+	 			</div>
+		 		<div class="panel-body">
+		 			{% if parents_with_no_children %}
+		 				<div class="col-md-8">
+							<a href="{% url 'parents_with_no_children' 1 %}">Parents with no children</a>
+						</div>
+						<div class="col-md-2" align="right">
+							{{ parents_with_no_children }}
+						</div>
+						<div class="col-md-2"></div>
+					{% endif %}
+					{% if parents_with_no_children_under_four %}
+						<div class="col-md-8">
+							<a href="{% url 'parents_without_children_under_four' 1 %}">
+								Parents with no children under four
+							</a>
+						</div>
+						<div class="col-md-2" align="right">
+							{{ parents_with_no_children_under_four }}
+						</div>
+						<div class="col-md-2"></div>
+					{% endif %}
+					{% if parents_with_overdue_children %}
+						<div class="col-md-8">
+							<a href="{% url 'parents_with_overdue_children' 1 %}">Parents with overdue children</a>
+						</div>
+						<div class="col-md-2" align="right">
+							{{ parents_with_overdue_children }}
+						</div>
+						<div class="col-md-2"></div>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-4">
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">EVENTS</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<div class="col-md-5"></div>
+					<div class="col-md-3" align="right">Registered</div>
+					<div class="col-md-4" align="right">Participated</div>
+		 			{% for event_count in event_counts %}
+		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
+			 				<div class="col-md-5">
+								<a href="{% url 'event_type' event_count.pk %}">{{ event_count.name }}</a>
+							</div>
+							<div class="col-md-3" align="right">
+								{{ event_count.registered_count }}
+							</div>
+							<div class="col-md-4" align="right">
+								{{ event_count.participated_count }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+
+		 <div class="col-md-2"></div>
+
 	</div>
 
  {% endblock %}

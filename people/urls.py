@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^person/(?P<person_id>[0-9]+)$', views.person, name='person'),
     url(r'^people_type/(?P<role_type>[0-9]+)$', views.people_type, name='people_type'),
     url(r'^event/(?P<event_id>[0-9]+)$', views.event, name='event'),
+    url(r'^event_type/(?P<event_type>[0-9]+)$', views.event_type, name='event_type'),
     url(r'^profile/(?P<person_id>[0-9]+)$', views.profile, name='profile'),
 	url(r'^edit_event/(?P<event_id>[0-9]+)$', views.edit_event, name='edit_event'),
     url(r'^add_relationship/(?P<person_id>[0-9]+)$', views.add_relationship, name='add_relationship'),

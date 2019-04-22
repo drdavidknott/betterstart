@@ -17,6 +17,7 @@ from django.urls import reverse
 import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.db.models import Sum, Count
 
 def index(request):
 	# get the template
@@ -27,12 +28,15 @@ def index(request):
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
 	# get parents with overdue children
 	parents_with_overdue_children = get_parents_with_overdue_children()
+	# get the event types, with registered and participated counts
+	event_counts = get_event_types_with_counts()
 	# set the context
 	context = build_context({
 								'role_types' : role_types,
 								'parents_with_no_children' : len(parents_with_no_children),
 								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
-								'parents_with_overdue_children' : len(parents_with_overdue_children)
+								'parents_with_overdue_children' : len(parents_with_overdue_children),
+								'event_counts' : event_counts
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
@@ -638,6 +642,16 @@ def get_events_by_name_dates_and_type(name,event_type,date_from,date_to):
 	# return the list of events
 	return events
 
+def add_counts_to_events(events):
+	# take a list of events, and add the count of participated and volunteered numbers to them
+	for event in events:
+		# get the registrations
+		event.registered_count = event.event_registration_set.filter(registered=True).count()
+		# and the participations
+		event.participated_count = event.event_registration_set.filter(participated=True).count()
+	# return the results
+	return events
+
 def get_event_type(event_type_id):
 	# try to get event type
 	try:
@@ -652,6 +666,20 @@ def get_event_type(event_type_id):
 def get_event_types():
 	# return a list of all the event type objects
 	return Event_Type.objects.all()
+
+def get_event_types_with_counts():
+	# return a list of all the event type objects, supplemented with counts
+	event_types = get_event_types()
+	# now go through the role types
+	for event_type in event_types:
+		# get the registration count
+		event_type.registered_count = \
+			Event_Registration.objects.filter(event__event_type=event_type, registered=True).count()
+		# get the participation count
+		event_type.participated_count = \
+			Event_Registration.objects.filter(event__event_type=event_type, participated=True).count()
+	# return the results
+	return event_types
 
 def get_event_registrations(event):
 	# return a list of registrations for an event
@@ -1911,6 +1939,24 @@ def event(request, event_id=0):
 	return HttpResponse(event_template.render(context=context, request=request))
 
 @login_required
+def event_type(request, event_type):
+	# copy the request
+	copy_POST = request.POST.copy()
+	# set search terms for an event search
+	copy_POST['action'] = 'search'
+	copy_POST['event_type'] = event_type
+	copy_POST['name'] = ''
+	copy_POST['date_from'] = ''
+	copy_POST['date_to'] = ''
+	copy_POST['page'] = '1'
+	# now copy it back
+	request.POST = copy_POST
+	# and set the method
+	request.method = 'POST'
+	# now call the people view
+	return events(request)
+
+@login_required
 def events(request):
 	# set a blank list
 	events = []
@@ -1953,6 +1999,8 @@ def events(request):
 				previous_page = page - 1
 				# sort and truncate the list of events
 				events = events.order_by('-date')[previous_page*results_per_page:page*results_per_page]
+				# add the counts to the events
+				events = add_counts_to_events(events)
 			# otherwise we have incorrect dates
 			else:
 				# set a search error

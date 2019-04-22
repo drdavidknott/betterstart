@@ -90,7 +90,7 @@ elif os.getenv('GAE_APPLICATION', None):
             'HOST': '/cloudsql/betterstart-236907:europe-west1:betterstart',
             'USER': 'betterstart-test',
             'PASSWORD': os.getenv('BETTERSTART_PW', None),
-            'NAME': 'betterstart_test',
+            'NAME': 'betterstart_test_v2',
         }
     }
 else:
@@ -99,7 +99,7 @@ else:
             'ENGINE': 'django.db.backends.mysql',
             'HOST': '127.0.0.1',
             'PORT': '3306',
-            'NAME': 'betterstart_test',
+            'NAME': 'betterstart_test_v2',
             'USER': 'betterstart-test',
             'PASSWORD': os.getenv('BETTERSTART_PW', None),
         }

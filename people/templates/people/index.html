@@ -70,13 +70,82 @@
 		<div class="col-md-4">
  			<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">EVENTS</h4>
+	 				<h4 class="panel-title">EVENTS: {{ dashboard_dates.first_day_of_this_month|date:'F' }}</h4>
 	 			</div>
 		 		<div class="panel-body">
 					<div class="col-md-5"></div>
 					<div class="col-md-3" align="right">Registered</div>
 					<div class="col-md-4" align="right">Participated</div>
-		 			{% for event_count in event_counts %}
+		 			{% for event_count in event_dashboard.this_month %}
+		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
+			 				<div class="col-md-5">
+								<a href="{% url 'event_type_this_month' event_count.pk %}">{{ event_count.name }}</a>
+							</div>
+							<div class="col-md-3" align="right">
+								{{ event_count.registered_count }}
+							</div>
+							<div class="col-md-4" align="right">
+								{{ event_count.participated_count }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">EVENTS: {{ dashboard_dates.first_day_of_last_month|date:'F' }}</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<div class="col-md-5"></div>
+					<div class="col-md-3" align="right">Registered</div>
+					<div class="col-md-4" align="right">Participated</div>
+		 			{% for event_count in event_dashboard.last_month %}
+		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
+			 				<div class="col-md-5">
+								<a href="{% url 'event_type_last_month' event_count.pk %}">{{ event_count.name }}</a>
+							</div>
+							<div class="col-md-3" align="right">
+								{{ event_count.registered_count }}
+							</div>
+							<div class="col-md-4" align="right">
+								{{ event_count.participated_count }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">EVENTS: Since {{ dashboard_dates.first_day_of_this_year|date:'d M Y' }}</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<div class="col-md-5"></div>
+					<div class="col-md-3" align="right">Registered</div>
+					<div class="col-md-4" align="right">Participated</div>
+		 			{% for event_count in event_dashboard.this_year %}
+		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
+			 				<div class="col-md-5">
+								<a href="{% url 'event_type_this_year' event_count.pk %}">{{ event_count.name }}</a>
+							</div>
+							<div class="col-md-3" align="right">
+								{{ event_count.registered_count }}
+							</div>
+							<div class="col-md-4" align="right">
+								{{ event_count.participated_count }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">EVENTS: ALL TIME</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<div class="col-md-5"></div>
+					<div class="col-md-3" align="right">Registered</div>
+					<div class="col-md-4" align="right">Participated</div>
+		 			{% for event_count in event_dashboard.all_time %}
 		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
 			 				<div class="col-md-5">
 								<a href="{% url 'event_type' event_count.pk %}">{{ event_count.name }}</a>
@@ -91,8 +160,9 @@
 					{% endfor %}
 				</div>
 			</div>
+		</div>
 
-		 <div class="col-md-2"></div>
+		<div class="col-md-2"></div>
 
 	</div>
 

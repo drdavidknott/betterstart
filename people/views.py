@@ -29,14 +29,15 @@ def index(request):
 	# get parents with overdue children
 	parents_with_overdue_children = get_parents_with_overdue_children()
 	# get the event types, with registered and participated counts
-	event_counts = get_event_types_with_counts()
+	event_dashboard = get_dashboard_event_counts(**get_dashboard_dates())
 	# set the context
 	context = build_context({
 								'role_types' : role_types,
 								'parents_with_no_children' : len(parents_with_no_children),
 								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
 								'parents_with_overdue_children' : len(parents_with_overdue_children),
-								'event_counts' : event_counts
+								'event_dashboard' : event_dashboard,
+								'dashboard_dates' : get_dashboard_dates()
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
@@ -652,6 +653,26 @@ def add_counts_to_events(events):
 	# return the results
 	return events
 
+def get_dashboard_event_counts(
+								today,
+								first_day_of_this_year,
+								first_day_of_last_month,
+								last_day_of_last_month,
+								first_day_of_this_month
+								):
+	# create the empty dictionary
+	dashboard_dict = {}
+	# get the event counts for use on the dashboard
+	dashboard_dict['all_time'] = get_event_types_with_counts()
+	dashboard_dict['this_year'] = get_event_types_with_counts(date_from=first_day_of_this_year)
+	dashboard_dict['last_month'] = get_event_types_with_counts(
+																date_from=first_day_of_last_month,
+																date_to=last_day_of_last_month
+																)
+	dashboard_dict['this_month'] = get_event_types_with_counts(date_from=first_day_of_this_month)
+	# now return the dictionary
+	return dashboard_dict
+
 def get_event_type(event_type_id):
 	# try to get event type
 	try:
@@ -667,17 +688,30 @@ def get_event_types():
 	# return a list of all the event type objects
 	return Event_Type.objects.all()
 
-def get_event_types_with_counts():
+def get_event_types_with_counts(date_from=0, date_to=0):
 	# return a list of all the event type objects, supplemented with counts
 	event_types = get_event_types()
 	# now go through the role types
 	for event_type in event_types:
-		# get the registration count
-		event_type.registered_count = \
-			Event_Registration.objects.filter(event__event_type=event_type, registered=True).count()
-		# get the participation count
-		event_type.participated_count = \
-			Event_Registration.objects.filter(event__event_type=event_type, participated=True).count()
+		# get the registrations
+		event_registrations = Event_Registration.objects.filter(event__event_type=event_type, registered=True)
+		# get the participations
+		event_participations = Event_Registration.objects.filter(event__event_type=event_type, participated=True)
+		# if we have a from date, filter further
+		if date_from:
+			# filter the registrations
+			event_registrations = event_registrations.filter(event__date__gte=date_from)
+			# and the participations
+			event_participations = event_participations.filter(event__date__gte=date_from)
+		# if we have a before date, filter further
+		if date_to:
+			# filter the registrations
+			event_registrations = event_registrations.filter(event__date__lte=date_to)
+			# and the participations
+			event_participations = event_participations.filter(event__date__lte=date_to)
+		# set the counts
+		event_type.registered_count = event_registrations.count()
+		event_type.participated_count = event_participations.count()
 	# return the results
 	return event_types
 
@@ -1284,6 +1318,36 @@ def build_context(context_dict):
 	context_dict['nav_background'] = os.getenv('BETTERSTART_NAV','betterstart-background-local-test')
 	# return the dictionary
 	return context_dict
+
+def get_dashboard_dates(date=0):
+	# this function returns a dict of dates inclduing the first day of the month, the first day of the previous
+	# month, and the first day of this financial year
+	# create an empty dictionary
+	date_dict = {}
+	# check whether we got a date
+	if date:
+		# set today to the date
+		today = date
+	# otherwise set the date to today
+	else:
+		# set the date to today
+		today = datetime.date.today()
+	# and set the dictionary entry to today
+	date_dict['today'] = today
+	# first, figure out the first day of this month
+	date_dict['first_day_of_this_month'] = today.replace(day=1)
+	# now, figure out the last day of the previous month
+	date_dict['last_day_of_last_month'] = date_dict['first_day_of_this_month'] - datetime.timedelta(days=1)
+	# now, figure out the first day of the last month
+	date_dict['first_day_of_last_month'] = date_dict['last_day_of_last_month'].replace(day=1)
+	# now figure out the first day of this year (most recent 1st of April)
+	date_dict['first_day_of_this_year'] = today.replace(day=1,month=4)
+	# now check whether the date is in the future
+	if date_dict['first_day_of_this_year'] > today:
+		# go back to last year
+		date_dict['first_day_of_this_year'] = first_day_of_this_year.replace(year=first_day_of_this_year.year-1)
+	# return the dictionary
+	return date_dict
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -1940,14 +2004,35 @@ def event(request, event_id=0):
 
 @login_required
 def event_type(request, event_type):
+	# get the calling url
+	path = request.get_full_path()
+	# get the dashboard dates
+	dashboard_dates = get_dashboard_dates()
+	# set blank dates
+	date_from = ''
+	date_to = ''
+	# set the dates, dependent on the url
+	if 'this_month' in path:
+		# set the date_from to the first of the month
+		date_from = dashboard_dates['first_day_of_this_month'].strftime('%Y-%m-%d')
+	# otherwise check for last month
+	elif 'last_month' in path:
+		# set the date from to the first of last month
+		date_from = dashboard_dates['first_day_of_last_month'].strftime('%Y-%m-%d')
+		# and the date to to the last of last month
+		date_to = dashboard_dates['last_day_of_last_month'].strftime('%Y-%m-%d')
+	# otherwise check for this year
+	elif 'this_year' in path:
+		# set the date from to the beginning of the year
+		date_from = dashboard_dates['first_day_of_this_year'].strftime('%Y-%m-%d')
 	# copy the request
 	copy_POST = request.POST.copy()
 	# set search terms for an event search
 	copy_POST['action'] = 'search'
 	copy_POST['event_type'] = event_type
 	copy_POST['name'] = ''
-	copy_POST['date_from'] = ''
-	copy_POST['date_to'] = ''
+	copy_POST['date_from'] = date_from
+	copy_POST['date_to'] = date_to
 	copy_POST['page'] = '1'
 	# now copy it back
 	request.POST = copy_POST

@@ -40,6 +40,27 @@
 			</div>
  			<div class="panel panel-default">
 	 			<div class="panel-heading">
+	 				<h4 class="panel-title">PARENT CHAMPIONS</h4>
+	 			</div>
+		 		<div class="panel-body">
+	 				<div class="col-xs-8">
+						<a href="{% url 'people_type' parent_champion_role_type.pk %}">Current parent champions</a>
+					</div>
+					<div class="col-xs-2" align="right">
+							{{ current_parent_champions }}
+					</div>
+					<div class="col-xs-2"></div>
+	 				<div class="col-xs-8">
+						<a href="{% url 'all_time_parent_champions' %}">All time parent champions</a>
+					</div>
+					<div class="col-xs-2" align="right">
+							{{ all_time_parent_champions }}
+					</div>
+					<div class="col-xs-2"></div>
+				</div>
+			</div>
+ 			<div class="panel panel-default">
+	 			<div class="panel-heading">
 	 				<h4 class="panel-title">EXCEPTIONS</h4>
 	 			</div>
 		 		<div class="panel-body">

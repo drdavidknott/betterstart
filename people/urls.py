@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^addevent$', views.addevent, name='addevent'),
     url(r'^person/(?P<person_id>[0-9]+)$', views.person, name='person'),
     url(r'^people_type/(?P<role_type>[0-9]+)$', views.people_type, name='people_type'),
+    url(r'^all_time_parent_champions$', views.all_time_parent_champions, name='all_time_parent_champions'),
     url(r'^event/(?P<event_id>[0-9]+)$', views.event, name='event'),
     url(r'^event_type/(?P<event_type>[0-9]+)$', views.event_type, name='event_type'),
     url(r'^event_type_this_month/(?P<event_type>[0-9]+)$', views.event_type, name='event_type_this_month'),

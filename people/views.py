@@ -25,6 +25,10 @@ def index(request):
 	index_template = loader.get_template('people/index.html')
 	# get the role types
 	role_types = get_role_types_with_counts()
+	# get the number of people who have ever been parent champions
+	parent_champions = get_parent_champions()
+	# get the parent champion role type
+	parent_champion_role_type = get_role_type_by_name('Parent Champion')
 	# get the exceptions
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
 	# get parents with overdue children
@@ -32,12 +36,16 @@ def index(request):
 	# get the event types, with registered and participated counts
 	event_dashboard = get_dashboard_event_counts(**get_dashboard_dates())
 	# set the context
+	print(parent_champions['all_time'])
 	context = build_context({
 								'role_types' : role_types,
 								'total_people' : Person.objects.all().count(),
 								'parents_with_no_children' : len(parents_with_no_children),
 								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
 								'parents_with_overdue_children' : len(parents_with_overdue_children),
+								'current_parent_champions' : len(parent_champions['current']),
+								'all_time_parent_champions' : len(parent_champions['all_time']),
+								'parent_champion_role_type' : parent_champion_role_type,
 								'event_dashboard' : event_dashboard,
 								'dashboard_dates' : get_dashboard_dates()
 								})
@@ -474,7 +482,7 @@ def get_people_by_names_and_role(first_name='',last_name='',role_type='0'):
 		# check whether this was an all parent champions enquiry
 		if role_type == 'Has ever been a Parent Champion':
 			# do the filter
-			people = people.filter(role_history__role_type__role_type_name='Parent Champion')
+			people = people.filter(role_history__role_type__role_type_name='Parent Champion').distinct()
 		# otherwise just check for a normal role type
 		else:
 			# apply the filter
@@ -529,6 +537,18 @@ def get_parents_with_overdue_children():
 									pregnant=True,
 									due_date__lt=datetime.date.today()
 									)
+
+def get_parent_champions():
+	# return a dict of two lists: current parent champions, and people who have ever been parent champions
+	# declare the dict
+	parent_champions = {}
+	# get the current parent champions
+	parent_champions['current'] = Person.objects.filter(default_role__role_type_name='Parent Champion')
+	# get the all time parent champions
+	parent_champions['all_time'] = \
+		Person.objects.filter(role_history__role_type__role_type_name='Parent Champion').distinct()
+	# return the dict
+	return parent_champions
 
 def get_address(address_id):
 	# try to get a address using the address id
@@ -785,6 +805,18 @@ def get_role_type(role_type_id):
 		role_type = False
 	# return the role type
 	return role_type
+
+def get_role_type_by_name(role_type_name):
+	# try to get role type
+	try:
+		role_type = Role_Type.objects.get(role_type_name=role_type_name)
+	# handle the exception
+	except Role_Type.DoesNotExist:
+		# set a false value
+		role_type = False
+	# return the role type
+	return role_type
+
 
 def get_ethnicities():
 	# return a list of all the ethnicity objects
@@ -1575,6 +1607,11 @@ def people_type(request, role_type):
 	request.method = 'POST'
 	# now call the people view
 	return people(request)
+
+@login_required
+def all_time_parent_champions(request):
+	# call the people type function, setting the role type to a custom role
+	return people_type(request,'Has ever been a Parent Champion')
 
 @login_required
 def parent_exceptions(request, page=1):

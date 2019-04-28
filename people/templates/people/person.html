@@ -65,6 +65,25 @@
 			</div>
 		</div>
 
+		{% if role_history %}
+	 		<div class="panel panel-default">
+				<div class="panel-heading">
+		 				<h4 class="panel-title">
+		 					<a href="{% url 'add_relationship' person.pk %}">ROLES</a>
+		 				</h4>
+	 			</div>
+		 		<div class="panel-body">
+		 			<div class="col-md-12">
+			 			{% for role in role_history %}
+			 				<div>
+								{{ role.role_type.role_type_name }} from {{ role.started.date }}
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		{% endif %}
+
  		<div class="panel panel-default">
 			<div class="panel-heading">
 	 				<h4 class="panel-title">

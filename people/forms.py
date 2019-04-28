@@ -167,6 +167,8 @@ class PersonSearchForm(forms.Form):
 		role_type_list = []
 		# add in a default value
 		role_type_list.append((0,'Any'))
+		# and an any parent champion role
+		role_type_list.append(('Has ever been a Parent Champion','Has ever been a Parent Champion'))
 		# go through the role types
 		for role_type in role_types:
 			# append a list of value and display value to the list

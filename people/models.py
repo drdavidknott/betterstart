@@ -248,6 +248,17 @@ class Role(models.Model):
 		else:
 			return 'untrained'
 
+# Role history model: records that a person has played a particular type of role
+# Records whether the person has been trained in the role, and whether the person is active in the role
+class Role_History(models.Model):
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
+	started = models.DateTimeField(auto_now_add=True)
+	# define the function that will return a string showing the relationship as the object reference
+	def __str__(self):
+		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \
+			+ ' from ' + str(self.started.date())
+
 # CC Registration model: records that a person is registered at a Children Centre
 class CC_Registration(models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)

@@ -2,7 +2,7 @@ from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
-					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option
+					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -458,7 +458,7 @@ def get_people_by_name(first_name,last_name):
 	# return the people
 	return people
 
-def get_people_by_names_and_role(first_name='',last_name='',role_type=0):
+def get_people_by_names_and_role(first_name='',last_name='',role_type='0'):
 	# get all people
 	people = Person.objects.all()
 	# check whether we have a first name
@@ -470,9 +470,15 @@ def get_people_by_names_and_role(first_name='',last_name='',role_type=0):
 		# filter by the name
 		people = people.filter(last_name__icontains=last_name)
 	# if we have a role type, filter by the role type
-	if role_type != 0:
-		# apply the filter
-		people = people.filter(default_role_id=role_type)
+	if role_type != '0':
+		# check whether this was an all parent champions enquiry
+		if role_type == 'Has ever been a Parent Champion':
+			# do the filter
+			people = people.filter(role_history__role_type__role_type_name='Parent Champion')
+		# otherwise just check for a normal role type
+		else:
+			# apply the filter
+			people = people.filter(default_role_id=int(role_type))
 	# return the list of people
 	return people
 
@@ -891,6 +897,8 @@ def create_person(
 					date_of_birth=None,
 					gender='',
 					ethnicity=1):
+	# get the role type
+	default_role = get_role_type(default_role)
 	# create a person
 	person = Person(
 					first_name = first_name,
@@ -898,11 +906,17 @@ def create_person(
 					last_name = last_name,
 					date_of_birth = date_of_birth,
 					gender = gender,
-					default_role = get_role_type(default_role),
+					default_role = default_role,
 					ethnicity = get_ethnicity(ethnicity)
 						)
 	# save the record
 	person.save()
+	# create the role history
+	role_history = Role_History(
+								person = person,
+								role_type = default_role)
+	# and save it
+	role_history.save()
 	# and return the person
 	return person
 
@@ -1255,6 +1269,73 @@ def build_answer(request, person, question_id, option_id):
 	# and we're done
 	return answer
 
+def update_person(
+					request,
+					person,
+					first_name,
+					middle_names,
+					last_name,
+					email_address,
+					date_of_birth,
+					gender,
+					english_is_second_language,
+					pregnant,
+					due_date,
+					default_role_id,
+					ethnicity_id
+				):
+	# set the role change flag to false: we don't know whether the role has changed
+	role_change = False
+	# attempt to get the ethnicity
+	ethnicity = get_ethnicity(ethnicity_id)
+	# set the value for the person
+	if ethnicity:
+		# set the value
+		person.ethnicity = ethnicity
+	# otherwise set a message
+	else:
+		# set the message
+		messages.error(request, 'Ethnicity does not exist.')
+	# attempt to get the role type
+	default_role = get_role_type(default_role_id)
+	# set the value for the person
+	if default_role:
+		# check whether the role has changed
+		if person.default_role != default_role:
+			# set the role change flag
+			role_change = True
+		# set the value
+		person.default_role = default_role
+	# otherwise set a message
+	else:
+		# set the banner
+		messages.error(request, 'Role type does not exist.')
+	# update the person record
+	person.first_name = first_name
+	person.middle_names = middle_names
+	person.last_name = last_name
+	person.email_address = email_address
+	person.date_of_birth = date_of_birth
+	person.gender = gender
+	person.english_is_second_language = english_is_second_language
+	person.pregnant = pregnant
+	person.due_date = due_date
+	# save the record
+	person.save()
+	# and save a role history if the role has changed
+	if role_change:
+		# create the object
+		role_history = Role_History(
+									person = person,
+									role_type = default_role
+									)
+		# and save it
+		role_history.save()
+	# set a success message
+	messages.success(request, str(person) + ' profile updated.')
+	# return the person
+	return person
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -1449,7 +1530,7 @@ def people(request):
 			people = get_people_by_names_and_role(
 													first_name=first_name,
 													last_name=last_name,
-													role_type=int(role_type)
+													role_type=role_type
 													)
 			# get the page number
 			page = int(request.POST['page'])
@@ -1560,7 +1641,7 @@ def addperson(request):
 				# create the person
 				person = create_person(
 										first_name = first_name,
-										middle_name = middle_names,
+										middle_names = middle_names,
 										last_name = last_name,
 										default_role = default_role
 										)
@@ -1620,13 +1701,16 @@ def person(request, person_id=0):
 				'relationships_to' : relationships_to,
 				'addresses' : person.addresses.all(),
 				'registrations' : person.events.all(),
-				'answers' : person.answers.all()
+				'answers' : person.answers.all(),
+				'role_history' : person.role_history_set.all()
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
 
 @login_required
 def profile(request, person_id=0):
+	# set the old role to false: this indicates that the role hasn't changed yet
+	old_role = False
 	# try to get the person
 	person = get_person(person_id)
 	# if there isn't a person, crash to a banner
@@ -1642,40 +1726,22 @@ def profile(request, person_id=0):
 									)
 		# check whether the entry is valid
 		if profileform.is_valid():
-			# update the person record
-			person.first_name = profileform.cleaned_data['first_name']
-			person.middle_names = profileform.cleaned_data['middle_names']
-			person.last_name = profileform.cleaned_data['last_name']
-			person.email_address = profileform.cleaned_data['email_address']
-			person.date_of_birth = profileform.cleaned_data['date_of_birth']
-			person.gender = profileform.cleaned_data['gender']
-			person.english_is_second_language = profileform.cleaned_data['english_is_second_language']
-			person.pregnant = profileform.cleaned_data['pregnant']
-			person.due_date = profileform.cleaned_data['due_date']
-			# attempt to get the ethnicity
-			ethnicity = get_ethnicity(profileform.cleaned_data['ethnicity'])
-			# set the value for the person
-			if ethnicity:
-				# set the value
-				person.ethnicity = ethnicity
-			# otherwise crash out to a banner
-			else:
-				# set the banner
-				return make_banner(request, 'Ethnicity does not exist.')
-			# attempt to get the role type
-			default_role = get_role_type(profileform.cleaned_data['role_type'])
-			# set the value for the person
-			if default_role:
-				# set the value
-				person.default_role = default_role
-			# otherwise crash out to a banner
-			else:
-				# set the banner
-				return make_banner(request, 'Role type does not exist.')
-			# save the record
-			person.save()
-			# set a success message
-			messages.success(request, str(person) + ' profile updated.')
+			# update the person
+			person = update_person(
+								request = request,
+								person = person,
+								first_name = profileform.cleaned_data['first_name'],
+								middle_names = profileform.cleaned_data['middle_names'],
+								last_name = profileform.cleaned_data['last_name'],
+								email_address = profileform.cleaned_data['email_address'],
+								date_of_birth = profileform.cleaned_data['date_of_birth'],
+								gender = profileform.cleaned_data['gender'],
+								english_is_second_language = profileform.cleaned_data['english_is_second_language'],
+								pregnant = profileform.cleaned_data['pregnant'],
+								due_date = profileform.cleaned_data['due_date'],
+								default_role_id = profileform.cleaned_data['role_type'],
+								ethnicity_id = profileform.cleaned_data['ethnicity']
+									)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
 	else:

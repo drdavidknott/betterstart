@@ -25,7 +25,7 @@ def index(request):
 	index_template = loader.get_template('people/index.html')
 	# get the role types
 	role_types = get_role_types_with_counts()
-	# get the number of people who have ever been parent champions
+	# get the lists of people who have ever been parent champions
 	parent_champions = get_parent_champions()
 	# get the parent champion role type
 	parent_champion_role_type = get_role_type_by_name('Parent Champion')
@@ -36,7 +36,6 @@ def index(request):
 	# get the event types, with registered and participated counts
 	event_dashboard = get_dashboard_event_counts(**get_dashboard_dates())
 	# set the context
-	print(parent_champions['all_time'])
 	context = build_context({
 								'role_types' : role_types,
 								'total_people' : Person.objects.all().count(),
@@ -499,7 +498,7 @@ def get_parents_without_children():
 	# get the date four years ago
 	today_four_years_ago = today.replace(year=today.year-4)
 	# attempt to get parents with no children
-	parents = Person.objects.filter(default_role__role_type_name='Parent')
+	parents = Person.objects.filter(default_role__role_type_name__contains='Parent')
 	# exclude those with pregnancy dates in the future
 	parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
 	# order the list

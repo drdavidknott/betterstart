@@ -85,31 +85,37 @@
 	 					</a>
 	 			</div>
 		 		<div class="panel-body">
-					<div class="col-xs-5"></div>
-					<div class="col-xs-3" align="right">Registered</div>
-					<div class="col-xs-4" align="right">Participated</div>
+		 			<div class="row col-xs-12">
+						<div class="col-xs-5"></div>
+						<div class="col-xs-3" align="right">Registered</div>
+						<div class="col-xs-4" align="right">Participated</div>
+					</div>
 		 			{% for event_count in event_dashboard.this_month %}
 		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-			 				<div class="col-xs-5">
-								<a href="{% url 'event_type_this_month' event_count.pk %}">{{ event_count.name }}</a>
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_count.registered_count }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_count.participated_count }}
+		 					<div class="row col-xs-12">
+				 				<div class="col-xs-5">
+									<a href="{% url 'event_type_this_month' event_count.pk %}">{{ event_count.name }}</a>
+								</div>
+								<div class="col-xs-3" align="right">
+									{{ event_count.registered_count }}
+								</div>
+								<div class="col-xs-4" align="right">
+									{{ event_count.participated_count }}
+								</div>
 							</div>
 						{% endif %}
 					{% endfor %}
 					<strong>
-						<div class="col-xs-5">
-							TOTAL:
-						</div>
-						<div class="col-xs-3" align="right">
-							{{ event_dashboard.this_month_registered_total }}
-						</div>
-						<div class="col-xs-4" align="right">
-							{{ event_dashboard.this_month_participated_total }}
+						<div class="row col-xs-12">
+							<div class="col-xs-5">
+								TOTAL:
+							</div>
+							<div class="col-xs-3" align="right">
+								{{ event_dashboard.this_month_registered_total }}
+							</div>
+							<div class="col-xs-4" align="right">
+								{{ event_dashboard.this_month_participated_total }}
+							</div>
 						</div>
 					</strong>
 				</div>
@@ -122,11 +128,14 @@
 	 					</a>
 	 			</div>
 		 		<div class="panel-body">
-					<div class="col-xs-5"></div>
-					<div class="col-xs-3" align="right">Registered</div>
-					<div class="col-xs-4" align="right">Participated</div>
+		 			<div class="row col-xs-12">
+						<div class="col-xs-5"></div>
+						<div class="col-xs-3" align="right">Registered</div>
+						<div class="col-xs-4" align="right">Participated</div>
+					</div>
 		 			{% for event_count in event_dashboard.last_month %}
 		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
+		 				<div class="row col-xs-12">
 			 				<div class="col-xs-5">
 								<a href="{% url 'event_type_last_month' event_count.pk %}">{{ event_count.name }}</a>
 							</div>
@@ -136,17 +145,20 @@
 							<div class="col-xs-4" align="right">
 								{{ event_count.participated_count }}
 							</div>
+						</div>
 						{% endif %}
 					{% endfor %}
 					<strong>
-						<div class="col-xs-5">
-							TOTAL:
-						</div>
-						<div class="col-xs-3" align="right">
-							{{ event_dashboard.last_month_registered_total }}
-						</div>
-						<div class="col-xs-4" align="right">
-							{{ event_dashboard.last_month_participated_total }}
+						<div class="row col-xs-12">
+							<div class="col-xs-5">
+								TOTAL:
+							</div>
+							<div class="col-xs-3" align="right">
+								{{ event_dashboard.last_month_registered_total }}
+							</div>
+							<div class="col-xs-4" align="right">
+								{{ event_dashboard.last_month_participated_total }}
+							</div>
 						</div>
 					</strong>
 				</div>
@@ -159,31 +171,37 @@
 	 					</a>
 	 			</div>
 		 		<div class="panel-body">
-					<div class="col-xs-5"></div>
-					<div class="col-xs-3" align="right">Registered</div>
-					<div class="col-xs-4" align="right">Participated</div>
+		 			<div class="row col-xs-12">
+						<div class="col-xs-5"></div>
+						<div class="col-xs-3" align="right">Registered</div>
+						<div class="col-xs-4" align="right">Participated</div>
+					</div>
 		 			{% for event_count in event_dashboard.this_year %}
 		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-			 				<div class="col-xs-5">
-								<a href="{% url 'event_type_this_year' event_count.pk %}">{{ event_count.name }}</a>
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_count.registered_count }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_count.participated_count }}
+		 					<div class="row col-xs-12">
+				 				<div class="col-xs-5">
+									<a href="{% url 'event_type_this_year' event_count.pk %}">{{ event_count.name }}</a>
+								</div>
+								<div class="col-xs-3" align="right">
+									{{ event_count.registered_count }}
+								</div>
+								<div class="col-xs-4" align="right">
+									{{ event_count.participated_count }}
+								</div>
 							</div>
 						{% endif %}
 					{% endfor %}
 					<strong>
-						<div class="col-xs-5">
-							TOTAL:
-						</div>
-						<div class="col-xs-3" align="right">
-							{{ event_dashboard.this_year_registered_total }}
-						</div>
-						<div class="col-xs-4" align="right">
-							{{ event_dashboard.this_year_participated_total }}
+		 				<div class="row col-xs-12">
+							<div class="col-xs-5">
+								TOTAL:
+							</div>
+							<div class="col-xs-3" align="right">
+								{{ event_dashboard.this_year_registered_total }}
+							</div>
+							<div class="col-xs-4" align="right">
+								{{ event_dashboard.this_year_participated_total }}
+							</div>
 						</div>
 					</strong>
 				</div>
@@ -193,31 +211,37 @@
 	 				<h4 class="panel-title"><a href="{% url 'event_type' 0 %}">EVENTS: ALL TIME</a></h4>
 	 			</div>
 		 		<div class="panel-body">
-					<div class="col-xs-5"></div>
-					<div class="col-xs-3" align="right">Registered</div>
-					<div class="col-xs-4" align="right">Participated</div>
+		 			<div class="row col-xs-12">
+						<div class="col-xs-5"></div>
+						<div class="col-xs-3" align="right">Registered</div>
+						<div class="col-xs-4" align="right">Participated</div>
+					</div>
 		 			{% for event_count in event_dashboard.all_time %}
 		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-			 				<div class="col-xs-5">
-								<a href="{% url 'event_type' event_count.pk %}">{{ event_count.name }}</a>
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_count.registered_count }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_count.participated_count }}
+		 					<div class="row col-xs-12">
+				 				<div class="col-xs-5">
+									<a href="{% url 'event_type' event_count.pk %}">{{ event_count.name }}</a>
+								</div>
+								<div class="col-xs-3" align="right">
+									{{ event_count.registered_count }}
+								</div>
+								<div class="col-xs-4" align="right">
+									{{ event_count.participated_count }}
+								</div>
 							</div>
 						{% endif %}
 					{% endfor %}
 					<strong>
-						<div class="col-xs-5">
-							TOTAL:
-						</div>
-						<div class="col-xs-3" align="right">
-							{{ event_dashboard.all_time_registered_total }}
-						</div>
-						<div class="col-xs-4" align="right">
-							{{ event_dashboard.all_time_participated_total }}
+		 				<div class="row col-xs-12">
+							<div class="col-xs-5">
+								TOTAL:
+							</div>
+							<div class="col-xs-3" align="right">
+								{{ event_dashboard.all_time_registered_total }}
+							</div>
+							<div class="col-xs-4" align="right">
+								{{ event_dashboard.all_time_participated_total }}
+							</div>
 						</div>
 					</strong>
 				</div>

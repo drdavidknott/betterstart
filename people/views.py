@@ -19,6 +19,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 
+@login_required
 def index(request):
 	# get the template
 	index_template = loader.get_template('people/index.html')

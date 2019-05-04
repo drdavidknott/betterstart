@@ -80,8 +80,6 @@ def index(request):
 													)
 	# append the parent champions panel to the column
 	roles_dashboard_column.panels.append(parent_champions_dashboard_panel)
-
-
 	# create the exceptions dashboard panel
 	exceptions_dashboard_panel = Dashboard_Panel(
 														title = 'EXCEPTIONS',

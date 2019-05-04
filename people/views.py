@@ -12,6 +12,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm
 from .utilities import get_page_list, make_banner
+from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
 from django.urls import reverse
 import datetime
@@ -33,20 +34,185 @@ def index(request):
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
 	# get parents with overdue children
 	parents_with_overdue_children = get_parents_with_overdue_children()
-	# get the event types, with registered and participated counts
-	event_dashboard = get_dashboard_event_counts(**get_dashboard_dates())
+	# create a dashboard
+	dashboard = Dashboard()
+	# create the roles column for the dashboard
+	roles_dashboard_column = Dashboard_Column()
+	# add the role types dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'ROLES',
+															column_names = ['counts'],
+															rows = get_role_types_with_counts(),
+															row_name = 'role_type_name',
+															row_values = ['count'],
+															row_url = 'people_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 2,
+															right_margin = 2,
+															)
+											)
+	# create the parent champions dashboard panel
+	parent_champions_dashboard_panel = Dashboard_Panel(
+														title = 'PARENT CHAMPIONS',
+														column_names = ['counts'],
+														label_width = 8,
+														column_width = 2,
+														right_margin = 2)
+	# add the current parent champions row to the panel
+	parent_champions_dashboard_panel.rows.append(
+													Dashboard_Panel_Row(
+																		label = 'Current parent champions',
+																		values = [len(parent_champions['current'])],
+																		url = 'people_type',
+																		parameter = parent_champion_role_type.pk
+																		)
+													)
+	# and add the all time parent champions row to the panel
+	parent_champions_dashboard_panel.rows.append(
+													Dashboard_Panel_Row(
+																		label = 'All time parent champions',
+																		values = [len(parent_champions['all_time'])],
+																		url = 'all_time_parent_champions'
+																		)
+													)
+	# append the parent champions panel to the column
+	roles_dashboard_column.panels.append(parent_champions_dashboard_panel)
+
+
+	# create the exceptions dashboard panel
+	exceptions_dashboard_panel = Dashboard_Panel(
+														title = 'EXCEPTIONS',
+														column_names = ['counts'],
+														label_width = 8,
+														column_width = 2,
+														right_margin = 2)
+	# add the parents with no children row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Parents with no children',
+																values = [len(parents_with_no_children)],
+																url = 'parents_with_no_children',
+																parameter = 1
+																)
+											)
+	# add the parents with no children under four row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Parents with no children under four',
+																values = [len(parents_with_no_children_under_four)],
+																url = 'parents_without_children_under_four',
+																parameter = 1
+																)
+											)
+	# add the overdue parents row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Parents with overdue children',
+																values = [len(parents_with_overdue_children)],
+																url = 'parents_with_overdue_children',
+																parameter = 1
+																)
+											)
+	# append the parent champions panel to the column
+	roles_dashboard_column.panels.append(exceptions_dashboard_panel)
+
+	# append the roles column to the dashboard
+	dashboard.columns.append(roles_dashboard_column)
+	# create the events column for the dashboard
+	events_dashboard_column = Dashboard_Column()
+	# get the event dashboard dates
+	event_dashboard_dates = get_dashboard_dates()
+	# set variables for convenience
+	first_day_of_this_month = event_dashboard_dates['first_day_of_this_month']
+	first_day_of_last_month = event_dashboard_dates['first_day_of_last_month']
+	last_day_of_last_month = event_dashboard_dates['last_day_of_last_month']
+	first_day_of_this_year = event_dashboard_dates['first_day_of_this_year']
+	# add the this month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: ' + \
+																	first_day_of_this_month.strftime('%B'),
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_types_with_counts(
+																					date_from=first_day_of_this_month
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the last month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: ' + \
+																	first_day_of_last_month.strftime('%B'),
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_types_with_counts(
+																					date_from=first_day_of_last_month,
+																					date_to=last_day_of_last_month
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the last month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: Since ' + \
+																	first_day_of_this_year.strftime('%d %B %Y'),
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_types_with_counts(
+																					date_from=first_day_of_this_year
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the all time event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: ALL TIME',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_types_with_counts(),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# append the roles column to the dashboard
+	dashboard.columns.append(events_dashboard_column)
 	# set the context
 	context = build_context({
-								'role_types' : role_types,
-								'total_people' : Person.objects.all().count(),
-								'parents_with_no_children' : len(parents_with_no_children),
-								'parents_with_no_children_under_four' : len(parents_with_no_children_under_four),
-								'parents_with_overdue_children' : len(parents_with_overdue_children),
-								'current_parent_champions' : len(parent_champions['current']),
-								'all_time_parent_champions' : len(parent_champions['all_time']),
-								'parent_champion_role_type' : parent_champion_role_type,
-								'event_dashboard' : event_dashboard,
-								'dashboard_dates' : get_dashboard_dates()
+								'dashboard' : dashboard
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
@@ -680,45 +846,6 @@ def add_counts_to_events(events):
 	# return the results
 	return events
 
-def get_dashboard_event_counts(
-								today,
-								first_day_of_this_year,
-								first_day_of_last_month,
-								last_day_of_last_month,
-								first_day_of_this_month
-								):
-	# create the empty dictionary
-	dashboard_dict = {}
-	# get the event counts and totals for use on the dashboard
-	dashboard_dict['all_time'] = get_event_types_with_counts()
-	dashboard_dict = get_dashboard_totals(dashboard_dict, 'all_time')
-	dashboard_dict['this_year'] = get_event_types_with_counts(date_from=first_day_of_this_year)
-	dashboard_dict = get_dashboard_totals(dashboard_dict, 'this_year')
-	dashboard_dict['last_month'] = get_event_types_with_counts(
-																date_from=first_day_of_last_month,
-																date_to=last_day_of_last_month
-																)
-	dashboard_dict = get_dashboard_totals(dashboard_dict, 'last_month')
-	dashboard_dict['this_month'] = get_event_types_with_counts(date_from=first_day_of_this_month)
-	dashboard_dict = get_dashboard_totals(dashboard_dict, 'this_month')
-	# now return the dictionary
-	return dashboard_dict
-
-def get_dashboard_totals(dashboard_dict,dashboard_name):
-	# create 0 values
-	registered_total = 0
-	participated_total = 0
-	# go through the list
-	for event_type_with_counts in dashboard_dict[dashboard_name]:
-		# update the totals
-		registered_total += event_type_with_counts.registered_count
-		participated_total += event_type_with_counts.participated_count
-	# set the values in the dictionary
-	dashboard_dict[dashboard_name + '_registered_total'] = registered_total
-	dashboard_dict[dashboard_name + '_participated_total'] = participated_total
-	# return the result
-	return dashboard_dict
-
 def get_event_type(event_type_id):
 	# try to get event type
 	try:
@@ -815,7 +942,6 @@ def get_role_type_by_name(role_type_name):
 		role_type = False
 	# return the role type
 	return role_type
-
 
 def get_ethnicities():
 	# return a list of all the ethnicity objects

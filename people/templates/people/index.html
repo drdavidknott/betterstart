@@ -8,268 +8,86 @@
 
  	<div class="row col-md-12">
 
- 		<div class="col-md-1"></div>
+ 		<div class="col-md-{{ dashboard.margin }}"></div>
 
-		<div class="col-md-5">
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">ROLES</h4>
-	 			</div>
-		 		<div class="panel-body">
-		 			{% for role_type in role_types %}
-		 				{% if role_type.count != 0 %}
-			 				<div class="col-xs-8">
-								<a href="{% url 'people_type' role_type.pk %}">{{ role_type.role_type_name }}</a>
-							</div>
-							<div class="col-xs-2" align="right">
-									{{ role_type.count }}
-							</div>
-							<div class="col-xs-2"></div>
-						{% endif %}
-					{% endfor %}
-					<strong>
-						<div class="col-xs-8">
-							TOTAL:
-						</div>
-						<div class="col-xs-2" align="right">
-							{{ total_people }}
-						</div>
-						<div class="col-xs-2"></div>
-					</strong>
-				</div>
-			</div>
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">PARENT CHAMPIONS</h4>
-	 			</div>
-		 		<div class="panel-body">
-	 				<div class="col-xs-8">
-						<a href="{% url 'people_type' parent_champion_role_type.pk %}">Current parent champions</a>
-					</div>
-					<div class="col-xs-2" align="right">
-							{{ current_parent_champions }}
-					</div>
-					<div class="col-xs-2"></div>
-	 				<div class="col-xs-8">
-						<a href="{% url 'all_time_parent_champions' %}">All time parent champions</a>
-					</div>
-					<div class="col-xs-2" align="right">
-							{{ all_time_parent_champions }}
-					</div>
-					<div class="col-xs-2"></div>
-				</div>
-			</div>
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">EXCEPTIONS</h4>
-	 			</div>
-		 		<div class="panel-body">
-		 			{% if parents_with_no_children %}
-		 				<div class="col-xs-8">
-							<a href="{% url 'parents_with_no_children' 1 %}">Parents with no children</a>
-						</div>
-						<div class="col-xs-2" align="right">
-							{{ parents_with_no_children }}
-						</div>
-						<div class="col-xs-2"></div>
-					{% endif %}
-					{% if parents_with_no_children_under_four %}
-						<div class="col-xs-8">
-							<a href="{% url 'parents_without_children_under_four' 1 %}">
-								Parents with no children under four
-							</a>
-						</div>
-						<div class="col-xs-2" align="right">
-							{{ parents_with_no_children_under_four }}
-						</div>
-						<div class="col-xs-2"></div>
-					{% endif %}
-					{% if parents_with_overdue_children %}
-						<div class="col-xs-8">
-							<a href="{% url 'parents_with_overdue_children' 1 %}">Parents with overdue children</a>
-						</div>
-						<div class="col-xs-2" align="right">
-							{{ parents_with_overdue_children }}
-						</div>
-						<div class="col-xs-2"></div>
-					{% endif %}
-				</div>
-			</div>
-		</div>
+		{% for column in dashboard.columns %}
 
-		<div class="col-md-5">
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">
-	 					<a href="{% url 'event_type_this_month' 0 %}">
-	 						EVENTS: {{ dashboard_dates.first_day_of_this_month|date:'F' }}</h4>
-	 					</a>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div class="row col-xs-12">
-						<div class="col-xs-5"></div>
-						<div class="col-xs-3" align="right">Registered</div>
-						<div class="col-xs-4" align="right">Participated</div>
-					</div>
-		 			{% for event_count in event_dashboard.this_month %}
-		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-		 					<div class="row col-xs-12">
-				 				<div class="col-xs-5">
-									<a href="{% url 'event_type_this_month' event_count.pk %}">{{ event_count.name }}</a>
-								</div>
-								<div class="col-xs-3" align="right">
-									{{ event_count.registered_count }}
-								</div>
-								<div class="col-xs-4" align="right">
-									{{ event_count.participated_count }}
-								</div>
-							</div>
-						{% endif %}
-					{% endfor %}
-					<strong>
-						<div class="row col-xs-12">
-							<div class="col-xs-5">
-								TOTAL:
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_dashboard.this_month_registered_total }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_dashboard.this_month_participated_total }}
-							</div>
-						</div>
-					</strong>
-				</div>
-			</div>
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">
-	 					<a href="{% url 'event_type_last_month' 0 %}">
-	 						EVENTS: {{ dashboard_dates.first_day_of_last_month|date:'F' }}</h4>
-	 					</a>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div class="row col-xs-12">
-						<div class="col-xs-5"></div>
-						<div class="col-xs-3" align="right">Registered</div>
-						<div class="col-xs-4" align="right">Participated</div>
-					</div>
-		 			{% for event_count in event_dashboard.last_month %}
-		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-		 				<div class="row col-xs-12">
-			 				<div class="col-xs-5">
-								<a href="{% url 'event_type_last_month' event_count.pk %}">{{ event_count.name }}</a>
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_count.registered_count }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_count.participated_count }}
-							</div>
-						</div>
-						{% endif %}
-					{% endfor %}
-					<strong>
-						<div class="row col-xs-12">
-							<div class="col-xs-5">
-								TOTAL:
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_dashboard.last_month_registered_total }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_dashboard.last_month_participated_total }}
-							</div>
-						</div>
-					</strong>
-				</div>
-			</div>
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">
-	 					<a href="{% url 'event_type_this_year' 0 %}">
-	 						EVENTS: Since {{ dashboard_dates.first_day_of_this_year|date:'d M Y' }}</h4>
-	 					</a>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div class="row col-xs-12">
-						<div class="col-xs-5"></div>
-						<div class="col-xs-3" align="right">Registered</div>
-						<div class="col-xs-4" align="right">Participated</div>
-					</div>
-		 			{% for event_count in event_dashboard.this_year %}
-		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-		 					<div class="row col-xs-12">
-				 				<div class="col-xs-5">
-									<a href="{% url 'event_type_this_year' event_count.pk %}">{{ event_count.name }}</a>
-								</div>
-								<div class="col-xs-3" align="right">
-									{{ event_count.registered_count }}
-								</div>
-								<div class="col-xs-4" align="right">
-									{{ event_count.participated_count }}
-								</div>
-							</div>
-						{% endif %}
-					{% endfor %}
-					<strong>
-		 				<div class="row col-xs-12">
-							<div class="col-xs-5">
-								TOTAL:
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_dashboard.this_year_registered_total }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_dashboard.this_year_participated_total }}
-							</div>
-						</div>
-					</strong>
-				</div>
-			</div>
- 			<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title"><a href="{% url 'event_type' 0 %}">EVENTS: ALL TIME</a></h4>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div class="row col-xs-12">
-						<div class="col-xs-5"></div>
-						<div class="col-xs-3" align="right">Registered</div>
-						<div class="col-xs-4" align="right">Participated</div>
-					</div>
-		 			{% for event_count in event_dashboard.all_time %}
-		 				{% if event_count.registered_count != 0 or event_count.participated_count != 0 %}
-		 					<div class="row col-xs-12">
-				 				<div class="col-xs-5">
-									<a href="{% url 'event_type' event_count.pk %}">{{ event_count.name }}</a>
-								</div>
-								<div class="col-xs-3" align="right">
-									{{ event_count.registered_count }}
-								</div>
-								<div class="col-xs-4" align="right">
-									{{ event_count.participated_count }}
-								</div>
-							</div>
-						{% endif %}
-					{% endfor %}
-					<strong>
-		 				<div class="row col-xs-12">
-							<div class="col-xs-5">
-								TOTAL:
-							</div>
-							<div class="col-xs-3" align="right">
-								{{ event_dashboard.all_time_registered_total }}
-							</div>
-							<div class="col-xs-4" align="right">
-								{{ event_dashboard.all_time_participated_total }}
-							</div>
-						</div>
-					</strong>
-				</div>
-			</div>
-		</div>
+			<div class="col-md-{{ column.width }}">
 
-		<div class="col-md-1"></div>
+				{% if column.heading %}
+
+					<h3>{{ column.heading }}</h3>
+
+				{% endif %}
+
+				{% for panel in column.panels %}
+
+					<div class="panel panel-default">
+			 			<div class="panel-heading">
+			 				<h4 class="panel-title">{{ panel.title }}</h4>
+			 			</div>
+				 		<div class="panel-body">
+				 			{% if panel.show_column_names %}
+				 				<div class="col-xs-{{ panel.label_width }}"></div>
+								{% for column_name in panel.column_names %}
+									<div class="col-xs-{{ panel.column_width }}" align="right">
+										{{ column_name }}
+									</div>
+								{% endfor %}
+								{% if panel.right_margin %}
+									<div class="col-xs-{{ right_margin }}"></div>
+								{% endif %}
+							{% endif %}
+				 			{% for row in panel.rows %}
+				 				{% if panel.display_zeroes or row.has_data %}
+					 				<div class="col-xs-{{ panel.label_width }}">
+					 					{% if row.url %}
+					 						{% if row.parameter %}
+					 							<a href="{% url row.url row.parameter %}">
+					 						{% else %}
+					 							<a href="{% url row.url %}">
+					 						{% endif %}
+					 					{% endif %}
+										{{ row.label }}
+										{% if row.url %}
+											</a>
+										{% endif %}
+									</div>
+									{% for value in row.values %}
+										<div class="col-xs-{{ panel.column_width }}" align="right">
+											{{ value }}
+										</div>
+									{% endfor %}
+									{% if panel.right_margin %}
+										<div class="col-xs-{{ right_margin }}"></div>
+									{% endif %}
+								{% endif %}
+							{% endfor %}
+							{% if panel.totals %}
+								<strong>
+									<div class="col-xs-{{ panel.label_width }}">
+										TOTAL:
+									</div>
+									{% for total in panel.get_totals %}
+										<div class="col-xs-{{ panel.column_width }}" align="right">
+											{{ total }}
+										</div>
+									{% endfor %}
+								{% if panel.right_margin %}
+									<div class="col-xs-{{ right_margin }}"></div>
+								{% endif %}
+								</strong>
+							{% endif %}
+						</div>
+					</div>
+
+				{% endfor %}
+
+			</div>
+
+		{% endfor %}
+
+		<div class="col-md-{{ dashboard.margin }}"></div>
 
 	</div>
 

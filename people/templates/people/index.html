@@ -28,55 +28,61 @@
 			 			</div>
 				 		<div class="panel-body">
 				 			{% if panel.show_column_names %}
-				 				<div class="col-xs-{{ panel.label_width }}"></div>
-								{% for column_name in panel.column_names %}
-									<div class="col-xs-{{ panel.column_width }}" align="right">
-										{{ column_name }}
-									</div>
-								{% endfor %}
-								{% if panel.right_margin %}
-									<div class="col-xs-{{ right_margin }}"></div>
-								{% endif %}
-							{% endif %}
-				 			{% for row in panel.rows %}
-				 				{% if panel.display_zeroes or row.has_data %}
-					 				<div class="col-xs-{{ panel.label_width }}">
-					 					{% if row.url %}
-					 						{% if row.parameter %}
-					 							<a href="{% url row.url row.parameter %}">
-					 						{% else %}
-					 							<a href="{% url row.url %}">
-					 						{% endif %}
-					 					{% endif %}
-										{{ row.label }}
-										{% if row.url %}
-											</a>
-										{% endif %}
-									</div>
-									{% for value in row.values %}
+				 				<div class="col-xs-12">
+					 				<div class="col-xs-{{ panel.label_width }}"></div>
+									{% for column_name in panel.column_names %}
 										<div class="col-xs-{{ panel.column_width }}" align="right">
-											{{ value }}
+											{{ column_name }}
 										</div>
 									{% endfor %}
 									{% if panel.right_margin %}
 										<div class="col-xs-{{ right_margin }}"></div>
 									{% endif %}
+								</div>
+							{% endif %}
+				 			{% for row in panel.rows %}
+				 				{% if panel.display_zeroes or row.has_data %}
+				 					<div class="col-xs-12">
+						 				<div class="col-xs-{{ panel.label_width }}">
+						 					{% if row.url %}
+						 						{% if row.parameter %}
+						 							<a href="{% url row.url row.parameter %}">
+						 						{% else %}
+						 							<a href="{% url row.url %}">
+						 						{% endif %}
+						 					{% endif %}
+											{{ row.label }}
+											{% if row.url %}
+												</a>
+											{% endif %}
+										</div>
+										{% for value in row.values %}
+											<div class="col-xs-{{ panel.column_width }}" align="right">
+												{{ value }}
+											</div>
+										{% endfor %}
+										{% if panel.right_margin %}
+											<div class="col-xs-{{ right_margin }}"></div>
+										{% endif %}
+									</div>
 								{% endif %}
 							{% endfor %}
 							{% if panel.totals %}
-								<strong>
-									<div class="col-xs-{{ panel.label_width }}">
-										TOTAL:
-									</div>
-									{% for total in panel.get_totals %}
-										<div class="col-xs-{{ panel.column_width }}" align="right">
-											{{ total }}
+								<div class="col-xs-12">
+									<strong>
+										<div class="col-xs-{{ panel.label_width }}">
+											TOTAL:
 										</div>
-									{% endfor %}
-								{% if panel.right_margin %}
-									<div class="col-xs-{{ right_margin }}"></div>
-								{% endif %}
-								</strong>
+										{% for total in panel.get_totals %}
+											<div class="col-xs-{{ panel.column_width }}" align="right">
+												{{ total }}
+											</div>
+										{% endfor %}
+									{% if panel.right_margin %}
+										<div class="col-xs-{{ right_margin }}"></div>
+									{% endif %}
+									</strong>
+								</div>
 							{% endif %}
 						</div>
 					</div>

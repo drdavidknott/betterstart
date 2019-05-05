@@ -92,7 +92,6 @@ class Dashboard_Panel:
 		# if we have been passed a list of objects to load into rows, process them
 		if rows:
 			# call the function to populate the rows from a list of objects
-			print(rows)
 			self.load_rows_from_objects(
 										rows=rows,
 										row_name=row_name,

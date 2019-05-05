@@ -55,10 +55,9 @@
 				<table class="table table-striped panel panel-default">
 					<thead><tr>
 						<th>NAME:</th>
+						<th>TYPE:</th>
 						<th>LOCATION:</th>
 						<th>DATE:</th>
-						<th>START TIME:</th>
-						<th>END TIME:</th>
 						<th>REGISTERED:</th>
 						<th>PARTICIPATED:</th>
 					</tr></thead>
@@ -71,16 +70,15 @@
 									</a>
 								</td>
 								<td>
+									<a href="{% url 'event_type' event.event_type.pk %}">
+										{{ event.event_type.name }}
+									</a>
+								</td>
+								<td>
 									{{ event.location }}
 								</td>
 								<td>
 									{{ event.date }}
-								</td>
-								<td>
-									{{ event.start_time }}
-								</td>
-								<td> 
-									{{ event.end_time }}
 								</td>
 								<td>
 									{{ event.registered_count }}

@@ -2352,7 +2352,8 @@ def events(request):
 				'date_from' : date_from,
 				'date_to' : date_to,
 				'page_list' : page_list,
-				'search_error' : search_error
+				'search_error' : search_error,
+				'default_date' : datetime.date.today().strftime('%Y-%m-%d')
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))

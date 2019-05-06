@@ -1661,6 +1661,8 @@ def people(request):
 	people = []
 	# and a blank page_list
 	page_list = []
+	# and zero search results
+	number_of_people = 0
 	# and blank search terms
 	first_name = ''
 	last_name = ''
@@ -1687,6 +1689,8 @@ def people(request):
 													last_name=last_name,
 													role_type=role_type
 													)
+			# figure out how many people we got
+			number_of_people = len(people)
 			# get the page number
 			page = int(request.POST['page'])
 			# figure out how many pages we have
@@ -1709,7 +1713,8 @@ def people(request):
 				'first_name' : first_name,
 				'last_name' : last_name,
 				'role_type' : role_type,
-				'search_error' : search_error
+				'search_error' : search_error,
+				'number_of_people' : number_of_people
 				})
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))

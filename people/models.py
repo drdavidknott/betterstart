@@ -193,9 +193,6 @@ class Person(models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'people'
-	# define a function to return the name
-	def name(self):
-		return self.first_name + ' ' + self.last_name
 	# and a function to return the full name
 	def full_name(self):
 		return self.first_name + ' ' + self.middle_names + ' ' + self.last_name

@@ -1200,8 +1200,8 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 			relationship_from.delete()
 			relationship_to.delete()
 			# set a message
-			messages.success(request,'Relationship between ' + person_from.name() + ' and ' 
-								+ person_to.name() + ' deleted.')
+			messages.success(request,'Relationship between ' + str(person_from) + ' and ' 
+								+ str(person_to) + ' deleted.')
 		# if nothing has changed, we are done, so we can return success
 		else:
 			# set the flag

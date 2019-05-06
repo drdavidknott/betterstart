@@ -42,6 +42,30 @@ def set_up_test_user():
 	# return the user
 	return test_user
 
+def set_up_event_base_data():
+	# create an event category
+	test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+	# create an event type
+	test_event_type = Event_Type.objects.create(
+												name = 'test_event_type',
+												description = 'type desc',
+												event_category = test_event_category)
+
+def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
+	# set up the number of people asked for
+	# create the number of people needed
+	for n in range(number):
+		# create an event
+		test_event = Event.objects.create(
+											name = name_root + str(n),
+											description = 'Test event description',
+											event_type = event_type,
+											date = datetime.datetime.strptime(date,'%Y-%m-%d'),
+											start_time = datetime.datetime.strptime('10:00','%H:%M'),
+											end_time = datetime.datetime.strptime('11:00','%H:%M'),
+											location = 'Test location'
+											)
+
 class PeopleViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -479,3 +503,153 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),7)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
+
+class EventsViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create an event category
+		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+		# create a load of event types
+		test_event_type_1 = Event_Type.objects.create(
+														name = 'test_event_type_1',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_2 = Event_Type.objects.create(
+														name = 'test_event_type_2',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_3 = Event_Type.objects.create(
+														name = 'test_event_type_3',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_4 = Event_Type.objects.create(
+														name = 'test_event_type_4',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_5 = Event_Type.objects.create(
+														name = 'test_event_type_5',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_6 = Event_Type.objects.create(
+														name = 'test_event_type_6',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_7 = Event_Type.objects.create(
+														name = 'test_event_type_7',
+														description = 'type desc',
+														event_category = test_event_category)
+		# Create 50 of each type
+		set_up_test_events('Test_Event_Type_1_', test_event_type_1,50)
+		set_up_test_events('Test_Event_Type_2_', test_event_type_2,50)
+		set_up_test_events('Test_Event_Type_3_', test_event_type_3,50)
+		set_up_test_events('Test_Event_Type_4_', test_event_type_4,50)
+		# and 50 of each of the two test event types with different names
+		set_up_test_events('Different_Name_',test_event_type_1,50)
+		set_up_test_events('Another_Name_',test_event_type_2,50)
+		# and more with the types swapped over
+		set_up_test_events('Different_Name_',test_event_type_1,50)
+		set_up_test_events('Another_Name_',test_event_type_2,50)
+		# and a short set to test a result set with less than a page
+		set_up_test_events('Short_Set_',test_event_type_4,10)
+		# and a set that doesn't exactly fit two pagaes
+		set_up_test_events('Pagination_',test_event_type_5,32)
+		# and three sets with different dates
+		set_up_test_events('Dates_',test_event_type_6,10,date='2019-01-01')
+		set_up_test_events('Dates_',test_event_type_6,10,date='2019-02-01')
+		set_up_test_events('Dates_',test_event_type_6,10,date='2019-03-01')
+		# and three more
+		set_up_test_events('Dates_',test_event_type_7,10,date='2019-01-01')
+		set_up_test_events('Dates_',test_event_type_7,10,date='2019-02-01')
+		set_up_test_events('Dates_',test_event_type_7,10,date='2019-03-01')
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/events')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/events')
+
+	def test_empty_page_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('events'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# the list of people passed in the context should be empty
+		self.assertEqual(len(response.context['events']),0)
+
+	def test_search_with_no_criteria(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],502)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21])
+
+	def test_search_with_date_range(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '2019-01-20',
+											'date_to' : '2019-02-20',
+											'event_type' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],20)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),20)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_with_date_range_and_event_type(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the event type record
+		test_event_type_6 = Event_Type.objects.get(name='test_event_type_6')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '2019-01-20',
+											'date_to' : '2019-02-20',
+											'event_type' : str(test_event_type_6.pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)

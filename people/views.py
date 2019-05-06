@@ -2306,6 +2306,8 @@ def events(request):
 	date_to = 0
 	# set a blank search_error
 	search_error = ''
+	# and a zero number of results
+	number_of_events = 0
 	# set the results per page
 	results_per_page = 25
 	# check whether this is a post
@@ -2328,6 +2330,8 @@ def events(request):
 															date_to=date_to,
 															event_type=int(event_type)
 															)
+				# set the number of results
+				number_of_events = len(events)
 				# get the page number
 				page = int(request.POST['page'])
 				# figure out how many pages we have
@@ -2358,7 +2362,8 @@ def events(request):
 				'date_to' : date_to,
 				'page_list' : page_list,
 				'search_error' : search_error,
-				'default_date' : datetime.date.today().strftime('%Y-%m-%d')
+				'default_date' : datetime.date.today().strftime('%Y-%m-%d'),
+				'number_of_events' : number_of_events
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))

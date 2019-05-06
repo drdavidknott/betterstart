@@ -56,6 +56,7 @@ class PeopleViewTest(TestCase):
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
 		test_role_4 = Role_Type.objects.create(role_type_name='test role 4')
+		test_role_5 = Role_Type.objects.create(role_type_name='test role 5')
 		# Create 50 of each type
 		set_up_test_people('Parent_',parent_role,50)
 		set_up_test_people('Parent_Champion_',parent_champion_role,50)
@@ -71,6 +72,8 @@ class PeopleViewTest(TestCase):
 		set_up_test_people('Short_Set_',test_role_3,10)
 		# create 25 ex-parent champions
 		set_up_test_people('Ex_Parent_Champion_',parent_champion_role,50)
+		# and a set that doesn't exactly fit two pagaes
+		set_up_test_people('Pagination_',test_role_5,32)
 		# now go through them and update their role and role history
 		ex_parent_champions = Person.objects.filter(first_name__icontains='Ex')
 		# go through the list
@@ -116,11 +119,11 @@ class PeopleViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of people
-		self.assertEqual(response.context['number_of_people'],460)
+		self.assertEqual(response.context['number_of_people'],492)
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
 
 	def test_search_for_parent_role_type(self):
 		# log the user in
@@ -428,3 +431,51 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),0)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
+
+	def test_second_page_with_less_than_full_set_of_results_by_role_type(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the test role type record
+		test_role_type_5 = Role_Type.objects.get(role_type_name='test role 5')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : str(test_role_type_5.pk),
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],32)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),7)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_second_page_with_less_than_full_set_of_results_by_first_name(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'Pagination',
+											'last_name' : '',
+											'role_type' : '0',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],32)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),7)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])

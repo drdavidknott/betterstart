@@ -631,6 +631,78 @@ class EventsViewTest(TestCase):
 	def test_search_with_date_range_and_event_type(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '2019-01-20',
+											'date_to' : '2019-02-20',
+											'event_type' : '6',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_with_date_from(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '2019-01-20',
+											'date_to' : '',
+											'event_type' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],40)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_with_date_to(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '2019-01-20',
+											'event_type' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],462)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+
+	def test_search_with_date_range_and_event_type(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
 		# get the event type record
 		test_event_type_6 = Event_Type.objects.get(name='test_event_type_6')
 		# attempt to get the events page
@@ -653,3 +725,42 @@ class EventsViewTest(TestCase):
 		self.assertEqual(len(response.context['events']),10)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
+
+class EventViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create an event category
+		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+		# create a load of event types
+		test_event_type_1 = Event_Type.objects.create(
+														name = 'test_event_type_1',
+														description = 'type desc',
+														event_category = test_event_category)
+		# Create a test event
+		set_up_test_events('Test_Event_Type_1_', test_event_type_1,1)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/event/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/event/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('event',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_invalid_event(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('event',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')

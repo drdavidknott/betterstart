@@ -676,7 +676,55 @@ class EventsViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
 
+	def test_search_with_date_from_and_event_type(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '2019-01-20',
+											'date_to' : '',
+											'event_type' : '6',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],20)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),20)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
 	def test_search_with_date_to(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '2019-01-20',
+											'event_type' : '1',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],150)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6])
+
+	def test_search_with_date_to_and_event_type(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page

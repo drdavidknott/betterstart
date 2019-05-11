@@ -2,7 +2,8 @@ from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
-					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History
+					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
+					ABSS_Type
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -462,9 +463,12 @@ def load_reference_data(directory):
 		# then children centres
 		elif data_type == 'children_centre':
 			messages.append(load_children_centre(value))
-		# and finally role type
+		# and role type
 		elif data_type == 'role_type':
 			messages.append(load_role_type(value))
+		# and abss type
+		elif data_type == 'ABSS_type':
+			messages.append(load_ABSS_type(value))		
 		# and deal with any unknown type
 		else:
 			# set an error message
@@ -482,9 +486,7 @@ def load_capture_type(value):
 		message = capture_type_label + ' not created: capture type already exists.'
 	except (Capture_Type.DoesNotExist):
 		# the capture type does not exist, so create it
-		capture_type = Capture_Type(capture_type_name=value)
-		# save the capture type
-		capture_type.save()
+		capture_type = Capture_Type.objects.create(capture_type_name=value)
 		# set the message
 		message = capture_type_label + ' created.'
 	# return the messages
@@ -500,9 +502,7 @@ def load_ethnicity(value):
 		message = ethnicity_label + ' not created: ethnicity already exists.'
 	except (Ethnicity.DoesNotExist):
 		# the capture type does not exist, so create it
-		ethnicity = Ethnicity(description=value)
-		# save the ethnicity
-		ethnicity.save()
+		ethnicity = Ethnicity.objects.create(description=value)
 		# set the message
 		message = ethnicity_label + ' created.'
 	# return the messages
@@ -518,9 +518,7 @@ def load_role_type(value):
 		message = role_type_label + ' not created: role type already exists.'
 	except (Role_Type.DoesNotExist):
 		# the capture type does not exist, so create it
-		role_type = Role_Type(role_type_name=value)
-		# save the role type
-		role_type.save()
+		role_type = Role_Type.objects.create(role_type_name=value)
 		# set the message
 		message = role_type_label + ' created.'
 	# return the messages
@@ -536,11 +534,25 @@ def load_children_centre(value):
 		message = children_centre_label + ' not created: children centre already exists.'
 	except (Children_Centre.DoesNotExist):
 		# the capture type does not exist, so create it
-		children_centre = Children_Centre(children_centre_name=value)
-		# save the children centre
-		children_centre.save()
+		children_centre = Children_Centre.create(children_centre_name=value)
 		# set the message
 		message = children_centre_label + ' created.'
+	# return the messages
+	return message
+
+def load_ABSS_type(value):
+	# create a label for use in messages
+	ABSS_type_label = 'ABSS type: ' + value
+	# check whether the record already exists
+	try:
+		ABSS_type = ABSS_Type.objects.get(name=value)
+		# set the message to show that it exists
+		message = ABSS_type_label + ' not created: ABSS type already exists.'
+	except (ABSS_Type.DoesNotExist):
+		# the type does not exist, so create it
+		ABSS_type = ABSS_Type.objects.create(name=value)
+		# set the message
+		message = ABSS_type_label + ' created.'
 	# return the messages
 	return message
 

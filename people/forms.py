@@ -86,10 +86,13 @@ class ProfileForm(forms.Form):
 	date_of_birth = forms.DateField(
 									label="Date of birth",
 									required=False,
-									widget=forms.DateInput(attrs={
+									widget=forms.DateInput(	
+																format='%d/%m/%Y',
+																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
-																	}))
+																	}),
+        							input_formats=('%d/%m/%Y',))
 	role_type = forms.ChoiceField(
 									label="Role",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
@@ -113,10 +116,13 @@ class ProfileForm(forms.Form):
 	due_date = forms.DateField(
 									label="Pregnancy due date",
 									required=False,
-									widget=forms.DateInput(attrs={
+									widget=forms.DateInput(
+																format='%d/%m/%Y',
+																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
-																	}))
+																	}),
+									input_formats=('%d/%m/%Y',))
 	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
@@ -212,10 +218,13 @@ class AddRelationshipForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	date_of_birth = forms.DateField(
 									label="Date of birth",
-									widget=forms.DateInput(attrs={
+									widget=forms.DateInput(
+																format='%d/%m/%Y',
+																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
-																	}))
+																	}),
+									input_formats=('%d/%m/%Y',))
 	gender = forms.ChoiceField(
 									label="Gender",
 									choices=gender_choices,
@@ -360,15 +369,17 @@ class EventForm(forms.Form):
 									widget=forms.Select())
 	date = forms.DateField(
 									label="Date",
-									widget=forms.DateInput(attrs={
+									widget=forms.DateInput(																format='%d/%m/%Y',
+																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
-																	}))
+																	}),
+									input_formats=('%d/%m/%Y',))
 	start_time = forms.TimeField(
 									label="Start Time",
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
 	end_time = forms.TimeField(
-									label="Start Time",
+									label="End Time",
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
@@ -483,17 +494,21 @@ class EventSearchForm(forms.Form):
 	date_from = forms.DateField(
 									label="From",
 									required=False,
-									widget=forms.DateInput(attrs={
+									widget=forms.DateInput(																format='%d/%m/%Y',
+																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
-																	}))
+																	}),
+									input_formats=('%d/%m/%Y',))
 	date_to = forms.DateField(
 									label="To",
 									required=False,
-									widget=forms.DateInput(attrs={
+									widget=forms.DateInput(																format='%d/%m/%Y',
+																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
-																	}))
+																	}),
+									input_formats=('%d/%m/%Y',))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# pull the choices field out of the parameters

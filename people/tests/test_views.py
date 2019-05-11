@@ -9,8 +9,15 @@ def set_up_people_base_data():
 	# set up base data needed to do tests for people
 	# first the ethnicity
 	test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
+	# and a second test ethnicity
+	second_test_ethnicity = Ethnicity.objects.create(description='second_test_ethnicity')
 	# and the capture type
 	test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
+	# create a test role
+	test_role = Role_Type.objects.create(role_type_name='test_role_type')
+	# and a second test role type
+	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type')
+
 
 def set_up_test_people(name_root,role_type,number):
 	# set up the number of people asked for
@@ -613,8 +620,8 @@ class EventsViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'name' : '',
-											'date_from' : '2019-01-20',
-											'date_to' : '2019-02-20',
+											'date_from' : '20/01/2019',
+											'date_to' : '20/02/2019',
 											'event_type' : '0',
 											'page' : '1'
 											}
@@ -637,8 +644,8 @@ class EventsViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'name' : '',
-											'date_from' : '2019-01-20',
-											'date_to' : '2019-02-20',
+											'date_from' : '20/01/2019',
+											'date_to' : '20/02/2019',
 											'event_type' : '6',
 											'page' : '1'
 											}
@@ -661,7 +668,7 @@ class EventsViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'name' : '',
-											'date_from' : '2019-01-20',
+											'date_from' : '20/01/2019',
 											'date_to' : '',
 											'event_type' : '0',
 											'page' : '1'
@@ -685,7 +692,7 @@ class EventsViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'name' : '',
-											'date_from' : '2019-01-20',
+											'date_from' : '20/01/2019',
 											'date_to' : '',
 											'event_type' : '6',
 											'page' : '1'
@@ -710,7 +717,7 @@ class EventsViewTest(TestCase):
 											'action' : 'search',
 											'name' : '',
 											'date_from' : '',
-											'date_to' : '2019-01-20',
+											'date_to' : '20/01/2019',
 											'event_type' : '1',
 											'page' : '1'
 											}
@@ -734,7 +741,7 @@ class EventsViewTest(TestCase):
 											'action' : 'search',
 											'name' : '',
 											'date_from' : '',
-											'date_to' : '2019-01-20',
+											'date_to' : '20/01/2019',
 											'event_type' : '0',
 											'page' : '1'
 											}
@@ -759,8 +766,8 @@ class EventsViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'name' : '',
-											'date_from' : '2019-01-20',
-											'date_to' : '2019-02-20',
+											'date_from' : '20/01/2019',
+											'date_to' : '20/02/2019',
 											'event_type' : str(test_event_type_6.pk),
 											'page' : '1'
 											}
@@ -812,3 +819,263 @@ class EventViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an error in the page
 		self.assertContains(response,'ERROR')
+
+class AddPersonViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for people
+		set_up_people_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/addperson')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/addperson')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('addperson'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_create_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addperson'),
+									data = { 
+												'first_name' : 'Testfirst',
+												'middle_names' : 'Testmiddle',
+												'last_name' : 'Testlast',
+												'role_type' : '1'
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/person/1')
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.first_name,'Testfirst')
+		self.assertEqual(test_person.middle_names,'Testmiddle')
+		self.assertEqual(test_person.last_name,'Testlast')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_person.email_address,'')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.addresses.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.english_is_second_language,False)
+		self.assertEqual(test_person.pregnant,False)
+		self.assertEqual(test_person.due_date,None)
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+
+	def test_person_already_exists(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the role
+		test_role = Role_Type.objects.get(id=1)
+		# submit a post for a person who aready exists
+		set_up_test_people('Person_',test_role,1)
+		# submit the form
+		response = self.client.post(
+									reverse('addperson'),
+									data = { 
+												'first_name' : 'Person_0',
+												'middle_names' : '',
+												'last_name' : 'Person_0',
+												'role_type' : '1'
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'WARNING')
+
+	def test_confirmation_of_new_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the role
+		test_role = Role_Type.objects.get(id=1)
+		# submit a post for a person who doesn't exist
+		set_up_test_people('Person_',test_role,1)
+		# submit the form
+		response = self.client.post(
+									reverse('addperson'),
+									data = {
+												'action' : 'CONFIRM',
+												'first_name' : 'Person_0',
+												'middle_names' : '',
+												'last_name' : 'Person_0',
+												'role_type' : '1'
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/person/2')
+		# get the record
+		test_person = Person.objects.get(id=2)
+		# check the record contents
+		self.assertEqual(test_person.first_name,'Person_0')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person_0')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_person.email_address,'')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.addresses.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.english_is_second_language,False)
+		self.assertEqual(test_person.pregnant,False)
+		self.assertEqual(test_person.due_date,None)
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+
+class ProfileViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for people
+		set_up_people_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/profile/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/profile/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('profile',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_invalid_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('profile',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_update_profile(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the test role
+		test_role = Role_Type.objects.get(id=1)
+		# create a person
+		set_up_test_people('Person_',test_role,1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[1]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : 'updated_middle_names',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'english_is_second_language' : True,
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : '2',
+											'ethnicity' : '2'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.first_name,'updated_first_name')
+		self.assertEqual(test_person.middle_names,'updated_middle_names')
+		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
+		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.addresses.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.english_is_second_language,True)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+
+class AddEventViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for people
+		set_up_event_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/addevent')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/addevent')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('addevent'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_create_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addevent'),
+									data = { 
+												'name' : 'Testevent',
+												'description' : 'Testdescription',
+												'location' : 'Testlocation',
+												'event_type' : '1',
+												'date' : '01/01/2019',
+												'start_time' : '10:00',
+												'end_time' : '11:00'
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/event_registration/1')
+		# get the record
+		test_event = Event.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_event.name,'Testevent')
+		self.assertEqual(test_event.description,'Testdescription')
+		self.assertEqual(test_event.location,'Testlocation')
+		self.assertEqual(test_event.event_type.name,'test_event_type')
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/01/2019')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
+

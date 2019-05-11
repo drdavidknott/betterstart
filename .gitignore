@@ -7,4 +7,4 @@ db.sqlite3
 .DS_Store
 app.yaml
 requirements.txt
-cloud-sql-proxy
+cloud_sql_proxy

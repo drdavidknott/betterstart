@@ -1569,7 +1569,7 @@ def build_context(context_dict):
 	# check whether we have a default date
 	if not context_dict.get('default_date', False):
 		# set the default date to the default
-		context_dict['default_date'] = '2010-01-01'
+		context_dict['default_date'] = '01/01/2010'
 	# set the site details from the environment variables
 	context_dict['site_name'] = os.getenv('BETTERSTART_NAME', None)
 	context_dict['nav_background'] = os.getenv('BETTERSTART_NAV','betterstart-background-local-test')
@@ -2230,7 +2230,7 @@ def addevent(request):
 	# set the context
 	context = build_context({
 				'addeventform' : addeventform,
-				'default_date' : datetime.date.today().strftime('%Y-%m-%d')
+				'default_date' : datetime.date.today().strftime('%d/%m/%Y')
 				})
 	# return the HttpResponse
 	return HttpResponse(addevent_template.render(context=context, request=request))
@@ -2362,7 +2362,7 @@ def events(request):
 				'date_to' : date_to,
 				'page_list' : page_list,
 				'search_error' : search_error,
-				'default_date' : datetime.date.today().strftime('%Y-%m-%d'),
+				'default_date' : datetime.date.today().strftime('%d/%m/%Y'),
 				'number_of_events' : number_of_events
 				})
 	# return the HttpResponse

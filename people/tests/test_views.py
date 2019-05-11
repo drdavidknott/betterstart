@@ -71,6 +71,8 @@ def set_up_relationship_base_data():
 	# create test relationship type records
 	Relationship_Type.objects.create(relationship_type='parent', relationship_counterpart='child')
 	Relationship_Type.objects.create(relationship_type='child', relationship_counterpart='parent')
+	Relationship_Type.objects.create(relationship_type='from', relationship_counterpart='to')
+	Relationship_Type.objects.create(relationship_type='to', relationship_counterpart='from')
 
 def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
 	# set up the number of people asked for

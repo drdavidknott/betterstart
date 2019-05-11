@@ -258,14 +258,18 @@ class AddRelationshipForm(forms.Form):
 	role_type = forms.ChoiceField(
 									label="Role",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	ABSS_type = forms.ChoiceField(
+									label="ABSS",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	relationship_type = forms.ChoiceField(
 									label="Relationship",
 									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# pull the choices field out of the parameters
+		# pull the choices fields out of the parameters
 		relationship_types = kwargs.pop('relationship_types')
 		role_types = kwargs.pop('role_types')
+		ABSS_types = kwargs.pop('ABSS_types')
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choice field for ethnicities
@@ -284,6 +288,14 @@ class AddRelationshipForm(forms.Form):
 			role_type_list.append((role_type.pk, role_type.role_type_name))
 		# set the choices
 		self.fields['role_type'].choices = role_type_list
+		# set the choice field for ABSS types
+		ABSS_type_list = []
+		# go through the ABSS types
+		for ABSS_type in ABSS_types:
+			# append a list of value and display value to the list
+			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
+		# set the choices
+		self.fields['ABSS_type'].choices = ABSS_type_list
 
 
 class AddRelationshipToExistingPersonForm(forms.Form):

@@ -1268,6 +1268,25 @@ class AddRelationshipViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
+	def test_find_existing_person_for_relationship(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person to add the relationships to
+		set_up_test_people('Test_exists_',1,1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[1]),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'Test_exists_0',
+											'last_name' : 'Test_exists_0',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# test that the result is contained within the response
+		self.assertContains(response,'Test_exists_0')
+
 	def test_add_relationship_to_new_person(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -1285,7 +1304,8 @@ class AddRelationshipViewTest(TestCase):
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
 											'role_type' : '2',
-											'relationship_type' : '1'
+											'relationship_type' : '1',
+											'ABSS_type' : 1
 											}
 									)
 		# check the response
@@ -1313,6 +1333,7 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_new_person.families.all().exists(),False)
 		self.assertEqual(test_new_person.savs_id,None)
+		self.assertEqual(test_new_person.ABSS_type.name,'test_ABSS_type')
 		# get the original person
 		test_original_person = Person.objects.get(id=1)
 		# get the relationship from 

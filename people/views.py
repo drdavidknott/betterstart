@@ -1108,7 +1108,8 @@ def create_person(
 					default_role,
 					date_of_birth=None,
 					gender='',
-					ethnicity=1):
+					ethnicity=1,
+					ABSS_type=1):
 	# get the role type
 	default_role = get_role_type(default_role)
 	# create a person
@@ -1119,7 +1120,8 @@ def create_person(
 					date_of_birth = date_of_birth,
 					gender = gender,
 					default_role = default_role,
-					ethnicity = get_ethnicity(ethnicity)
+					ethnicity = get_ethnicity(ethnicity),
+					ABSS_type = get_ABSS_type(ABSS_type)
 						)
 	# save the record
 	person.save()
@@ -2081,7 +2083,7 @@ def add_relationship(request,person_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = get_people_by_names_and_role(first_name,last_name)
+				people = get_people_by_names_role_and_ABSS(first_name,last_name)
 				# remove the people who already have a relationship
 				search_results = remove_existing_relationships(person, people)
 				# if there are search results, create a form to create relationships from the search results
@@ -2100,6 +2102,7 @@ def add_relationship(request,person_id=0):
 				addrelationshipform = AddRelationshipForm(
 															request.POST,
 															relationship_types=relationship_types,
+															ABSS_types=get_ABSS_types(),
 															role_types = role_types
 															)
 			# otherwise we have a blank form
@@ -2125,6 +2128,7 @@ def add_relationship(request,person_id=0):
 			addrelationshipform = AddRelationshipForm(
 														request.POST,
 														relationship_types = relationship_types,
+														ABSS_types=get_ABSS_types(),
 														role_types = role_types
 														)
 			# check whether the form is valid
@@ -2136,7 +2140,8 @@ def add_relationship(request,person_id=0):
 											last_name = addrelationshipform.cleaned_data['last_name'],
 											date_of_birth = addrelationshipform.cleaned_data['date_of_birth'],
 											default_role = addrelationshipform.cleaned_data['role_type'],
-											gender = addrelationshipform.cleaned_data['gender']
+											gender = addrelationshipform.cleaned_data['gender'],
+											ABSS_type = addrelationshipform.cleaned_data['ABSS_type']
 											)
 				# set a message to say that we have create a new person
 				messages.success(request, str(person_to) + ' created.')
@@ -2155,7 +2160,8 @@ def add_relationship(request,person_id=0):
 		# build the form
 		editexistingrelationshipsform = EditExistingRelationshipsForm(
 																		relationships=relationships_to,
-																		relationship_types=get_relationship_types())
+																		relationship_types=get_relationship_types()
+																		)
 		# and go through the relationships, adding the name of the select field and the hidden field
 		for relationship_to in relationships_to:
 			# set the values

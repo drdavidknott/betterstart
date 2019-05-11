@@ -1,6 +1,6 @@
 from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
-							Event_Registration, Role_History, Relationship_Type, Relationship
+							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -17,6 +17,11 @@ def set_up_people_base_data():
 	test_role = Role_Type.objects.create(role_type_name='test_role_type')
 	# and a second test role type
 	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type')
+	# create a test ABSS type
+	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
+	# create a second test ABSS type
+	second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type')
+
 
 def set_up_test_people(name_root,role_type,number):
 	# set up the number of people asked for
@@ -950,6 +955,7 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
 
 class ProfileViewTest(TestCase):
 	@classmethod
@@ -1004,7 +1010,8 @@ class ProfileViewTest(TestCase):
 											'pregnant' : True,
 											'due_date' : '01/01/2020',
 											'role_type' : '2',
-											'ethnicity' : '2'
+											'ethnicity' : '2',
+											'ABSS_type' : '2'
 											}
 									)
 		# check the response
@@ -1031,6 +1038,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
 
 class AddEventViewTest(TestCase):
 	@classmethod

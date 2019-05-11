@@ -93,6 +93,9 @@ class ProfileForm(forms.Form):
 																	'autocomplete' : 'off'
 																	}),
         							input_formats=('%d/%m/%Y',))
+	ABSS_type = forms.ChoiceField(
+									label="ABSS Type",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	role_type = forms.ChoiceField(
 									label="Role",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
@@ -129,6 +132,7 @@ class ProfileForm(forms.Form):
 		# pull the choices fields out of the parameters
 		ethnicities = kwargs.pop('ethnicities')
 		role_types = kwargs.pop('role_types')
+		ABSS_types = kwargs.pop('ABSS_types')
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice field for ethnicities
@@ -147,6 +151,14 @@ class ProfileForm(forms.Form):
 			role_type_list.append((role_type.pk, role_type.role_type_name))
 		# set the choices
 		self.fields['role_type'].choices = role_type_list
+		# set the choice field for ABSS types
+		ABSS_type_list = []
+		# go through the ABSS types
+		for ABSS_type in ABSS_types:
+			# append a list of value and display value to the list
+			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
+		# set the choices
+		self.fields['ABSS_type'].choices = ABSS_type_list
 
 class PersonSearchForm(forms.Form):
 	# Define the fields that we need in the form.

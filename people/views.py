@@ -1056,6 +1056,21 @@ def get_answer(person,question):
 	# return the value
 	return answer
 
+def get_ABSS_types():
+	# return a list of all the ABSS type objects
+	return ABSS_Type.objects.all()
+
+def get_ABSS_type(ABSS_type_id):
+	# try to get ABSS type
+	try:
+		ABSS_type = ABSS_Type.objects.get(pk=ABSS_type_id)
+	# handle the exception
+	except ABSS_Type.DoesNotExist:
+		# set a false value
+		ABSS_type = False
+	# return the ABSS type
+	return ABSS_type
+
 def create_person(
 					first_name,
 					middle_names,
@@ -1449,7 +1464,8 @@ def update_person(
 					pregnant,
 					due_date,
 					default_role_id,
-					ethnicity_id
+					ethnicity_id,
+					ABSS_type_id
 				):
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
@@ -1463,6 +1479,16 @@ def update_person(
 	else:
 		# set the message
 		messages.error(request, 'Ethnicity does not exist.')
+	# attempt to get the ABSS type
+	ABSS_type = get_ABSS_type(ABSS_type_id)
+	# set the value for the person
+	if ABSS_type:
+		# set the value
+		person.ABSS_type = ABSS_type
+	# otherwise set a message
+	else:
+		# set the message
+		messages.error(request, 'ABSS Type does not exist.')
 	# attempt to get the role type
 	default_role = get_role_type(default_role_id)
 	# set the value for the person
@@ -1825,7 +1851,7 @@ def addperson(request):
 				# set a success message
 				messages.success(request,
 									'Another ' + str(person) + ' created.'
- 									)
+									)
 				# go to the profile of the person
 				return redirect('/person/' + str(person.pk))
 		# otherwise see whether the person matches an existing person by name
@@ -1842,7 +1868,7 @@ def addperson(request):
 			# set a success message
 			messages.success(request,
 								str(person) + ' created.'
- 								)
+								)
 			# go to the profile of the person
 			return redirect('/person/' + str(person.pk))
 	# otherwise create a fresh form
@@ -1899,7 +1925,8 @@ def profile(request, person_id=0):
 		profileform = ProfileForm(
 									request.POST,
 									ethnicities=get_ethnicities(),
-									role_types=get_role_types()
+									role_types=get_role_types(),
+									ABSS_types=get_ABSS_types()
 									)
 		# check whether the entry is valid
 		if profileform.is_valid():
@@ -1917,7 +1944,8 @@ def profile(request, person_id=0):
 								pregnant = profileform.cleaned_data['pregnant'],
 								due_date = profileform.cleaned_data['due_date'],
 								default_role_id = profileform.cleaned_data['role_type'],
-								ethnicity_id = profileform.cleaned_data['ethnicity']
+								ethnicity_id = profileform.cleaned_data['ethnicity'],
+								ABSS_type_id = profileform.cleaned_data['ABSS_type']
 									)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
@@ -1934,13 +1962,15 @@ def profile(request, person_id=0):
 						'gender' : person.gender,
 						'english_is_second_language' : person.english_is_second_language,
 						'pregnant' : person.pregnant,
-						'due_date' : person.due_date
+						'due_date' : person.due_date,
+						'ABSS_type' : person.ABSS_type.pk
 						}
 		# create the form
 		profileform = ProfileForm(
 									profile_dict,
 									ethnicities=get_ethnicities(),
-									role_types=get_role_types()
+									role_types=get_role_types(),
+									ABSS_types=get_ABSS_types()
 									)
 	# load the template
 	profile_template = loader.get_template('people/profile.html')

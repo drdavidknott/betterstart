@@ -2140,8 +2140,8 @@ def add_address(request,person_id=0):
 												person = person,
 												address = address
 												)
-					# clear the add address form so that it doesn't display
-					addaddressform = ''
+					# redirect to the person's profile page
+					return redirect('/person/' + str(person.pk))
 				# otherwise deal with an invalid post code
 				else:
 					# set the error message

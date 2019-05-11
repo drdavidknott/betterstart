@@ -1,6 +1,6 @@
 from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
-							Event_Registration, Role_History
+							Event_Registration, Role_History, Relationship_Type, Relationship
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -17,7 +17,6 @@ def set_up_people_base_data():
 	test_role = Role_Type.objects.create(role_type_name='test_role_type')
 	# and a second test role type
 	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type')
-
 
 def set_up_test_people(name_root,role_type,number):
 	# set up the number of people asked for
@@ -57,6 +56,11 @@ def set_up_event_base_data():
 												name = 'test_event_type',
 												description = 'type desc',
 												event_category = test_event_category)
+
+def set_up_relationship_base_data():
+	# create test relationship type records
+	Relationship_Type.objects.create(relationship_type='parent', relationship_counterpart='child')
+	Relationship_Type.objects.create(relationship_type='child', relationship_counterpart='parent')
 
 def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
 	# set up the number of people asked for
@@ -1078,4 +1082,88 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/01/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
+
+class AddRelationshipViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for people
+		set_up_people_base_data()
+		# set up base data for relationships
+		set_up_relationship_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/add_relationship/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/add_relationship/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('add_relationship',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_add_relationship_to_new_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the default role type
+		test_role_type = Role_Type.objects.get(id=1)
+		# create a person to add the relationships to
+		set_up_test_people('Test_from_',test_role_type,1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[1]),
+									data = { 
+											'action' : 'addrelationshiptonewperson',
+											'first_name' : 'new_first_name',
+											'middle_names' : 'new_middle_names',
+											'last_name' : 'new_last_name',
+											'email_address' : 'new_email_address@test.com',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'role_type' : '2',
+											'relationship_type' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the newly created person record
+		test_new_person = Person.objects.get(id=2)
+		# check the record contents
+		self.assertEqual(test_new_person.first_name,'new_first_name')
+		self.assertEqual(test_new_person.middle_names,'new_middle_names')
+		self.assertEqual(test_new_person.last_name,'new_last_name')
+		self.assertEqual(test_new_person.default_role.role_type_name,'second_test_role_type')
+		self.assertEqual(test_new_person.gender,'Male')
+		self.assertEqual(test_new_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_new_person.email_address,'')
+		self.assertEqual(test_new_person.notes,'')
+		self.assertEqual(test_new_person.relationships.all().exists(),True)
+		self.assertEqual(test_new_person.children_centres.all().exists(),False)
+		self.assertEqual(test_new_person.addresses.all().exists(),False)
+		self.assertEqual(test_new_person.events.all().exists(),False)
+		self.assertEqual(test_new_person.english_is_second_language,False)
+		self.assertEqual(test_new_person.pregnant,False)
+		self.assertEqual(test_new_person.due_date,None)
+		self.assertEqual(test_new_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_new_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_new_person.families.all().exists(),False)
+		self.assertEqual(test_new_person.savs_id,None)
+		# get the original person
+		test_original_person = Person.objects.get(id=1)
+		# get the relationship from 
+		relationship_from_original = Relationship.objects.get(relationship_from=test_original_person)
+		# check the contents
+		self.assertEqual(relationship_from_original.relationship_type.relationship_type,'parent')
+		self.assertEqual(relationship_from_original.relationship_to,test_new_person)
+		# get the relationship to 
+		relationship_from_new = Relationship.objects.get(relationship_from=test_new_person)
+		# check the contents
+		self.assertEqual(relationship_from_new.relationship_type.relationship_type,'child')
+		self.assertEqual(relationship_from_new.relationship_to,test_original_person)
 

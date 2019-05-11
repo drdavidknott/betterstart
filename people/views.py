@@ -81,6 +81,22 @@ def index(request):
 													)
 	# append the parent champions panel to the column
 	roles_dashboard_column.panels.append(parent_champions_dashboard_panel)
+	# add the role types dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'ABSS',
+															column_names = ['counts'],
+															rows = get_ABSS_types_with_counts(),
+															row_name = 'name',
+															row_values = ['count'],
+															row_url = 'ABSS_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 2,
+															right_margin = 2,
+															)
+											)
 	# create the exceptions dashboard panel
 	exceptions_dashboard_panel = Dashboard_Panel(
 														title = 'EXCEPTIONS',
@@ -1064,6 +1080,16 @@ def get_ABSS_types():
 	# return a list of all the ABSS type objects
 	return ABSS_Type.objects.all()
 
+def get_ABSS_types_with_counts():
+	# return a list of all the ABSS type objects, supplemented with counts
+	ABSS_types = get_ABSS_types()
+	# now go through the ABSS types
+	for ABSS_type in ABSS_types:
+		# get the count
+		ABSS_type.count = Person.objects.filter(ABSS_type=ABSS_type).count()
+	# return the results
+	return ABSS_types
+
 def get_ABSS_type(ABSS_type_id):
 	# try to get ABSS type
 	try:
@@ -1781,6 +1807,25 @@ def people_type(request, role_type):
 	copy_POST['role_type'] = role_type
 	copy_POST['first_name'] = ''
 	copy_POST['last_name'] = ''
+	copy_POST['ABSS_type'] = '0'
+	copy_POST['page'] = '1'
+	# now copy it back
+	request.POST = copy_POST
+	# and set the method
+	request.method = 'POST'
+	# now call the people view
+	return people(request)
+
+@login_required
+def ABSS_type(request, ABSS_type):
+	# copy the request
+	copy_POST = request.POST.copy()
+	# set search terms for a people search
+	copy_POST['action'] = 'search'
+	copy_POST['role_type'] = '0'
+	copy_POST['first_name'] = ''
+	copy_POST['last_name'] = ''
+	copy_POST['ABSS_type'] = ABSS_type
 	copy_POST['page'] = '1'
 	# now copy it back
 	request.POST = copy_POST

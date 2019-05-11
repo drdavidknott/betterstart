@@ -29,7 +29,7 @@
 						<input type="hidden" name="page" value="1">
 						<div class = "row form-group">
 							{% for field in personsearchform %}
-								<div class = "col-md-4">
+								<div class = "col-md-3">
 									<div>{{ field.label_tag }}</div>
 									<div>{{ field }}</div>
 								</div>
@@ -103,6 +103,7 @@
 					<input type="hidden" name="first_name" value="{{ first_name }}">
 					<input type="hidden" name="last_name" value="{{ last_name }}">
 					<input type="hidden" name="role_type" value="{{ role_type }}">
+					<input type="hidden" name="ABSS_type" value="{{ ABSS_type }}">
 					{% for target_page in page_list %}
 						<input type="submit" name="page" value="{{ target_page }}">
 					{% endfor %}

@@ -23,8 +23,12 @@ def set_up_people_base_data():
 	second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type')
 
 
-def set_up_test_people(name_root,role_type,number):
+def set_up_test_people(name_root,role_type_id=1,number=1,ABSS_type_id=1):
 	# set up the number of people asked for
+	# get the ABSS type
+	ABSS_type = ABSS_Type.objects.get(id=ABSS_type_id)
+	# and the role type
+	role_type = Role_Type.objects.get(id=role_type_id)
 	# create the number of people needed
 	for n in range(number):
 		# create a person
@@ -39,7 +43,8 @@ def set_up_test_people(name_root,role_type,number):
 											default_role = role_type,
 											english_is_second_language = False,
 											pregnant = False,
-											due_date = None
+											due_date = None,
+											ABSS_type = ABSS_type
 											)
 		# create a role history entry
 		Role_History.objects.create(
@@ -97,23 +102,27 @@ class PeopleViewTest(TestCase):
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
 		test_role_4 = Role_Type.objects.create(role_type_name='test role 4')
 		test_role_5 = Role_Type.objects.create(role_type_name='test role 5')
+		# create a test ABSS type
+		test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
+		# create a second test ABSS type
+		second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type')
 		# Create 50 of each type
-		set_up_test_people('Parent_',parent_role,50)
-		set_up_test_people('Parent_Champion_',parent_champion_role,50)
-		set_up_test_people('Test_Role_1_',test_role_1,50)
-		set_up_test_people('Test_Role_2_',test_role_2,50)
+		set_up_test_people('Parent_',parent_role.pk,50)
+		set_up_test_people('Parent_Champion_',parent_champion_role.pk,50)
+		set_up_test_people('Test_Role_1_',test_role_1.pk,50)
+		set_up_test_people('Test_Role_2_',test_role_2.pk,50)
 		# and 50 of each of the two test role types with different names
-		set_up_test_people('Different_Name_',test_role_1,50)
-		set_up_test_people('Another_Name_',test_role_2,50)
+		set_up_test_people('Different_Name_',test_role_1.pk,50)
+		set_up_test_people('Another_Name_',test_role_2.pk,50)
 		# and more with the roles swapped over
-		set_up_test_people('Different_Name_',test_role_2,50)
-		set_up_test_people('Another_Name_',test_role_1,50)
+		set_up_test_people('Different_Name_',test_role_2.pk,50)
+		set_up_test_people('Another_Name_',test_role_1.pk,50)
 		# and a short set to test a result set with less than a page
-		set_up_test_people('Short_Set_',test_role_3,10)
+		set_up_test_people('Short_Set_',test_role_3.pk,10)
 		# create 25 ex-parent champions
-		set_up_test_people('Ex_Parent_Champion_',parent_champion_role,50)
+		set_up_test_people('Ex_Parent_Champion_',parent_champion_role.pk,50)
 		# and a set that doesn't exactly fit two pagaes
-		set_up_test_people('Pagination_',test_role_5,32)
+		set_up_test_people('Pagination_',test_role_5.pk,32)
 		# now go through them and update their role and role history
 		ex_parent_champions = Person.objects.filter(first_name__icontains='Ex')
 		# go through the list
@@ -153,6 +162,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -178,6 +188,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : str(parent_role_type.pk),
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -201,6 +212,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'Test_Role_1',
 											'last_name' : '',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -224,6 +236,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'test_role_1',
 											'last_name' : '',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -247,6 +260,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : 'Test_Role_1',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -270,6 +284,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : 'test_role_1',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -291,6 +306,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'Short',
 											'last_name' : '',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -316,6 +332,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'Different',
 											'last_name' : '',
 											'role_type' : str(test_role_type_1.pk),
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -341,6 +358,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'Different',
 											'last_name' : 'Different',
 											'role_type' : str(test_role_type_1.pk),
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -364,6 +382,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : 'Has ever been a Parent Champion',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -387,6 +406,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'No results',
 											'last_name' : '',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -410,6 +430,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : 'No results',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -435,6 +456,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : str(test_role_type_4.pk),
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -460,6 +482,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'Test_Role_1_',
 											'last_name' : '',
 											'role_type' : str(test_role_type_3.pk),
+											'ABSS_type' : '0',
 											'page' : '1'
 											}
 									)
@@ -485,6 +508,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : str(test_role_type_5.pk),
+											'ABSS_type' : '0',
 											'page' : '2'
 											}
 									)
@@ -508,6 +532,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'Pagination',
 											'last_name' : '',
 											'role_type' : '0',
+											'ABSS_type' : '0',
 											'page' : '2'
 											}
 									)
@@ -519,6 +544,140 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),7)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_ABSS_search_on_type(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_',1,30,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_ABSS_search_on_type_and_name(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_find_',1,30,2)
+		set_up_test_people('ABSS_not_found_',1,30,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_ABSS_search_on_type_role(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_role_1',1,30,2)
+		set_up_test_people('ABSS_test_role_2',2,35,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_ABSS_search_on_type_and_name_and_role(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_role_1',1,30,2)
+		set_up_test_people('ABSS_test_role_2',2,35,2)
+		set_up_test_people('ABSS_test_find',2,37,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],37)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_ABSS_search_with_no_results(self):
+		# create a new ABSS type
+		ABSS_Type.objects.create(name='Third test ABSS')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '3',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
 
 class EventsViewTest(TestCase):
 	@classmethod
@@ -893,10 +1052,8 @@ class AddPersonViewTest(TestCase):
 	def test_person_already_exists(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
-		# get the role
-		test_role = Role_Type.objects.get(id=1)
 		# submit a post for a person who aready exists
-		set_up_test_people('Person_',test_role,1)
+		set_up_test_people('Person_',1,1)
 		# submit the form
 		response = self.client.post(
 									reverse('addperson'),
@@ -915,10 +1072,8 @@ class AddPersonViewTest(TestCase):
 	def test_confirmation_of_new_person(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
-		# get the role
-		test_role = Role_Type.objects.get(id=1)
 		# submit a post for a person who doesn't exist
-		set_up_test_people('Person_',test_role,1)
+		set_up_test_people('Person_',1,1)
 		# submit the form
 		response = self.client.post(
 									reverse('addperson'),
@@ -992,10 +1147,8 @@ class ProfileViewTest(TestCase):
 	def test_update_profile(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
-		# get the test role
-		test_role = Role_Type.objects.get(id=1)
 		# create a person
-		set_up_test_people('Person_',test_role,1)
+		set_up_test_people('Person_',1,1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
 									reverse('profile',args=[1]),
@@ -1118,10 +1271,8 @@ class AddRelationshipViewTest(TestCase):
 	def test_add_relationship_to_new_person(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
-		# get the default role type
-		test_role_type = Role_Type.objects.get(id=1)
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',test_role_type,1)
+		set_up_test_people('Test_from_',1,1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
 									reverse('add_relationship',args=[1]),

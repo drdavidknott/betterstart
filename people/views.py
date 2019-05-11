@@ -641,7 +641,7 @@ def get_people_by_name(first_name,last_name):
 	# return the people
 	return people
 
-def get_people_by_names_and_role(first_name='',last_name='',role_type='0'):
+def get_people_by_names_role_and_ABSS(first_name='',last_name='',role_type='0',ABSS_type='0'):
 	# get all people
 	people = Person.objects.all()
 	# check whether we have a first name
@@ -662,6 +662,10 @@ def get_people_by_names_and_role(first_name='',last_name='',role_type='0'):
 		else:
 			# apply the filter
 			people = people.filter(default_role_id=int(role_type))
+	# if we have an ABSS type, filter by the ABSS type
+	if ABSS_type != '0':
+		# do the filter
+		people = people.filter(ABSS_type_id=int(ABSS_type))
 	# return the list of people
 	return people
 
@@ -1705,6 +1709,7 @@ def people(request):
 	first_name = ''
 	last_name = ''
 	role_type = 0
+	ABSS_type = 0
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1712,7 +1717,11 @@ def people(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(request.POST,role_types=get_role_types())
+		personsearchform = PersonSearchForm(	
+											request.POST,
+											role_types=get_role_types(),
+											ABSS_types=get_ABSS_types()
+											)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
@@ -1721,11 +1730,13 @@ def people(request):
 			first_name = personsearchform.cleaned_data['first_name']
 			last_name = personsearchform.cleaned_data['last_name']
 			role_type = personsearchform.cleaned_data['role_type']
+			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			# conduct a search
-			people = get_people_by_names_and_role(
+			people = get_people_by_names_role_and_ABSS(
 													first_name=first_name,
 													last_name=last_name,
-													role_type=role_type
+													role_type=role_type,
+													ABSS_type=ABSS_type
 													)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -1740,7 +1751,10 @@ def people(request):
 	# otherwise set a bank form
 	else:
 		# create the blank form
-		personsearchform = PersonSearchForm(role_types=get_role_types())
+		personsearchform = PersonSearchForm(
+											role_types=get_role_types(),
+											ABSS_types=get_ABSS_types()
+											)
 	# get the template
 	people_template = loader.get_template('people/people.html')
 	# set the context
@@ -1751,6 +1765,7 @@ def people(request):
 				'first_name' : first_name,
 				'last_name' : last_name,
 				'role_type' : role_type,
+				'ABSS_type' : ABSS_type,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})

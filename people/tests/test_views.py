@@ -1349,3 +1349,105 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(relationship_from_new.relationship_type.relationship_type,'child')
 		self.assertEqual(relationship_from_new.relationship_to,test_original_person)
 
+	def test_add_relationship_to_existing_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person to add the relationships to
+		set_up_test_people('Test_from_',1,1)
+		set_up_test_people('Test_to_',1,1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[1]),
+									data = { 
+											'action' : 'editrelationships',
+											'relationship_type_2' : '1',
+											}
+									)
+		# get the from person
+		test_from_person = Person.objects.get(id=1)
+		# and the to person
+		test_to_person = Person.objects.get(id=2)
+		# get the 
+		relationship_from = Relationship.objects.get(relationship_from=test_from_person)
+		# check the contents
+		self.assertEqual(relationship_from.relationship_type.relationship_type,'parent')
+		self.assertEqual(relationship_from.relationship_to,test_to_person)
+		# get the relationship to 
+		relationship_to = Relationship.objects.get(relationship_from=test_to_person)
+		# check the contents
+		self.assertEqual(relationship_to.relationship_type.relationship_type,'child')
+		self.assertEqual(relationship_to.relationship_to,test_from_person)
+
+	def test_edit_existing_relationship(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person to add the relationships to
+		set_up_test_people('Test_from_',1,1)
+		set_up_test_people('Test_to_',1,1)
+		# get the people
+		test_from_person = Person.objects.get(id=1)
+		# and the to person
+		test_to_person = Person.objects.get(id=2)
+		# create the relationships
+		Relationship.objects.create(
+										relationship_from=test_from_person,
+										relationship_to=test_to_person,
+										relationship_type=Relationship_Type.objects.get(id=1)
+			)
+		# and the other one
+		Relationship.objects.create(
+										relationship_from=test_to_person,
+										relationship_to=test_from_person,
+										relationship_type=Relationship_Type.objects.get(id=2)
+			)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[1]),
+									data = { 
+											'action' : 'editrelationships',
+											'relationship_type_2' : '3',
+											}
+									)
+		# get the 
+		relationship_from = Relationship.objects.get(relationship_from=test_from_person)
+		# check the contents
+		self.assertEqual(relationship_from.relationship_type.relationship_type,'from')
+		self.assertEqual(relationship_from.relationship_to,test_to_person)
+		# get the relationship to 
+		relationship_to = Relationship.objects.get(relationship_from=test_to_person)
+		# check the contents
+		self.assertEqual(relationship_to.relationship_type.relationship_type,'to')
+		self.assertEqual(relationship_to.relationship_to,test_from_person)
+
+	def test_delete_existing_relationship(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person to add the relationships to
+		set_up_test_people('Test_from_',1,1)
+		set_up_test_people('Test_to_',1,1)
+		# get the people
+		test_from_person = Person.objects.get(id=1)
+		# and the to person
+		test_to_person = Person.objects.get(id=2)
+		# create the relationships
+		Relationship.objects.create(
+										relationship_from=test_from_person,
+										relationship_to=test_to_person,
+										relationship_type=Relationship_Type.objects.get(id=1)
+			)
+		# and the other one
+		Relationship.objects.create(
+										relationship_from=test_to_person,
+										relationship_to=test_from_person,
+										relationship_type=Relationship_Type.objects.get(id=2)
+			)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[1]),
+									data = { 
+											'action' : 'editrelationships',
+											'relationship_type_2' : '0',
+											}
+									)
+		# check that all relationships have gone
+		self.assertEqual(Relationship.objects.all().exists(),False)

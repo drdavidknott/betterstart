@@ -2652,7 +2652,7 @@ def event_registration(request,event_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = get_people_by_names_and_role(first_name,last_name)
+				people = people_search(first_name,last_name)
 				# remove the people who already have a registration
 				search_results = remove_existing_registrations(event, people)
 				# if there are search results, create a form to create relationships from the search results

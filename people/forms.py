@@ -2,6 +2,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
+from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type
 from django.contrib.auth import authenticate
 import datetime
 
@@ -24,6 +25,36 @@ def age_status_choices(age_statuses):
 		age_status_list.append((age_status.pk, age_status.status))
 	# return the list
 	return age_status_list
+
+def ABSS_type_choices(ABSS_types):
+	# set the choice field for ABSS types
+	ABSS_type_list = []
+	# go through the ABSS types
+	for ABSS_type in ABSS_types:
+		# append a list of value and display value to the list
+		ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
+	# return the choices
+	return ABSS_type_list
+
+def role_type_choices(role_types):
+	# set the choice field for role types
+	role_type_list = []
+	# go through the role types
+	for role_type in role_types:
+		# append a list of value and display value to the list
+		role_type_list.append((role_type.pk, role_type.role_type_name))
+	# return the list
+	return role_type_list
+
+def ethnicity_choices(ethnicities):
+	# set the choice field for ethnicities
+	ethnicity_list = []
+	# go through the ethnicities
+	for ethnicity in ethnicities:
+		# append a list of value and display value to the list
+		ethnicity_list.append((ethnicity.pk, ethnicity.description))
+	# return the list
+	return ethnicity_list
 
 class LoginForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -60,22 +91,10 @@ class AddPersonForm(forms.Form):
 		role_types = kwargs.pop('role_types')
 		# call the built in constructor
 		super(AddPersonForm, self).__init__(*args, **kwargs)
-		# set the choice field for role types
-		role_type_list = []
-		# set an initial value
-		initial = 1
-		# go through the role types
-		for role_type in role_types:
-			# append a list of value and display value to the list
-			role_type_list.append((role_type.pk, role_type.role_type_name))
-			# also see whether we have the UNKKNOWN role type
-			if role_type.role_type_name == 'UNKNOWN':
-				# set the initial value
-				initial = role_type.pk
 		# set the choices
-		self.fields['role_type'].choices = role_type_list
+		self.fields['role_type'].choices = role_type_choices(role_types)
 		# set the initial value
-		self.fields['role_type'].initial = initial
+		self.fields['role_type'].initial = Role_Type.objects.get(role_type_name='UNKNOWN').pk
 
 class ProfileForm(forms.Form):
 	# Define the choices for gender
@@ -152,45 +171,13 @@ class ProfileForm(forms.Form):
 	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
-		# pull the choices fields out of the parameters
-		ethnicities = kwargs.pop('ethnicities')
-		role_types = kwargs.pop('role_types')
-		ABSS_types = kwargs.pop('ABSS_types')
-		age_statuses = kwargs.pop('age_statuses')
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
-		# set the choice field for ethnicities
-		ethnicity_list = []
-		# go through the ethnicities
-		for ethnicity in ethnicities:
-			# append a list of value and display value to the list
-			ethnicity_list.append((ethnicity.pk, ethnicity.description))
-		# set the choices
-		self.fields['ethnicity'].choices = ethnicity_list
-		# set the choice field for role types
-		role_type_list = []
-		# go through the role types
-		for role_type in role_types:
-			# append a list of value and display value to the list
-			role_type_list.append((role_type.pk, role_type.role_type_name))
-		# set the choices
-		self.fields['role_type'].choices = role_type_list
-		# set the choice field for ABSS types
-		ABSS_type_list = []
-		# go through the ABSS types
-		for ABSS_type in ABSS_types:
-			# append a list of value and display value to the list
-			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
-		# set the choices
-		self.fields['ABSS_type'].choices = ABSS_type_list
-		# set the choice field for age statuses
-		age_status_list = []
-		# go through the age statuses
-		for age_status in age_statuses:
-			# append a list of value and display value to the list
-			age_status_list.append((age_status.pk, age_status.status))
-		# set the choices
-		self.fields['age_status'].choices = age_status_list
+		# set the choice fields
+		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all())
+		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all())
+		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())
+		self.fields['ethnicity'].choices = ethnicity_choices(Ethnicity.objects.all())
 
 class PersonSearchForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -210,35 +197,19 @@ class PersonSearchForm(forms.Form):
 	ABSS_type = forms.ChoiceField(
 									label="ABSS",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	age_status = forms.ChoiceField(
+									label="Adult or Child",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# pull the choices fields out of the parameters
-		role_types = kwargs.pop('role_types')
-		ABSS_types = kwargs.pop('ABSS_types')
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
-		# set the choice field for role types
-		role_type_list = []
-		# add in a default value
-		role_type_list.append((0,'Any'))
-		# and an any parent champion role
-		role_type_list.append(('Has ever been a Parent Champion','Has ever been a Parent Champion'))
-		# go through the role types
-		for role_type in role_types:
-			# append a list of value and display value to the list
-			role_type_list.append((role_type.pk, role_type.role_type_name))
 		# set the choices
-		self.fields['role_type'].choices = role_type_list
-		# set the choice field for ABSS types
-		ABSS_type_list = []
-		# add in a default value
-		ABSS_type_list.append((0,'Any'))
-		# go through the ABSS types
-		for ABSS_type in ABSS_types:
-			# append a list of value and display value to the list
-			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
-		# set the choices
-		self.fields['ABSS_type'].choices = ABSS_type_list
+		self.fields['role_type'].choices = [(0,'Any'),
+											('Has ever been a Parent Champion','Has ever been a Parent Champion')] \
+											 + role_type_choices(Role_Type.objects.all())
+		self.fields['ABSS_type'].choices = [(0,'Any')] + ABSS_type_choices(ABSS_Type.objects.all())
+		self.fields['age_status'].choices = [(0,'Any')] + age_status_choices(Age_Status.objects.all())
 
 class PersonNameSearchForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -311,22 +282,8 @@ class AddRelationshipForm(forms.Form):
 		# set the choices
 		self.fields['relationship_type'].choices = relationship_type_choices(relationship_types)
 		self.fields['age_status'].choices = age_status_choices(age_statuses)
-		# set the choice field for role types
-		role_type_list = []
-		# go through the role types
-		for role_type in role_types:
-			# append a list of value and display value to the list
-			role_type_list.append((role_type.pk, role_type.role_type_name))
-		# set the choices
-		self.fields['role_type'].choices = role_type_list
-		# set the choice field for ABSS types
-		ABSS_type_list = []
-		# go through the ABSS types
-		for ABSS_type in ABSS_types:
-			# append a list of value and display value to the list
-			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
-		# set the choices
-		self.fields['ABSS_type'].choices = ABSS_type_list
+		self.fields['role_type'].choices = role_type_choices(role_types)
+		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_types)
 
 class AddRelationshipToExistingPersonForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

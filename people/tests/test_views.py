@@ -18,6 +18,8 @@ def set_up_people_base_data():
 	test_role = Role_Type.objects.create(role_type_name='test_role_type')
 	# and a second test role type
 	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type')
+	# and an UNKNOWN role type
+	unknown_test_role = Role_Type.objects.create(role_type_name='UNKNOWN')
 	# create a test ABSS type
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
 	# create a second test ABSS type
@@ -27,12 +29,7 @@ def set_up_people_base_data():
 	# create a second test age status
 	test_age_status = Age_Status.objects.create(status='Child')
 
-def set_up_test_people(name_root,role_type_id=1,number=1,ABSS_type_id=1):
-	# set up the number of people asked for
-	# get the ABSS type
-	ABSS_type = ABSS_Type.objects.get(id=ABSS_type_id)
-	# and the role type
-	role_type = Role_Type.objects.get(id=role_type_id)
+def set_up_test_people(name_root,role_type_id=1,number=1,ABSS_type_id=1,age_status_id=1):
 	# create the number of people needed
 	for n in range(number):
 		# create a person
@@ -44,16 +41,17 @@ def set_up_test_people(name_root,role_type_id=1,number=1,ABSS_type_id=1):
 											date_of_birth = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
 											gender = 'Gender',
 											notes = 'test notes',
-											default_role = role_type,
+											default_role = Role_Type.objects.get(id=role_type_id),
 											english_is_second_language = False,
 											pregnant = False,
 											due_date = None,
-											ABSS_type = ABSS_type
+											ABSS_type = ABSS_Type.objects.get(id=ABSS_type_id),
+											age_status = Age_Status.objects.get(id=age_status_id)
 											)
 		# create a role history entry
 		Role_History.objects.create(
 									person = test_person,
-									role_type = role_type
+									role_type = Role_Type.objects.get(id=role_type_id)
 									)
 
 def set_up_test_user():
@@ -102,6 +100,10 @@ class PeopleViewTest(TestCase):
 		parent_role = Role_Type.objects.create(role_type_name='Parent')
 		# and the parent champion role
 		parent_champion_role = Role_Type.objects.create(role_type_name='Parent Champion')
+		# create a test age status
+		test_age_status = Age_Status.objects.create(status='Adult')
+		# create a second test age status
+		test_age_status = Age_Status.objects.create(status='Child')
 		# and four more test role types
 		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
@@ -169,6 +171,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -195,6 +198,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : str(parent_role_type.pk),
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -219,6 +223,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -243,6 +248,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -267,6 +273,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : 'Test_Role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -291,6 +298,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : 'test_role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -313,6 +321,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -339,6 +348,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -365,6 +375,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : 'Different',
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -389,6 +400,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : 'Has ever been a Parent Champion',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -413,6 +425,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -437,6 +450,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : 'No results',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -463,6 +477,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : str(test_role_type_4.pk),
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -489,6 +504,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : str(test_role_type_3.pk),
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -515,6 +531,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : str(test_role_type_5.pk),
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '2'
 											}
 									)
@@ -539,6 +556,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
+											'age_status' : '0',
 											'page' : '2'
 											}
 									)
@@ -565,6 +583,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '2',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -592,6 +611,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '2',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -619,6 +639,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '2',
 											'ABSS_type' : '2',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -647,6 +668,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '2',
 											'ABSS_type' : '2',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -673,6 +695,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '3',
+											'age_status' : '0',
 											'page' : '1'
 											}
 									)
@@ -684,6 +707,279 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),0)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
+
+	def test_age_status_on_type(self):
+		# create some extra people
+		set_up_test_people('age_status_test_',1,30,1,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_age_status_search_on_type_and_name(self):
+		# create some extra people
+		set_up_test_people('age_test_find_',1,30,1,2)
+		set_up_test_people('age_not_found_',1,30,1,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_age_status_search_on_type_role(self):
+		# create some extra people
+		set_up_test_people('age_status_test_role_1',1,30,1,2)
+		set_up_test_people('age_status_test_role_2',2,35,1,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '0',
+											'age_status' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_age_status_search_on_type_and_name_and_role(self):
+		# create some extra people
+		set_up_test_people('age_status_test_role_1',1,30,1,2)
+		set_up_test_people('age_status_test_role_2',2,35,1,2)
+		set_up_test_people('age_status_test_find',2,37,1,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '0',
+											'age_status' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],37)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_age_status_search_on_type_and_name_and_role_and_ABSS(self):
+		# create some extra people
+		set_up_test_people('age_status_test_role_1',1,30,1,2)
+		set_up_test_people('age_status_test_role_2',2,35,1,2)
+		set_up_test_people('age_status_test_role_3',3,37,1,2)
+		set_up_test_people('age_status_test_find',2,39,2,2)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '2',
+											'age_status' : '2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],39)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_age_status_search_with_no_results(self):
+		# create a new age status
+		Age_Status.objects.create(status='Third test age status')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '3',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+class PeopleQueryTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up people base data
+		set_up_people_base_data()
+
+	def test_role_type_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/role_type/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/role_type/1')
+
+	def test_ABSS_type_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/ABSS_type/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/ABSS_type/1')
+
+	def test_age_status_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/age_status/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/age_status/1')
+
+	def test_role_type_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.get(reverse('role_type',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_ABSS_type_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.get(reverse('ABSS_type',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_age_status_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.get(reverse('age_status',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_role_type_search(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a new type
+		test_role_type = Role_Type.objects.create(role_type_name='People Query Test')
+		# create some extra people
+		set_up_test_people('Role Type Query Test',test_role_type.pk,30,1,1)
+		# attempt to get the people page
+		response = self.client.get(reverse('role_type',args=[test_role_type.pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_ABSS_type_search(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a new type
+		test_ABSS_type = ABSS_Type.objects.create(name='People Query Test')
+		# create some extra people
+		set_up_test_people('ABSS Type Query Test',1,30,test_ABSS_type.pk,1)
+		# attempt to get the people page
+		response = self.client.get(reverse('ABSS_type',args=[test_ABSS_type.pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_age_status_search(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a new status
+		test_age_status = Age_Status.objects.create(status='Age Status Test')
+		# create some extra people
+		set_up_test_people('Age Status Query Test',1,30,1,test_age_status.pk)
+		# attempt to get the people page
+		response = self.client.get(reverse('age_status',args=[test_age_status.pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
 
 class EventsViewTest(TestCase):
 	@classmethod

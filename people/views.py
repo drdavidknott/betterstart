@@ -15,7 +15,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 from .utilities import get_page_list, make_banner
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
-from django.urls import reverse
+from django.urls import reverse, resolve
 import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -47,7 +47,7 @@ def index(request):
 															rows = get_role_types_with_counts(),
 															row_name = 'role_type_name',
 															row_values = ['count'],
-															row_url = 'people_type',
+															row_url = 'role_type',
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
@@ -67,7 +67,7 @@ def index(request):
 													Dashboard_Panel_Row(
 																		label = 'Current parent champions',
 																		values = [len(parent_champions['current'])],
-																		url = 'people_type',
+																		url = 'role_type',
 																		parameter = parent_champion_role_type.pk
 																		)
 													)
@@ -89,7 +89,7 @@ def index(request):
 															rows = get_age_statuses_with_counts(),
 															row_name = 'status',
 															row_values = ['count'],
-															row_url = 'ABSS_type',
+															row_url = 'age_status',
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
@@ -1820,6 +1820,7 @@ def people(request):
 	last_name = ''
 	role_type = 0
 	ABSS_type = 0
+	age_status = 0
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1827,11 +1828,7 @@ def people(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(	
-											request.POST,
-											role_types=get_role_types(),
-											ABSS_types=get_ABSS_types()
-											)
+		personsearchform = PersonSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
@@ -1841,12 +1838,14 @@ def people(request):
 			last_name = personsearchform.cleaned_data['last_name']
 			role_type = personsearchform.cleaned_data['role_type']
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
+			age_status = personsearchform.cleaned_data['age_status']
 			# conduct a search
 			people = people_search(
 													first_name=first_name,
 													last_name=last_name,
 													role_type=role_type,
-													ABSS_type=ABSS_type
+													ABSS_type=ABSS_type,
+													age_status=age_status
 													)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -1861,10 +1860,7 @@ def people(request):
 	# otherwise set a bank form
 	else:
 		# create the blank form
-		personsearchform = PersonSearchForm(
-											role_types=get_role_types(),
-											ABSS_types=get_ABSS_types()
-											)
+		personsearchform = PersonSearchForm()
 	# get the template
 	people_template = loader.get_template('people/people.html')
 	# set the context
@@ -1876,6 +1872,7 @@ def people(request):
 				'last_name' : last_name,
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,
+				'age_status' : age_status,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})
@@ -1883,33 +1880,26 @@ def people(request):
 	return HttpResponse(people_template.render(context=context, request=request))
 
 @login_required
-def people_type(request, role_type):
+def people_query(request, id):
+	# this function emulates a post from a search form
+	# the criterion to be searched on is dependent on the url name
+	# create a dictionary of items
+	form_values = {
+					'role_type' : '0',
+					'ABSS_type' : '0',
+					'age_status' : '0'
+					}
+	# set the value based on the url
+	form_values[resolve(request.path_info).url_name] = id
 	# copy the request
 	copy_POST = request.POST.copy()
 	# set search terms for a people search
 	copy_POST['action'] = 'search'
-	copy_POST['role_type'] = role_type
+	copy_POST['role_type'] = form_values['role_type']
 	copy_POST['first_name'] = ''
 	copy_POST['last_name'] = ''
-	copy_POST['ABSS_type'] = '0'
-	copy_POST['page'] = '1'
-	# now copy it back
-	request.POST = copy_POST
-	# and set the method
-	request.method = 'POST'
-	# now call the people view
-	return people(request)
-
-@login_required
-def ABSS_type(request, ABSS_type):
-	# copy the request
-	copy_POST = request.POST.copy()
-	# set search terms for a people search
-	copy_POST['action'] = 'search'
-	copy_POST['role_type'] = '0'
-	copy_POST['first_name'] = ''
-	copy_POST['last_name'] = ''
-	copy_POST['ABSS_type'] = ABSS_type
+	copy_POST['ABSS_type'] = form_values['ABSS_type']
+	copy_POST['age_status'] = form_values['age_status']
 	copy_POST['page'] = '1'
 	# now copy it back
 	request.POST = copy_POST
@@ -2066,13 +2056,7 @@ def profile(request, person_id=0):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a form
-		profileform = ProfileForm(
-									request.POST,
-									ethnicities=get_ethnicities(),
-									role_types=get_role_types(),
-									ABSS_types=get_ABSS_types(),
-									age_statuses=get_age_statuses()
-									)
+		profileform = ProfileForm(request.POST)
 		# check whether the entry is valid
 		if profileform.is_valid():
 			# update the person
@@ -2113,13 +2097,7 @@ def profile(request, person_id=0):
 						'age_status' : person.age_status.pk
 						}
 		# create the form
-		profileform = ProfileForm(
-									profile_dict,
-									ethnicities=get_ethnicities(),
-									role_types=get_role_types(),
-									ABSS_types=get_ABSS_types(),
-									age_statuses=get_age_statuses()
-									)
+		profileform = ProfileForm(profile_dict)
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
 	# set the context

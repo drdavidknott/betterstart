@@ -22,3 +22,5 @@ role_type,Staff
 ABSS_type,ABSS beneficiary
 ABSS_type,Not ABSS
 ABSS_type,ABSS deliverer
+age_status,Adult
+age_status,Child

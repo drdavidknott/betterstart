@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type
+					ABSS_Type, Age_Status
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -81,7 +81,23 @@ def index(request):
 													)
 	# append the parent champions panel to the column
 	roles_dashboard_column.panels.append(parent_champions_dashboard_panel)
-	# add the role types dashboard panel
+	# add the age status dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'Adults and Children',
+															column_names = ['counts'],
+															rows = get_age_statuses_with_counts(),
+															row_name = 'status',
+															row_values = ['count'],
+															row_url = 'ABSS_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 2,
+															right_margin = 2,
+															)
+											)
+	# add the ABSS dashboard panel
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'ABSS',
@@ -484,7 +500,10 @@ def load_reference_data(directory):
 			messages.append(load_role_type(value))
 		# and abss type
 		elif data_type == 'ABSS_type':
-			messages.append(load_ABSS_type(value))		
+			messages.append(load_ABSS_type(value))
+		# and age status
+		elif data_type == 'age_status':
+			messages.append(load_age_status(value))	
 		# and deal with any unknown type
 		else:
 			# set an error message
@@ -569,6 +588,22 @@ def load_ABSS_type(value):
 		ABSS_type = ABSS_Type.objects.create(name=value)
 		# set the message
 		message = ABSS_type_label + ' created.'
+	# return the messages
+	return message
+
+def load_age_status(value):
+	# create a label for use in messages
+	age_status_label = 'Age status: ' + value
+	# check whether the record already exists
+	try:
+		age_status = Age_Status.objects.get(status=value)
+		# set the message to show that it exists
+		message = age_status_label + ' not created: Age status already exists.'
+	except (Age_Status.DoesNotExist):
+		# the type does not exist, so create it
+		age_status = Age_Status.objects.create(status=value)
+		# set the message
+		message = age_status_label + ' created.'
 	# return the messages
 	return message
 
@@ -657,7 +692,12 @@ def get_people_by_name(first_name,last_name):
 	# return the people
 	return people
 
-def get_people_by_names_role_and_ABSS(first_name='',last_name='',role_type='0',ABSS_type='0'):
+def people_search(
+					first_name='',
+					last_name='',
+					role_type='0',
+					ABSS_type='0',
+					age_status='0'):
 	# get all people
 	people = Person.objects.all()
 	# check whether we have a first name
@@ -682,6 +722,10 @@ def get_people_by_names_role_and_ABSS(first_name='',last_name='',role_type='0',A
 	if ABSS_type != '0':
 		# do the filter
 		people = people.filter(ABSS_type_id=int(ABSS_type))
+	# if we have an age status, filter by the age status
+	if age_status != '0':
+		# do the filter
+		people = people.filter(age_status_id=int(age_status))
 	# return the list of people
 	return people
 
@@ -1101,6 +1145,31 @@ def get_ABSS_type(ABSS_type_id):
 	# return the ABSS type
 	return ABSS_type
 
+def get_age_statuses():
+	# return a list of all the ABSS type objects
+	return Age_Status.objects.all()
+
+def get_age_statuses_with_counts():
+	# return a list of all the ABSS type objects, supplemented with counts
+	age_statuses = get_age_statuses()
+	# now go through the ABSS types
+	for age_status in age_statuses:
+		# get the count
+		age_status.count = Person.objects.filter(age_status=age_status).count()
+	# return the results
+	return age_statuses
+
+def get_age_status(age_status_id):
+	# try to get ABSS type
+	try:
+		age_status = Age_Status.objects.get(pk=age_status_id)
+	# handle the exception
+	except Age_Status.DoesNotExist:
+		# set a false value
+		age_status = False
+	# return the ABSS type
+	return age_status
+
 def create_person(
 					first_name,
 					middle_names,
@@ -1109,7 +1178,8 @@ def create_person(
 					date_of_birth=None,
 					gender='',
 					ethnicity=1,
-					ABSS_type=1):
+					ABSS_type=1,
+					age_status=1):
 	# get the role type
 	default_role = get_role_type(default_role)
 	# create a person
@@ -1121,7 +1191,8 @@ def create_person(
 					gender = gender,
 					default_role = default_role,
 					ethnicity = get_ethnicity(ethnicity),
-					ABSS_type = get_ABSS_type(ABSS_type)
+					ABSS_type = get_ABSS_type(ABSS_type),
+					age_status = get_age_status(age_status)
 						)
 	# save the record
 	person.save()
@@ -1497,7 +1568,8 @@ def update_person(
 					due_date,
 					default_role_id,
 					ethnicity_id,
-					ABSS_type_id
+					ABSS_type_id,
+					age_status_id
 				):
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
@@ -1521,6 +1593,16 @@ def update_person(
 	else:
 		# set the message
 		messages.error(request, 'ABSS Type does not exist.')
+	# attempt to get the age status
+	age_status = get_age_status(age_status_id)
+	# set the value for the person
+	if age_status:
+		# set the value
+		person.age_status = age_status
+	# otherwise set a message
+	else:
+		# set the message
+		messages.error(request, 'Age Status does not exist.')
 	# attempt to get the role type
 	default_role = get_role_type(default_role_id)
 	# set the value for the person
@@ -1760,7 +1842,7 @@ def people(request):
 			role_type = personsearchform.cleaned_data['role_type']
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			# conduct a search
-			people = get_people_by_names_role_and_ABSS(
+			people = people_search(
 													first_name=first_name,
 													last_name=last_name,
 													role_type=role_type,
@@ -1988,7 +2070,8 @@ def profile(request, person_id=0):
 									request.POST,
 									ethnicities=get_ethnicities(),
 									role_types=get_role_types(),
-									ABSS_types=get_ABSS_types()
+									ABSS_types=get_ABSS_types(),
+									age_statuses=get_age_statuses()
 									)
 		# check whether the entry is valid
 		if profileform.is_valid():
@@ -2007,7 +2090,8 @@ def profile(request, person_id=0):
 								due_date = profileform.cleaned_data['due_date'],
 								default_role_id = profileform.cleaned_data['role_type'],
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
-								ABSS_type_id = profileform.cleaned_data['ABSS_type']
+								ABSS_type_id = profileform.cleaned_data['ABSS_type'],
+								age_status_id = profileform.cleaned_data['age_status']
 									)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
@@ -2025,14 +2109,16 @@ def profile(request, person_id=0):
 						'english_is_second_language' : person.english_is_second_language,
 						'pregnant' : person.pregnant,
 						'due_date' : person.due_date,
-						'ABSS_type' : person.ABSS_type.pk
+						'ABSS_type' : person.ABSS_type.pk,
+						'age_status' : person.age_status.pk
 						}
 		# create the form
 		profileform = ProfileForm(
 									profile_dict,
 									ethnicities=get_ethnicities(),
 									role_types=get_role_types(),
-									ABSS_types=get_ABSS_types()
+									ABSS_types=get_ABSS_types(),
+									age_statuses=get_age_statuses()
 									)
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
@@ -2083,7 +2169,7 @@ def add_relationship(request,person_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = get_people_by_names_role_and_ABSS(first_name,last_name)
+				people = people_search(first_name,last_name)
 				# remove the people who already have a relationship
 				search_results = remove_existing_relationships(person, people)
 				# if there are search results, create a form to create relationships from the search results
@@ -2103,7 +2189,8 @@ def add_relationship(request,person_id=0):
 															request.POST,
 															relationship_types=relationship_types,
 															ABSS_types=get_ABSS_types(),
-															role_types = role_types
+															role_types=role_types,
+															age_statuses=get_age_statuses()
 															)
 			# otherwise we have a blank form
 			else:
@@ -2129,7 +2216,8 @@ def add_relationship(request,person_id=0):
 														request.POST,
 														relationship_types = relationship_types,
 														ABSS_types=get_ABSS_types(),
-														role_types = role_types
+														role_types = role_types,
+														age_statuses = get_age_statuses()
 														)
 			# check whether the form is valid
 			if addrelationshipform.is_valid():
@@ -2141,7 +2229,8 @@ def add_relationship(request,person_id=0):
 											date_of_birth = addrelationshipform.cleaned_data['date_of_birth'],
 											default_role = addrelationshipform.cleaned_data['role_type'],
 											gender = addrelationshipform.cleaned_data['gender'],
-											ABSS_type = addrelationshipform.cleaned_data['ABSS_type']
+											ABSS_type = addrelationshipform.cleaned_data['ABSS_type'],
+											age_status = addrelationshipform.cleaned_data['age_status']
 											)
 				# set a message to say that we have create a new person
 				messages.success(request, str(person_to) + ' created.')

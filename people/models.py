@@ -44,6 +44,17 @@ class ABSS_Type(models.Model):
 	class Meta:
 		verbose_name_plural = 'ABSS types'
 
+# Age status type model: represents the person's status dependent on age (adult or child)
+# This is reference data.
+class Age_Status(models.Model):
+	status = models.CharField(max_length=50)
+	# define the function that will return the person name as the object reference
+	def __str__(self):
+		return self.status
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'Age statuses'
+
 # Capture Type model: represents the way in which the person's details were captured
 class Capture_Type(models.Model):
 	capture_type_name = models.CharField(max_length=50)
@@ -199,6 +210,7 @@ class Person(models.Model):
 	families = models.ManyToManyField(Family, blank=True)
 	savs_id = models.IntegerField(blank=True, null=True)
 	ABSS_type = models.ForeignKey(ABSS_Type, default=1, on_delete=models.SET_DEFAULT)
+	age_status = models.ForeignKey(Age_Status, default=1, on_delete=models.SET_DEFAULT)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.first_name + ' ' + self.last_name

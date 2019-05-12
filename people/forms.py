@@ -5,6 +5,26 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 import datetime
 
+def relationship_type_choices(relationship_types):
+	# set the choice field for relationship types
+	relationship_type_list = []
+	# go through the relationship types
+	for relationship_type in relationship_types:
+		# append a list of value and display value to the list
+		relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
+	# return the list
+	return relationship_type_list
+
+def age_status_choices(age_statuses):
+	# set the choice field for age statuses
+	age_status_list = []
+	# go through the age statuses
+	for age_status in age_statuses:
+		# append a list of value and display value to the list
+		age_status_list.append((age_status.pk, age_status.status))
+	# return the list
+	return age_status_list
+
 class LoginForm(forms.Form):
 	# Define the fields that we need in the form.
 	email_address = forms.EmailField(
@@ -96,6 +116,9 @@ class ProfileForm(forms.Form):
 	ABSS_type = forms.ChoiceField(
 									label="ABSS Type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	age_status = forms.ChoiceField(
+									label="Adult or Child",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	role_type = forms.ChoiceField(
 									label="Role",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
@@ -133,6 +156,7 @@ class ProfileForm(forms.Form):
 		ethnicities = kwargs.pop('ethnicities')
 		role_types = kwargs.pop('role_types')
 		ABSS_types = kwargs.pop('ABSS_types')
+		age_statuses = kwargs.pop('age_statuses')
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice field for ethnicities
@@ -159,6 +183,14 @@ class ProfileForm(forms.Form):
 			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
 		# set the choices
 		self.fields['ABSS_type'].choices = ABSS_type_list
+		# set the choice field for age statuses
+		age_status_list = []
+		# go through the age statuses
+		for age_status in age_statuses:
+			# append a list of value and display value to the list
+			age_status_list.append((age_status.pk, age_status.status))
+		# set the choices
+		self.fields['age_status'].choices = age_status_list
 
 class PersonSearchForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -261,6 +293,9 @@ class AddRelationshipForm(forms.Form):
 	ABSS_type = forms.ChoiceField(
 									label="ABSS",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	age_status = forms.ChoiceField(
+									label="Adult or Child",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	relationship_type = forms.ChoiceField(
 									label="Relationship",
 									widget=forms.Select())
@@ -270,16 +305,12 @@ class AddRelationshipForm(forms.Form):
 		relationship_types = kwargs.pop('relationship_types')
 		role_types = kwargs.pop('role_types')
 		ABSS_types = kwargs.pop('ABSS_types')
+		age_statuses = kwargs.pop('age_statuses')
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
-		# set the choice field for ethnicities
-		relationship_type_list = []
-		# go through the ethnicities
-		for relationship_type in relationship_types:
-			# append a list of value and display value to the list
-			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
 		# set the choices
-		self.fields['relationship_type'].choices = relationship_type_list
+		self.fields['relationship_type'].choices = relationship_type_choices(relationship_types)
+		self.fields['age_status'].choices = age_status_choices(age_statuses)
 		# set the choice field for role types
 		role_type_list = []
 		# go through the role types
@@ -296,7 +327,6 @@ class AddRelationshipForm(forms.Form):
 			ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
 		# set the choices
 		self.fields['ABSS_type'].choices = ABSS_type_list
-
 
 class AddRelationshipToExistingPersonForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

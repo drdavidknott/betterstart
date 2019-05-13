@@ -1172,16 +1172,22 @@ def get_age_status(age_status_id):
 
 def create_person(
 					first_name,
-					middle_names,
 					last_name,
-					default_role,
+					middle_names='',
+					default_role=False,
 					date_of_birth=None,
 					gender='',
 					ethnicity=1,
 					ABSS_type=1,
 					age_status=1):
-	# get the role type
-	default_role = get_role_type(default_role)
+	# check whether we have a role type
+	if default_role:
+		# get the role
+		default_role = get_role_type(default_role)
+	# otherwise set unknown
+	else:
+		# get the UNKNOWN role type
+		default_role = get_role_type_by_name('UNKNOWN')
 	# create a person
 	person = Person(
 					first_name = first_name,
@@ -1962,14 +1968,12 @@ def addperson(request):
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
-		addpersonform = AddPersonForm(request.POST, role_types = get_role_types())
+		addpersonform = AddPersonForm(request.POST)
 		# check whether the form is valid
 		if addpersonform.is_valid():
 			# get the names
 			first_name = addpersonform.cleaned_data['first_name']
-			middle_names = addpersonform.cleaned_data['middle_names']
 			last_name = addpersonform.cleaned_data['last_name']
-			default_role = addpersonform.cleaned_data['role_type']
 			# see whether this is a confirmation action
 			# get the action from the request
 			action = request.POST.get('action','')
@@ -1978,16 +1982,14 @@ def addperson(request):
 				# create the person
 				person = create_person(
 										first_name = first_name,
-										middle_names = middle_names,
 										last_name = last_name,
-										default_role = default_role
 										)
 				# set a success message
 				messages.success(request,
 									'Another ' + str(person) + ' created.'
 									)
 				# go to the profile of the person
-				return redirect('/person/' + str(person.pk))
+				return redirect('/profile/' + str(person.pk))
 		# otherwise see whether the person matches an existing person by name
 		matching_people = get_people_by_name(first_name,last_name)
 		# if there aren't any matching people, also create the person
@@ -1995,22 +1997,18 @@ def addperson(request):
 			# create the person
 			person = create_person(
 									first_name = first_name,
-									middle_names = middle_names,
-									last_name = last_name,
-									default_role = default_role
+									last_name = last_name
 									)
 			# set a success message
 			messages.success(request,
-								str(person) + ' created.'
+								'Base data for ' + str(person) + ' created.'
 								)
 			# go to the profile of the person
-			return redirect('/person/' + str(person.pk))
+			return redirect('/profile/' + str(person.pk))
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		addpersonform = AddPersonForm(
-										role_types = get_role_types()
-										)
+		addpersonform = AddPersonForm()
 	# get the template
 	addperson_template = loader.get_template('people/addperson.html')
 	# set the context

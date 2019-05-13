@@ -1320,20 +1320,18 @@ class AddPersonViewTest(TestCase):
 									reverse('addperson'),
 									data = { 
 												'first_name' : 'Testfirst',
-												'middle_names' : 'Testmiddle',
 												'last_name' : 'Testlast',
-												'role_type' : '1'
 											}
 									)
 		# check that we got a redirect response
-		self.assertRedirects(response, '/person/1')
+		self.assertRedirects(response, '/profile/1')
 		# get the record
 		test_person = Person.objects.get(id=1)
 		# check the record contents
 		self.assertEqual(test_person.first_name,'Testfirst')
-		self.assertEqual(test_person.middle_names,'Testmiddle')
+		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Testlast')
-		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.default_role.role_type_name,'UNKNOWN')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_person.email_address,'')
 		self.assertEqual(test_person.date_of_birth,None)
@@ -1384,20 +1382,18 @@ class AddPersonViewTest(TestCase):
 									data = {
 												'action' : 'CONFIRM',
 												'first_name' : 'Person_0',
-												'middle_names' : '',
 												'last_name' : 'Person_0',
-												'role_type' : '1'
 											}
 									)
 		# check that we got a redirect response
-		self.assertRedirects(response, '/person/2')
+		self.assertRedirects(response, '/profile/2')
 		# get the record
 		test_person = Person.objects.get(id=2)
 		# check the record contents
 		self.assertEqual(test_person.first_name,'Person_0')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person_0')
-		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.default_role.role_type_name,'UNKNOWN')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_person.email_address,'')
 		self.assertEqual(test_person.date_of_birth,None)

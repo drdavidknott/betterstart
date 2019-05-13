@@ -73,28 +73,10 @@ class AddPersonForm(forms.Form):
 									label="First name",
 									max_length=50, 
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	middle_names = forms.CharField(
-									label="Middle Name",
-									max_length=50,
-									required = False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	last_name = forms.CharField(
 									label="Surname",
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	role_type = forms.ChoiceField(
-									label="Role",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
-	# over-ride the __init__ method to set the choices
-	def __init__(self, *args, **kwargs):
-		# pull the choices field out of the parameters
-		role_types = kwargs.pop('role_types')
-		# call the built in constructor
-		super(AddPersonForm, self).__init__(*args, **kwargs)
-		# set the choices
-		self.fields['role_type'].choices = role_type_choices(role_types)
-		# set the initial value
-		self.fields['role_type'].initial = Role_Type.objects.get(role_type_name='UNKNOWN').pk
 
 class ProfileForm(forms.Form):
 	# Define the choices for gender

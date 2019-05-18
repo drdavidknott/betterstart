@@ -697,7 +697,8 @@ def people_search(
 					last_name='',
 					role_type='0',
 					ABSS_type='0',
-					age_status='0'):
+					age_status='0',
+					champions='0'):
 	# get all people
 	people = Person.objects.all()
 	# check whether we have a first name
@@ -722,6 +723,20 @@ def people_search(
 	if ABSS_type != '0':
 		# do the filter
 		people = people.filter(ABSS_type_id=int(ABSS_type))
+	# if we have an age status, filter by the age status
+	if age_status != '0':
+		# do the filter
+		people = people.filter(age_status_id=int(age_status))
+	# if we have a champion setting, filter by the champion flags
+	if champions != '0':
+		# check what type of query we got
+		if champions == 'Trained Champions':
+			# get the trained champions
+			people = people.filter(trained_champion=True)
+		# otherwise we got a different request
+		elif champions == 'Active Champions':
+			# get the active champions
+			people = people.filter(active_champion=True)
 	# if we have an age status, filter by the age status
 	if age_status != '0':
 		# do the filter
@@ -1179,7 +1194,9 @@ def create_person(
 					gender='',
 					ethnicity=1,
 					ABSS_type=1,
-					age_status=1):
+					age_status=1,
+					trained_champion=False,
+					active_champion=False):
 	# check whether we have a role type
 	if default_role:
 		# get the role
@@ -1198,7 +1215,9 @@ def create_person(
 					default_role = default_role,
 					ethnicity = get_ethnicity(ethnicity),
 					ABSS_type = get_ABSS_type(ABSS_type),
-					age_status = get_age_status(age_status)
+					age_status = get_age_status(age_status),
+					trained_champion=trained_champion,
+					active_champion=active_champion
 						)
 	# save the record
 	person.save()
@@ -1575,7 +1594,9 @@ def update_person(
 					default_role_id,
 					ethnicity_id,
 					ABSS_type_id,
-					age_status_id
+					age_status_id,
+					trained_champion,
+					active_champion
 				):
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
@@ -1633,6 +1654,8 @@ def update_person(
 	person.english_is_second_language = english_is_second_language
 	person.pregnant = pregnant
 	person.due_date = due_date
+	person.trained_champion = trained_champion
+	person.active_champion = active_champion
 	# save the record
 	person.save()
 	# and save a role history if the role has changed
@@ -1827,6 +1850,7 @@ def people(request):
 	role_type = 0
 	ABSS_type = 0
 	age_status = 0
+	champions = 0
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1845,13 +1869,15 @@ def people(request):
 			role_type = personsearchform.cleaned_data['role_type']
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			age_status = personsearchform.cleaned_data['age_status']
+			champions = personsearchform.cleaned_data['champions']
 			# conduct a search
 			people = people_search(
 													first_name=first_name,
 													last_name=last_name,
 													role_type=role_type,
 													ABSS_type=ABSS_type,
-													age_status=age_status
+													age_status=age_status,
+													champions=champions
 													)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -1879,6 +1905,7 @@ def people(request):
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,
 				'age_status' : age_status,
+				'champions' : champions,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})
@@ -1893,7 +1920,8 @@ def people_query(request, id):
 	form_values = {
 					'role_type' : '0',
 					'ABSS_type' : '0',
-					'age_status' : '0'
+					'age_status' : '0',
+					'champions' : '0'
 					}
 	# set the value based on the url
 	form_values[resolve(request.path_info).url_name] = id
@@ -1906,6 +1934,7 @@ def people_query(request, id):
 	copy_POST['last_name'] = ''
 	copy_POST['ABSS_type'] = form_values['ABSS_type']
 	copy_POST['age_status'] = form_values['age_status']
+	copy_POST['champions'] = form_values['champions']
 	copy_POST['page'] = '1'
 	# now copy it back
 	request.POST = copy_POST
@@ -1917,7 +1946,7 @@ def people_query(request, id):
 @login_required
 def all_time_parent_champions(request):
 	# call the people type function, setting the role type to a custom role
-	return people_type(request,'Has ever been a Parent Champion')
+	return people_query(request,'Has ever been a Parent Champion')
 
 @login_required
 def parent_exceptions(request, page=1):
@@ -2073,7 +2102,9 @@ def profile(request, person_id=0):
 								default_role_id = profileform.cleaned_data['role_type'],
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
 								ABSS_type_id = profileform.cleaned_data['ABSS_type'],
-								age_status_id = profileform.cleaned_data['age_status']
+								age_status_id = profileform.cleaned_data['age_status'],
+								trained_champion = profileform.cleaned_data['trained_champion'],
+								active_champion = profileform.cleaned_data['active_champion']
 									)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
@@ -2092,7 +2123,9 @@ def profile(request, person_id=0):
 						'pregnant' : person.pregnant,
 						'due_date' : person.due_date,
 						'ABSS_type' : person.ABSS_type.pk,
-						'age_status' : person.age_status.pk
+						'age_status' : person.age_status.pk,
+						'trained_champion' : person.trained_champion,
+						'active_champion' : person.active_champion
 						}
 		# create the form
 		profileform = ProfileForm(profile_dict)

@@ -29,7 +29,15 @@ def set_up_people_base_data():
 	# create a second test age status
 	test_age_status = Age_Status.objects.create(status='Child')
 
-def set_up_test_people(name_root,role_type_id=1,number=1,ABSS_type_id=1,age_status_id=1):
+def set_up_test_people(
+						name_root,
+						role_type_id=1,
+						number=1,
+						ABSS_type_id=1,
+						age_status_id=1,
+						trained_champion=False,
+						active_champion=False
+						):
 	# create the number of people needed
 	for n in range(number):
 		# create a person
@@ -46,7 +54,9 @@ def set_up_test_people(name_root,role_type_id=1,number=1,ABSS_type_id=1,age_stat
 											pregnant = False,
 											due_date = None,
 											ABSS_type = ABSS_Type.objects.get(id=ABSS_type_id),
-											age_status = Age_Status.objects.get(id=age_status_id)
+											age_status = Age_Status.objects.get(id=age_status_id),
+											trained_champion = trained_champion,
+											active_champion = active_champion
 											)
 		# create a role history entry
 		Role_History.objects.create(
@@ -172,6 +182,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -199,6 +210,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(parent_role_type.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -224,6 +236,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -249,6 +262,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -274,6 +288,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -299,6 +314,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -322,6 +338,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -349,6 +366,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -376,6 +394,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -401,6 +420,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : 'Has ever been a Parent Champion',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -426,6 +446,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -451,6 +472,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -478,6 +500,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_4.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -505,6 +528,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_3.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -532,6 +556,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_5.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '2'
 											}
 									)
@@ -557,6 +582,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '2'
 											}
 									)
@@ -584,6 +610,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '2',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -612,6 +639,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '2',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -640,6 +668,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '2',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -669,6 +698,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '2',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -696,6 +726,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '3',
 											'age_status' : '0',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -723,6 +754,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '2',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -751,6 +783,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '2',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -779,6 +812,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '0',
 											'age_status' : '2',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -808,6 +842,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '0',
 											'age_status' : '2',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -838,6 +873,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '2',
 											'age_status' : '2',
+											'champions' : '0',
 											'page' : '1'
 											}
 									)
@@ -865,6 +901,440 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '3',
+											'champions' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_trained_champions(self):
+		# create some extra people
+		set_up_test_people('trained_champion_test_',1,30,1,1,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '1',
+											'champions' : 'Trained Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_trained_champion_and_age_status(self):
+		# create some extra people
+		set_up_test_people('trained_champion_test_',1,30,1,2,True)
+		set_up_test_people('trained_champion_test_',1,27,1,1,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '2',
+											'champions' : 'Trained Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_trained_champion_search_on_champion_and_name(self):
+		# create some extra people
+		set_up_test_people('trained_test_find_',1,30,1,2,True)
+		set_up_test_people('trained_not_found_',1,30,1,2,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : 'Trained Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_trained_search_on_role(self):
+		# create some extra people
+		set_up_test_people('trained_test_role_1',1,30,1,1)
+		set_up_test_people('trained_test_role_2',2,35,1,1,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : 'Trained Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_trained_search_on_and_name_and_role(self):
+		# create some extra people
+		set_up_test_people('trained_test_role_1',1,30,1,1)
+		set_up_test_people('trained_test_role_2',2,35,1,1)
+		set_up_test_people('trained_test_find',2,37,1,1,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],37)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_trained_search_on_type_and_name_and_role_and_ABSS(self):
+		# create some extra people
+		set_up_test_people('trained_test_role_1',1,30,1,2)
+		set_up_test_people('trained_test_role_2',2,35,1,2)
+		set_up_test_people('trained_test_role_3',3,37,1,2)
+		set_up_test_people('trained_test_find',2,39,2,2,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '2',
+											'age_status' : '0',
+											'champions' : 'Trained Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],39)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_trained_search_with_no_results(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : 'Trained Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_active_champions(self):
+		# create some extra people
+		set_up_test_people('active_champion_test_',1,30,1,1,True,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '1',
+											'champions' : 'Active Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_champions_only(self):
+		# create some extra people
+		set_up_test_people('active_champion_test_',1,30,1,1,True,True)
+		set_up_test_people('trained_champion_test_',1,17,1,1,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '1',
+											'champions' : 'Active Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_champion_and_age_status(self):
+		# create some extra people
+		set_up_test_people('active_champion_test_',1,30,1,2,True,True)
+		set_up_test_people('active_champion_test_',1,27,1,1,True,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '2',
+											'champions' : 'Active Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_champion_search_on_champion_and_name(self):
+		# create some extra people
+		set_up_test_people('active_test_find_',1,30,1,2,True,True)
+		set_up_test_people('active_not_found_',1,30,1,2,True,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : 'Active Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_search_on_role(self):
+		# create some extra people
+		set_up_test_people('active_test_role_1',1,30,1,1)
+		set_up_test_people('active_test_role_2',2,35,1,1,True,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : 'Active Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_search_on_and_name_and_role(self):
+		# create some extra people
+		set_up_test_people('active_test_role_1',1,30,1,1)
+		set_up_test_people('active_test_role_2',2,35,1,1)
+		set_up_test_people('active_test_find',2,37,1,1,True,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],37)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_search_on_type_and_name_and_role_and_ABSS(self):
+		# create some extra people
+		set_up_test_people('active_test_role_1',1,30,1,2)
+		set_up_test_people('active_test_role_2',2,35,1,2)
+		set_up_test_people('active_test_role_3',3,37,1,2)
+		set_up_test_people('active_test_find',2,39,2,2,True,True)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : 'find',
+											'last_name' : '',
+											'role_type' : '2',
+											'ABSS_type' : '2',
+											'age_status' : '0',
+											'champions' : 'Active Champions',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],39)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_active_search_with_no_results(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'champions' : 'Active Champions',
 											'page' : '1'
 											}
 									)
@@ -1350,6 +1820,8 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
 		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.trained_champion,False)
+		self.assertEqual(test_person.active_champion,False)
 
 	def test_person_already_exists(self):
 		# log the user in
@@ -1412,6 +1884,8 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
 		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.trained_champion,False)
+		self.assertEqual(test_person.active_champion,False)
 
 class ProfileViewTest(TestCase):
 	@classmethod
@@ -1466,7 +1940,9 @@ class ProfileViewTest(TestCase):
 											'role_type' : '2',
 											'ethnicity' : '2',
 											'ABSS_type' : '2',
-											'age_status' : '2'
+											'age_status' : '2',
+											'trained_champion' : True,
+											'active_champion' : True
 											}
 									)
 		# check the response
@@ -1495,6 +1971,8 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
 		self.assertEqual(test_person.age_status.status,'Child')
+		self.assertEqual(test_person.trained_champion,True)
+		self.assertEqual(test_person.active_champion,True)
 
 class AddEventViewTest(TestCase):
 	@classmethod

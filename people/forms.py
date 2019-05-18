@@ -123,6 +123,14 @@ class ProfileForm(forms.Form):
 	role_type = forms.ChoiceField(
 									label="Role",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	trained_champion = forms.BooleanField(
+									label = "Trained Parent Champion",
+									required = False,
+									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+	active_champion = forms.BooleanField(
+									label = "Active Parent Champion",
+									required = False,
+									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	ethnicity = forms.ChoiceField(
 									label="Ethnicity",
 									required=False,
@@ -160,6 +168,22 @@ class ProfileForm(forms.Form):
 		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all())
 		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())
 		self.fields['ethnicity'].choices = ethnicity_choices(Ethnicity.objects.all())
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(ProfileForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# now perform the additional checks
+		# start by checking whether the active champion is set without the trained champion
+		if self.cleaned_data['active_champion'] and not self.cleaned_data['trained_champion']:
+			#set the error message
+			self._errors['active_champion'] = "Only trained champions can be active champions."
+			# set the validity flag
+			valid = False
+		# return the result
+		return valid
 
 class PersonSearchForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -182,6 +206,9 @@ class PersonSearchForm(forms.Form):
 	age_status = forms.ChoiceField(
 									label="Adult or Child",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	champions = forms.ChoiceField(
+									label="Parent Champions",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -192,6 +219,9 @@ class PersonSearchForm(forms.Form):
 											 + role_type_choices(Role_Type.objects.all())
 		self.fields['ABSS_type'].choices = [(0,'Any')] + ABSS_type_choices(ABSS_Type.objects.all())
 		self.fields['age_status'].choices = [(0,'Any')] + age_status_choices(Age_Status.objects.all())
+		self.fields['champions'].choices = [(0,'N/A'),
+											('Trained Champions','Trained Champions'), \
+											('Active Champions','Active Champions')]
 
 class PersonNameSearchForm(forms.Form):
 	# Define the fields that we need in the form.

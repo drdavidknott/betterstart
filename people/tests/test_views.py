@@ -1801,6 +1801,7 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
 		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
 
@@ -2296,3 +2297,65 @@ class EventRegistrationViewTest(TestCase):
 			self.assertEqual(registration_3.registered,True)
 			self.assertEqual(registration_3.participated,False)
 			self.assertEqual(registration_3.role_type,test_role_1)
+
+class EditEventViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for event
+		set_up_event_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/edit_event/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/edit_event/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the event page
+		response = self.client.get(reverse('edit_event',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_invalid_event(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('edit_event',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_edit_event(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create an event
+		set_up_test_events('Event_',Event_Type.objects.get(id=1),1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_event',args=[1]),
+									data = { 
+											'name' : 'updated_name',
+											'description' : 'updated_description',
+											'location' : 'updated_location',
+											'date' : '05/05/2019',
+											'start_time' : '13:00',
+											'end_time' : '14:00',
+											'event_type' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,302)
+		# get the record
+		test_event = Event.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_event.name,'updated_name')
+		self.assertEqual(test_event.description,'updated_description')
+		self.assertEqual(test_event.location,'updated_location')
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')

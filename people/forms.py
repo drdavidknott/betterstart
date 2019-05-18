@@ -214,14 +214,10 @@ class PersonSearchForm(forms.Form):
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['role_type'].choices = [(0,'Any'),
-											('Has ever been a Parent Champion','Has ever been a Parent Champion')] \
-											 + role_type_choices(Role_Type.objects.all())
+		self.fields['role_type'].choices = [(0,'Any')] + role_type_choices(Role_Type.objects.all())
 		self.fields['ABSS_type'].choices = [(0,'Any')] + ABSS_type_choices(ABSS_Type.objects.all())
 		self.fields['age_status'].choices = [(0,'Any')] + age_status_choices(Age_Status.objects.all())
-		self.fields['champions'].choices = [(0,'N/A'),
-											('trained','Trained Champions'), \
-											('active','Active Champions')]
+		self.fields['champions'].choices = [(0,'N/A'),('trained','Trained Champions'),('active','Active Champions')]
 
 class PersonNameSearchForm(forms.Form):
 	# Define the fields that we need in the form.

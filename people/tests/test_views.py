@@ -141,17 +141,6 @@ class PeopleViewTest(TestCase):
 		set_up_test_people('Ex_Parent_Champion_',parent_champion_role.pk,50)
 		# and a set that doesn't exactly fit two pagaes
 		set_up_test_people('Pagination_',test_role_5.pk,32)
-		# now go through them and update their role and role history
-		ex_parent_champions = Person.objects.filter(first_name__icontains='Ex')
-		# go through the list
-		for ex_parent_champion in ex_parent_champions:
-			# update the role
-			ex_parent_champion.default_role = test_role_1
-			# and set the history
-			Role_History.objects.create(
-							person = ex_parent_champion,
-							role_type = test_role_1
-							)
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -406,32 +395,6 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
-
-	def test_search_for_people_who_have_ever_been_a_parent_champion(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# attempt to get the events page
-		response = self.client.post(
-									reverse('listpeople'),
-									data = { 
-											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
-											'role_type' : 'Has ever been a Parent Champion',
-											'ABSS_type' : '0',
-											'age_status' : '0',
-											'champions' : '0',
-											'page' : '1'
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# check that we got the right number of people
-		self.assertEqual(response.context['number_of_people'],100)
-		# check how many we got for this page
-		self.assertEqual(len(response.context['people']),25)
-		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4])
 
 	def test_first_name_search_with_no_results(self):
 		# log the user in

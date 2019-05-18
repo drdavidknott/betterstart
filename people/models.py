@@ -211,6 +211,8 @@ class Person(models.Model):
 	savs_id = models.IntegerField(blank=True, null=True)
 	ABSS_type = models.ForeignKey(ABSS_Type, default=1, on_delete=models.SET_DEFAULT)
 	age_status = models.ForeignKey(Age_Status, default=1, on_delete=models.SET_DEFAULT)
+	trained_champion = models.BooleanField(default=False)
+	active_champion = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.first_name + ' ' + self.last_name

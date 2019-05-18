@@ -50,11 +50,11 @@
 		 		</div>
 		 		<div>
 		 			<div class="col-xs-3">Trained Parent Champion:</div>
-		 			<div class="col-xs-9">{{ person.trained_champion }}</div>
+		 			<div class="col-xs-9">{{ person.trained_champion|yesno:'Yes,No' }}</div>
 		 		</div>
 		 		<div>
 		 			<div class="col-xs-3">Active Parent Champion:</div>
-		 			<div class="col-xs-9">{{ person.active_champion }}</div>
+		 			<div class="col-xs-9">{{ person.active_champion|yesno:'Yes,No' }}</div>
 		 		</div>
 		 		<div>
 		 			<div class="col-xs-3">Role:</div>
@@ -70,11 +70,11 @@
 				</div>
 		 		<div>
 		 			<div class="col-xs-3">English is a second language:</div>
-		 			<div class="col-xs-9">{{ person.english_is_second_language }}</div>
+		 			<div class="col-xs-9">{{ person.english_is_second_language|yesno:'Yes,No' }}</div>
 				</div>
 		 		<div>
 		 			<div class="col-xs-3">Pregnant (or partner is pregnant):</div>
-		 			<div class="col-xs-9">{{ person.pregnant }}</div>
+		 			<div class="col-xs-9">{{ person.pregnant|yesno:'Yes,No' }}</div>
 				</div>
 		 		<div>
 		 			<div class="col-xs-3">Due date:</div>
@@ -82,25 +82,6 @@
 				</div>
 			</div>
 		</div>
-
-		{% if role_history %}
-	 		<div class="panel panel-default">
-				<div class="panel-heading">
-		 				<h4 class="panel-title">
-		 					<a href="{% url 'profile' person.pk %}">ROLES</a>
-		 				</h4>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div class="col-md-12">
-			 			{% for role in role_history %}
-			 				<div>
-								{{ role.role_type.role_type_name }} from {{ role.started.date }}
-							</div>
-						{% endfor %}
-					</div>
-				</div>
-			</div>
-		{% endif %}
 
  		<div class="panel panel-default">
 			<div class="panel-heading">

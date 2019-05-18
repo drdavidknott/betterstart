@@ -65,18 +65,19 @@ def index(request):
 	# add the current parent champions row to the panel
 	parent_champions_dashboard_panel.rows.append(
 													Dashboard_Panel_Row(
-																		label = 'Current parent champions',
-																		values = [len(parent_champions['current'])],
-																		url = 'role_type',
-																		parameter = parent_champion_role_type.pk
+																		label = 'Trained parent champions',
+																		values = [len(parent_champions['trained'])],
+																		url = 'champions',
+																		parameter = 'trained'
 																		)
 													)
 	# and add the all time parent champions row to the panel
 	parent_champions_dashboard_panel.rows.append(
 													Dashboard_Panel_Row(
-																		label = 'All time parent champions',
-																		values = [len(parent_champions['all_time'])],
-																		url = 'all_time_parent_champions'
+																		label = 'Active parent champions',
+																		values = [len(parent_champions['active'])],
+																		url = 'champions',
+																		parameter = 'active'
 																		)
 													)
 	# append the parent champions panel to the column
@@ -730,11 +731,11 @@ def people_search(
 	# if we have a champion setting, filter by the champion flags
 	if champions != '0':
 		# check what type of query we got
-		if champions == 'Trained Champions':
+		if champions == 'trained':
 			# get the trained champions
 			people = people.filter(trained_champion=True)
 		# otherwise we got a different request
-		elif champions == 'Active Champions':
+		elif champions == 'active':
 			# get the active champions
 			people = people.filter(active_champion=True)
 	# if we have an age status, filter by the age status
@@ -793,14 +794,13 @@ def get_parents_with_overdue_children():
 									)
 
 def get_parent_champions():
-	# return a dict of two lists: current parent champions, and people who have ever been parent champions
+	# return a dict of two lists: trained parent champions and active parent champions
 	# declare the dict
 	parent_champions = {}
-	# get the current parent champions
-	parent_champions['current'] = Person.objects.filter(default_role__role_type_name='Parent Champion')
-	# get the all time parent champions
-	parent_champions['all_time'] = \
-		Person.objects.filter(role_history__role_type__role_type_name='Parent Champion').distinct()
+	# get the trained parent champions
+	parent_champions['trained'] = Person.objects.filter(trained_champion=True)
+	# get actie parent champions
+	parent_champions['active'] = Person.objects.filter(active_champion=True)
 	# return the dict
 	return parent_champions
 
@@ -1942,11 +1942,6 @@ def people_query(request, id):
 	request.method = 'POST'
 	# now call the people view
 	return people(request)
-
-@login_required
-def all_time_parent_champions(request):
-	# call the people type function, setting the role type to a custom role
-	return people_query(request,'Has ever been a Parent Champion')
 
 @login_required
 def parent_exceptions(request, page=1):

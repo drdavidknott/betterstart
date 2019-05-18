@@ -220,8 +220,8 @@ class PersonSearchForm(forms.Form):
 		self.fields['ABSS_type'].choices = [(0,'Any')] + ABSS_type_choices(ABSS_Type.objects.all())
 		self.fields['age_status'].choices = [(0,'Any')] + age_status_choices(Age_Status.objects.all())
 		self.fields['champions'].choices = [(0,'N/A'),
-											('Trained Champions','Trained Champions'), \
-											('Active Champions','Active Champions')]
+											('trained','Trained Champions'), \
+											('active','Active Champions')]
 
 class PersonNameSearchForm(forms.Form):
 	# Define the fields that we need in the form.

@@ -929,7 +929,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '1',
-											'champions' : 'Trained Champions',
+											'champions' : 'trained',
 											'page' : '1'
 											}
 									)
@@ -958,7 +958,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '2',
-											'champions' : 'Trained Champions',
+											'champions' : 'trained',
 											'page' : '1'
 											}
 									)
@@ -987,7 +987,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'Trained Champions',
+											'champions' : 'trained',
 											'page' : '1'
 											}
 									)
@@ -1016,7 +1016,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'Trained Champions',
+											'champions' : 'trained',
 											'page' : '1'
 											}
 									)
@@ -1077,7 +1077,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '2',
 											'age_status' : '0',
-											'champions' : 'Trained Champions',
+											'champions' : 'trained',
 											'page' : '1'
 											}
 									)
@@ -1103,7 +1103,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'Trained Champions',
+											'champions' : 'trained',
 											'page' : '1'
 											}
 									)
@@ -1131,7 +1131,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '1',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)
@@ -1160,7 +1160,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '1',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)
@@ -1189,7 +1189,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '2',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)
@@ -1218,7 +1218,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)
@@ -1247,7 +1247,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)
@@ -1308,7 +1308,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '2',
 											'ABSS_type' : '2',
 											'age_status' : '0',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)
@@ -1334,7 +1334,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'Active Champions',
+											'champions' : 'active',
 											'page' : '1'
 											}
 									)

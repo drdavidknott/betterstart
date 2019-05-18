@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status
+					ABSS_Type, Age_Status, Event_Role_Type
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -499,6 +499,9 @@ def load_reference_data(directory):
 		# and role type
 		elif data_type == 'role_type':
 			messages.append(load_role_type(value))
+		# and role type
+		elif data_type == 'event_role_type':
+			messages.append(load_event_role_type(value))
 		# and abss type
 		elif data_type == 'ABSS_type':
 			messages.append(load_ABSS_type(value))
@@ -557,6 +560,22 @@ def load_role_type(value):
 		role_type = Role_Type.objects.create(role_type_name=value)
 		# set the message
 		message = role_type_label + ' created.'
+	# return the messages
+	return message
+
+def load_event_role_type(value):
+	# create a label for use in messages
+	event_role_type_label = 'Event role type: ' + value
+	# check whether the capture type already exists
+	try:
+		event_role_type = Event_Role_Type.objects.get(event_role_type_name=value)
+		# set the message to show that it exists
+		message = event_role_type_label + ' not created: event role type already exists.'
+	except (Event_Role_Type.DoesNotExist):
+		# the event role type does not exist, so create it
+		event_role_type = Event_Role_Type.objects.create(event_role_type_name=value)
+		# set the message
+		message = event_role_type_label + ' created.'
 	# return the messages
 	return message
 

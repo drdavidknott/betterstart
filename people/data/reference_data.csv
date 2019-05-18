@@ -20,6 +20,15 @@ role_type,Ambassador
 role_type,Volunteer
 role_type,Childcare
 role_type,Staff
+event_role_type,UNKNOWN
+event_role_type,Carer
+event_role_type,Parent
+event_role_type,Parent Champion
+event_role_type,Child
+event_role_type,Ambassador
+event_role_type,Volunteer
+event_role_type,Childcare
+role_type,Staff
 ABSS_type,ABSS beneficiary
 ABSS_type,Not ABSS
 ABSS_type,ABSS deliverer

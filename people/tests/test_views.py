@@ -1754,3 +1754,329 @@ class AddRelationshipViewTest(TestCase):
 									)
 		# check that all relationships have gone
 		self.assertEqual(Relationship.objects.all().exists(),False)
+
+class AddEventViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for events
+		set_up_event_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/addevent')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/addevent')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('addevent'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_create_event(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addevent'),
+									data = { 
+												'name' : 'Testevent',
+												'description' : 'Testeventdesc',
+												'location' : 'Testeventloc',
+												'date' : '01/02/2010',
+												'start_time' : '10:00',
+												'end_time' : '11:00',
+												'event_type' : '1'
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/event_registration/1')
+		# get the record
+		test_event = Event.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_event.name,'Testevent')
+		self.assertEqual(test_event.description,'Testeventdesc')
+		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
+
+class EventRegistationViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for events
+		set_up_event_base_data()
+		# and for people
+		set_up_people_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/event_registration/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/event_registration/1')
+
+	def test_invalid_event(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('event_registration',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_successful_response_if_logged_in(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an event
+		response = self.client.get(reverse('event_registration',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_event_registration_search_blank_search_error(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some people
+		set_up_test_people('Found_name_',1,50)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'search',
+												'first_name' : '',
+												'last_name' : '',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_error'],'First name or last name must be entered.')
+
+	def test_event_registration_search_no_results(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some people
+		set_up_test_people('Found_name_',1,50)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'search',
+												'first_name' : 'noresult',
+												'last_name' : 'noresult',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],0)
+
+	def test_event_registration_search_first_name(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some people
+		set_up_test_people('Found_name_',1,17)
+		set_up_test_people('Lost_name_',1,19)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'search',
+												'first_name' : 'Found_name_',
+												'last_name' : '',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],17)
+
+	def test_event_registration_search_last_name(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some people
+		set_up_test_people('Found_name_',1,17)
+		set_up_test_people('Lost_name_',1,19)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'search',
+												'first_name' : '',
+												'last_name' : 'Found_name_',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],17)
+
+	def test_event_registration_register_people_multiple_roles(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		# create some people
+		set_up_test_people('Registered_',1,3)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'addregistration',
+												'search_keys' : '1,2,3',
+												'registered_1' : 'on',
+												'participated_1' : '',
+												'role_type_1' : str(test_role_1.pk),
+												'registered_2' : 'on',
+												'participated_2' : '',
+												'role_type_2' : str(test_role_2.pk),
+												'registered_3' : 'on',
+												'participated_3' : '',
+												'role_type_3' : str(test_role_3.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the event
+		event = Event.objects.get(id=1)
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=Person.objects.get(id=1),event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,True)
+		self.assertEqual(registration_1.participated,False)
+		self.assertEqual(registration_1.role_type,test_role_1)
+		# get the registration for the second person
+		registration_2 = Event_Registration.objects.get(person=Person.objects.get(id=2),event=event)
+		# check the values
+		self.assertEqual(registration_2.registered,True)
+		self.assertEqual(registration_2.participated,False)
+		self.assertEqual(registration_2.role_type,test_role_2)
+		# get the registration for the third person
+		registration_3 = Event_Registration.objects.get(person=Person.objects.get(id=3),event=event)
+		# check the values
+		self.assertEqual(registration_3.registered,True)
+		self.assertEqual(registration_3.participated,False)
+		self.assertEqual(registration_3.role_type,test_role_3)
+
+	def test_event_registration_participate_people_multiple_roles(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		# create some people
+		set_up_test_people('Registered_',1,3)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'addregistration',
+												'search_keys' : '1,2,3',
+												'registered_1' : '',
+												'participated_1' : 'on',
+												'role_type_1' : str(test_role_1.pk),
+												'registered_2' : '',
+												'participated_2' : 'on',
+												'role_type_2' : str(test_role_2.pk),
+												'registered_3' : '',
+												'participated_3' : 'on',
+												'role_type_3' : str(test_role_3.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the event
+		event = Event.objects.get(id=1)
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=Person.objects.get(id=1),event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,False)
+		self.assertEqual(registration_1.participated,True)
+		self.assertEqual(registration_1.role_type,test_role_1)
+		# get the registration for the second person
+		registration_2 = Event_Registration.objects.get(person=Person.objects.get(id=2),event=event)
+		# check the values
+		self.assertEqual(registration_2.registered,False)
+		self.assertEqual(registration_2.participated,True)
+		self.assertEqual(registration_2.role_type,test_role_2)
+		# get the registration for the third person
+		registration_3 = Event_Registration.objects.get(person=Person.objects.get(id=3),event=event)
+		# check the values
+		self.assertEqual(registration_3.registered,False)
+		self.assertEqual(registration_3.participated,True)
+		self.assertEqual(registration_3.role_type,test_role_3)
+
+	def test_event_registration_register_participate_people_multiple_roles(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		# create some people
+		set_up_test_people('Registered_',1,3)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[1]),
+									data = {
+												'action' : 'addregistration',
+												'search_keys' : '1,2,3',
+												'registered_1' : 'on',
+												'participated_1' : 'on',
+												'role_type_1' : str(test_role_1.pk),
+												'registered_2' : 'on',
+												'participated_2' : 'on',
+												'role_type_2' : str(test_role_2.pk),
+												'registered_3' : 'on',
+												'participated_3' : 'on',
+												'role_type_3' : str(test_role_3.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the event
+		event = Event.objects.get(id=1)
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=Person.objects.get(id=1),event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,True)
+		self.assertEqual(registration_1.participated,True)
+		self.assertEqual(registration_1.role_type,test_role_1)
+		# get the registration for the second person
+		registration_2 = Event_Registration.objects.get(person=Person.objects.get(id=2),event=event)
+		# check the values
+		self.assertEqual(registration_2.registered,True)
+		self.assertEqual(registration_2.participated,True)
+		self.assertEqual(registration_2.role_type,test_role_2)
+		# get the registration for the third person
+		registration_3 = Event_Registration.objects.get(person=Person.objects.get(id=3),event=event)
+		# check the values
+		self.assertEqual(registration_3.registered,True)
+		self.assertEqual(registration_3.participated,True)
+		self.assertEqual(registration_3.role_type,test_role_3)
+
+

@@ -2758,6 +2758,7 @@ def event_registration(request,event_id=0):
 				'search_results' : search_results,
 				'search_keys' : search_keys,
 				'search_error' : search_error,
+				'search_number' : len(search_results),
 				'event' : event,
 				'registrations' : registrations,
 				'registration_keys' : registration_keys

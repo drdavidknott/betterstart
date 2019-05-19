@@ -2787,10 +2787,7 @@ def event_registration(request,event_id=0):
 		# clear the registration keys
 		registration_keys = ''
 		# create the form
-		editregistrationform = EditRegistrationForm(
-													role_types = role_types,
-													registrations = registrations
-													)
+		editregistrationform = EditRegistrationForm(registrations = registrations)
 		# add field names to each registration, so that we know when to display them
 		for registration in registrations:
 			# add the three field names

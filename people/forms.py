@@ -466,6 +466,10 @@ class AddRegistrationForm(forms.Form):
 			if person.default_role.role_type_name == 'Parent':
 				# swith the role type id to carer
 				role_type_id = Role_Type.objects.get(role_type_name='Carer').pk
+			# check whether the role type exists
+			elif not person.default_role.use_for_events:
+				# set the role type to UNKNOWN
+				role_type_id = Role_Type.objects.get(role_type_name='UNKNOWN').pk
 			# otherwise set the id
 			else:
 				# set the id
@@ -481,8 +485,6 @@ class AddRegistrationForm(forms.Form):
 class EditRegistrationForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
-		# pull the role types list out of the parameters
-		role_types = kwargs.pop('role_types')
 		# pull the registrations list out of the parameter
 		registrations = kwargs.pop('registrations')
 		# call the built in constructor
@@ -490,7 +492,7 @@ class EditRegistrationForm(forms.Form):
 		# set the choice field for role types
 		role_type_list = []
 		# go through the role types to build the options
-		for role_type in role_types:
+		for role_type in Role_Type.objects.filter(use_for_events=True):
 			# append a list of value and display value to the list
 			role_type_list.append((role_type.pk, role_type.role_type_name))
 		# now go through the registrations and build fields

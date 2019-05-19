@@ -441,7 +441,7 @@ class AddRegistrationForm(forms.Form):
 		# set the choice field for role types
 		role_type_list = []
 		# go through the role types to build the options
-		for role_type in role_types:
+		for role_type in Role_Type.objects.filter(use_for_events=True):
 			# append a list of value and display value to the list
 			role_type_list.append((role_type.pk, role_type.role_type_name))
 		# now go through the people and build fields
@@ -462,12 +462,21 @@ class AddRegistrationForm(forms.Form):
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 			# set the field name for role
 			field_name = 'role_type_' + str(person.pk)
+			# TODO: change the approach below to an alternate relationship
+			# if this is a parent, make them a carer
+			if person.default_role.role_type_name == 'Parent':
+				# swith the role type id to carer
+				role_type_id = Role_Type.objects.get(role_type_name='Carer').pk
+			# otherwise set the id
+			else:
+				# set the id
+				role_type_id = person.default_role.pk
 			# create the field
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
 														widget=forms.Select(),
 														choices=role_type_list,
-														initial=person.default_role.pk
+														initial=role_type_id
 														)
 
 class EditRegistrationForm(forms.Form):

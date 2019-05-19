@@ -25,8 +25,6 @@ from django.db.models import Sum, Count
 def index(request):
 	# get the template
 	index_template = loader.get_template('people/index.html')
-	# get the role types
-	role_types = get_role_types_with_counts()
 	# get the lists of people who have ever been parent champions
 	parent_champions = get_parent_champions()
 	# get the parent champion role type
@@ -44,7 +42,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'ROLES',
 															column_names = ['counts'],
-															rows = get_role_types_with_counts(),
+															rows = get_role_types_with_people_counts(),
 															row_name = 'role_type_name',
 															row_values = ['count'],
 															row_url = 'role_type',
@@ -1014,13 +1012,23 @@ def get_registration(person, event):
 	# return the value
 	return event_registration
 
-def get_role_types():
-	# return a list of all the role type objects
-	return Role_Type.objects.all()
+def get_role_types(events_or_people='all'):
+	# get a list of the role type objects
+	role_types = Role_Type.objects.all()
+	# now filter if necessary
+	if events_or_people == 'events':
+		# filter on event flag
+		role_types.filter(use_for_events=True)
+	# otherwise check for people
+	elif events_or_people == 'people':
+		# filter on people flag
+		role_types.filter(use_for_events=True)
+	# return the results
+	return role_types
 
-def get_role_types_with_counts():
+def get_role_types_with_people_counts():
 	# return a list of all the role type objects, supplemented with counts
-	role_types = get_role_types()
+	role_types = get_role_types('people')
 	# now go through the role types
 	for role_type in role_types:
 		# get the count

@@ -35,17 +35,6 @@ class Role_Type(models.Model):
 	class Meta:
 		verbose_name_plural = 'role types'
 
-# Event Role Type model: represents different types of role that a person can play at an event
-# This is reference data.
-class Event_Role_Type(models.Model):
-	event_role_type_name = models.CharField(max_length=50)
-	# define the function that will return the person name as the object reference
-	def __str__(self):
-		return self.event_role_type_name
-	# set the name to be used in the admin console
-	class Meta:
-		verbose_name_plural = 'event role types'
-
 # ABSS type model: represents different types of relationship that a person can have with ABSS
 # This is reference data.
 class ABSS_Type(models.Model):

@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Event_Role_Type
+					ABSS_Type, Age_Status
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -265,6 +265,8 @@ def dataload(request):
 	messages = messages + load_event_categories(directory)
 	# load event types
 	messages = messages + load_event_types(directory)
+	# load role types
+	messages = messages + load_role_types(directory)
 	# load areas
 	messages = messages + load_areas(directory)
 	# load wards
@@ -496,12 +498,6 @@ def load_reference_data(directory):
 		# then children centres
 		elif data_type == 'children_centre':
 			messages.append(load_children_centre(value))
-		# and role type
-		elif data_type == 'role_type':
-			messages.append(load_role_type(value))
-		# and role type
-		elif data_type == 'event_role_type':
-			messages.append(load_event_role_type(value))
 		# and abss type
 		elif data_type == 'ABSS_type':
 			messages.append(load_ABSS_type(value))
@@ -511,7 +507,42 @@ def load_reference_data(directory):
 		# and deal with any unknown type
 		else:
 			# set an error message
-			messages = messages + 'Data type: ' + data_type + ' is not recognised.'
+			messages = messages + ['Data type: ' + data_type + ' is not recognised.']
+	# return the messages
+	return messages
+
+def load_role_types(directory):
+	# set a blank messages lists
+	messages = []
+	# set the file name
+	role_types_file_name = os.path.join(directory, 'data/role_types.csv')
+	# open the role types file
+	role_types_file = open(role_types_file_name,'r')
+	# read it as a csv file
+	role_types = csv.DictReader(role_types_file)
+	# go through the csv file and process it
+	for role_type_record in role_types:
+		# get the name
+		role_type_name = role_type_record['role_type_name']
+		# create a label for use in messages
+		role_type_label = 'Role Type: ' + role_type_name
+		# check whether the role type already exists
+		try:
+			role_type = Role_Type.objects.get(role_type_name=role_type_name)
+			# set the message to show that it exists
+			messages.append(role_type_label + ' not created: Role Type already exists.')
+		# we didn't find a record
+		except (Role_Type.DoesNotExist):
+			# the role_type does not exist, so create it
+			role_type = Role_Type(
+									role_type_name = role_type_name,
+									use_for_events = (role_type_record['use_for_events'] == 'True'),
+									use_for_people = (role_type_record['use_for_people'] == 'True')
+									)
+			# save the role type
+			role_type.save()
+			# set the message
+			messages.append(role_type_label + ' created.')
 	# return the messages
 	return messages
 
@@ -544,38 +575,6 @@ def load_ethnicity(value):
 		ethnicity = Ethnicity.objects.create(description=value)
 		# set the message
 		message = ethnicity_label + ' created.'
-	# return the messages
-	return message
-
-def load_role_type(value):
-	# create a label for use in messages
-	role_type_label = 'Role type: ' + value
-	# check whether the capture type already exists
-	try:
-		role_type = Role_Type.objects.get(role_type_name=value)
-		# set the message to show that it exists
-		message = role_type_label + ' not created: role type already exists.'
-	except (Role_Type.DoesNotExist):
-		# the capture type does not exist, so create it
-		role_type = Role_Type.objects.create(role_type_name=value)
-		# set the message
-		message = role_type_label + ' created.'
-	# return the messages
-	return message
-
-def load_event_role_type(value):
-	# create a label for use in messages
-	event_role_type_label = 'Event role type: ' + value
-	# check whether the capture type already exists
-	try:
-		event_role_type = Event_Role_Type.objects.get(event_role_type_name=value)
-		# set the message to show that it exists
-		message = event_role_type_label + ' not created: event role type already exists.'
-	except (Event_Role_Type.DoesNotExist):
-		# the event role type does not exist, so create it
-		event_role_type = Event_Role_Type.objects.create(event_role_type_name=value)
-		# set the message
-		message = event_role_type_label + ' created.'
 	# return the messages
 	return message
 

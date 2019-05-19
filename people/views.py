@@ -2710,10 +2710,7 @@ def event_registration(request,event_id=0):
 				# if there are search results, create a form to create relationships from the search results
 				if search_results:
 					# create the form
-					addregistrationform = AddRegistrationForm(
-															role_types=role_types,
-															people=search_results
-															)
+					addregistrationform = AddRegistrationForm(people=search_results)
 				# add field names to each result, so that we know when to display them
 				for result in search_results:
 					# add the three field names

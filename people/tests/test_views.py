@@ -15,11 +15,11 @@ def set_up_people_base_data():
 	# and the capture type
 	test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
 	# create a test role
-	test_role = Role_Type.objects.create(role_type_name='test_role_type')
+	test_role = Role_Type.objects.create(role_type_name='test_role_type',use_for_events=True,use_for_people=True)
 	# and a second test role type
-	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type')
+	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type',use_for_events=True,use_for_people=True)
 	# and an UNKNOWN role type
-	unknown_test_role = Role_Type.objects.create(role_type_name='UNKNOWN')
+	unknown_test_role = Role_Type.objects.create(role_type_name='UNKNOWN',use_for_events=True,use_for_people=True)
 	# create a test ABSS type
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
 	# create a second test ABSS type
@@ -107,19 +107,19 @@ class PeopleViewTest(TestCase):
 		# create a test user
 		user = set_up_test_user()
 		# create the Parent role
-		parent_role = Role_Type.objects.create(role_type_name='Parent')
+		parent_role = Role_Type.objects.create(role_type_name='Parent',use_for_events=True,use_for_people=True)
 		# and the parent champion role
-		parent_champion_role = Role_Type.objects.create(role_type_name='Parent Champion')
+		parent_champion_role = Role_Type.objects.create(role_type_name='Parent Champion',use_for_events=True,use_for_people=True)
 		# create a test age status
 		test_age_status = Age_Status.objects.create(status='Adult')
 		# create a second test age status
 		test_age_status = Age_Status.objects.create(status='Child')
 		# and four more test role types
-		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
-		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
-		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
-		test_role_4 = Role_Type.objects.create(role_type_name='test role 4')
-		test_role_5 = Role_Type.objects.create(role_type_name='test role 5')
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
+		test_role_4 = Role_Type.objects.create(role_type_name='test role 4',use_for_events=True,use_for_people=True)
+		test_role_5 = Role_Type.objects.create(role_type_name='test role 5',use_for_events=True,use_for_people=True)
 		# create a test ABSS type
 		test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
 		# create a second test ABSS type
@@ -1364,7 +1364,7 @@ class PeopleQueryTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a new type
-		test_role_type = Role_Type.objects.create(role_type_name='People Query Test')
+		test_role_type = Role_Type.objects.create(role_type_name='People Query Test',use_for_events=True,use_for_people=True)
 		# create some extra people
 		set_up_test_people('Role Type Query Test',test_role_type.pk,30,1,1)
 		# attempt to get the people page
@@ -2372,9 +2372,9 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some role types
-		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
-		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
-		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',1,3)
 		# log the user in
@@ -2423,9 +2423,9 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some role types
-		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
-		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
-		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',1,3)
 		# log the user in
@@ -2474,9 +2474,9 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some role types
-		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
-		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
-		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',1,3)
 		# log the user in
@@ -2526,9 +2526,9 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some role types
-		test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
-		test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
-		test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',1,3)
 		# create some registrations
@@ -2599,7 +2599,7 @@ class EventRegistrationViewTest(TestCase):
 			# create an event
 			set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 			# create some role types
-			test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
+			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 			# create some people
 			set_up_test_people('Registered_',1,3)
 			# create some registrations
@@ -2670,9 +2670,9 @@ class EventRegistrationViewTest(TestCase):
 			# create an event
 			set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 			# create some role types
-			test_role_1 = Role_Type.objects.create(role_type_name='test role 1')
-			test_role_2 = Role_Type.objects.create(role_type_name='test role 2')
-			test_role_3 = Role_Type.objects.create(role_type_name='test role 3')
+			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+			test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+			test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 			# create some people
 			set_up_test_people('Registered_',1,3)
 			# create some registrations

@@ -165,7 +165,7 @@ class ProfileForm(forms.Form):
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice fields
 		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all())
-		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all())
+		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.filter(use_for_people=True))
 		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())
 		self.fields['ethnicity'].choices = ethnicity_choices(Ethnicity.objects.all())
 	def is_valid(self):
@@ -214,7 +214,8 @@ class PersonSearchForm(forms.Form):
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['role_type'].choices = [(0,'Any')] + role_type_choices(Role_Type.objects.all())
+		self.fields['role_type'].choices = [(0,'Any')] + \
+											role_type_choices(Role_Type.objects.filter(use_for_people=True))
 		self.fields['ABSS_type'].choices = [(0,'Any')] + ABSS_type_choices(ABSS_Type.objects.all())
 		self.fields['age_status'].choices = [(0,'Any')] + age_status_choices(Age_Status.objects.all())
 		self.fields['champions'].choices = [(0,'N/A'),('trained','Trained Champions'),('active','Active Champions')]
@@ -432,8 +433,6 @@ class EventForm(forms.Form):
 class AddRegistrationForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
-		# pull the role types list out of the parameters
-		role_types = kwargs.pop('role_types')
 		# pull the people list out of the parameter
 		people = kwargs.pop('people')
 		# call the built in constructor

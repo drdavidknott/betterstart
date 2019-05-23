@@ -226,6 +226,8 @@ class Person(models.Model):
 	age_status = models.ForeignKey(Age_Status, default=1, on_delete=models.SET_DEFAULT)
 	trained_champion = models.BooleanField(default=False)
 	active_champion = models.BooleanField(default=False)
+	house_name_or_number = models.CharField(max_length=50, default='', blank=True)
+	street = models.ForeignKey(Street, null=True, blank=True, on_delete=models.SET_NULL)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.first_name + ' ' + self.last_name

@@ -110,6 +110,17 @@ class Post_Code(models.Model):
 	class Meta:
 		verbose_name_plural = 'post codes'
 
+# Street model: represents valid streets aligned to post codes
+class Street(models.Model):
+	name = models.CharField(max_length=100)
+	post_code = models.ForeignKey(Post_Code, default=1, on_delete=models.SET_DEFAULT)
+	# define the function that will return the person name as the object reference
+	def __str__(self):
+		return self.name + ' (' + self.post_code.post_code + ')'
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'streets'
+
 # Address model: represents addresses where people live
 class Address(models.Model):
 	house_name_or_number = models.CharField(max_length=50)

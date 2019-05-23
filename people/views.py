@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status
+					ABSS_Type, Age_Status, Street
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -271,6 +271,8 @@ def dataload(request):
 	messages = messages + load_wards(directory)
 	# load post codes and get the results as messages
 	messages = messages + load_post_code(directory)
+	# load streets and get the results as messages
+	messages = messages + load_streets(directory)
 	# add the messages to the context
 	context = {
 				'load_messages' : messages,
@@ -466,6 +468,47 @@ def load_post_code(directory):
 		except (Ward.DoesNotExist):
 			# the area does not exist, so set an error messaage
 			messages.append(post_code_label + ' not created: ward does not exist.')
+	# return the messages
+	return messages
+
+def load_streets(directory):
+	# set a blank messages lists
+	messages = []
+	# set the file name
+	streets_file_name = os.path.join(directory, 'data/streets_and_post_codes.csv')
+	# open the streets file
+	streets_file = open(streets_file_name,'r')
+	# read it as a csv file
+	streets_rows = csv.DictReader(streets_file)
+	# go through the csv file and process it
+	for street_row in streets_rows:
+		# get the street
+		street_name = street_row['name']
+		# and the post code
+		post_code_name = street_row['post_code']
+		# create a label for use in messages
+		street_label = 'Street: ' + street_name + ' (Post Code: ' + post_code_name + ')'
+		# check whether the post_code exists
+		try:
+			post_code = Post_Code.objects.get(post_code=post_code_name)
+			# now try to find the street
+			try:
+				street = Street.objects.get(name=street_name,post_code=post_code)
+				# set the message to show that it exists
+				messages.append(street_label + ' not created: street already exists.')
+			except (Street.DoesNotExist):
+				# create the street
+				street = Street(
+										name = street_name,
+										post_code = post_code
+									)
+				# save the street
+				street.save()
+				# and set the message
+				messages.append(street_label + ' created.')
+		except (Post_Code.DoesNotExist):
+			# the area does not exist, so set an error messaage
+			messages.append(street_label + ' not created: street does not exist.')
 	# return the messages
 	return messages
 

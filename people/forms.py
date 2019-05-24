@@ -352,17 +352,48 @@ class EditExistingRelationshipsForm(forms.Form):
 														)
 
 class AddressSearchForm(forms.Form):
-	# Define the fields that we need in the form to capture the address
+	# Define the fields that we need in the form to search for the address
 	house_name_or_number = forms.CharField(
 									label="House name or number",
 									max_length=50,
-									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	street = forms.CharField(
 									label="Street",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	post_code = forms.CharField(
+									label="Post Code",
+									max_length=10,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(AddressSearchForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# now perform the additional checks
+		# start by checking whether we have either a post code or a street
+		if not self.cleaned_data['post_code'] and not self.cleaned_data['street']:
+			#set the error message
+			self.add_error(None,'Either post code or street must be entered.')
+			# set the validity flag
+			valid = False
+		# return the result
+		return valid
+
+class UpdateAddressForm(forms.Form):
+	# Define the fields that we need in the form to update the address
+	street_id = forms.CharField(
+									label="Street",
+									max_length=50,
+									widget=forms.HiddenInput())
+	house_name_or_number = forms.CharField(
+											label="House Name or Number",
+											max_length=50,
+											widget=forms.HiddenInput())
 
 class AddAddressForm(forms.Form):
 	# Define the fields that we need in the form to capture the address

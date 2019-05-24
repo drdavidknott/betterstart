@@ -1,0 +1,123 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	{% include "people/person_header.html" %}
+
+	{% if person.house_name_or_number %}
+	 	<div class="row">
+	 		<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">CURRENT ADDRESS:</h4>
+		 			</div>
+			 		<div class="panel-body">
+			 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
+			 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
+			 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
+			 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
+						<form action ="{% url 'address' person.pk %}" method="post">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="remove">
+							<div>
+	 							<input type="submit" value="Remove">
+	 						</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	{% endif %}
+
+ 	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">FIND ADDRESS:</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'address' person.pk %}" method="post">
+						{% csrf_token %}
+						<input type="hidden" name="action" value="search">
+						<input type="hidden" name="page" value="1">
+						<div class = "row form-group">
+							{% for field in addresssearchform %}
+								<div class = "col-md-3">{{ field.label_tag }} {{ field }}</div>
+							{% endfor %}
+							<div class = "col-md-3">{{ addresssearchform.non_field_errors }}</div>
+						</div>
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{% if search_results %}
+
+		<div class="row">
+			<div class="col-md-12">
+		 		<div class="panel panel-default">
+		 			<div class="panel-heading">
+		 				<h4 class="panel-title">RESULTS: ({{ search_number }} found)</h4>
+		 			</div>
+		 			<div class="panel-body">
+		 				{% for result in search_results %}
+							<form action ="{% url 'address' person.pk %}" method="post">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="update">
+								<input type="hidden" name="street_id" value="{{ result.pk }}">
+								<input type="hidden" name="house_name_or_number" value="{{ house_name_or_number }}">
+								<div class = "row form-group">
+									<div class="col-xs-4">
+										{{ house_name_or_number }}
+										{{ result.name }}
+										{{ result.post_code }}
+									</div>
+									<div class="col-xs-1" align="left">
+			 							<input type="submit" value="Submit">
+			 						</div>
+			 					</div>
+							</form>
+						{% endfor %}
+		 			</div>
+		 		</div>
+		 	</div>
+		 </div>
+
+	{% endif %}
+
+</div>
+
+{% if page_list %}
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<form action ="{% url 'address' person.pk %}" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="search">
+					<input type="hidden" name="house_name_or_number" value="{{ house_name_or_number }}">
+					<input type="hidden" name="street" value="{{ street }}">
+					<input type="hidden" name="post_code" value="{{ post_code }}">
+					{% for target_page in page_list %}
+						<input type="submit" name="page" value="{{ target_page }}">
+					{% endfor %}
+				</form>
+			</div>
+		</div>
+	</div>
+{% endif %}
+
+
+{% endblock %}
+

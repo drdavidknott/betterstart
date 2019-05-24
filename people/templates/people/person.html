@@ -107,15 +107,16 @@
  		<div class="panel panel-default">
 			<div class="panel-heading">
 	 				<h4 class="panel-title">
-	 					<a href="{% url 'add_address' person.pk %}">ADDRESSES</a>
+	 					<a href="{% url 'address' person.pk %}">ADDRESS</a>
 	 				</h4>
  			</div>
 	 		<div class="panel-body">
-		 		{% for address in addresses %}
-	 				<div class="col-md-12">
-						{{ address.house_name_or_number }} {{ address.street }}, {{ address.town }} {{ address.post_code}}
-					</div>
-				{% endfor %}
+				{% if person.house_name_or_number %}
+		 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
+		 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
+		 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
+		 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
+				{% endif %}
 			</div>
 		</div>
 

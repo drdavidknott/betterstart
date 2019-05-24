@@ -11,7 +11,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
-					AnswerQuestionsForm
+					AnswerQuestionsForm, UpdateAddressForm
 from .utilities import get_page_list, make_banner
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
@@ -895,6 +895,31 @@ def get_post_code_by_code(code):
 	# return the result
 	return post_code
 
+def get_streets_by_name_and_post_code(name='',post_code=''):
+	# get the streets
+	streets = Street.objects.all()
+	# if there is a name, filter by name
+	if name:
+		# apply the filter
+		streets = streets.filter(name__icontains=name)
+	# if there is a post code, filter by post code
+	if post_code:
+		# apply the filter
+		streets = streets.filter(post_code__post_code__icontains=post_code)
+	# return the results
+	return streets
+
+def get_street(street_id):
+	# try to get street
+	try:
+		street = Street.objects.get(pk=street_id)
+	# handle the exception
+	except Street.DoesNotExist:
+		# set a false value
+		street = False
+	# return the street
+	return street
+
 def get_residence(person, address):
 	# try to get a residence
 	try:
@@ -1741,6 +1766,48 @@ def update_person(
 	# return the person
 	return person
 
+def update_address(
+					request,
+					person,
+					house_name_or_number,
+					street_id
+				):
+	# set the success flag
+	success = False
+	# attempt to get the street
+	street = get_street(street_id)
+	# set the value for the person
+	if street:
+		# set the value
+		person.street = street
+		# set the house name or numer
+		person.house_name_or_number = house_name_or_number
+		# save the person
+		person.save()
+		# set the message
+		messages.success(request, 'Address updated for ' + str(person))
+		# set the success flag
+		success = True
+	# otherwise set a message
+	else:
+		# set the message
+		messages.error(request, 'Street does not exist.')
+	# return the flag
+	return success
+
+def remove_address(
+					request,
+					person
+				):
+	# set the value
+	person.street = None
+	# set the house name or numer
+	person.house_name_or_number = ''
+	# save the person
+	person.save()
+	# set the message
+	messages.success(request, 'Address removed for ' + str(person))
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -2462,6 +2529,97 @@ def add_address(request,person_id=0):
 				'search_results' : search_results,
 				'search_error' : search_error,
 				'person' : person
+				})
+	# return the response
+	return HttpResponse(person_template.render(context=context, request=request))
+
+@login_required
+def address(request,person_id=0):
+	# this view is used to set the address for a person, by searching on post code or street name
+	# load the template
+	person_template = loader.get_template('people/address.html')
+	# get the person
+	person = get_person(person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# set the search results
+	search_results = []
+	# and a blank page_list
+	page_list = []
+	# and zero search results
+	search_number = 0
+	# and blank search terms
+	house_name_or_number = ''
+	street = ''
+	post_code = ''
+	# set the results per page
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		addresssearchform = AddressSearchForm(request.POST)
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# validate the form
+			if addresssearchform.is_valid():
+				# get the house name or number, street name and post code
+				house_name_or_number = addresssearchform.cleaned_data['house_name_or_number']
+				street = addresssearchform.cleaned_data['street']
+				post_code = addresssearchform.cleaned_data['post_code']
+				# do the search
+				search_results = get_streets_by_name_and_post_code(
+																	name=street,
+																	post_code=post_code
+																	)
+				# figure out how many results we got
+				search_number = len(search_results)
+				# get the page number
+				page = int(request.POST['page'])
+				# figure out how many pages we have
+				page_list = get_page_list(search_results, results_per_page)
+				# set the previous page
+				previous_page = page - 1
+				# sort and truncate the list of results
+				search_results = search_results.order_by('name')[previous_page*results_per_page:page*results_per_page]
+		# see whether we got an update
+		elif request.POST['action'] == 'update':
+			# create an update form
+			updateaddressform = UpdateAddressForm(request.POST)
+			# validate the form
+			if updateaddressform.is_valid():
+				# attempt to update the address
+				if update_address(
+									request,
+									person=person,
+									street_id=int(updateaddressform.cleaned_data['street_id']),
+									house_name_or_number=updateaddressform.cleaned_data['house_name_or_number']
+									):
+					# go to the profile of the person
+					return redirect('/person/' + str(person.pk))
+		# or a remove
+		elif request.POST['action'] == 'remove':
+			# remove the address
+			remove_address(
+							request,
+							person=person,
+							)
+			# go to the profile of the person
+			return redirect('/person/' + str(person.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a blank form
+		addresssearchform = AddressSearchForm()
+	# set the context from the person based on person id
+	context = build_context({
+				'addresssearchform' : addresssearchform,
+				'search_results' : search_results,
+				'search_number' : search_number,
+				'person' : person,
+				'page_list' : page_list,
+				'house_name_or_number' : house_name_or_number,
+				'street' : street,
+				'post_code' : post_code
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))

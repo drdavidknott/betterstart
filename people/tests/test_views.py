@@ -1,7 +1,7 @@
 from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
 							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type, \
-							Age_Status
+							Age_Status, Area, Ward, Post_Code, Street
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -85,6 +85,37 @@ def set_up_relationship_base_data():
 	Relationship_Type.objects.create(relationship_type='child', relationship_counterpart='parent')
 	Relationship_Type.objects.create(relationship_type='from', relationship_counterpart='to')
 	Relationship_Type.objects.create(relationship_type='to', relationship_counterpart='from')
+
+def set_up_address_base_data():
+	# create records required for an post code and street
+	area = Area.objects.create(area_name='Test area')
+	ward = Ward.objects.create(ward_name='Test ward',area=area)
+
+def set_up_test_post_codes(
+						name_root,
+						ward_id=1,
+						number=1
+						):
+	# create the number of post codes needed
+	for n in range(number):
+		# create a post code
+		Post_Code.objects.create(
+									post_code = name_root + str(n),
+									ward = Ward.objects.get(id=ward_id)
+									)
+
+def set_up_test_streets(
+						name_root,
+						post_code_id=1,
+						number=1
+						):
+	# create the number of streets needed
+	for n in range(number):
+		# create a street
+		Street.objects.create(
+									name = name_root + str(n),
+									post_code = Post_Code.objects.get(id=post_code_id)
+									)
 
 def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
 	# set up the number of people asked for
@@ -1713,16 +1744,6 @@ class EventViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
-	def test_invalid_event(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# attempt to get an invalid event
-		response = self.client.get(reverse('event',args=[9999]))
-		# check that we got a valid response
-		self.assertEqual(response.status_code, 200)
-		# check that we got an error in the page
-		self.assertContains(response,'ERROR')
-
 class AddPersonViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -2800,3 +2821,273 @@ class EditEventViewTest(TestCase):
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')
+
+class AddressViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC',number=50)
+		set_up_test_post_codes('XYZ',number=75)
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1',1,number=50)
+		set_up_test_streets('ABC streets 2',1,number=60)
+		set_up_test_streets('XYZ streets',51,number=35)
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('address_test',number=1)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/address/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/address/1')
+
+	def test_invalid_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('address',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_empty_search_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('address',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# the search results should be empty
+		self.assertEqual(response.context['search_number'],0)
+
+	def test_search_without_street_or_post_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'search',
+											'house_name_or_number' : '55',
+											'street' : '',
+											'post_code' : '',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Either post code or street must be entered.')
+
+	def test_search_on_street(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'search',
+											'house_name_or_number' : '55',
+											'street' : 'ABC',
+											'post_code' : '',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['search_number'],110)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['search_results']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5])
+
+	def test_search_on_post_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'search',
+											'house_name_or_number' : '55',
+											'street' : '',
+											'post_code' : 'XYZ',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['search_number'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['search_results']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_on_street_and_post_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'search',
+											'house_name_or_number' : '55',
+											'street' : 'ABC streets 2',
+											'post_code' : 'ABC',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['search_number'],60)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['search_results']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3])
+
+	def test_search_on_street_and_post_code_partial_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'search',
+											'house_name_or_number' : '55',
+											'street' : 'ABC streets 2',
+											'post_code' : 'ABC',
+											'page' : '3'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['search_number'],60)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['search_results']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3])
+
+	def test_search_on_street_and_post_code_no_results(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'search',
+											'house_name_or_number' : '55',
+											'street' : 'XYZ',
+											'post_code' : 'ABC streets 2',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['search_number'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['search_results']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[])
+
+	def test_add_address(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit an address creation
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'update',
+											'house_name_or_number' : '55',
+											'street_id' : '1',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.house_name_or_number,'55')
+		self.assertEqual(test_person.street.pk,1)
+
+def test_update_address(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit an address creation
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'update',
+											'house_name_or_number' : '55',
+											'street_id' : '1',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.house_name_or_number,'55')
+		self.assertEqual(test_person.street.pk,1)
+		# submit an address update
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'update',
+											'house_name_or_number' : '99',
+											'street_id' : '2',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.house_name_or_number,'99')
+		self.assertEqual(test_person.street.pk,2)
+
+def test_remove_address(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit an address creation
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'update',
+											'house_name_or_number' : '55',
+											'street_id' : '1',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.house_name_or_number,'55')
+		self.assertEqual(test_person.street.pk,1)
+		# submit an address update
+		response = self.client.post(
+									reverse('address',args=[1]),
+									data = { 
+											'action' : 'remove',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(id=1)
+		# check the record contents
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+

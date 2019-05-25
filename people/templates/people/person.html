@@ -134,7 +134,7 @@
 	 		<div class="panel-body">
 		 		{% for registration in registrations %}
 	 				<div class="col-md-12">
-						{{ registration }}
+						{{ registration.role_type.role_type_name }} at {{ registration.event }}
 					</div>
 				{% endfor %}
 			</div>

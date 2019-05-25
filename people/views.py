@@ -2186,7 +2186,7 @@ def person(request, person_id=0):
 	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
-				'registrations' : person.events.all(),
+				'registrations' : Event_Registration.objects.filter(person=person),
 				'answers' : person.answers.all(),
 				'role_history' : person.role_history_set.all()
 				})

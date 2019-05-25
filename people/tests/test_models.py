@@ -97,7 +97,7 @@ class EventRegistrationTest(TestCase):
         event_registration = Event_Registration.objects.get(id=1)
         # check the str method
         self.assertEqual(
-        	'First Last: test_role at Test event on 2019-01-01 (registered and participated)',
+        	'First Last: test_role at Test event on 01/01/2019 (registered and participated)',
         	str(event_registration)
         				)
 
@@ -111,7 +111,7 @@ class EventRegistrationTest(TestCase):
         event_registration.save()
         # check the str method
         self.assertEqual(
-        	'First Last: test_role at Test event on 2019-01-01 (registered and did not participate)',
+        	'First Last: test_role at Test event on 01/01/2019 (registered and did not participate)',
         	str(event_registration)
         				)
 
@@ -126,7 +126,7 @@ class EventRegistrationTest(TestCase):
         event_registration.save()
         # check the str method
         self.assertEqual(
-        	'First Last: test_role at Test event on 2019-01-01 (not registered and did not participate)',
+        	'First Last: test_role at Test event on 01/01/2019 (not registered and did not participate)',
         	str(event_registration)
         				)
 
@@ -140,7 +140,7 @@ class EventRegistrationTest(TestCase):
         event_registration.save()
         # check the str method
         self.assertEqual(
-        	'First Last: test_role at Test event on 2019-01-01 (not registered and participated)',
+        	'First Last: test_role at Test event on 01/01/2019 (not registered and participated)',
         	str(event_registration)
         				)
 

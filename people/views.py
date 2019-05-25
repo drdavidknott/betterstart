@@ -863,18 +863,6 @@ def get_parent_champions():
 	# return the dict
 	return parent_champions
 
-def get_address(address_id):
-	# try to get a address using the address id
-	try:
-		# do the database call
-		address = Address.objects.get(pk=address_id)
-	# handle the exception
-	except Address.DoesNotExist:
-		# set the address to false
-		address = False
-	# return the result
-	return address
-
 def get_addresses_by_number_or_street(house_name_or_number,street):
 	# try to get addresses with the matching properties
 	addresses = Address.objects.filter(
@@ -919,21 +907,6 @@ def get_street(street_id):
 		street = False
 	# return the street
 	return street
-
-def get_residence(person, address):
-	# try to get a residence
-	try:
-		# do the database query
-		residence = Residence.objects.get(
-											person=person,
-											address=address
-											)
-	# handle the exception
-	except Residence.DoesNotExist:
-		# set a false value
-		residence = False
-	# return the value
-	return residence
 
 def get_ethnicity(ethnicity_id):
 	# try to get ethnicity
@@ -1481,40 +1454,6 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 			messages.error(request, 'Relationship could not be created.')
 	# return the result
 	return success
-
-def build_residence(request, person, address):
-	# attempt to create a new residence record, checking first that the residence does not exist
-	residence = get_residence(person,address)
-	# check whether we got a residence or not
-	if not residence:
-		# create the residence
-		residence = create_residence(person,address)
-		# set the success message
-		messages.success(request,'New residence (' + str(residence) + ') created.')
-	# otherwise set a warning message
-	else:
-		# set the warning that the residence already exists
-		messages.error(request,'Residence (' + str(residence) + ') already exists.')
-	# return the residence
-	return residence
-
-def remove_residence(request, person, address):
-	# attempt to remove a residence record, checking first that the residence exists
-	residence = get_residence(person,address)
-	# check whether we got the residence or not
-	if residence:
-		# preserve the name
-		residence_name = str(residence)
-		# delete the residence
-		residence.delete()
-		# set the success message
-		messages.success(request,'Residence (' + residence_name + ') deleted.')
-	# otherwise set a warning message
-	else:
-		# set the warning that the residence already exists
-		messages.error(request,'Residence does not exist.')
-	# return with no parameters
-	return
 
 def build_event(request, name, description, date, start_time, end_time, event_type_id, location):
 	# get the event type
@@ -2406,129 +2345,6 @@ def add_relationship(request,person_id=0):
 				'search_error' : search_error,
 				'person' : person,
 				'relationships_to' : relationships_to
-				})
-	# return the response
-	return HttpResponse(person_template.render(context=context, request=request))
-
-@login_required
-def add_address(request,person_id=0):
-	# this view is used to add an address to a person, either by performing a search and adding an address which 
-	# has been found, or by adding a new address
-	# load the template
-	person_template = loader.get_template('people/add_address.html')
-	# get the person
-	person = get_person(person_id)
-	# if the person doesn't exist, crash to a banner
-	if not person:
-		return make_banner(request, 'Person does not exist.')
-	# initialise blank forms in case we don't need them (but need to pass them in the context)
-	addaddressform = ''
-	# get existing addresses
-	addresses = person.addresses.all()
-	# set the search results
-	search_results = []
-	# set a blank search_error
-	search_error = ''
-	# check whether this is a post
-	if request.method == 'POST':
-		# create a search form
-		addresssearchform = AddressSearchForm(request.POST)
-		# check what type of submission we got
-		if request.POST['action'] == 'search':
-			# validate the form
-			addresssearchform.is_valid()
-			# get the house name or number and street name
-			house_name_or_number = addresssearchform.cleaned_data['house_name_or_number']
-			street = addresssearchform.cleaned_data['street']
-			# if neither field is blank, do the search
-			if house_name_or_number or street:
-				# conduct a search
-				search_addresses = get_addresses_by_number_or_street(house_name_or_number,street)
-				# remove the people who already have a relationship
-				search_results = remove_existing_addresses(person, search_addresses)
-				# if there are search results, create a form to create relationships from the search results
-				addaddressform = AddAddressForm(request.POST)
-			# otherwise we have a blank form
-			else:
-				# set the message
-				search_error = 'Street name or house name or number must be entered.'
-		# check whether we have been asked to add a relationship to a new person
-		elif request.POST['action'] == 'addnewaddress':
-			# create the form
-			addaddressform = AddAddressForm(request.POST)
-			# check whether the form is valid
-			if addaddressform.is_valid():
-				# attempt to get the post code
-				post_code = get_post_code_by_code(addaddressform.cleaned_data['post_code'])
-				# check whether that was successful
-				if post_code:
-					# create the address
-					address = create_address(
-											house_name_or_number = addaddressform.cleaned_data['house_name_or_number'],
-											street = addaddressform.cleaned_data['street'],
-											town = addaddressform.cleaned_data['town'],
-											post_code = post_code
-											)
-					# set the message
-					messages.success(request, 'Address ' + str(address) + ' created.')
-					# create a residence
-					residence = build_residence(
-												request,
-												person = person,
-												address = address
-												)
-					# redirect to the person's profile page
-					return redirect('/person/' + str(person.pk))
-				# otherwise deal with an invalid post code
-				else:
-					# set the error message
-					addaddressform.add_error('post_code','Invalid post code.')
-		# check whether we have been asked to add an existing address
-		elif request.POST['action'] == 'addexistingaddress':
-			# get the address
-			address = get_address(int(request.POST['address_id']))
-			# if we got an address, build the residence
-			if address:
-				# build the residence
-				residence = build_residence(
-											request,
-											person = person,
-											address = address
-											)
-			# otherwise set an error message
-			else:
-				# set the message
-				messages.error('Address does not exist.')
-		# check whether we have been asked to remove an existing address
-		elif request.POST['action'] == 'removeaddress':
-			# get the address
-			address = get_address(int(request.POST['address_id']))
-			# if we got an address, build the residence
-			if address:
-				# build the residence
-				residence = remove_residence(
-											request,
-											person = person,
-											address = address
-											)
-			# otherwise set an error message
-			else:
-				# set the message
-				messages.error('Address does not exist.')
-	# otherwise we didn't get a post
-	else:
-		# create a blank form
-		addresssearchform = AddressSearchForm()
-	# get the addresses: there may be new ones
-	addresses = person.addresses.all()
-	# set the context from the person based on person id
-	context = build_context({
-				'addresssearchform' : addresssearchform,
-				'addaddressform' : addaddressform,
-				'addresses' : addresses,
-				'search_results' : search_results,
-				'search_error' : search_error,
-				'person' : person
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))

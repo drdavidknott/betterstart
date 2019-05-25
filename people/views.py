@@ -34,9 +34,9 @@ def index(request):
 	# get parents with overdue children
 	parents_with_overdue_children = get_parents_with_overdue_children()
 	# create a dashboard
-	dashboard = Dashboard()
+	dashboard = Dashboard(margin=0)
 	# create the roles column for the dashboard
-	roles_dashboard_column = Dashboard_Column()
+	roles_dashboard_column = Dashboard_Column(width=4)
 	# add the role types dashboard panel
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
@@ -49,8 +49,8 @@ def index(request):
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
-															column_width = 2,
-															right_margin = 2,
+															column_width = 3,
+															right_margin = 1,
 															)
 											)
 	# create the parent champions dashboard panel
@@ -58,8 +58,8 @@ def index(request):
 														title = 'PARENT CHAMPIONS',
 														column_names = ['counts'],
 														label_width = 8,
-														column_width = 2,
-														right_margin = 2)
+														column_width = 3,
+														right_margin = 1)
 	# add the current parent champions row to the panel
 	parent_champions_dashboard_panel.rows.append(
 													Dashboard_Panel_Row(
@@ -92,8 +92,8 @@ def index(request):
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
-															column_width = 2,
-															right_margin = 2,
+															column_width = 3,
+															right_margin = 1,
 															)
 											)
 	# add the ABSS dashboard panel
@@ -108,8 +108,8 @@ def index(request):
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
-															column_width = 2,
-															right_margin = 2,
+															column_width = 3,
+															right_margin = 1,
 															)
 											)
 	# create the exceptions dashboard panel
@@ -117,8 +117,8 @@ def index(request):
 														title = 'EXCEPTIONS',
 														column_names = ['counts'],
 														label_width = 8,
-														column_width = 2,
-														right_margin = 2)
+														column_width = 3,
+														right_margin = 1)
 	# add the parents with no children row to the panel
 	exceptions_dashboard_panel.rows.append(
 											Dashboard_Panel_Row(
@@ -148,11 +148,10 @@ def index(request):
 											)
 	# append the parent champions panel to the column
 	roles_dashboard_column.panels.append(exceptions_dashboard_panel)
-
 	# append the roles column to the dashboard
 	dashboard.columns.append(roles_dashboard_column)
 	# create the events column for the dashboard
-	events_dashboard_column = Dashboard_Column()
+	events_dashboard_column = Dashboard_Column(width=4)
 	# get the event dashboard dates
 	event_dashboard_dates = get_dashboard_dates()
 	# set variables for convenience
@@ -240,6 +239,38 @@ def index(request):
 											)
 	# append the roles column to the dashboard
 	dashboard.columns.append(events_dashboard_column)
+	# create the geo column for the dashboard
+	geo_dashboard_column = Dashboard_Column(width=4)
+	# add the areas panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'AREAS',
+															column_names = ['counts'],
+															rows = get_areas_with_people_counts(),
+															row_name = 'area_name',
+															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the wards panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'WARDS',
+															column_names = ['counts'],
+															rows = get_wards_with_people_counts(),
+															row_name = 'ward_name',
+															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# append the geo column to the dashboard
+	dashboard.columns.append(geo_dashboard_column)
 	# set the context
 	context = build_context({
 								'dashboard' : dashboard
@@ -1078,6 +1109,26 @@ def get_role_types_with_people_counts():
 		role_type.count = Person.objects.filter(default_role=role_type).count()
 	# return the results
 	return role_types
+
+def get_wards_with_people_counts():
+	# return a list of all the wards with people counts
+	wards = Ward.objects.all()
+	# now go through the wards
+	for ward in wards:
+		# get the count
+		ward.count = Person.objects.filter(street__post_code__ward=ward).count()
+	# return the results
+	return wards
+
+def get_areas_with_people_counts():
+	# return a list of all the areas with people counts
+	areas = Area.objects.all()
+	# now go through the areas
+	for area in areas:
+		# get the count
+		area.count = Person.objects.filter(street__post_code__ward__area=area).count()
+	# return the results
+	return areas
 
 def get_role_type(role_type_id):
 	# try to get role type

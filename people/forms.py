@@ -414,6 +414,23 @@ class AddAddressForm(forms.Form):
 									max_length=10,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 
+class AddressToRelationshipsForm(forms.Form):
+	# over-ride the built in __init__ method so that we can add fields dynamically
+	def __init__(self, *args, **kwargs):
+		# pull the person list out of the parameter
+		people = kwargs.pop('people')
+		# call the built in constructor
+		super(AddressToRelationshipsForm, self).__init__(*args, **kwargs)
+		# now go through the people and build fields
+		for person in people:
+			# set the field name for applying the address
+			field_name = 'apply_' + str(person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Apply",
+														required = False,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+
 class EventForm(forms.Form):
 	# Define the fields that we need in the form to capture the event
 	name = forms.CharField(

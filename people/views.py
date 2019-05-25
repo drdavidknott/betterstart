@@ -11,7 +11,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
-					AnswerQuestionsForm, UpdateAddressForm
+					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm
 from .utilities import get_page_list, make_banner
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
@@ -733,6 +733,8 @@ def get_relationships_to(person):
 		person = Person.objects.get(pk=relationship.relationship_to.pk)
 		# add the relationship type to the person object
 		person.relationship_type = relationship.relationship_type.relationship_type
+		# and the counterpart
+		person.relationship_counterpart = relationship.relationship_type.relationship_counterpart
 		# and the key
 		person.relationship_type_pk = relationship.relationship_type.pk
 		# append the person to the list
@@ -2133,7 +2135,6 @@ def person(request, person_id=0):
 	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
-				'addresses' : person.addresses.all(),
 				'registrations' : person.events.all(),
 				'answers' : person.answers.all(),
 				'role_history' : person.role_history_set.all()
@@ -2436,6 +2437,80 @@ def address(request,person_id=0):
 				'house_name_or_number' : house_name_or_number,
 				'street' : street,
 				'post_code' : post_code
+				})
+	# return the response
+	return HttpResponse(person_template.render(context=context, request=request))
+
+@login_required
+def address_to_relationships(request,person_id=0):
+	# this view is used to set the address for a person, by searching on post code or street name
+	# load the template
+	person_template = loader.get_template('people/address_to_relationships.html')
+	# get the person
+	person = get_person(person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# set a blank set of application keys
+	application_keys = ''
+	# and a blank delimiter
+	application_key_delimiter = ''
+	# and a blank form
+	addresstorelationshipsform = ''
+	# check whether this is a post
+	if request.method == 'POST':
+		# check what type of submission we got
+		if request.POST['action'] == 'apply_address':
+			# get the list of search keys from the hidden field
+			application_keys = request.POST['application_keys'].split(',')
+			# go through the application
+			for application_key in application_keys:
+				# get the indicators of whether the address should be applied
+				applied = check_checkbox(request.POST, 'apply_' + application_key)
+				# if the address is to be applied, we need to update the address
+				if applied:
+					# apply the address
+					update_address(
+									request,
+									person=Person.objects.get(id=int(application_key)),
+									street_id=person.street.pk,
+									house_name_or_number=person.house_name_or_number
+									)
+	# create the lists
+	people_at_same_address = []
+	people_not_at_same_address = []
+	# go through the peple
+	for relationship_to in get_relationships_to(person):
+		# check the address
+		if relationship_to.house_name_or_number == person.house_name_or_number and \
+			relationship_to.street == person.street:
+			# add the person to the same address list
+			people_at_same_address.append(relationship_to)
+		# otherwise hit the other list
+		else:
+			# add the person to the not same address list
+			people_not_at_same_address.append(relationship_to)
+	# if there are people not at the same address, create the form
+	if people_not_at_same_address:
+		# clear the application keys
+		application_keys = ''
+		# create the form
+		addresstorelationshipsform = AddressToRelationshipsForm(people = people_not_at_same_address)
+		# add field name to each person
+		for this_person in people_not_at_same_address:
+			# add the field name
+			this_person.apply_field_name = 'apply_' + str(this_person.pk)
+			# add the key of the  person to the string of keys
+			application_keys += application_key_delimiter + str(this_person.pk)
+			# and set the delimiter
+			application_key_delimiter = ','
+	# set the context from the person based on person id
+	context = build_context({
+				'person' : person,
+				'people_at_same_address' : people_at_same_address,
+				'people_not_at_same_address' : people_not_at_same_address,
+				'application_keys' : application_keys,
+				'addresstorelationshipsform' : addresstorelationshipsform
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))

@@ -112,10 +112,17 @@
  			</div>
 	 		<div class="panel-body">
 				{% if person.house_name_or_number %}
-		 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
-		 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
-		 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
-		 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
+			 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
+			 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
+			 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
+			 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
+					{% if relationships_to %}
+						<div>
+							<a href="{% url 'address_to_relationships' person.pk %}">
+								Apply address to relationships
+							</a>
+						</div>
+					{% endif %}
 				{% endif %}
 			</div>
 		</div>

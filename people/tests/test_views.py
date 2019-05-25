@@ -1793,7 +1793,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.notes,'')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
-		self.assertEqual(test_person.addresses.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
 		self.assertEqual(test_person.english_is_second_language,False)
 		self.assertEqual(test_person.pregnant,False)
@@ -1806,6 +1805,8 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.trained_champion,False)
 		self.assertEqual(test_person.active_champion,False)
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
 
 	def test_person_already_exists(self):
 		# log the user in
@@ -1857,7 +1858,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.notes,'')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
-		self.assertEqual(test_person.addresses.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
 		self.assertEqual(test_person.english_is_second_language,False)
 		self.assertEqual(test_person.pregnant,False)
@@ -1870,6 +1870,8 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.trained_champion,False)
 		self.assertEqual(test_person.active_champion,False)
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
 
 class ProfileViewTest(TestCase):
 	@classmethod
@@ -1944,7 +1946,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.notes,'test notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
-		self.assertEqual(test_person.addresses.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
 		self.assertEqual(test_person.english_is_second_language,True)
 		self.assertEqual(test_person.pregnant,True)
@@ -1957,6 +1958,8 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Child')
 		self.assertEqual(test_person.trained_champion,True)
 		self.assertEqual(test_person.active_champion,True)
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
 
 class AddEventViewTest(TestCase):
 	@classmethod
@@ -2090,7 +2093,6 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.notes,'')
 		self.assertEqual(test_new_person.relationships.all().exists(),True)
 		self.assertEqual(test_new_person.children_centres.all().exists(),False)
-		self.assertEqual(test_new_person.addresses.all().exists(),False)
 		self.assertEqual(test_new_person.events.all().exists(),False)
 		self.assertEqual(test_new_person.english_is_second_language,False)
 		self.assertEqual(test_new_person.pregnant,False)
@@ -2101,6 +2103,8 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.savs_id,None)
 		self.assertEqual(test_new_person.ABSS_type.name,'test_ABSS_type')
 		self.assertEqual(test_new_person.age_status.status,'Adult')
+		self.assertEqual(test_new_person.house_name_or_number,'')
+		self.assertEqual(test_new_person.street,None)
 		# get the original person
 		test_original_person = Person.objects.get(id=1)
 		# get the relationship from 

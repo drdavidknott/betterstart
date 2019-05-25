@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
-					Children_Centre, CC_Registration, Area, Ward, Post_Code, Address, Residence, Event, Event_Type, \
+					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Option, Answer, Role_History, \
 					ABSS_Type, Age_Status, Street
 
@@ -18,8 +18,6 @@ admin.site.register(CC_Registration)
 admin.site.register(Area)
 admin.site.register(Ward)
 admin.site.register(Post_Code)
-admin.site.register(Address)
-admin.site.register(Residence)
 admin.site.register(Event)
 admin.site.register(Event_Type)
 admin.site.register(Event_Category)

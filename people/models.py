@@ -121,19 +121,6 @@ class Street(models.Model):
 	class Meta:
 		verbose_name_plural = 'streets'
 
-# Address model: represents addresses where people live
-class Address(models.Model):
-	house_name_or_number = models.CharField(max_length=50)
-	street = models.CharField(max_length=50)
-	town = models.CharField(max_length=50)
-	post_code = models.ForeignKey(Post_Code, default=1, on_delete=models.SET_DEFAULT)
-	# define the function that will return the person name as the object reference
-	def __str__(self):
-		return self.house_name_or_number + ' ' + self.street + ', ' + self.town + ' ' + self.post_code.post_code
-	# set the name to be used in the admin console
-	class Meta:
-		verbose_name_plural = 'addresses'
-
 # Event Type model: represents categories of event types.
 # This is reference data
 class Event_Category(models.Model):
@@ -145,7 +132,6 @@ class Event_Category(models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'event categories'
-
 
 # Event Type model: represents types of events.
 # Types of events are further grouped into categories.
@@ -212,7 +198,6 @@ class Person(models.Model):
 	relationships = models.ManyToManyField('self', through='Relationship', symmetrical=False)
 	default_role = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
 	children_centres = models.ManyToManyField(Children_Centre, through='CC_Registration')
-	addresses = models.ManyToManyField(Address, through='Residence')
 	events = models.ManyToManyField(Event, through='Event_Registration')
 	answers = models.ManyToManyField(Option, through='Answer')
 	english_is_second_language = models.BooleanField(default=False)
@@ -312,20 +297,6 @@ class CC_Registration(models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'children centre registrations'
-
-# Residence: records that a person is resident at an address.
-class Residence(models.Model):
-	person = models.ForeignKey(Person, on_delete=models.CASCADE)
-	address = models.ForeignKey(Address, on_delete=models.CASCADE)
-	# define the function that will return a string showing the relationship as the object reference
-	def __str__(self):
-		return self.person.first_name + ' ' + self.person.last_name + ' lives at ' + \
-				self.address.house_name_or_number + ' ' + self.address.street + ', ' + self.address.town + ' ' + \
-				self.address.post_code.post_code + ' (' + self.address.post_code.ward.ward_name + ', ' + \
-				self.address.post_code.ward.area.area_name + ')'
-	# set the name to be used in the admin console
-	class Meta:
-		verbose_name_plural = 'residences'
 
 # Event Registration: records that a person registered for or participated in an event.
 class Event_Registration(models.Model):

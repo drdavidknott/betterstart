@@ -111,19 +111,21 @@
 	 				</h4>
  			</div>
 	 		<div class="panel-body">
-				{% if person.house_name_or_number %}
-			 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
-			 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
-			 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
-			 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
-					{% if relationships_to %}
-						<div>
-							<a href="{% url 'address_to_relationships' person.pk %}">
-								Apply address to relationships
-							</a>
-						</div>
+	 			<div class='col-md-12'>
+					{% if person.house_name_or_number %}
+				 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
+				 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
+				 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
+				 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
+						{% if relationships_to %}
+							<div>
+								<a href="{% url 'address_to_relationships' person.pk %}">
+									Apply address to relationships
+								</a>
+							</div>
+						{% endif %}
 					{% endif %}
-				{% endif %}
+				</div>
 			</div>
 		</div>
 
@@ -134,7 +136,9 @@
 	 		<div class="panel-body">
 		 		{% for registration in registrations %}
 	 				<div class="col-md-12">
-						{{ registration.role_type.role_type_name }} at {{ registration.event }}
+						{{ registration.role_type.role_type_name }} 
+						({{ registration.registered_status }} and {{ registration.participated_status }}) at 
+						<a href="{% url 'event' registration.event.pk %}">{{ registration.event }}</a>
 					</div>
 				{% endfor %}
 			</div>

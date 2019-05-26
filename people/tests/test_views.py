@@ -137,6 +137,10 @@ class PeopleViewTest(TestCase):
 	def setUpTestData(cls):
 		# create a test user
 		user = set_up_test_user()
+		# set up base data: first the ethnicity
+		test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
+		# and the capture type
+		test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
 		# create the Parent role
 		parent_role = Role_Type.objects.create(role_type_name='Parent',use_for_events=True,use_for_people=True)
 		# and the parent champion role

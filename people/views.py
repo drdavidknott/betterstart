@@ -83,7 +83,7 @@ def index(request):
 	# add the age status dashboard panel
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'Adults and Children',
+															title = 'ADULTS AND CHILDREN',
 															column_names = ['counts'],
 															rows = get_age_statuses_with_counts(),
 															row_name = 'status',
@@ -164,6 +164,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'EVENTS: ' + \
 																	first_day_of_this_month.strftime('%B'),
+															title_url = 'events_this_month',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
 															rows = get_event_types_with_counts(
@@ -171,7 +172,7 @@ def index(request):
 																								),
 															row_name = 'name',
 															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type',
+															row_url = 'event_type_this_month',
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 5,
@@ -184,6 +185,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'EVENTS: ' + \
 																	first_day_of_last_month.strftime('%B'),
+															title_url = 'events_last_month',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
 															rows = get_event_types_with_counts(
@@ -192,7 +194,7 @@ def index(request):
 																								),
 															row_name = 'name',
 															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type',
+															row_url = 'event_type_last_month',
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 5,
@@ -205,6 +207,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'EVENTS: Since ' + \
 																	first_day_of_this_year.strftime('%d %B %Y'),
+															title_url = 'events_this_year',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
 															rows = get_event_types_with_counts(
@@ -212,7 +215,7 @@ def index(request):
 																								),
 															row_name = 'name',
 															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type',
+															row_url = 'event_type_this_year',
 															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 5,
@@ -224,6 +227,7 @@ def index(request):
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'EVENTS: ALL TIME',
+															title_url = 'events_all_time',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
 															rows = get_event_types_with_counts(),
@@ -948,7 +952,7 @@ def get_ethnicity(ethnicity_id):
 	# handle the exception
 	except Ethnicity.DoesNotExist:
 		# set a false value
-		ethnicity = false
+		ethnicity = False
 	# return the ethnicity
 	return ethnicity
 
@@ -2625,7 +2629,7 @@ def event(request, event_id=0):
 	return HttpResponse(event_template.render(context=context, request=request))
 
 @login_required
-def event_type(request, event_type):
+def event_type(request, event_type='0'):
 	# get the calling url
 	path = request.get_full_path()
 	# get the dashboard dates
@@ -2636,17 +2640,17 @@ def event_type(request, event_type):
 	# set the dates, dependent on the url
 	if 'this_month' in path:
 		# set the date_from to the first of the month
-		date_from = dashboard_dates['first_day_of_this_month'].strftime('%Y-%m-%d')
+		date_from = dashboard_dates['first_day_of_this_month'].strftime('%d/%m/%Y')
 	# otherwise check for last month
 	elif 'last_month' in path:
 		# set the date from to the first of last month
-		date_from = dashboard_dates['first_day_of_last_month'].strftime('%Y-%m-%d')
+		date_from = dashboard_dates['first_day_of_last_month'].strftime('%d/%m/%Y')
 		# and the date to to the last of last month
-		date_to = dashboard_dates['last_day_of_last_month'].strftime('%Y-%m-%d')
+		date_to = dashboard_dates['last_day_of_last_month'].strftime('%d/%m/%Y')
 	# otherwise check for this year
 	elif 'this_year' in path:
 		# set the date from to the beginning of the year
-		date_from = dashboard_dates['first_day_of_this_year'].strftime('%Y-%m-%d')
+		date_from = dashboard_dates['first_day_of_this_year'].strftime('%d/%m/%Y')
 	# copy the request
 	copy_POST = request.POST.copy()
 	# set search terms for an event search
@@ -2715,7 +2719,7 @@ def events(request):
 			# otherwise we have incorrect dates
 			else:
 				# set a search error
-				search_error = 'Dates must be entered in YYYY-MM-DD format.'
+				search_error = 'Dates must be entered in DD/MM/YYYY format.'
 	# otherwise set a bank form
 	else:
 		# create the blank form

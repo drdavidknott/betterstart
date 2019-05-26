@@ -207,7 +207,7 @@ class PersonSearchForm(forms.Form):
 									label="Adult or Child",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	champions = forms.ChoiceField(
-									label="Parent Champions",
+									label="Champions",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
@@ -585,7 +585,7 @@ class EventSearchForm(forms.Form):
 	date_from = forms.DateField(
 									label="From",
 									required=False,
-									widget=forms.DateInput(																format='%d/%m/%Y',
+									widget=forms.DateInput(format='%d/%m/%Y',
 																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
@@ -594,7 +594,7 @@ class EventSearchForm(forms.Form):
 	date_to = forms.DateField(
 									label="To",
 									required=False,
-									widget=forms.DateInput(																format='%d/%m/%Y',
+									widget=forms.DateInput(format='%d/%m/%Y',
 																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'

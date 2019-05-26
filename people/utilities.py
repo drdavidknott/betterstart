@@ -66,6 +66,7 @@ class Dashboard_Panel:
 					self, 
 					title,
 					column_names,
+					title_url=False,
 					show_column_names=False,
 					label_width=6,
 					column_width=6,
@@ -80,6 +81,7 @@ class Dashboard_Panel:
 					):
 		# set the attributes
 		self.title = title
+		self.title_url = title_url
 		self.column_names = column_names
 		self.show_column_names = show_column_names
 		self.label_width = label_width

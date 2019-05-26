@@ -24,7 +24,15 @@
 
 					<div class="panel panel-default">
 			 			<div class="panel-heading">
-			 				<h4 class="panel-title">{{ panel.title }}</h4>
+			 				<h4 class="panel-title">
+			 					{% if panel.title_url %}
+			 						<a href='{{ panel.title_url }}'>
+			 					{% endif %}
+			 					{{ panel.title }}
+			 					{% if panel.title_url %}
+			 						</a>
+			 					{% endif %}
+			 				</h4>
 			 			</div>
 				 		<div class="panel-body">
 				 			{% if panel.show_column_names %}

@@ -1316,9 +1316,9 @@ def create_person(
 					default_role=False,
 					date_of_birth=None,
 					gender='',
-					ethnicity=1,
-					ABSS_type=1,
-					age_status=1,
+					ethnicity=0,
+					ABSS_type=0,
+					age_status=0,
 					trained_champion=False,
 					active_champion=False):
 	# check whether we have a role type
@@ -1329,6 +1329,15 @@ def create_person(
 	else:
 		# get the UNKNOWN role type
 		default_role = get_role_type_by_name('UNKNOWN')
+	# get the default values for ethnicity, ABSS Type and age_status
+	if not ethnicity:
+		ethnicity = Ethnicity.objects.get(description='Prefer not to say').pk
+	# and the ABSS type
+	if not ABSS_type:
+		ABSS_type = ABSS_Type.objects.get(name='ABSS beneficiary').pk
+	# and the age status
+	if not age_status:
+		age_status = Age_Status.objects.get(status='Adult').pk
 	# create a person
 	person = Person(
 					first_name = first_name,

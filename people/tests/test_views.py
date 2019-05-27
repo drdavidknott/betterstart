@@ -12,6 +12,8 @@ def set_up_people_base_data():
 	test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
 	# and a second test ethnicity
 	second_test_ethnicity = Ethnicity.objects.create(description='second_test_ethnicity')
+	# and another ethnicity
+	test_ethnicity = Ethnicity.objects.create(description='Prefer not to say')
 	# and the capture type
 	test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
 	# create a test role
@@ -24,6 +26,8 @@ def set_up_people_base_data():
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
 	# create a second test ABSS type
 	second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type')
+	# and another type
+	test_ABSS_type = ABSS_Type.objects.create(name='ABSS beneficiary')
 	# create a test age status
 	test_age_status = Age_Status.objects.create(status='Adult')
 	# create a second test age status
@@ -1803,11 +1807,11 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.english_is_second_language,False)
 		self.assertEqual(test_person.pregnant,False)
 		self.assertEqual(test_person.due_date,None)
-		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
-		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.trained_champion,False)
 		self.assertEqual(test_person.active_champion,False)
@@ -1868,11 +1872,11 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.english_is_second_language,False)
 		self.assertEqual(test_person.pregnant,False)
 		self.assertEqual(test_person.due_date,None)
-		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
-		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.trained_champion,False)
 		self.assertEqual(test_person.active_champion,False)
@@ -2103,7 +2107,7 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.english_is_second_language,False)
 		self.assertEqual(test_new_person.pregnant,False)
 		self.assertEqual(test_new_person.due_date,None)
-		self.assertEqual(test_new_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_new_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_new_person.families.all().exists(),False)
 		self.assertEqual(test_new_person.savs_id,None)

@@ -8,10 +8,14 @@ def set_up_test_person():
 	test_role_type = Role_Type.objects.create(role_type_name='test_role')
 	# and the ethnicity
 	test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
+	# and another ethnicity
+	test_ethnicity = Ethnicity.objects.create(description='Prefer not to say')
 	# and the capture type
 	test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
 	# create a test ABSS type
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
+	# and another type
+	test_ABSS_type = ABSS_Type.objects.create(name='ABSS beneficiary')
 	# create a test age status
 	test_age_status = Age_Status.objects.create(status='Adult')
 	# create the person

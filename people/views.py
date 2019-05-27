@@ -1969,6 +1969,15 @@ def log_user_in(request):
 	return HttpResponse(login_template.render(context, request))
 
 @login_required
+def log_user_out(request):
+	# log the user out
+	logout(request)
+	# set a success message
+	messages.success(request, 'Successfully logged out. ')
+	# redirect to the home page
+	return redirect('index')
+
+@login_required
 def people(request):
 	# set a blank list
 	people = []

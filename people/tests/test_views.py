@@ -31,10 +31,10 @@ def set_up_people_base_data():
 
 def set_up_test_people(
 						name_root,
-						role_type_id=1,
+						role_type='test_role_type',
 						number=1,
-						ABSS_type_id=1,
-						age_status_id=1,
+						ABSS_type='test_ABSS_type',
+						age_status='Adult',
 						trained_champion=False,
 						active_champion=False
 						):
@@ -49,19 +49,21 @@ def set_up_test_people(
 											date_of_birth = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
 											gender = 'Gender',
 											notes = 'test notes',
-											default_role = Role_Type.objects.get(id=role_type_id),
+											default_role = Role_Type.objects.get(role_type_name=role_type),
 											english_is_second_language = False,
 											pregnant = False,
 											due_date = None,
-											ABSS_type = ABSS_Type.objects.get(id=ABSS_type_id),
-											age_status = Age_Status.objects.get(id=age_status_id),
+											ABSS_type = ABSS_Type.objects.get(name=ABSS_type),
+											age_status = Age_Status.objects.get(status=age_status),
 											trained_champion = trained_champion,
-											active_champion = active_champion
+											active_champion = active_champion,
+											capture_type = Capture_Type.objects.get(capture_type_name='test_capture_type'),
+											ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 											)
 		# create a role history entry
 		Role_History.objects.create(
 									person = test_person,
-									role_type = Role_Type.objects.get(id=role_type_id)
+									role_type = Role_Type.objects.get(role_type_name=role_type)
 									)
 
 def set_up_test_user():
@@ -93,7 +95,7 @@ def set_up_address_base_data():
 
 def set_up_test_post_codes(
 						name_root,
-						ward_id=1,
+						ward='Test ward',
 						number=1
 						):
 	# create the number of post codes needed
@@ -101,12 +103,12 @@ def set_up_test_post_codes(
 		# create a post code
 		Post_Code.objects.create(
 									post_code = name_root + str(n),
-									ward = Ward.objects.get(id=ward_id)
+									ward = Ward.objects.get(ward_name=ward)
 									)
 
 def set_up_test_streets(
 						name_root,
-						post_code_id=1,
+						post_code,
 						number=1
 						):
 	# create the number of streets needed
@@ -114,7 +116,7 @@ def set_up_test_streets(
 		# create a street
 		Street.objects.create(
 									name = name_root + str(n),
-									post_code = Post_Code.objects.get(id=post_code_id)
+									post_code = Post_Code.objects.get(post_code=post_code)
 									)
 
 def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
@@ -160,22 +162,22 @@ class PeopleViewTest(TestCase):
 		# create a second test ABSS type
 		second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type')
 		# Create 50 of each type
-		set_up_test_people('Parent_',parent_role.pk,50)
-		set_up_test_people('Parent_Champion_',parent_champion_role.pk,50)
-		set_up_test_people('Test_Role_1_',test_role_1.pk,50)
-		set_up_test_people('Test_Role_2_',test_role_2.pk,50)
+		set_up_test_people('Parent_','Parent',50)
+		set_up_test_people('Parent_Champion_','Parent Champion',50)
+		set_up_test_people('Test_Role_1_','test role 1',50)
+		set_up_test_people('Test_Role_2_','test role 2',50)
 		# and 50 of each of the two test role types with different names
-		set_up_test_people('Different_Name_',test_role_1.pk,50)
-		set_up_test_people('Another_Name_',test_role_2.pk,50)
+		set_up_test_people('Different_Name_','test role 1',50)
+		set_up_test_people('Another_Name_','test role 2',50)
 		# and more with the roles swapped over
-		set_up_test_people('Different_Name_',test_role_2.pk,50)
-		set_up_test_people('Another_Name_',test_role_1.pk,50)
+		set_up_test_people('Different_Name_','test role 2',50)
+		set_up_test_people('Another_Name_','test role 1',50)
 		# and a short set to test a result set with less than a page
-		set_up_test_people('Short_Set_',test_role_3.pk,10)
+		set_up_test_people('Short_Set_','test role 3',10)
 		# create 25 ex-parent champions
-		set_up_test_people('Ex_Parent_Champion_',parent_champion_role.pk,50)
+		set_up_test_people('Ex_Parent_Champion_','Parent Champion',50)
 		# and a set that doesn't exactly fit two pagaes
-		set_up_test_people('Pagination_',test_role_5.pk,32)
+		set_up_test_people('Pagination_','test role 5',32)
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -595,7 +597,7 @@ class PeopleViewTest(TestCase):
 
 	def test_ABSS_search_on_type(self):
 		# create some extra people
-		set_up_test_people('ABSS_test_',1,30,2)
+		set_up_test_people('ABSS_test_','test role 1',30,'second_test_ABSS_type')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -606,7 +608,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : '0',
-											'ABSS_type' : '2',
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'champions' : '0',
 											'page' : '1'
@@ -623,8 +625,8 @@ class PeopleViewTest(TestCase):
 
 	def test_ABSS_search_on_type_and_name(self):
 		# create some extra people
-		set_up_test_people('ABSS_test_find_',1,30,2)
-		set_up_test_people('ABSS_not_found_',1,30,2)
+		set_up_test_people('ABSS_test_find_','test role 1',30,'second_test_ABSS_type')
+		set_up_test_people('ABSS_not_found_','test role 1',30,'second_test_ABSS_type')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -635,7 +637,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : 'find',
 											'last_name' : '',
 											'role_type' : '0',
-											'ABSS_type' : '2',
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'champions' : '0',
 											'page' : '1'
@@ -652,8 +654,8 @@ class PeopleViewTest(TestCase):
 
 	def test_ABSS_search_on_type_role(self):
 		# create some extra people
-		set_up_test_people('ABSS_test_role_1',1,30,2)
-		set_up_test_people('ABSS_test_role_2',2,35,2)
+		set_up_test_people('ABSS_test_role_1','test role 1',30,'test_ABSS_type')
+		set_up_test_people('ABSS_test_role_2','test role 2',35,'second_test_ABSS_type')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -663,8 +665,8 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : '',
 											'last_name' : '',
-											'role_type' : '2',
-											'ABSS_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'champions' : '0',
 											'page' : '1'
@@ -681,9 +683,9 @@ class PeopleViewTest(TestCase):
 
 	def test_ABSS_search_on_type_and_name_and_role(self):
 		# create some extra people
-		set_up_test_people('ABSS_test_role_1',1,30,2)
-		set_up_test_people('ABSS_test_role_2',2,35,2)
-		set_up_test_people('ABSS_test_find',2,37,2)
+		set_up_test_people('ABSS_test_role_1','test role 1',30,'second_test_ABSS_type')
+		set_up_test_people('ABSS_test_role_2','test role 2',35,'second_test_ABSS_type')
+		set_up_test_people('ABSS_test_find','test role 2',37,'second_test_ABSS_type')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -693,8 +695,8 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
-											'ABSS_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'champions' : '0',
 											'page' : '1'
@@ -722,7 +724,7 @@ class PeopleViewTest(TestCase):
 											'first_name' : '',
 											'last_name' : '',
 											'role_type' : '0',
-											'ABSS_type' : '3',
+											'ABSS_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
 											'age_status' : '0',
 											'champions' : '0',
 											'page' : '1'
@@ -739,7 +741,7 @@ class PeopleViewTest(TestCase):
 
 	def test_age_status_on_type(self):
 		# create some extra people
-		set_up_test_people('age_status_test_',1,30,1,2)
+		set_up_test_people('age_status_test_','test role 1',30,'test_ABSS_type','Child')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -751,7 +753,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '2',
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : '0',
 											'page' : '1'
 											}
@@ -767,8 +769,8 @@ class PeopleViewTest(TestCase):
 
 	def test_age_status_search_on_type_and_name(self):
 		# create some extra people
-		set_up_test_people('age_test_find_',1,30,1,2)
-		set_up_test_people('age_not_found_',1,30,1,2)
+		set_up_test_people('age_test_find_','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_not_found_','test role 1',30,'test_ABSS_type','Child')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -780,7 +782,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '2',
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : '0',
 											'page' : '1'
 											}
@@ -796,8 +798,8 @@ class PeopleViewTest(TestCase):
 
 	def test_age_status_search_on_type_role(self):
 		# create some extra people
-		set_up_test_people('age_status_test_role_1',1,30,1,2)
-		set_up_test_people('age_status_test_role_2',2,35,1,2)
+		set_up_test_people('age_status_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_2','test role 2',35,'test_ABSS_type','Child')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -807,9 +809,9 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : '',
 											'last_name' : '',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
-											'age_status' : '2',
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : '0',
 											'page' : '1'
 											}
@@ -825,9 +827,9 @@ class PeopleViewTest(TestCase):
 
 	def test_age_status_search_on_type_and_name_and_role(self):
 		# create some extra people
-		set_up_test_people('age_status_test_role_1',1,30,1,2)
-		set_up_test_people('age_status_test_role_2',2,35,1,2)
-		set_up_test_people('age_status_test_find',2,37,1,2)
+		set_up_test_people('age_status_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_find','test role 2',37,'test_ABSS_type','Child')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -837,9 +839,9 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
-											'age_status' : '2',
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : '0',
 											'page' : '1'
 											}
@@ -855,10 +857,10 @@ class PeopleViewTest(TestCase):
 
 	def test_age_status_search_on_type_and_name_and_role_and_ABSS(self):
 		# create some extra people
-		set_up_test_people('age_status_test_role_1',1,30,1,2)
-		set_up_test_people('age_status_test_role_2',2,35,1,2)
-		set_up_test_people('age_status_test_role_3',3,37,1,2)
-		set_up_test_people('age_status_test_find',2,39,2,2)
+		set_up_test_people('age_status_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_3','test role 3',37,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_find','test role 2',39,'second_test_ABSS_type','Child')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -868,9 +870,9 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
-											'ABSS_type' : '2',
-											'age_status' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : '0',
 											'page' : '1'
 											}
@@ -886,7 +888,7 @@ class PeopleViewTest(TestCase):
 
 	def test_age_status_search_with_no_results(self):
 		# create a new age status
-		Age_Status.objects.create(status='Third test age status')
+		age_status = Age_Status.objects.create(status='Third test age status')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -898,7 +900,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '3',
+											'age_status' : str(age_status.pk),
 											'champions' : '0',
 											'page' : '1'
 											}
@@ -914,7 +916,7 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_champions(self):
 		# create some extra people
-		set_up_test_people('trained_champion_test_',1,30,1,1,True)
+		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Adult',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -926,7 +928,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '1',
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'champions' : 'trained',
 											'page' : '1'
 											}
@@ -942,8 +944,8 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_champion_and_age_status(self):
 		# create some extra people
-		set_up_test_people('trained_champion_test_',1,30,1,2,True)
-		set_up_test_people('trained_champion_test_',1,27,1,1,True)
+		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Child',True)
+		set_up_test_people('trained_champion_test_','test role 1',27,'test_ABSS_type','Adult',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -955,7 +957,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '2',
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : 'trained',
 											'page' : '1'
 											}
@@ -971,8 +973,8 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_champion_search_on_champion_and_name(self):
 		# create some extra people
-		set_up_test_people('trained_test_find_',1,30,1,2,True)
-		set_up_test_people('trained_not_found_',1,30,1,2,True)
+		set_up_test_people('trained_test_find_','test role 1',30,'test_ABSS_type','Child',True)
+		set_up_test_people('trained_not_found_','test role 1',30,'test_ABSS_type','Child',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1000,18 +1002,18 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_search_on_role(self):
 		# create some extra people
-		set_up_test_people('trained_test_role_1',1,30,1,1)
-		set_up_test_people('trained_test_role_2',2,35,1,1,True)
+		set_up_test_people('trained_test_role_1','test role 1',30,'test_ABSS_type','Adult')
+		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Adult',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
 		response = self.client.post(
 									reverse('listpeople'),
-									data = { 
+									data = {
 											'action' : 'search',
 											'first_name' : '',
 											'last_name' : '',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'champions' : 'trained',
@@ -1029,9 +1031,9 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_search_on_and_name_and_role(self):
 		# create some extra people
-		set_up_test_people('trained_test_role_1',1,30,1,1)
-		set_up_test_people('trained_test_role_2',2,35,1,1)
-		set_up_test_people('trained_test_find',2,37,1,1,True)
+		set_up_test_people('trained_test_role_1','test role 1',30,'test_ABSS_type','Adult')
+		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Adult')
+		set_up_test_people('trained_test_find','test role 2',37,'test_ABSS_type','Adult',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1041,7 +1043,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'champions' : '0',
@@ -1059,10 +1061,10 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_search_on_type_and_name_and_role_and_ABSS(self):
 		# create some extra people
-		set_up_test_people('trained_test_role_1',1,30,1,2)
-		set_up_test_people('trained_test_role_2',2,35,1,2)
-		set_up_test_people('trained_test_role_3',3,37,1,2)
-		set_up_test_people('trained_test_find',2,39,2,2,True)
+		set_up_test_people('trained_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		set_up_test_people('trained_test_role_3','test role 3',37,'test_ABSS_type','Child')
+		set_up_test_people('trained_test_find','test role 2',39,'second_test_ABSS_type','Child',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1072,8 +1074,8 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
-											'ABSS_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'champions' : 'trained',
 											'page' : '1'
@@ -1116,7 +1118,7 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champions(self):
 		# create some extra people
-		set_up_test_people('active_champion_test_',1,30,1,1,True,True)
+		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Adult',True,True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1128,7 +1130,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '1',
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'champions' : 'active',
 											'page' : '1'
 											}
@@ -1144,8 +1146,8 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champions_only(self):
 		# create some extra people
-		set_up_test_people('active_champion_test_',1,30,1,1,True,True)
-		set_up_test_people('trained_champion_test_',1,17,1,1,True)
+		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Adult',True,True)
+		set_up_test_people('trained_champion_test_','test role 1',17,'test_ABSS_type','Adult',True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1157,7 +1159,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '1',
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'champions' : 'active',
 											'page' : '1'
 											}
@@ -1173,8 +1175,8 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champion_and_age_status(self):
 		# create some extra people
-		set_up_test_people('active_champion_test_',1,30,1,2,True,True)
-		set_up_test_people('active_champion_test_',1,27,1,1,True,True)
+		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Child',True,True)
+		set_up_test_people('active_champion_test_','test role 1',27,'test_ABSS_type','Adult',True,True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1186,7 +1188,7 @@ class PeopleViewTest(TestCase):
 											'last_name' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
-											'age_status' : '2',
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'champions' : 'active',
 											'page' : '1'
 											}
@@ -1202,8 +1204,8 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champion_search_on_champion_and_name(self):
 		# create some extra people
-		set_up_test_people('active_test_find_',1,30,1,2,True,True)
-		set_up_test_people('active_not_found_',1,30,1,2,True,True)
+		set_up_test_people('active_test_find_','test role 1',30,'test_ABSS_type','Child',True,True)
+		set_up_test_people('active_not_found_','test role 1',30,'test_ABSS_type','Child',True,True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1231,8 +1233,8 @@ class PeopleViewTest(TestCase):
 
 	def test_active_search_on_role(self):
 		# create some extra people
-		set_up_test_people('active_test_role_1',1,30,1,1)
-		set_up_test_people('active_test_role_2',2,35,1,1,True,True)
+		set_up_test_people('active_test_role_1','test role 1',30,'test_ABSS_type','Adult')
+		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Adult',True,True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1242,7 +1244,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : '',
 											'last_name' : '',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'champions' : 'active',
@@ -1260,9 +1262,9 @@ class PeopleViewTest(TestCase):
 
 	def test_active_search_on_and_name_and_role(self):
 		# create some extra people
-		set_up_test_people('active_test_role_1',1,30,1,1)
-		set_up_test_people('active_test_role_2',2,35,1,1)
-		set_up_test_people('active_test_find',2,37,1,1,True,True)
+		set_up_test_people('active_test_role_1','test role 1',30,'test_ABSS_type','Adult')
+		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Adult')
+		set_up_test_people('active_test_find','test role 2',37,'test_ABSS_type','Adult',True,True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1272,7 +1274,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'champions' : '0',
@@ -1290,10 +1292,10 @@ class PeopleViewTest(TestCase):
 
 	def test_active_search_on_type_and_name_and_role_and_ABSS(self):
 		# create some extra people
-		set_up_test_people('active_test_role_1',1,30,1,2)
-		set_up_test_people('active_test_role_2',2,35,1,2)
-		set_up_test_people('active_test_role_3',3,37,1,2)
-		set_up_test_people('active_test_find',2,39,2,2,True,True)
+		set_up_test_people('active_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		set_up_test_people('active_test_role_3','test role 3',37,'test_ABSS_type','Child')
+		set_up_test_people('active_test_find','test role 2',39,'second_test_ABSS_type','Adult',True,True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1303,8 +1305,8 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'first_name' : 'find',
 											'last_name' : '',
-											'role_type' : '2',
-											'ABSS_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'champions' : 'active',
 											'page' : '1'
@@ -1401,7 +1403,7 @@ class PeopleQueryTest(TestCase):
 		# create a new type
 		test_role_type = Role_Type.objects.create(role_type_name='People Query Test',use_for_events=True,use_for_people=True)
 		# create some extra people
-		set_up_test_people('Role Type Query Test',test_role_type.pk,30,1,1)
+		set_up_test_people('Role Type Query Test','People Query Test',30,'test_ABSS_type','Adult')
 		# attempt to get the people page
 		response = self.client.get(reverse('role_type',args=[test_role_type.pk]))
 		# check the response
@@ -1419,7 +1421,7 @@ class PeopleQueryTest(TestCase):
 		# create a new type
 		test_ABSS_type = ABSS_Type.objects.create(name='People Query Test')
 		# create some extra people
-		set_up_test_people('ABSS Type Query Test',1,30,test_ABSS_type.pk,1)
+		set_up_test_people('ABSS Type Query Test','test_role_type',30,'People Query Test','Adult')
 		# attempt to get the people page
 		response = self.client.get(reverse('ABSS_type',args=[test_ABSS_type.pk]))
 		# check the response
@@ -1437,7 +1439,7 @@ class PeopleQueryTest(TestCase):
 		# create a new status
 		test_age_status = Age_Status.objects.create(status='Age Status Test')
 		# create some extra people
-		set_up_test_people('Age Status Query Test',1,30,1,test_age_status.pk)
+		set_up_test_people('Age Status Query Test','test_role_type',30,'test_ABSS_type','Age Status Test')
 		# attempt to get the people page
 		response = self.client.get(reverse('age_status',args=[test_age_status.pk]))
 		# check the response
@@ -1584,7 +1586,7 @@ class EventsViewTest(TestCase):
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
-											'event_type' : '6',
+											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
 											'page' : '1'
 											}
 									)
@@ -1632,7 +1634,7 @@ class EventsViewTest(TestCase):
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '',
-											'event_type' : '6',
+											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
 											'page' : '1'
 											}
 									)
@@ -1656,7 +1658,7 @@ class EventsViewTest(TestCase):
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '20/01/2019',
-											'event_type' : '1',
+											'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
 											'page' : '1'
 											}
 									)
@@ -1784,7 +1786,7 @@ class AddPersonViewTest(TestCase):
 		# check that we got a redirect response
 		self.assertRedirects(response, '/profile/1')
 		# get the record
-		test_person = Person.objects.get(id=1)
+		test_person = Person.objects.get(first_name='Testfirst')
 		# check the record contents
 		self.assertEqual(test_person.first_name,'Testfirst')
 		self.assertEqual(test_person.middle_names,'')
@@ -1816,7 +1818,7 @@ class AddPersonViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# submit a post for a person who aready exists
-		set_up_test_people('Person_',1,1)
+		set_up_test_people('Person_','test_role_type',1)
 		# submit the form
 		response = self.client.post(
 									reverse('addperson'),
@@ -1824,7 +1826,7 @@ class AddPersonViewTest(TestCase):
 												'first_name' : 'Person_0',
 												'middle_names' : '',
 												'last_name' : 'Person_0',
-												'role_type' : '1'
+												'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk)
 											}
 									)
 		# check that we got a valid response
@@ -1836,7 +1838,7 @@ class AddPersonViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# submit a post for a person who doesn't exist
-		set_up_test_people('Person_',1,1)
+		set_up_test_people('Person_exists_','test_role_type',1)
 		# submit the form
 		response = self.client.post(
 									reverse('addperson'),
@@ -1849,7 +1851,7 @@ class AddPersonViewTest(TestCase):
 		# check that we got a redirect response
 		self.assertRedirects(response, '/profile/2')
 		# get the record
-		test_person = Person.objects.get(id=2)
+		test_person = Person.objects.get(first_name='Person_0')
 		# check the record contents
 		self.assertEqual(test_person.first_name,'Person_0')
 		self.assertEqual(test_person.middle_names,'')
@@ -1913,7 +1915,7 @@ class ProfileViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person
-		set_up_test_people('Person_',1,1)
+		set_up_test_people('Person_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
 									reverse('profile',args=[1]),
@@ -1927,10 +1929,10 @@ class ProfileViewTest(TestCase):
 											'english_is_second_language' : True,
 											'pregnant' : True,
 											'due_date' : '01/01/2020',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : '2',
-											'ABSS_type' : '2',
-											'age_status' : '2',
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_champion' : True,
 											'active_champion' : True
 											}
@@ -1938,7 +1940,7 @@ class ProfileViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 302)
 		# get the record
-		test_person = Person.objects.get(id=1)
+		test_person = Person.objects.get(first_name='updated_first_name')
 		# check the record contents
 		self.assertEqual(test_person.first_name,'updated_first_name')
 		self.assertEqual(test_person.middle_names,'updated_middle_names')
@@ -1997,7 +1999,7 @@ class AddEventViewTest(TestCase):
 												'name' : 'Testevent',
 												'description' : 'Testdescription',
 												'location' : 'Testlocation',
-												'event_type' : '1',
+												'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
 												'date' : '01/01/2019',
 												'start_time' : '10:00',
 												'end_time' : '11:00'
@@ -2044,7 +2046,7 @@ class AddRelationshipViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_exists_',1,1)
+		set_up_test_people('Test_exists_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
 									reverse('add_relationship',args=[1]),
@@ -2063,7 +2065,7 @@ class AddRelationshipViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
+		set_up_test_people('Test_from_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
 									reverse('add_relationship',args=[1]),
@@ -2075,7 +2077,7 @@ class AddRelationshipViewTest(TestCase):
 											'email_address' : 'new_email_address@test.com',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'role_type' : '2',
+											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'relationship_type' : '1',
 											'ABSS_type' : '1',
 											'age_status' : '1'
@@ -2126,8 +2128,8 @@ class AddRelationshipViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
+		set_up_test_people('Test_from_','test_role_type',1)
+		set_up_test_people('Test_to_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
 									reverse('add_relationship',args=[1]),
@@ -2155,8 +2157,8 @@ class AddRelationshipViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
+		set_up_test_people('Test_from_','test_role_type',1)
+		set_up_test_people('Test_to_','test_role_type',1)
 		# get the people
 		test_from_person = Person.objects.get(id=1)
 		# and the to person
@@ -2165,7 +2167,7 @@ class AddRelationshipViewTest(TestCase):
 		Relationship.objects.create(
 										relationship_from=test_from_person,
 										relationship_to=test_to_person,
-										relationship_type=Relationship_Type.objects.get(id=1)
+										relationship_type=Relationship_Type.objects.get(relationship_type='parent')
 			)
 		# and the other one
 		Relationship.objects.create(
@@ -2196,8 +2198,8 @@ class AddRelationshipViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
+		set_up_test_people('Test_from_','test_role_type',1)
+		set_up_test_people('Test_to_','test_role_type',1)
 		# get the people
 		test_from_person = Person.objects.get(id=1)
 		# and the to person
@@ -2206,7 +2208,7 @@ class AddRelationshipViewTest(TestCase):
 		Relationship.objects.create(
 										relationship_from=test_from_person,
 										relationship_to=test_to_person,
-										relationship_type=Relationship_Type.objects.get(id=1)
+										relationship_type=Relationship_Type.objects.get(relationship_type='parent')
 			)
 		# and the other one
 		Relationship.objects.create(
@@ -2260,7 +2262,7 @@ class AddEventViewTest(TestCase):
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
 												'end_time' : '11:00',
-												'event_type' : '1'
+												'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
 											}
 									)
 		# check that we got a redirect response
@@ -2315,7 +2317,7 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some people
-		set_up_test_people('Found_name_',1,50)
+		set_up_test_people('Found_name_','test_role_type',50)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2336,7 +2338,7 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some people
-		set_up_test_people('Found_name_',1,50)
+		set_up_test_people('Found_name_','test_role_type',50)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2357,8 +2359,8 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some people
-		set_up_test_people('Found_name_',1,17)
-		set_up_test_people('Lost_name_',1,19)
+		set_up_test_people('Found_name_',number=17)
+		set_up_test_people('Lost_name_',number=19)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2379,8 +2381,8 @@ class EventRegistrationViewTest(TestCase):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
 		# create some people
-		set_up_test_people('Found_name_',1,17)
-		set_up_test_people('Lost_name_',1,19)
+		set_up_test_people('Found_name_',number=17)
+		set_up_test_people('Lost_name_',number=19)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2405,7 +2407,7 @@ class EventRegistrationViewTest(TestCase):
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
-		set_up_test_people('Registered_',1,3)
+		set_up_test_people('Registered_',number=3)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2456,7 +2458,7 @@ class EventRegistrationViewTest(TestCase):
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
-		set_up_test_people('Registered_',1,3)
+		set_up_test_people('Registered_',number=3)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2507,7 +2509,7 @@ class EventRegistrationViewTest(TestCase):
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
-		set_up_test_people('Registered_',1,3)
+		set_up_test_people('Registered_',number=3)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -2559,7 +2561,7 @@ class EventRegistrationViewTest(TestCase):
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
-		set_up_test_people('Registered_',1,3)
+		set_up_test_people('Registered_',number=3)
 		# create some registrations
 		Event_Registration.objects.create(
 											event=Event.objects.get(id=1),
@@ -2630,7 +2632,7 @@ class EventRegistrationViewTest(TestCase):
 			# create some role types
 			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 			# create some people
-			set_up_test_people('Registered_',1,3)
+			set_up_test_people('Registered_',number=3)
 			# create some registrations
 			Event_Registration.objects.create(
 												event=Event.objects.get(id=1),
@@ -2703,7 +2705,7 @@ class EventRegistrationViewTest(TestCase):
 			test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
 			test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 			# create some people
-			set_up_test_people('Registered_',1,3)
+			set_up_test_people('Registered_',number=3)
 			# create some registrations
 			Event_Registration.objects.create(
 												event=Event.objects.get(id=1),
@@ -2815,7 +2817,7 @@ class EditEventViewTest(TestCase):
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
 											'end_time' : '14:00',
-											'event_type' : '1'
+											'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
 											}
 									)
 		# check the response
@@ -2841,9 +2843,9 @@ class Address(TestCase):
 		set_up_test_post_codes('ABC',number=50)
 		set_up_test_post_codes('XYZ',number=75)
 		# and a bunch of streets
-		set_up_test_streets('ABC streets 1',1,number=50)
-		set_up_test_streets('ABC streets 2',1,number=60)
-		set_up_test_streets('XYZ streets',51,number=35)
+		set_up_test_streets('ABC streets 1','ABC0',number=50)
+		set_up_test_streets('ABC streets 2','ABC0',number=60)
+		set_up_test_streets('XYZ streets','XYZ0',number=35)
 		# create base data for people
 		set_up_people_base_data()
 		# and a test person
@@ -2869,7 +2871,7 @@ class Address(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('address',args=[1]))
+		response = self.client.get(reverse('address',args=[Person.objects.get(first_name='address_test0').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# the search results should be empty
@@ -2880,7 +2882,7 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'search',
 											'house_name_or_number' : '55',
@@ -2899,7 +2901,7 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'search',
 											'house_name_or_number' : '55',
@@ -2922,7 +2924,7 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'search',
 											'house_name_or_number' : '55',
@@ -2945,7 +2947,7 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'search',
 											'house_name_or_number' : '55',
@@ -2968,7 +2970,7 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'search',
 											'house_name_or_number' : '55',
@@ -2991,7 +2993,7 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'search',
 											'house_name_or_number' : '55',
@@ -3014,79 +3016,79 @@ class Address(TestCase):
 		self.client.login(username='testuser', password='testword')
 		# submit an address creation
 		response = self.client.post(
-									reverse('address',args=[1]),
+									reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 									data = { 
 											'action' : 'update',
 											'house_name_or_number' : '55',
-											'street_id' : '1',
+											'street_id' : str(Street.objects.get(name='ABC streets 10').pk),
 											}
 									)
 		# check that we got a response
 		self.assertEqual(response.status_code, 302)
 		# get the record
-		test_person = Person.objects.get(id=1)
+		test_person = Person.objects.get(first_name='address_test0')
 		# check the record contents
 		self.assertEqual(test_person.house_name_or_number,'55')
-		self.assertEqual(test_person.street.pk,1)
+		self.assertEqual(test_person.street.pk,Street.objects.get(name='ABC streets 10').pk)
 
 	def test_update_address(self):
 			# log the user in
 			self.client.login(username='testuser', password='testword')
 			# submit an address creation
 			response = self.client.post(
-										reverse('address',args=[1]),
+										reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 										data = { 
 												'action' : 'update',
 												'house_name_or_number' : '55',
-												'street_id' : '1',
+												'street_id' : str(Street.objects.get(name='ABC streets 10').pk),
 												}
 										)
 			# check that we got a response
 			self.assertEqual(response.status_code, 302)
 			# get the record
-			test_person = Person.objects.get(id=1)
+			test_person = Person.objects.get(first_name='address_test0')
 			# check the record contents
 			self.assertEqual(test_person.house_name_or_number,'55')
-			self.assertEqual(test_person.street.pk,1)
+			self.assertEqual(test_person.street.pk,Street.objects.get(name='ABC streets 10').pk)
 			# submit an address update
 			response = self.client.post(
-										reverse('address',args=[1]),
+										reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 										data = { 
 												'action' : 'update',
 												'house_name_or_number' : '99',
-												'street_id' : '2',
+												'street_id' : str(Street.objects.get(name='ABC streets 11').pk),
 												}
 										)
 			# check that we got a response
 			self.assertEqual(response.status_code, 302)
 			# get the record
-			test_person = Person.objects.get(id=1)
+			test_person = Person.objects.get(first_name='address_test0')
 			# check the record contents
 			self.assertEqual(test_person.house_name_or_number,'99')
-			self.assertEqual(test_person.street.pk,2)
+			self.assertEqual(test_person.street.pk,Street.objects.get(name='ABC streets 11').pk)
 
 	def test_remove_address(self):
 			# log the user in
 			self.client.login(username='testuser', password='testword')
 			# submit an address creation
 			response = self.client.post(
-										reverse('address',args=[1]),
+										reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 										data = { 
 												'action' : 'update',
 												'house_name_or_number' : '55',
-												'street_id' : '1',
+												'street_id' : str(Street.objects.get(name='ABC streets 10').pk)
 												}
 										)
 			# check that we got a response
 			self.assertEqual(response.status_code, 302)
 			# get the record
-			test_person = Person.objects.get(id=1)
+			test_person = Person.objects.get(first_name='address_test0')
 			# check the record contents
 			self.assertEqual(test_person.house_name_or_number,'55')
 			self.assertEqual(test_person.street.pk,1)
 			# submit an address update
 			response = self.client.post(
-										reverse('address',args=[1]),
+										reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),
 										data = { 
 												'action' : 'remove',
 												}
@@ -3094,7 +3096,7 @@ class Address(TestCase):
 			# check that we got a response
 			self.assertEqual(response.status_code, 302)
 			# get the record
-			test_person = Person.objects.get(id=1)
+			test_person = Person.objects.get(first_name='address_test0')
 			# check the record contents
 			self.assertEqual(test_person.house_name_or_number,'')
 			self.assertEqual(test_person.street,None)
@@ -3112,6 +3114,8 @@ class AddressToRelationshipsViewTest(TestCase):
 		set_up_address_base_data()
 		# and the relationship date
 		set_up_relationship_base_data()
+		# create a person
+		set_up_test_people('address_test',number=1)
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -3131,11 +3135,11 @@ class AddressToRelationshipsViewTest(TestCase):
 
 	def test_successful_response_if_logged_in(self):
 		# create a person
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get a person
-		response = self.client.get(reverse('address_to_relationships',args=[1]))
+		response = self.client.get(reverse('address_to_relationships',args=[Person.objects.get(first_name='address_test0').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
@@ -3145,7 +3149,7 @@ class AddressToRelationshipsViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get a person
-		response = self.client.get(reverse('address_to_relationships',args=[1]))
+		response = self.client.get(reverse('address_to_relationships',args=[Person.objects.get(first_name='No_relationships0').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of events
@@ -3157,197 +3161,89 @@ class AddressToRelationshipsViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
+		set_up_test_people('Test_from_','test_role_type',1)
+		set_up_test_people('Test_to_','test_role_type',1)
 		# get the people
-		test_from_person = Person.objects.get(id=1)
+		test_from_person = Person.objects.get(first_name='Test_from_0')
 		# and the to person
-		test_to_person = Person.objects.get(id=2)
+		test_to_person = Person.objects.get(first_name='Test_to_0')
 		# create the relationships
 		Relationship.objects.create(
 										relationship_from=test_from_person,
 										relationship_to=test_to_person,
-										relationship_type=Relationship_Type.objects.get(id=1)
+										relationship_type=Relationship_Type.objects.get(relationship_type='parent')
 			)
 		# and the other one
 		Relationship.objects.create(
 										relationship_from=test_to_person,
 										relationship_to=test_from_person,
-										relationship_type=Relationship_Type.objects.get(id=2)
+										relationship_type=Relationship_Type.objects.get(relationship_type='child')
 			)
 		# set up a test post code
 		set_up_test_post_codes('Test PC')
 		# and a test street
-		set_up_test_streets('Test Street')
+		set_up_test_streets('Test Street','Test PC0')
 		# update the person
 		test_from_person.house_name_or_number = '25'
-		test_from_person.street = Street.objects.get(id=1)
+		test_from_person.street = Street.objects.get(name='Test Street0')
 		# seve the record
 		test_from_person.save()
 		# update the address
 		response = self.client.post(
-									reverse('address_to_relationships',args=[1]),
+									reverse('address_to_relationships',args=[Person.objects.get(first_name='Test_from_0').pk]),
 									data = {
 												'action' : 'apply_address',
-												'application_keys' : '2',
-												'apply_2' : 'on',
+												'application_keys' : str(Person.objects.get(first_name='Test_to_0').pk),
+												'apply_' + str(Person.objects.get(first_name='Test_to_0').pk) : 'on',
 											}
 									)
 		# check the record contents
-		test_to_person = Person.objects.get(id=2)
+		test_to_person = Person.objects.get(first_name='Test_to_0')
 		self.assertEqual(test_to_person.house_name_or_number,'25')
-		self.assertEqual(test_to_person.street,Street.objects.get(id=1))
+		self.assertEqual(test_to_person.street,Street.objects.get(name='Test Street0'))
 
 	def test_no_update_to_address(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
+		set_up_test_people('Test_from_','test_role_type',1)
+		set_up_test_people('Test_to_','test_role_type',1)
 		# get the people
-		test_from_person = Person.objects.get(id=1)
+		test_from_person = Person.objects.get(first_name='Test_from_0')
 		# and the to person
-		test_to_person = Person.objects.get(id=2)
+		test_to_person = Person.objects.get(first_name='Test_to_0')
 		# create the relationships
 		Relationship.objects.create(
 										relationship_from=test_from_person,
 										relationship_to=test_to_person,
-										relationship_type=Relationship_Type.objects.get(id=1)
+										relationship_type=Relationship_Type.objects.get(relationship_type='parent')
 			)
 		# and the other one
 		Relationship.objects.create(
 										relationship_from=test_to_person,
 										relationship_to=test_from_person,
-										relationship_type=Relationship_Type.objects.get(id=2)
+										relationship_type=Relationship_Type.objects.get(relationship_type='child')
 			)
 		# set up a test post code
 		set_up_test_post_codes('Test PC')
 		# and a test street
-		set_up_test_streets('Test Street')
+		set_up_test_streets('Test Street','Test PC0')
 		# update the person
 		test_from_person.house_name_or_number = '25'
-		test_from_person.street = Street.objects.get(id=1)
+		test_from_person.street = Street.objects.get(name='Test Street0')
 		# seve the record
 		test_from_person.save()
 		# update the address
 		response = self.client.post(
-									reverse('address_to_relationships',args=[1]),
+									reverse('address_to_relationships',args=[Person.objects.get(first_name='Test_from_0').pk]),
 									data = {
 												'action' : 'apply_address',
-												'application_keys' : '2',
-												'apply_2' : '',
+												'application_keys' : str(Person.objects.get(first_name='Test_to_0').pk),
+												'apply_' + str(Person.objects.get(first_name='Test_to_0').pk) : '',
 											}
 									)
 		# check the record contents
-		test_to_person = Person.objects.get(id=2)
+		test_to_person = Person.objects.get(first_name='Test_to_0')
 		self.assertEqual(test_to_person.house_name_or_number,'')
 		self.assertEqual(test_to_person.street,None)
-
-	def test_update_existing_address(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
-		# get the people
-		test_from_person = Person.objects.get(id=1)
-		# and the to person
-		test_to_person = Person.objects.get(id=2)
-		# create the relationships
-		Relationship.objects.create(
-										relationship_from=test_from_person,
-										relationship_to=test_to_person,
-										relationship_type=Relationship_Type.objects.get(id=1)
-			)
-		# and the other one
-		Relationship.objects.create(
-										relationship_from=test_to_person,
-										relationship_to=test_from_person,
-										relationship_type=Relationship_Type.objects.get(id=2)
-			)
-		# set up a test post code
-		set_up_test_post_codes('Test FR')
-		# and a test street
-		set_up_test_streets('Test From Street')
-		# update the person
-		test_from_person.house_name_or_number = '25'
-		test_from_person.street = Street.objects.get(id=1)
-		# seve the record
-		test_from_person.save()
-		# set up a test post code
-		set_up_test_post_codes('Test TO')
-		# and a test street
-		set_up_test_streets('Test TO Street')
-		# update the person
-		test_to_person.house_name_or_number = '52'
-		test_to_person.street = Street.objects.get(id=2)
-		# seve the record
-		test_to_person.save()
-		# update the address
-		response = self.client.post(
-									reverse('address_to_relationships',args=[1]),
-									data = {
-												'action' : 'apply_address',
-												'application_keys' : '2',
-												'apply_2' : 'on',
-											}
-									)
-		# check the record contents
-		test_to_person = Person.objects.get(id=2)
-		self.assertEqual(test_to_person.house_name_or_number,'25')
-		self.assertEqual(test_to_person.street,Street.objects.get(id=1))
-
-	def test_no_update_to_existing_address(self):
-			# log the user in
-			self.client.login(username='testuser', password='testword')
-			# create a person to add the relationships to
-			set_up_test_people('Test_from_',1,1)
-			set_up_test_people('Test_to_',1,1)
-			# get the people
-			test_from_person = Person.objects.get(id=1)
-			# and the to person
-			test_to_person = Person.objects.get(id=2)
-			# create the relationships
-			Relationship.objects.create(
-											relationship_from=test_from_person,
-											relationship_to=test_to_person,
-											relationship_type=Relationship_Type.objects.get(id=1)
-				)
-			# and the other one
-			Relationship.objects.create(
-											relationship_from=test_to_person,
-											relationship_to=test_from_person,
-											relationship_type=Relationship_Type.objects.get(id=2)
-				)
-			# set up a test post code
-			set_up_test_post_codes('Test FR')
-			# and a test street
-			set_up_test_streets('Test From Street')
-			# update the person
-			test_from_person.house_name_or_number = '25'
-			test_from_person.street = Street.objects.get(id=1)
-			# seve the record
-			test_from_person.save()
-			# set up a test post code
-			set_up_test_post_codes('Test TO')
-			# and a test street
-			set_up_test_streets('Test TO Street')
-			# update the person
-			test_to_person.house_name_or_number = '52'
-			test_to_person.street = Street.objects.get(id=2)
-			# seve the record
-			test_to_person.save()
-			# update the address
-			response = self.client.post(
-										reverse('address_to_relationships',args=[1]),
-										data = {
-													'action' : 'apply_address',
-													'application_keys' : '2',
-													'apply_2' : '',
-												}
-										)
-			# check the record contents
-			test_to_person = Person.objects.get(id=2)
-			self.assertEqual(test_to_person.house_name_or_number,'52')
-			self.assertEqual(test_to_person.street,Street.objects.get(id=2))
 

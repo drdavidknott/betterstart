@@ -68,7 +68,7 @@ class PersonModelTest(TestCase):
 	def test_str_for_person(self):
 		# test that the str method for person returns first name and last name separated by a space
 		# get the person
-		person = Person.objects.get(id=1)
+		person = Person.objects.get(first_name='First')
 		# check the str method
 		self.assertEqual('First Last', str(person))
 

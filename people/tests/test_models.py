@@ -75,7 +75,7 @@ class PersonModelTest(TestCase):
 	def test_full_name_for_person(self):
 		# test that the full name method for person returns first name, middle name and last names separated by spaces
 		# get the person
-		person = Person.objects.get(id=1)
+		person = Person.objects.get(first_name='First')
 		# check the str method
 		self.assertEqual('First Middle Names Last', person.full_name())
 
@@ -87,7 +87,7 @@ class EventRegistrationTest(TestCase):
 		# and the event
 		test_event = set_up_test_event()
 		# and get the role type
-		test_role_type = Role_Type.objects.get(id=1)
+		test_role_type = Role_Type.objects.get(role_type_name='test_role')
 		# create the event registration
 		test_event_registration = Event_Registration.objects.create(
 																	person = test_person,
@@ -102,7 +102,7 @@ class EventRegistrationTest(TestCase):
 	def test_str_for_event_registration_registered_and_participated(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# check the str method
 		self.assertEqual(
 			'First Last: test_role at Test event on 01/01/2019 (registered and participated)',
@@ -112,7 +112,7 @@ class EventRegistrationTest(TestCase):
 	def test_str_for_event_registration_registered_did_not_participate(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.participated = False
 		# save the object
@@ -126,7 +126,7 @@ class EventRegistrationTest(TestCase):
 	def test_str_for_event_registration_did_not_register_did_not_participate(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.participated = False
 		event_registration.registered = False
@@ -141,7 +141,7 @@ class EventRegistrationTest(TestCase):
 	def test_str_for_event_registration_did_not_register_but_participated(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.registered = False
 		# save the object
@@ -155,7 +155,7 @@ class EventRegistrationTest(TestCase):
 	def test_registered_status_true_for_event_registration(self):
 		# test that the registered status method for person returns the right string when registered = True
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.registered = True
 		# save the object
@@ -166,7 +166,7 @@ class EventRegistrationTest(TestCase):
 	def test_registered_status_false_for_event_registration(self):
 		# test that the registered status method for person returns the right string when registered = False
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.registered = False
 		# save the object
@@ -177,7 +177,7 @@ class EventRegistrationTest(TestCase):
 	def test_participated_status_true_for_event_registration(self):
 		# test that the registered status method for person returns the right string when registered = True
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.participated = True
 		# save the object
@@ -188,7 +188,7 @@ class EventRegistrationTest(TestCase):
 	def test_participated_status_false_for_event_registration(self):
 		# test that the registered status method for person returns the right string when registered = False
 		# get the person
-		event_registration = Event_Registration.objects.get(id=1)
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# update the object
 		event_registration.participated = False
 		# save the object

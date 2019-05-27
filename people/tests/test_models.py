@@ -26,7 +26,11 @@ def set_up_test_person():
 										default_role = test_role_type,
 										english_is_second_language = False,
 										pregnant = False,
-										due_date = None
+										due_date = None,
+										capture_type = test_capture_type,
+										ABSS_type = test_ABSS_type,
+										age_status = test_age_status,
+										ethnicity = test_ethnicity
 										)
 	# return the person
 	return test_person

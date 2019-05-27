@@ -288,6 +288,7 @@ class AddRelationshipForm(forms.Form):
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choices
 		self.fields['relationship_type'].choices = relationship_type_choices(Relationship_Type.objects.all())
+		self.fields['relationship_type'].initial = Relationship_Type.objects.get(relationship_type='parent').pk
 		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all())
 		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all())
 		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())

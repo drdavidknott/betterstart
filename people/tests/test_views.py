@@ -2309,7 +2309,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_successful_response_if_logged_in(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get an event
@@ -2319,7 +2319,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_search_blank_search_error(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some people
 		set_up_test_people('Found_name_','test_role_type',50)
 		# log the user in
@@ -2340,7 +2340,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_search_no_results(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some people
 		set_up_test_people('Found_name_','test_role_type',50)
 		# log the user in
@@ -2361,7 +2361,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_search_first_name(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some people
 		set_up_test_people('Found_name_',number=17)
 		set_up_test_people('Lost_name_',number=19)
@@ -2383,7 +2383,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_search_last_name(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some people
 		set_up_test_people('Found_name_',number=17)
 		set_up_test_people('Lost_name_',number=19)
@@ -2405,7 +2405,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_register_people_multiple_roles(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some role types
 		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
@@ -2456,7 +2456,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_participate_people_multiple_roles(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some role types
 		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
@@ -2507,7 +2507,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_register_participate_people_multiple_roles(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some role types
 		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
@@ -2559,7 +2559,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_register_change_roles(self):
 		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some role types
 		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
@@ -2632,7 +2632,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_register_change_registered_and_participated(self):
 			# create an event
-			set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+			set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 			# create some role types
 			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 			# create some people
@@ -2703,7 +2703,7 @@ class EventRegistrationViewTest(TestCase):
 
 	def test_event_registration_register_change_registered_and_participated_and_role(self):
 			# create an event
-			set_up_test_events('test_event_',Event_Type.objects.get(id=1),1)
+			set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 			# create some role types
 			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 			test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)

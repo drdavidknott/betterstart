@@ -281,18 +281,18 @@ class AddRelationshipForm(forms.Form):
 									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# pull the choices fields out of the parameters
-		relationship_types = kwargs.pop('relationship_types')
-		role_types = kwargs.pop('role_types')
-		ABSS_types = kwargs.pop('ABSS_types')
-		age_statuses = kwargs.pop('age_statuses')
+		# pull the fields out of the parameters
+		first_name = kwargs.pop('first_name')
+		last_name = kwargs.pop('last_name')
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['relationship_type'].choices = relationship_type_choices(relationship_types)
-		self.fields['age_status'].choices = age_status_choices(age_statuses)
-		self.fields['role_type'].choices = role_type_choices(role_types)
-		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_types)
+		self.fields['relationship_type'].choices = relationship_type_choices(Relationship_Type.objects.all())
+		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all())
+		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all())
+		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())
+		self.fields['first_name'].initial = first_name
+		self.fields['last_name'].initial = last_name
 
 class AddRelationshipToExistingPersonForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

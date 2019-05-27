@@ -3029,75 +3029,75 @@ class Address(TestCase):
 		self.assertEqual(test_person.house_name_or_number,'55')
 		self.assertEqual(test_person.street.pk,1)
 
-def test_update_address(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit an address creation
-		response = self.client.post(
-									reverse('address',args=[1]),
-									data = { 
-											'action' : 'update',
-											'house_name_or_number' : '55',
-											'street_id' : '1',
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 302)
-		# get the record
-		test_person = Person.objects.get(id=1)
-		# check the record contents
-		self.assertEqual(test_person.house_name_or_number,'55')
-		self.assertEqual(test_person.street.pk,1)
-		# submit an address update
-		response = self.client.post(
-									reverse('address',args=[1]),
-									data = { 
-											'action' : 'update',
-											'house_name_or_number' : '99',
-											'street_id' : '2',
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 302)
-		# get the record
-		test_person = Person.objects.get(id=1)
-		# check the record contents
-		self.assertEqual(test_person.house_name_or_number,'99')
-		self.assertEqual(test_person.street.pk,2)
+	def test_update_address(self):
+			# log the user in
+			self.client.login(username='testuser', password='testword')
+			# submit an address creation
+			response = self.client.post(
+										reverse('address',args=[1]),
+										data = { 
+												'action' : 'update',
+												'house_name_or_number' : '55',
+												'street_id' : '1',
+												}
+										)
+			# check that we got a response
+			self.assertEqual(response.status_code, 302)
+			# get the record
+			test_person = Person.objects.get(id=1)
+			# check the record contents
+			self.assertEqual(test_person.house_name_or_number,'55')
+			self.assertEqual(test_person.street.pk,1)
+			# submit an address update
+			response = self.client.post(
+										reverse('address',args=[1]),
+										data = { 
+												'action' : 'update',
+												'house_name_or_number' : '99',
+												'street_id' : '2',
+												}
+										)
+			# check that we got a response
+			self.assertEqual(response.status_code, 302)
+			# get the record
+			test_person = Person.objects.get(id=1)
+			# check the record contents
+			self.assertEqual(test_person.house_name_or_number,'99')
+			self.assertEqual(test_person.street.pk,2)
 
-def test_remove_address(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit an address creation
-		response = self.client.post(
-									reverse('address',args=[1]),
-									data = { 
-											'action' : 'update',
-											'house_name_or_number' : '55',
-											'street_id' : '1',
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 302)
-		# get the record
-		test_person = Person.objects.get(id=1)
-		# check the record contents
-		self.assertEqual(test_person.house_name_or_number,'55')
-		self.assertEqual(test_person.street.pk,1)
-		# submit an address update
-		response = self.client.post(
-									reverse('address',args=[1]),
-									data = { 
-											'action' : 'remove',
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 302)
-		# get the record
-		test_person = Person.objects.get(id=1)
-		# check the record contents
-		self.assertEqual(test_person.house_name_or_number,'')
-		self.assertEqual(test_person.street,None)
+	def test_remove_address(self):
+			# log the user in
+			self.client.login(username='testuser', password='testword')
+			# submit an address creation
+			response = self.client.post(
+										reverse('address',args=[1]),
+										data = { 
+												'action' : 'update',
+												'house_name_or_number' : '55',
+												'street_id' : '1',
+												}
+										)
+			# check that we got a response
+			self.assertEqual(response.status_code, 302)
+			# get the record
+			test_person = Person.objects.get(id=1)
+			# check the record contents
+			self.assertEqual(test_person.house_name_or_number,'55')
+			self.assertEqual(test_person.street.pk,1)
+			# submit an address update
+			response = self.client.post(
+										reverse('address',args=[1]),
+										data = { 
+												'action' : 'remove',
+												}
+										)
+			# check that we got a response
+			self.assertEqual(response.status_code, 302)
+			# get the record
+			test_person = Person.objects.get(id=1)
+			# check the record contents
+			self.assertEqual(test_person.house_name_or_number,'')
+			self.assertEqual(test_person.street,None)
 
 class AddressToRelationshipsViewTest(TestCase):
 	@classmethod
@@ -3282,7 +3282,7 @@ class AddressToRelationshipsViewTest(TestCase):
 		test_to_person.house_name_or_number = '52'
 		test_to_person.street = Street.objects.get(id=2)
 		# seve the record
-		test_from_person.save()
+		test_to_person.save()
 		# update the address
 		response = self.client.post(
 									reverse('address_to_relationships',args=[1]),
@@ -3297,57 +3297,57 @@ class AddressToRelationshipsViewTest(TestCase):
 		self.assertEqual(test_to_person.house_name_or_number,'25')
 		self.assertEqual(test_to_person.street,Street.objects.get(id=1))
 
-def test_no_update_to_existing_address(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# create a person to add the relationships to
-		set_up_test_people('Test_from_',1,1)
-		set_up_test_people('Test_to_',1,1)
-		# get the people
-		test_from_person = Person.objects.get(id=1)
-		# and the to person
-		test_to_person = Person.objects.get(id=2)
-		# create the relationships
-		Relationship.objects.create(
-										relationship_from=test_from_person,
-										relationship_to=test_to_person,
-										relationship_type=Relationship_Type.objects.get(id=1)
-			)
-		# and the other one
-		Relationship.objects.create(
-										relationship_from=test_to_person,
-										relationship_to=test_from_person,
-										relationship_type=Relationship_Type.objects.get(id=2)
-			)
-		# set up a test post code
-		set_up_test_post_codes('Test FR')
-		# and a test street
-		set_up_test_streets('Test From Street')
-		# update the person
-		test_from_person.house_name_or_number = '25'
-		test_from_person.street = Street.objects.get(id=1)
-		# seve the record
-		test_from_person.save()
-		# set up a test post code
-		set_up_test_post_codes('Test TO')
-		# and a test street
-		set_up_test_streets('Test TO Street')
-		# update the person
-		test_to_person.house_name_or_number = '52'
-		test_to_person.street = Street.objects.get(id=2)
-		# seve the record
-		test_from_person.save()
-		# update the address
-		response = self.client.post(
-									reverse('address_to_relationships',args=[1]),
-									data = {
-												'action' : 'apply_address',
-												'application_keys' : '2',
-												'apply_2' : '',
-											}
-									)
-		# check the record contents
-		test_to_person = Person.objects.get(id=2)
-		self.assertEqual(test_to_person.house_name_or_number,'52')
-		self.assertEqual(test_to_person.street,Street.objects.get(id=2))
+	def test_no_update_to_existing_address(self):
+			# log the user in
+			self.client.login(username='testuser', password='testword')
+			# create a person to add the relationships to
+			set_up_test_people('Test_from_',1,1)
+			set_up_test_people('Test_to_',1,1)
+			# get the people
+			test_from_person = Person.objects.get(id=1)
+			# and the to person
+			test_to_person = Person.objects.get(id=2)
+			# create the relationships
+			Relationship.objects.create(
+											relationship_from=test_from_person,
+											relationship_to=test_to_person,
+											relationship_type=Relationship_Type.objects.get(id=1)
+				)
+			# and the other one
+			Relationship.objects.create(
+											relationship_from=test_to_person,
+											relationship_to=test_from_person,
+											relationship_type=Relationship_Type.objects.get(id=2)
+				)
+			# set up a test post code
+			set_up_test_post_codes('Test FR')
+			# and a test street
+			set_up_test_streets('Test From Street')
+			# update the person
+			test_from_person.house_name_or_number = '25'
+			test_from_person.street = Street.objects.get(id=1)
+			# seve the record
+			test_from_person.save()
+			# set up a test post code
+			set_up_test_post_codes('Test TO')
+			# and a test street
+			set_up_test_streets('Test TO Street')
+			# update the person
+			test_to_person.house_name_or_number = '52'
+			test_to_person.street = Street.objects.get(id=2)
+			# seve the record
+			test_to_person.save()
+			# update the address
+			response = self.client.post(
+										reverse('address_to_relationships',args=[1]),
+										data = {
+													'action' : 'apply_address',
+													'application_keys' : '2',
+													'apply_2' : '',
+												}
+										)
+			# check the record contents
+			test_to_person = Person.objects.get(id=2)
+			self.assertEqual(test_to_person.house_name_or_number,'52')
+			self.assertEqual(test_to_person.street,Street.objects.get(id=2))
 

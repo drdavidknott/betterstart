@@ -2321,11 +2321,8 @@ def add_relationship(request,person_id=0):
 						result.field_name = 'relationship_type_' + str(result.pk)
 				# create a form to add the relationship
 				addrelationshipform = AddRelationshipForm(
-															request.POST,
-															relationship_types=relationship_types,
-															ABSS_types=get_ABSS_types(),
-															role_types=role_types,
-															age_statuses=get_age_statuses()
+															first_name = personsearchform.cleaned_data['first_name'],
+															last_name = personsearchform.cleaned_data['last_name'],
 															)
 			# otherwise we have a blank form
 			else:
@@ -2349,10 +2346,8 @@ def add_relationship(request,person_id=0):
 			# create the form
 			addrelationshipform = AddRelationshipForm(
 														request.POST,
-														relationship_types = relationship_types,
-														ABSS_types=get_ABSS_types(),
-														role_types = role_types,
-														age_statuses = get_age_statuses()
+														first_name = request.POST['first_name'],
+														last_name = request.POST['last_name']
 														)
 			# check whether the form is valid
 			if addrelationshipform.is_valid():

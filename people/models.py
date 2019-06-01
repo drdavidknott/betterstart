@@ -204,7 +204,7 @@ class Person(models.Model):
 	pregnant = models.BooleanField(default=False)
 	due_date = models.DateField(null=True, blank=True)
 	ethnicity = models.ForeignKey(Ethnicity, default=1, on_delete=models.SET_DEFAULT)
-	capture_type = models.ForeignKey(Capture_Type, default=1, on_delete=models.SET_DEFAULT)
+	capture_type = models.ForeignKey(Capture_Type, blank=True, null=True, on_delete=models.SET_NULL)
 	families = models.ManyToManyField(Family, blank=True)
 	savs_id = models.IntegerField(blank=True, null=True)
 	ABSS_type = models.ForeignKey(ABSS_Type, default=1, on_delete=models.SET_DEFAULT)

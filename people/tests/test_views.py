@@ -1920,7 +1920,7 @@ class ProfileViewTest(TestCase):
 		set_up_test_people('Person_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('profile',args=[1]),
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
 									data = { 
 											'first_name' : 'updated_first_name',
 											'middle_names' : 'updated_middle_names',
@@ -3209,7 +3209,7 @@ class AddressToRelationshipsViewTest(TestCase):
 		self.assertEqual(response.context['people_not_at_same_address'],[])
 		self.assertEqual(response.context['addresstorelationshipsform'],'')
 
-	def test_update_address(self):
+	def test_apply_address(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person to add the relationships to

@@ -25,6 +25,9 @@
 					<div class="panel panel-default">
 			 			<div class="panel-heading">
 			 				<h4 class="panel-title">
+			 					{% if panel.title_icon %}
+			 						<span class="glyphicon {{ panel.title_icon }}"></span>
+			 					{% endif %}
 			 					{% if panel.title_url %}
 			 						<a href='{{ panel.title_url }}'>
 			 					{% endif %}

@@ -41,6 +41,7 @@ def index(request):
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'ROLES',
+															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
 															rows = get_role_types_with_people_counts(),
 															row_name = 'role_type_name',
@@ -56,6 +57,7 @@ def index(request):
 	# create the parent champions dashboard panel
 	parent_champions_dashboard_panel = Dashboard_Panel(
 														title = 'PARENT CHAMPIONS',
+														title_icon = 'glyphicon-user',
 														column_names = ['counts'],
 														label_width = 8,
 														column_width = 3,
@@ -84,6 +86,7 @@ def index(request):
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'ADULTS AND CHILDREN',
+															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
 															rows = get_age_statuses_with_counts(),
 															row_name = 'status',
@@ -100,6 +103,7 @@ def index(request):
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'ABSS',
+															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
 															rows = get_ABSS_types_with_counts(),
 															row_name = 'name',
@@ -115,6 +119,7 @@ def index(request):
 	# create the exceptions dashboard panel
 	exceptions_dashboard_panel = Dashboard_Panel(
 														title = 'EXCEPTIONS',
+														title_icon = 'glyphicon-warning-sign',
 														column_names = ['counts'],
 														label_width = 8,
 														column_width = 3,
@@ -173,6 +178,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'EVENTS: ' + \
 																	first_day_of_this_month.strftime('%B'),
+															title_icon = 'glyphicon-calendar',
 															title_url = 'events_this_month',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
@@ -194,6 +200,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'EVENTS: ' + \
 																	first_day_of_last_month.strftime('%B'),
+															title_icon = 'glyphicon-calendar',
 															title_url = 'events_last_month',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
@@ -216,6 +223,7 @@ def index(request):
 											Dashboard_Panel(
 															title = 'EVENTS: Since ' + \
 																	first_day_of_this_year.strftime('%d %B %Y'),
+															title_icon = 'glyphicon-calendar',
 															title_url = 'events_this_year',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
@@ -236,6 +244,7 @@ def index(request):
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'EVENTS: ALL TIME',
+															title_icon = 'glyphicon-calendar',
 															title_url = 'events_all_time',
 															column_names = ['Registered','Participated'],
 															show_column_names = True,
@@ -258,6 +267,7 @@ def index(request):
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'AREAS',
+															title_icon = 'glyphicon-globe',
 															column_names = ['counts'],
 															rows = get_areas_with_people_counts(),
 															row_name = 'area_name',
@@ -272,6 +282,7 @@ def index(request):
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'WARDS',
+															title_icon = 'glyphicon-globe',
 															column_names = ['counts'],
 															rows = get_wards_with_people_counts(),
 															row_name = 'ward_name',

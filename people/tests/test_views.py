@@ -1852,7 +1852,7 @@ class AddPersonViewTest(TestCase):
 											}
 									)
 		# check that we got a redirect response
-		self.assertRedirects(response, '/profile/2')
+		self.assertRedirects(response, '/profile/' + str(Person.objects.get(first_name='Person_0').pk))
 		# get the record
 		test_person = Person.objects.get(first_name='Person_0')
 		# check the record contents
@@ -2136,7 +2136,8 @@ class AddRelationshipViewTest(TestCase):
 									reverse('add_relationship',args=[1]),
 									data = { 
 											'action' : 'editrelationships',
-											'relationship_type_2' : '1',
+											'relationship_type_' + str(Person.objects.get(first_name='Test_to_0').pk) : \
+												str(Relationship_Type.objects.get(relationship_type='parent').pk),
 											}
 									)
 		# get the from person
@@ -2181,7 +2182,8 @@ class AddRelationshipViewTest(TestCase):
 									reverse('add_relationship',args=[1]),
 									data = { 
 											'action' : 'editrelationships',
-											'relationship_type_2' : '3',
+											'relationship_type_' + str(Person.objects.get(first_name='Test_to_0').pk) : \
+												str(Relationship_Type.objects.get(relationship_type='from').pk),
 											}
 									)
 		# get the 
@@ -2222,7 +2224,8 @@ class AddRelationshipViewTest(TestCase):
 									reverse('add_relationship',args=[1]),
 									data = { 
 											'action' : 'editrelationships',
-											'relationship_type_2' : '0',
+											'relationship_type_' + str(Person.objects.get(first_name='Test_to_0').pk) : \
+												'0'
 											}
 									)
 		# check that all relationships have gone

@@ -146,6 +146,15 @@ def index(request):
 																parameter = 1
 																)
 											)
+	# add the overdue parents row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Children older than four',
+																values = [len(get_children_over_four())],
+																url = 'children_over_four',
+																parameter = 1
+																)
+											)
 	# append the parent champions panel to the column
 	roles_dashboard_column.panels.append(exceptions_dashboard_panel)
 	# append the roles column to the dashboard
@@ -888,6 +897,12 @@ def get_parents_with_overdue_children():
 									pregnant=True,
 									due_date__lt=datetime.date.today()
 									)
+
+def get_children_over_four():
+	# get today's date
+	today = datetime.date.today()
+	# return the results
+	return Person.objects.filter(date_of_birth__lt=today.replace(year=today.year-4),age_status__status='Child')
 
 def get_parent_champions():
 	# return a dict of two lists: trained parent champions and active parent champions
@@ -2094,7 +2109,10 @@ def people_query(request, id):
 	return people(request)
 
 @login_required
-def parent_exceptions(request, page=1):
+def exceptions(request, page=1):
+	# blank the lists
+	parents = []
+	children = []
 	# get the path, and figure out what we have been called as
 	path = request.get_full_path()
 	# set variables based on the type of call
@@ -2102,19 +2120,25 @@ def parent_exceptions(request, page=1):
 		# set the variables, starting with the relevant list of parents
 		parents, parents_with_no_children_under_four = get_parents_without_children()
 		# set the url
-		parent_exceptions_template = loader.get_template('people/parents_without_children.html')
+		exceptions_template = loader.get_template('people/parents_without_children.html')
 	# otherwise check for parents with no children under four
 	elif 'parents_without_children_under_four' in path:
 		# set the variables, starting with the relevant list of parents
 		parents_with_no_children, parents = get_parents_without_children()
 		# set the url
-		parent_exceptions_template = loader.get_template('people/parents_without_children_under_four.html')
+		exceptions_template = loader.get_template('people/parents_without_children_under_four.html')
 	# otherwise check for parents with overdue children
 	elif 'parents_with_overdue_children' in path:
 		# set the variables, starting with the relevant list of parents
 		parents = get_parents_with_overdue_children()
 		# set the url
-		parent_exceptions_template = loader.get_template('people/parents_with_overdue_children.html')
+		exceptions_template = loader.get_template('people/parents_with_overdue_children.html')
+	# otherwise check for children over four
+	elif 'children_over_four' in path:
+		# set the variables, starting with the relevant list of parents
+		children = get_children_over_four().order_by('date_of_birth')
+		# set the url
+		exceptions_template = loader.get_template('people/children_over_four.html')
 	# and a blank page_list
 	page_list = []
 	# set the results per page
@@ -2130,10 +2154,11 @@ def parent_exceptions(request, page=1):
 	# set the context
 	context = build_context({
 				'parents' : parents,
+				'children' : children,
 				'page_list' : page_list,
 				})
 	# return the HttpResponse
-	return HttpResponse(parent_exceptions_template.render(context=context, request=request))
+	return HttpResponse(exceptions_template.render(context=context, request=request))
 
 @login_required
 def addperson(request):

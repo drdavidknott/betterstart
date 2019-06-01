@@ -35,10 +35,12 @@ urlpatterns = [
     		name='address_to_relationships'),
     url(r'^event_registration/(?P<event_id>[0-9]+)$', views.event_registration, name='event_registration'),
     url(r'^parents_with_no_children/(?P<page>[0-9]+)$',
-    	views.parent_exceptions, name='parents_with_no_children'),
+    	views.exceptions, name='parents_with_no_children'),
     url(r'^parents_without_children_under_four/(?P<page>[0-9]+)$', 
-    	views.parent_exceptions, name='parents_without_children_under_four'),
+    	views.exceptions, name='parents_without_children_under_four'),
     url(r'^parents_with_overdue_children/(?P<page>[0-9]+)$', 
-    	views.parent_exceptions, name='parents_with_overdue_children'),
+    	views.exceptions, name='parents_with_overdue_children'),
+    url(r'^children_over_four/(?P<page>[0-9]+)$', 
+    	views.exceptions, name='children_over_four'),
     url(r'^answer_questions/(?P<person_id>[0-9]+)$', views.answer_questions, name='answer_questions')
 ]

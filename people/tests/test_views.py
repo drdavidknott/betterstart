@@ -2412,6 +2412,10 @@ class EventRegistrationViewTest(TestCase):
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# set the keys
@@ -2424,15 +2428,15 @@ class EventRegistrationViewTest(TestCase):
 									data = {
 												'action' : 'addregistration',
 												'search_keys' : keys,
-												'registered_1' : 'on',
-												'participated_1' : '',
-												'role_type_1' : str(test_role_1.pk),
-												'registered_2' : 'on',
-												'participated_2' : '',
-												'role_type_2' : str(test_role_2.pk),
-												'registered_3' : 'on',
-												'participated_3' : '',
-												'role_type_3' : str(test_role_3.pk),
+												'registered_' + str(person_1.pk) : 'on',
+												'participated_' + str(person_1.pk) : '',
+												'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+												'registered_' + str(person_2.pk) : 'on',
+												'participated_' + str(person_2.pk) : '',
+												'role_type_' + str(person_2.pk) : str(test_role_2.pk),
+												'registered_' + str(person_3.pk) : 'on',
+												'participated_' + str(person_3.pk) : '',
+												'role_type_' + str(person_3.pk) : str(test_role_3.pk),
 											}
 									)
 		# check the response
@@ -2440,19 +2444,19 @@ class EventRegistrationViewTest(TestCase):
 		# get the event
 		event = Event.objects.get(name='test_event_0')
 		# get the registration for the first person
-		registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
+		registration_1 = Event_Registration.objects.get(person=person_1,event=event)
 		# check the values
 		self.assertEqual(registration_1.registered,True)
 		self.assertEqual(registration_1.participated,False)
 		self.assertEqual(registration_1.role_type,test_role_1)
 		# get the registration for the second person
-		registration_2 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_1'),event=event)
+		registration_2 = Event_Registration.objects.get(person=person_2,event=event)
 		# check the values
 		self.assertEqual(registration_2.registered,True)
 		self.assertEqual(registration_2.participated,False)
 		self.assertEqual(registration_2.role_type,test_role_2)
 		# get the registration for the third person
-		registration_3 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_2'),event=event)
+		registration_3 = Event_Registration.objects.get(person=person_3,event=event)
 		# check the values
 		self.assertEqual(registration_3.registered,True)
 		self.assertEqual(registration_3.participated,False)
@@ -2467,6 +2471,10 @@ class EventRegistrationViewTest(TestCase):
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# set the keys
@@ -2479,22 +2487,19 @@ class EventRegistrationViewTest(TestCase):
 									data = {
 												'action' : 'addregistration',
 												'search_keys' : keys,
-												'registered_1' : '',
-												'participated_1' : 'on',
-												'role_type_1' : str(test_role_1.pk),
-												'registered_2' : '',
-												'participated_2' : 'on',
-												'role_type_2' : str(test_role_2.pk),
-												'registered_3' : '',
-												'participated_3' : 'on',
-												'role_type_3' : str(test_role_3.pk),
+												'registered_' + str(person_1.pk) : '',
+												'participated_' + str(person_1.pk) : 'on',
+												'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+												'registered_' + str(person_2.pk) : '',
+												'participated_' + str(person_2.pk) : 'on',
+												'role_type_' + str(person_2.pk) : str(test_role_2.pk),
+												'registered_' + str(person_3.pk) : '',
+												'participated_' + str(person_3.pk) : 'on',
+												'role_type_' + str(person_3.pk) : str(test_role_3.pk),
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
-		print('Test:')
-		for registration in Event_Registration.objects.all():
-			print(registration)
 		# get the event
 		event = Event.objects.get(name='test_event_0')
 		# get the registration for the first person
@@ -2525,6 +2530,10 @@ class EventRegistrationViewTest(TestCase):
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# set the keys
@@ -2537,15 +2546,15 @@ class EventRegistrationViewTest(TestCase):
 									data = {
 												'action' : 'addregistration',
 												'search_keys' : keys,
-												'registered_1' : 'on',
-												'participated_1' : 'on',
-												'role_type_1' : str(test_role_1.pk),
-												'registered_2' : 'on',
-												'participated_2' : 'on',
-												'role_type_2' : str(test_role_2.pk),
-												'registered_3' : 'on',
-												'participated_3' : 'on',
-												'role_type_3' : str(test_role_3.pk),
+												'registered_' + str(person_1.pk) : 'on',
+												'participated_' + str(person_1.pk) : 'on',
+												'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+												'registered_' + str(person_2.pk) : 'on',
+												'participated_' + str(person_2.pk) : 'on',
+												'role_type_' + str(person_2.pk) : str(test_role_2.pk),
+												'registered_' + str(person_3.pk) : 'on',
+												'participated_' + str(person_3.pk) : 'on',
+												'role_type_' + str(person_3.pk) : str(test_role_3.pk),
 											}
 									)
 		# check the response
@@ -2581,6 +2590,10 @@ class EventRegistrationViewTest(TestCase):
 		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
 		# create some people
 		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
 		# create some registrations
 		Event_Registration.objects.create(
 											event=Event.objects.get(name='test_event_0'),
@@ -2615,15 +2628,15 @@ class EventRegistrationViewTest(TestCase):
 									data = {
 												'action' : 'editregistration',
 												'registration_keys' : keys,
-												'registered_1' : 'on',
-												'participated_1' : '',
-												'role_type_1' : str(test_role_2.pk),
-												'registered_2' : 'on',
-												'participated_2' : '',
-												'role_type_2' : str(test_role_3.pk),
-												'registered_3' : 'on',
-												'participated_3' : '',
-												'role_type_3' : str(test_role_1.pk),
+												'registered_' + str(person_1.pk) : 'on',
+												'participated_' + str(person_1.pk) : '',
+												'role_type_' + str(person_1.pk) : str(test_role_2.pk),
+												'registered_' + str(person_2.pk) : 'on',
+												'participated_' + str(person_2.pk) : '',
+												'role_type_' + str(person_2.pk) : str(test_role_3.pk),
+												'registered_' + str(person_3.pk) : 'on',
+												'participated_' + str(person_3.pk) : '',
+												'role_type_' + str(person_3.pk) : str(test_role_1.pk),
 											}
 									)
 		# check the response
@@ -2656,6 +2669,10 @@ class EventRegistrationViewTest(TestCase):
 			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
 			# create some people
 			set_up_test_people('Registered_',number=3)
+			# get the people
+			person_1 = Person.objects.get(first_name='Registered_0')
+			person_2 = Person.objects.get(first_name='Registered_1')
+			person_3 = Person.objects.get(first_name='Registered_2')
 			# create some registrations
 			Event_Registration.objects.create(
 												event=Event.objects.get(name='test_event_0'),
@@ -2690,15 +2707,15 @@ class EventRegistrationViewTest(TestCase):
 										data = {
 													'action' : 'editregistration',
 													'registration_keys' : keys,
-													'registered_1' : 'on',
-													'participated_1' : '',
-													'role_type_1' : str(test_role_1.pk),
-													'registered_2' : 'on',
-													'participated_2' : '',
-													'role_type_2' : str(test_role_1.pk),
-													'registered_3' : 'on',
-													'participated_3' : '',
-													'role_type_3' : str(test_role_1.pk),
+													'registered_' + str(person_1.pk) : 'on',
+													'participated_' + str(person_1.pk) : '',
+													'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+													'registered_' + str(person_2.pk) : 'on',
+													'participated_' + str(person_2.pk) : '',
+													'role_type_' + str(person_2.pk) : str(test_role_1.pk),
+													'registered_' + str(person_3.pk) : 'on',
+													'participated_' + str(person_3.pk) : '',
+													'role_type_' + str(person_3.pk) : str(test_role_1.pk),
 												}
 										)
 			# check the response
@@ -2725,81 +2742,85 @@ class EventRegistrationViewTest(TestCase):
 			self.assertEqual(registration_3.role_type,test_role_1)
 
 	def test_event_registration_register_change_registered_and_participated_and_role(self):
-			# create an event
-			set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
-			# create some role types
-			test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
-			test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
-			test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
-			# create some people
-			set_up_test_people('Registered_',number=3)
-			# create some registrations
-			Event_Registration.objects.create(
-												event=Event.objects.get(name='test_event_0'),
-												person=Person.objects.get(first_name='Registered_0'),
-												role_type=test_role_1,
-												registered=False,
-												participated=True
-												)
-			Event_Registration.objects.create(
-												event=Event.objects.get(name='test_event_0'),
-												person=Person.objects.get(first_name='Registered_1'),
-												role_type=test_role_2,
-												registered=False,
-												participated=True
-												)
-			Event_Registration.objects.create(
-												event=Event.objects.get(name='test_event_0'),
-												person=Person.objects.get(first_name='Registered_2'),
-												role_type=test_role_3,
-												registered=False,
-												participated=True
-												)
-			# log the user in
-			self.client.login(username='testuser', password='testword')
-			# set the keys
-			keys = str(Person.objects.get(first_name='Registered_0').pk) + ',' + \
-							str(Person.objects.get(first_name='Registered_1').pk) + ',' + \
-							str(Person.objects.get(first_name='Registered_2').pk)
-			# do a search
-			response = self.client.post(
-										reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
-										data = {
-													'action' : 'editregistration',
-													'registration_keys' : keys,
-													'registered_1' : 'on',
-													'participated_1' : '',
-													'role_type_1' : str(test_role_2.pk),
-													'registered_2' : 'on',
-													'participated_2' : '',
-													'role_type_2' : str(test_role_3.pk),
-													'registered_3' : 'on',
-													'participated_3' : '',
-													'role_type_3' : str(test_role_1.pk),
-												}
-										)
-			# check the response
-			self.assertEqual(response.status_code, 200)
-			# get the event
-			event = Event.objects.get(name='test_event_0')
-			# get the registration for the first person
-			registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
-			# check the values
-			self.assertEqual(registration_1.registered,True)
-			self.assertEqual(registration_1.participated,False)
-			self.assertEqual(registration_1.role_type,test_role_2)
-			# get the registration for the second person
-			registration_2 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_1'),event=event)
-			# check the values
-			self.assertEqual(registration_2.registered,True)
-			self.assertEqual(registration_2.participated,False)
-			self.assertEqual(registration_2.role_type,test_role_3)
-			# get the registration for the third person
-			registration_3 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_2'),event=event)
-			# check the values
-			self.assertEqual(registration_3.registered,True)
-			self.assertEqual(registration_3.participated,False)
-			self.assertEqual(registration_3.role_type,test_role_1)
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
+		# create some people
+		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
+		# create some registrations
+		Event_Registration.objects.create(
+											event=Event.objects.get(name='test_event_0'),
+											person=Person.objects.get(first_name='Registered_0'),
+											role_type=test_role_1,
+											registered=False,
+											participated=True
+											)
+		Event_Registration.objects.create(
+											event=Event.objects.get(name='test_event_0'),
+											person=Person.objects.get(first_name='Registered_1'),
+											role_type=test_role_2,
+											registered=False,
+											participated=True
+											)
+		Event_Registration.objects.create(
+											event=Event.objects.get(name='test_event_0'),
+											person=Person.objects.get(first_name='Registered_2'),
+											role_type=test_role_3,
+											registered=False,
+											participated=True
+											)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# set the keys
+		keys = str(Person.objects.get(first_name='Registered_0').pk) + ',' + \
+						str(Person.objects.get(first_name='Registered_1').pk) + ',' + \
+						str(Person.objects.get(first_name='Registered_2').pk)
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'editregistration',
+												'registration_keys' : keys,
+												'registered_' + str(person_1.pk) : 'on',
+												'participated_' + str(person_1.pk) : '',
+												'role_type_' + str(person_1.pk) : str(test_role_2.pk),
+												'registered_' + str(person_2.pk) : 'on',
+												'participated_' + str(person_2.pk) : '',
+												'role_type_' + str(person_2.pk) : str(test_role_3.pk),
+												'registered_' + str(person_3.pk) : 'on',
+												'participated_' + str(person_3.pk) : '',
+												'role_type_' + str(person_3.pk) : str(test_role_1.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the event
+		event = Event.objects.get(name='test_event_0')
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,True)
+		self.assertEqual(registration_1.participated,False)
+		self.assertEqual(registration_1.role_type,test_role_2)
+		# get the registration for the second person
+		registration_2 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_1'),event=event)
+		# check the values
+		self.assertEqual(registration_2.registered,True)
+		self.assertEqual(registration_2.participated,False)
+		self.assertEqual(registration_2.role_type,test_role_3)
+		# get the registration for the third person
+		registration_3 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_2'),event=event)
+		# check the values
+		self.assertEqual(registration_3.registered,True)
+		self.assertEqual(registration_3.participated,False)
+		self.assertEqual(registration_3.role_type,test_role_1)
 
 class EditEventViewTest(TestCase):
 	@classmethod

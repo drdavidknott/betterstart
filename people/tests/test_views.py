@@ -1381,7 +1381,7 @@ class PeopleQueryTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
-		response = self.client.get(reverse('role_type',args=[1]))
+		response = self.client.get(reverse('role_type',args=[Role_Type.objects.get(role_type_name='test_role_type').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
@@ -1389,7 +1389,7 @@ class PeopleQueryTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
-		response = self.client.get(reverse('ABSS_type',args=[1]))
+		response = self.client.get(reverse('ABSS_type',args=[ABSS_Type.objects.get(name='test_ABSS_type').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
@@ -1397,7 +1397,7 @@ class PeopleQueryTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
-		response = self.client.get(reverse('age_status',args=[1]))
+		response = self.client.get(reverse('age_status',args=[Age_Status.objects.get(status='Adult').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 

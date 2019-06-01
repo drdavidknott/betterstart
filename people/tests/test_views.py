@@ -1788,7 +1788,7 @@ class AddPersonViewTest(TestCase):
 											}
 									)
 		# check that we got a redirect response
-		self.assertRedirects(response, '/profile/1')
+		self.assertRedirects(response, '/profile/' + str(Person.objects.get(first_name='Testfirst').pk))
 		# get the record
 		test_person = Person.objects.get(first_name='Testfirst')
 		# check the record contents

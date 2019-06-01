@@ -2492,6 +2492,9 @@ class EventRegistrationViewTest(TestCase):
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
+		print('Test:')
+		for registration in Event_Registration.objects.all():
+			print(registration)
 		# get the event
 		event = Event.objects.get(name='test_event_0')
 		# get the registration for the first person

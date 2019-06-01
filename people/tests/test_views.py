@@ -2080,9 +2080,9 @@ class AddRelationshipViewTest(TestCase):
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
-											'relationship_type' : '1',
-											'ABSS_type' : '1',
-											'age_status' : '1'
+											'relationship_type' : str(Relationship_Type.objects.get(relationship_type='parent').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk)
 											}
 									)
 		# check the response

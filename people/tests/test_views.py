@@ -2270,7 +2270,7 @@ class AddEventViewTest(TestCase):
 											}
 									)
 		# check that we got a redirect response
-		self.assertRedirects(response, '/event_registration/1')
+		self.assertRedirects(response, '/event_registration/' + str(Event.objects.get(name='Testevent').pk))
 		# get the record
 		test_event = Event.objects.get(name='Testevent')
 		# check the record contents

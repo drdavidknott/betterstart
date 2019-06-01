@@ -2051,7 +2051,7 @@ class AddRelationshipViewTest(TestCase):
 		set_up_test_people('Test_exists_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('add_relationship',args=[1]),
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_exists_0').pk]),
 									data = { 
 											'action' : 'search',
 											'first_name' : 'Test_exists_0',
@@ -2070,7 +2070,7 @@ class AddRelationshipViewTest(TestCase):
 		set_up_test_people('Test_from_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('add_relationship',args=[1]),
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_from_0').pk]),
 									data = { 
 											'action' : 'addrelationshiptonewperson',
 											'first_name' : 'new_first_name',
@@ -2133,7 +2133,7 @@ class AddRelationshipViewTest(TestCase):
 		set_up_test_people('Test_to_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('add_relationship',args=[1]),
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_from_0').pk]),
 									data = { 
 											'action' : 'editrelationships',
 											'relationship_type_' + str(Person.objects.get(first_name='Test_to_0').pk) : \
@@ -2179,7 +2179,7 @@ class AddRelationshipViewTest(TestCase):
 			)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('add_relationship',args=[1]),
+									reverse('add_relationship',args=[test_from_person.pk]),
 									data = { 
 											'action' : 'editrelationships',
 											'relationship_type_' + str(Person.objects.get(first_name='Test_to_0').pk) : \
@@ -2221,7 +2221,7 @@ class AddRelationshipViewTest(TestCase):
 			)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('add_relationship',args=[1]),
+									reverse('add_relationship',args=[test_from_person.pk]),
 									data = { 
 											'action' : 'editrelationships',
 											'relationship_type_' + str(Person.objects.get(first_name='Test_to_0').pk) : \

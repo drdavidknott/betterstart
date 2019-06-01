@@ -2010,7 +2010,7 @@ class AddEventViewTest(TestCase):
 		# check that we got a redirect response
 		self.assertRedirects(response, '/event_registration/1')
 		# get the record
-		test_event = Event.objects.get(id=1)
+		test_event = Event.objects.get(name='Testevent')
 		# check the record contents
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testdescription')
@@ -2088,7 +2088,7 @@ class AddRelationshipViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# get the newly created person record
-		test_new_person = Person.objects.get(id=2)
+		test_new_person = Person.objects.get(first_name='new_first_name')
 		# check the record contents
 		self.assertEqual(test_new_person.first_name,'new_first_name')
 		self.assertEqual(test_new_person.middle_names,'new_middle_names')
@@ -2113,7 +2113,7 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.house_name_or_number,'')
 		self.assertEqual(test_new_person.street,None)
 		# get the original person
-		test_original_person = Person.objects.get(id=1)
+		test_original_person = Person.objects.get(first_name='Test_from_0')
 		# get the relationship from 
 		relationship_from_original = Relationship.objects.get(relationship_from=test_original_person)
 		# check the contents
@@ -2174,7 +2174,7 @@ class AddRelationshipViewTest(TestCase):
 		Relationship.objects.create(
 										relationship_from=test_to_person,
 										relationship_to=test_from_person,
-										relationship_type=Relationship_Type.objects.get(id=2)
+										relationship_type=Relationship_Type.objects.get(relationship_type='child')
 			)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
@@ -2215,7 +2215,7 @@ class AddRelationshipViewTest(TestCase):
 		Relationship.objects.create(
 										relationship_from=test_to_person,
 										relationship_to=test_from_person,
-										relationship_type=Relationship_Type.objects.get(id=2)
+										relationship_type=Relationship_Type.objects.get(relationship_type='child')
 			)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
@@ -2435,7 +2435,7 @@ class EventRegistrationViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# get the event
-		event = Event.objects.get(id=1)
+		event = Event.objects.get(name='test_event_0')
 		# get the registration for the first person
 		registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
 		# check the values
@@ -2490,7 +2490,7 @@ class EventRegistrationViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# get the event
-		event = Event.objects.get(id=1)
+		event = Event.objects.get(name='test_event_0')
 		# get the registration for the first person
 		registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
 		# check the values
@@ -2545,7 +2545,7 @@ class EventRegistrationViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# get the event
-		event = Event.objects.get(id=1)
+		event = Event.objects.get(name='test_event_0')
 		# get the registration for the first person
 		registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
 		# check the values
@@ -2698,7 +2698,7 @@ class EventRegistrationViewTest(TestCase):
 			# check the response
 			self.assertEqual(response.status_code, 200)
 			# get the event
-			event = Event.objects.get(id=1)
+			event = Event.objects.get(name='test_event_0')
 			# get the registration for the first person
 			registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
 			# check the values
@@ -2775,7 +2775,7 @@ class EventRegistrationViewTest(TestCase):
 			# check the response
 			self.assertEqual(response.status_code, 200)
 			# get the event
-			event = Event.objects.get(id=1)
+			event = Event.objects.get(name='test_event_0')
 			# get the registration for the first person
 			registration_1 = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_0'),event=event)
 			# check the values
@@ -2831,10 +2831,10 @@ class EditEventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create an event
-		set_up_test_events('Event_',Event_Type.objects.get(id=1),1)
+		set_up_test_events('Event_',Event_Type.objects.get(name='test_event_type'),1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('edit_event',args=[1]),
+									reverse('edit_event',args=[Event.objects.get(name='Event_0').pk]),
 									data = { 
 											'name' : 'updated_name',
 											'description' : 'updated_description',
@@ -2848,7 +2848,7 @@ class EditEventViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code,302)
 		# get the record
-		test_event = Event.objects.get(id=1)
+		test_event = Event.objects.get(name='updated_name')
 		# check the record contents
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')

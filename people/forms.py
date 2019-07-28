@@ -164,10 +164,11 @@ class ProfileForm(forms.Form):
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice fields
-		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all())
-		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.filter(use_for_people=True))
-		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())
-		self.fields['ethnicity'].choices = ethnicity_choices(Ethnicity.objects.all())
+		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all().order_by('status'))
+		self.fields['role_type'].choices = role_type_choices(
+												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
+		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all().order_by('name'))
+		self.fields['ethnicity'].choices = ethnicity_choices(Ethnicity.objects.all().order_by('description'))
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function

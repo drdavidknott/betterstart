@@ -339,3 +339,15 @@ class Answer(models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'answers'
+
+# Answer note model: adds supplementary notes to a question
+class Answer_Note(models.Model):
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	question = models.ForeignKey(Question, on_delete=models.CASCADE)
+	notes = models.TextField(max_length=500, default='', blank=True)
+	# define the function that will return the option label as the object reference
+	def __str__(self):
+		return self.question.notes_label + ': ' + self.notes
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'answers'

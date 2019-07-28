@@ -1251,11 +1251,11 @@ def get_option(option_id):
 def get_questions_and_answers(person):
 	# this function gets a list of questions, and adds the answers relevant to the person
 	# get the list of questions
-	questions = Question.objects.all()
+	questions = Question.objects.all().order_by('question_text')
 	# get the options for each question
 	for question in questions:
 		# get the answers and stash it in the object
-		question.options = question.option_set.all()
+		question.options = question.option_set.all().order_by('option_label')
 		# set a default answer
 		question.answer = 0
 		# now try to get an answer

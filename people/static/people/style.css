@@ -10,3 +10,7 @@
 .betterstart-background-local-release {
 	background-color: #ED2D0F;
 }
+
+.select-fixed-width {
+	width: 200px;
+}

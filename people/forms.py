@@ -583,7 +583,7 @@ class EventSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	event_type = forms.ChoiceField(
 									label="Event Type",
-									widget=forms.Select())
+									widget=forms.Select(attrs={'class' : 'select-fixed-width',}))
 	date_from = forms.DateField(
 									label="From",
 									required=False,

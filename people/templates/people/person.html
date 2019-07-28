@@ -156,10 +156,17 @@
  			</div>
 	 		<div class="panel-body">
 	 			<div class="col-md-12">
-			 		{% for answer in answers %}
-		 				<div class="col-md-12">
-							{{ answer }}
-						</div>
+			 		{% for question in questions %}
+			 			{% if question.answer or question.note %}
+			 				<div class="col-md-12">
+								{{ question }}&nbsp{{ question.answer_text }}
+							</div>
+						{% endif %}
+			 			{% if question.note %}
+			 				<div class="col-md-12">
+								({{ question.notes_label }}: {{ question.note }})
+							</div>
+						{% endif %}
 					{% endfor %}
 				</div>
 			</div>

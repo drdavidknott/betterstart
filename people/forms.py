@@ -631,6 +631,8 @@ class AnswerQuestionsForm(forms.Form):
 		for question in questions:
 			# set the field name
 			field_name = 'question_' + str(question.pk)
+			# and the notes names
+			notes_name = 'notes_' + str(question.pk)
 			# set an empty option list
 			option_list = []
 			# set the non-answer
@@ -646,3 +648,12 @@ class AnswerQuestionsForm(forms.Form):
 															choices=option_list,
 															initial=question.answer
 															)
+				# if the question has notes, also create a notes field
+				if question.notes:
+					# create the field
+					self.fields[notes_name]= forms.CharField(
+											label=question.notes_label,
+											max_length=50,
+											widget=forms.TextInput(attrs={'class' : 'form-control',}),
+											initial=question.note
+											)

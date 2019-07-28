@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street
+					ABSS_Type, Age_Status, Street, Answer_Note
 import os
 import csv
 from django.contrib.auth.decorators import login_required
@@ -1258,6 +1258,8 @@ def get_questions_and_answers(person):
 		question.options = question.option_set.all().order_by('option_label')
 		# set a default answer
 		question.answer = 0
+		# and default answer test
+		question.answer_text = 'No answer'
 		# now try to get an answer
 		answer = get_answer(
 							person=person,
@@ -1267,6 +1269,19 @@ def get_questions_and_answers(person):
 		if answer:
 			# set the answer
 			question.answer = answer.option.pk
+			# and the text
+			question.answer_text = answer.option.option_label
+		# set a default note
+		question.note = ''
+		# now try to get an answer note
+		answer_note = get_answer_note(
+										person=person,
+										question=question
+										)
+		# check whether we got an answer note
+		if answer_note:
+			# set the answer
+			question.note = answer_note.notes
 	# return the results
 	return questions
 
@@ -1284,6 +1299,21 @@ def get_answer(person,question):
 		answer = False
 	# return the value
 	return answer
+
+def get_answer_note(person,question):
+	# try to get an answer note
+	try:
+		# do the database query
+		answer_note = Answer_Note.objects.get(
+												person=person,
+												question=question
+												)
+	# handle the exception
+	except Answer_Note.DoesNotExist:
+		# set a false value
+		answer_note = False
+	# return the value
+	return answer_note
 
 def get_ABSS_types():
 	# return a list of all the ABSS type objects
@@ -1703,6 +1733,50 @@ def build_answer(request, person, question_id, option_id):
 		messages.success(request,str(answer) + ' - created successfully.')
 	# and we're done
 	return answer
+
+def build_answer_note(request, person, question_id, notes):
+	# attempt to get the question
+	question = get_question(question_id)
+	# deal with exceptions if we didn't get a question
+	if not question:
+		# set the error
+		messages.error(request,'Could not create answer note: question' + str(question_id) + ' does not exist.')
+		# and crash out
+		return False
+	# see whether we have an answer note
+	answer_note = get_answer_note(person,question)
+	# if we got an answer note, check what we have been asked to do to it
+	if answer_note:
+		# see whether we have any text
+		if notes == '':
+			# save the answer text
+			answer_note_text = str(answer_note)
+			# we have been asked to delete the answer
+			answer_note.delete()
+			# and set the message
+			messages.success(request,answer_note_text + ' - deleted successfully.')
+		# otherwise we have been asked to record an answer note
+		elif answer_note.notes != notes:
+			# we have been asked to update the answer note
+			answer_note.notes = notes
+			# save the answer note
+			answer_note.save()
+			# and set the message
+			messages.success(request,str(answer_note) + ' - updated successfully.')
+	# otherwise we have to do a creation if we have an option id
+	elif notes != '':
+		# create the answer note
+		answer_note = Answer_Note(
+							person = person,
+							question = question,
+							notes = notes
+						)
+		# save the answer note
+		answer_note.save()
+		# and set the message
+		messages.success(request,str(answer_note) + ' - created successfully.')
+	# and we're done
+	return answer_note
 
 def update_person(
 					request,
@@ -2245,7 +2319,7 @@ def person(request, person_id=0):
 				'person' : person,
 				'relationships_to' : relationships_to,
 				'registrations' : Event_Registration.objects.filter(person=person),
-				'answers' : person.answers.all(),
+				'questions' : get_questions_and_answers(person),
 				'role_history' : person.role_history_set.all()
 				})
 	# return the response
@@ -3030,10 +3104,15 @@ def answer_questions(request,person_id=0):
 		for field in answerquestionsform.fields:
 			# get the question id from the field name
 			question_id = int(extract_id(field))
-			# get the option id from the value of the field
-			option_id = int(answerquestionsform.data[field])
-			# build the answer
-			build_answer(request,person,question_id,option_id)
+			# check whether it is a note or not
+			if 'notes' not in field:
+				# get the option id from the value of the field
+				option_id = int(answerquestionsform.data[field])
+				# build the answer
+				build_answer(request,person,question_id,option_id)
+			# process the note
+			else:
+				build_answer_note(request,person,question_id,answerquestionsform.data[field])
 	# otherwise create an empty form
 	else:
 		# create the empty form

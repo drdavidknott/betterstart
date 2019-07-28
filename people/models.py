@@ -167,6 +167,8 @@ class Event(models.Model):
 # Question model: represents questions
 class Question(models.Model):
 	question_text = models.CharField(max_length=150)
+	notes = models.BooleanField(default=False)
+	notes_label = models.CharField(max_length=30, default='Notes')
 	# define the function that will return the question text as the object reference
 	def __str__(self):
 		return self.question_text

@@ -2736,7 +2736,7 @@ def events(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		eventsearchform = EventSearchForm(request.POST, event_types=get_event_types())
+		eventsearchform = EventSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
@@ -2772,7 +2772,7 @@ def events(request):
 	# otherwise set a bank form
 	else:
 		# create the blank form
-		eventsearchform = EventSearchForm(event_types=get_event_types())
+		eventsearchform = EventSearchForm()
 	# get the template
 	events_template = loader.get_template('people/events.html')
 	# set the context

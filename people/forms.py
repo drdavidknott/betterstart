@@ -2,7 +2,7 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type
+from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type
 from django.contrib.auth import authenticate
 import datetime
 
@@ -605,14 +605,14 @@ class EventSearchForm(forms.Form):
 									input_formats=('%d/%m/%Y',))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# pull the choices field out of the parameters
-		event_types = kwargs.pop('event_types')
 		# call the built in constructor
 		super(EventSearchForm, self).__init__(*args, **kwargs)
 		# set the choice field for event types
 		event_type_list = []
 		# add the default choice
 		event_type_list.append((0,'Any'))
+		# get the event types
+		event_types = Event_Type.objects.all().order_by('name')
 		# go through the event types
 		for event_type in event_types:
 			# append a list of value and display value to the list

@@ -176,93 +176,7 @@ def index(request):
 	# add the this month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS BY TYPE: ' + \
-																	first_day_of_this_month.strftime('%B'),
-															title_icon = 'glyphicon-calendar',
-															title_url = 'events_this_month',
-															column_names = ['Registered','Participated'],
-															show_column_names = True,
-															rows = get_event_types_with_counts(
-																					date_from=first_day_of_this_month
-																								),
-															row_name = 'name',
-															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type_this_month',
-															row_parameter_name = 'pk',
-															totals = True,
-															label_width = 5,
-															column_width = 3,
-															right_margin = 1,
-															)
-											)
-	# add the last month event panel
-	events_dashboard_column.panels.append(
-											Dashboard_Panel(
-															title = 'EVENTS BY TYPE: ' + \
-																	first_day_of_last_month.strftime('%B'),
-															title_icon = 'glyphicon-calendar',
-															title_url = 'events_last_month',
-															column_names = ['Registered','Participated'],
-															show_column_names = True,
-															rows = get_event_types_with_counts(
-																					date_from=first_day_of_last_month,
-																					date_to=last_day_of_last_month
-																								),
-															row_name = 'name',
-															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type_last_month',
-															row_parameter_name = 'pk',
-															totals = True,
-															label_width = 5,
-															column_width = 3,
-															right_margin = 1,
-															)
-											)
-	# add the last month event panel
-	events_dashboard_column.panels.append(
-											Dashboard_Panel(
-															title = 'EVENTS BY TYPE: Since ' + \
-																	first_day_of_this_year.strftime('%d %B %Y'),
-															title_icon = 'glyphicon-calendar',
-															title_url = 'events_this_year',
-															column_names = ['Registered','Participated'],
-															show_column_names = True,
-															rows = get_event_types_with_counts(
-																					date_from=first_day_of_this_year
-																								),
-															row_name = 'name',
-															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type_this_year',
-															row_parameter_name = 'pk',
-															totals = True,
-															label_width = 5,
-															column_width = 3,
-															right_margin = 1,
-															)
-											)
-	# add the all time event panel
-	events_dashboard_column.panels.append(
-											Dashboard_Panel(
-															title = 'EVENTS BY TYPE: ALL TIME',
-															title_icon = 'glyphicon-calendar',
-															title_url = 'events_all_time',
-															column_names = ['Registered','Participated'],
-															show_column_names = True,
-															rows = get_event_types_with_counts(),
-															row_name = 'name',
-															row_values = ['registered_count','participated_count'],
-															row_url = 'event_type',
-															row_parameter_name = 'pk',
-															totals = True,
-															label_width = 5,
-															column_width = 3,
-															right_margin = 1,
-															)
-											)
-	# add the this month event panel
-	events_dashboard_column.panels.append(
-											Dashboard_Panel(
-															title = 'EVENTS BY CATEGORY: ' + \
+															title = 'EVENTS: ' + \
 																	first_day_of_this_month.strftime('%B'),
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_this_month',
@@ -284,7 +198,7 @@ def index(request):
 	# add the last month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS BY CATEGORY: ' + \
+															title = 'EVENTS: ' + \
 																	first_day_of_last_month.strftime('%B'),
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_last_month',
@@ -307,7 +221,7 @@ def index(request):
 	# add the last month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS BY CATEGORY: Since ' + \
+															title = 'EVENTS: Since ' + \
 																	first_day_of_this_year.strftime('%d %B %Y'),
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_this_year',
@@ -329,7 +243,7 @@ def index(request):
 	# add the all time event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS BY CATEGORY: ALL TIME',
+															title = 'EVENTS: ALL TIME',
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_all_time',
 															column_names = ['Registered','Participated'],

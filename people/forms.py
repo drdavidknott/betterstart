@@ -93,8 +93,8 @@ class ProfileForm(forms.Form):
 	middle_names = forms.CharField(
 									label="Middle names",
 									max_length=50,
-									required = False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+									initial='',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	last_name = forms.CharField(
 									label="Last name",
 									max_length=50,

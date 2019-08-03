@@ -176,7 +176,7 @@ def index(request):
 	# add the this month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS: ' + \
+															title = 'EVENTS BY TYPE: ' + \
 																	first_day_of_this_month.strftime('%B'),
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_this_month',
@@ -198,7 +198,7 @@ def index(request):
 	# add the last month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS: ' + \
+															title = 'EVENTS BY TYPE: ' + \
 																	first_day_of_last_month.strftime('%B'),
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_last_month',
@@ -221,7 +221,7 @@ def index(request):
 	# add the last month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS: Since ' + \
+															title = 'EVENTS BY TYPE: Since ' + \
 																	first_day_of_this_year.strftime('%d %B %Y'),
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_this_year',
@@ -243,7 +243,7 @@ def index(request):
 	# add the all time event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS: ALL TIME',
+															title = 'EVENTS BY TYPE: ALL TIME',
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_all_time',
 															column_names = ['Registered','Participated'],
@@ -259,7 +259,93 @@ def index(request):
 															right_margin = 1,
 															)
 											)
-	# append the roles column to the dashboard
+	# add the this month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS BY CATEGORY: ' + \
+																	first_day_of_this_month.strftime('%B'),
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_this_month',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(
+																					date_from=first_day_of_this_month
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category_this_month',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the last month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS BY CATEGORY: ' + \
+																	first_day_of_last_month.strftime('%B'),
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_last_month',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(
+																					date_from=first_day_of_last_month,
+																					date_to=last_day_of_last_month
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category_last_month',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the last month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS BY CATEGORY: Since ' + \
+																	first_day_of_this_year.strftime('%d %B %Y'),
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_this_year',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(
+																					date_from=first_day_of_this_year
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category_this_year',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the all time event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS BY CATEGORY: ALL TIME',
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_all_time',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# append the events column to the dashboard
 	dashboard.columns.append(events_dashboard_column)
 	# create the geo column for the dashboard
 	geo_dashboard_column = Dashboard_Column(width=4)
@@ -1022,7 +1108,7 @@ def get_events():
 	# return the list of people
 	return events
 
-def get_events_by_name_dates_and_type(name,event_type,date_from,date_to):
+def get_events_by_name_dates_and_type(name,event_type,event_category,date_from,date_to):
 	# check whether we have any search terms, otherwise return all events
 	# start by getting all the events
 	events = Event.objects.all()
@@ -1042,6 +1128,10 @@ def get_events_by_name_dates_and_type(name,event_type,date_from,date_to):
 	if event_type != 0:
 		# filter by type
 		events = events.filter(event_type_id=event_type)
+	# if we have a category, filter by that
+	if event_category != 0:
+		# filter by type
+		events = events.filter(event_type__event_category_id=event_category)
 	# return the list of events
 	return events
 
@@ -1096,6 +1186,36 @@ def get_event_types_with_counts(date_from=0, date_to=0):
 		event_type.participated_count = event_participations.count()
 	# return the results
 	return event_types
+
+def get_event_categories_with_counts(date_from=0, date_to=0):
+	# get the event categories
+	event_categories = Event_Category.objects.all()
+	# go throught the event categories
+	for event_category in event_categories:
+		# get the registrations
+		event_registrations = Event_Registration.objects.filter(
+																event__event_type__event_category=event_category,
+																registered=True)
+		# get the participations
+		event_participations = Event_Registration.objects.filter(event__event_type__event_category=event_category,
+																participated=True)
+		# if we have a from date, filter further
+		if date_from:
+			# filter the registrations
+			event_registrations = event_registrations.filter(event__date__gte=date_from)
+			# and the participations
+			event_participations = event_participations.filter(event__date__gte=date_from)
+		# if we have a before date, filter further
+		if date_to:
+			# filter the registrations
+			event_registrations = event_registrations.filter(event__date__lte=date_to)
+			# and the participations
+			event_participations = event_participations.filter(event__date__lte=date_to)
+		# set the counts
+		event_category.registered_count = event_registrations.count()
+		event_category.participated_count = event_participations.count()
+	# return the results
+	return event_categories
 
 def get_event_registrations(event):
 	# return a list of registrations for an event
@@ -2752,9 +2872,19 @@ def event(request, event_id=0):
 	return HttpResponse(event_template.render(context=context, request=request))
 
 @login_required
-def event_type(request, event_type='0'):
+def event_group(request, event_group='0'):
 	# get the calling url
 	path = request.get_full_path()
+	# set the grouping based on the path
+	if 'type' in path:
+		# we have an event type
+		event_type = event_group
+		event_category = '0'
+	# otherwise we have a category (or nothing)
+	else:
+		# set the type and group
+		event_type = '0'
+		event_category = event_group
 	# get the dashboard dates
 	dashboard_dates = get_dashboard_dates()
 	# set blank dates
@@ -2779,6 +2909,7 @@ def event_type(request, event_type='0'):
 	# set search terms for an event search
 	copy_POST['action'] = 'search'
 	copy_POST['event_type'] = event_type
+	copy_POST['event_category'] = event_category
 	copy_POST['name'] = ''
 	copy_POST['date_from'] = date_from
 	copy_POST['date_to'] = date_to
@@ -2820,12 +2951,14 @@ def events(request):
 				date_from = eventsearchform.cleaned_data['date_from']
 				date_to = eventsearchform.cleaned_data['date_to']
 				event_type = eventsearchform.cleaned_data['event_type']
+				event_category = eventsearchform.cleaned_data['event_category']
 				# conduct a search
 				events = get_events_by_name_dates_and_type(
 															name=name,
 															date_from=date_from,
 															date_to=date_to,
-															event_type=int(event_type)
+															event_type=int(event_type),
+															event_category=int(event_category)
 															)
 				# set the number of results
 				number_of_events = len(events)

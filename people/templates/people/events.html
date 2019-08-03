@@ -29,7 +29,7 @@
 						<input type="hidden" name="page" value="1">
 						<div class = "row form-group">
 							{% for field in eventsearchform %}
-								<div class = "col-md-3">
+								<div class = "col-md-2">
 									<div>{{ field.label_tag }}</div>
 									<div>{{ field }}</div>
 								</div>
@@ -55,6 +55,7 @@
 				<table class="table table-striped panel panel-default">
 					<thead><tr>
 						<th>NAME:</th>
+						<th>CATEGORY:</th>
 						<th>TYPE:</th>
 						<th>LOCATION:</th>
 						<th>DATE:</th>
@@ -67,6 +68,11 @@
 			 					<td>
 			 						<a href="{% url 'event' event.pk %}">
 										{{ event.name }}
+									</a>
+								</td>
+								<td>
+									<a href="{% url 'event_category' event.event_type.event_category.pk %}">
+										{{ event.event_type.event_category.name }}
 									</a>
 								</td>
 								<td>

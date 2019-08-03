@@ -2,7 +2,8 @@
 
 from django import forms
 from django.contrib.auth.models import User
-from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type
+from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
+							Event_Category
 from django.contrib.auth import authenticate
 import datetime
 
@@ -582,6 +583,9 @@ class EventSearchForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	event_category = forms.ChoiceField(
+									label="Event Category",
+									widget=forms.Select(attrs={'class' : 'select-fixed-width',}))
 	event_type = forms.ChoiceField(
 									label="Event Type",
 									widget=forms.Select(attrs={'class' : 'select-fixed-width',}))
@@ -619,6 +623,18 @@ class EventSearchForm(forms.Form):
 			event_type_list.append((event_type.pk, event_type.name))
 		# set the choices
 		self.fields['event_type'].choices = event_type_list
+		# set the choice field for event categories
+		event_category_list = []
+		# add the default choice
+		event_category_list.append((0,'Any'))
+		# get the event categories
+		event_categories = Event_Category.objects.all().order_by('name')
+		# go through the event categories
+		for event_category in event_categories:
+			# append a list of value and display value to the list
+			event_category_list.append((event_category.pk, event_category.name))
+		# set the choices
+		self.fields['event_category'].choices = event_category_list
 
 class AnswerQuestionsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

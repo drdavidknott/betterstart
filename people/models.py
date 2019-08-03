@@ -351,3 +351,4 @@ class Answer_Note(models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'answers'
+

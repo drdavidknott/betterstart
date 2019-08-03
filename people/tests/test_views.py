@@ -1482,6 +1482,9 @@ class EventsViewTest(TestCase):
 		user = set_up_test_user()
 		# create an event category
 		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+		# and another couple of event categories
+		test_event_category_2 = Event_Category.objects.create(name='test_event_category_2',description='category desc')
+		test_event_category_3 = Event_Category.objects.create(name='test_event_category_3',description='category desc')
 		# create a load of event types
 		test_event_type_1 = Event_Type.objects.create(
 														name = 'test_event_type_1',
@@ -1490,7 +1493,7 @@ class EventsViewTest(TestCase):
 		test_event_type_2 = Event_Type.objects.create(
 														name = 'test_event_type_2',
 														description = 'type desc',
-														event_category = test_event_category)
+														event_category = test_event_category_2)
 		test_event_type_3 = Event_Type.objects.create(
 														name = 'test_event_type_3',
 														description = 'type desc',
@@ -1506,7 +1509,7 @@ class EventsViewTest(TestCase):
 		test_event_type_6 = Event_Type.objects.create(
 														name = 'test_event_type_6',
 														description = 'type desc',
-														event_category = test_event_category)
+														event_category = test_event_category_3)
 		test_event_type_7 = Event_Type.objects.create(
 														name = 'test_event_type_7',
 														description = 'type desc',
@@ -1563,6 +1566,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '',
 											'date_to' : '',
 											'event_type' : '0',
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1587,6 +1591,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
 											'event_type' : '0',
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1611,6 +1616,32 @@ class EventsViewTest(TestCase):
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
+											'event_category' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_with_date_range_and_event_category(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '20/01/2019',
+											'date_to' : '20/02/2019',
+											'event_type' : '0',
+											'event_category' : str(Event_Category.objects.get(name='test_event_category_3').pk),
 											'page' : '1'
 											}
 									)
@@ -1635,6 +1666,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '20/01/2019',
 											'date_to' : '',
 											'event_type' : '0',
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1659,6 +1691,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '20/01/2019',
 											'date_to' : '',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1683,6 +1716,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '',
 											'date_to' : '20/01/2019',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1707,6 +1741,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '',
 											'date_to' : '20/01/2019',
 											'event_type' : '0',
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1733,6 +1768,7 @@ class EventsViewTest(TestCase):
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
 											'event_type' : str(test_event_type_6.pk),
+											'event_category' : '0',
 											'page' : '1'
 											}
 									)
@@ -1744,6 +1780,33 @@ class EventsViewTest(TestCase):
 		self.assertEqual(len(response.context['events']),10)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_with_event_category(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the event category record
+		test_event_category_2 = Event_Category.objects.get(name='test_event_category_2')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : str(test_event_category_2.pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],150)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6])
 
 class EventViewTest(TestCase):
 	@classmethod
@@ -3383,7 +3446,7 @@ class Questions(TestCase):
 		# create the options
 		set_up_test_options('q_no_notes_option_',question=q_no_notes,number=2)
 		# create a question with notes
-		set_up_test_questions('q_with_notes')
+		set_up_test_questions('q_with_notes',notes=True)
 		# get the question
 		q_with_notes = Question.objects.get(question_text='q_with_notes0')
 		# create the options
@@ -3468,7 +3531,7 @@ class Questions(TestCase):
 		# get the answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 
-def test_questions_answer_with_notes(self):
+	def test_questions_answer_with_notes(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the person
@@ -3495,9 +3558,9 @@ def test_questions_answer_with_notes(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'test_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 
-def test_questions_multiple_answers(self):
+	def test_questions_multiple_answers(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the person
@@ -3527,9 +3590,9 @@ def test_questions_multiple_answers(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'test_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 
-def test_questions_note_change(self):
+	def test_questions_note_change(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the person
@@ -3559,7 +3622,7 @@ def test_questions_note_change(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'test_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 		# submit the page with no answers
 		response = self.client.post(
 									reverse('answer_questions',args=[person.pk]),
@@ -3579,9 +3642,9 @@ def test_questions_note_change(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'new_notes')
+		self.assertEqual(answer_note.notes,'new_notes')
 
-def test_questions_note_removal(self):
+	def test_questions_note_removal(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the person
@@ -3611,7 +3674,7 @@ def test_questions_note_removal(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'test_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 		# submit the page with no answers
 		response = self.client.post(
 									reverse('answer_questions',args=[person.pk]),
@@ -3631,7 +3694,7 @@ def test_questions_note_removal(self):
 		# check that the note has gone
 		self.assertFalse(Answer_Note.objects.all().exists())
 
-def test_questions_answer_and_note_removal(self):
+	def test_questions_answer_and_note_removal(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the person
@@ -3661,12 +3724,12 @@ def test_questions_answer_and_note_removal(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'test_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 		# submit the page with no answers
 		response = self.client.post(
 									reverse('answer_questions',args=[person.pk]),
 									data = { 
-											'question_' + str(question_no_notes.pk): '',
+											'question_' + str(question_no_notes.pk): '0',
 											'spacer_' + str(question_no_notes.pk): 'spacer',
 											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
 											'notes_' + str(question_with_notes.pk): ''
@@ -3681,7 +3744,7 @@ def test_questions_answer_and_note_removal(self):
 		# check that the note has gone
 		self.assertFalse(Answer_Note.objects.all().exists())
 
-def test_questions_remove_question_keep_note(self):
+	def test_questions_remove_question_keep_note(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the person
@@ -3711,14 +3774,14 @@ def test_questions_remove_question_keep_note(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'test_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 		# submit the page with no answers
 		response = self.client.post(
 									reverse('answer_questions',args=[person.pk]),
 									data = { 
 											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
 											'spacer_' + str(question_no_notes.pk): 'spacer',
-											'question_' + str(question_with_notes.pk): '',
+											'question_' + str(question_with_notes.pk): '0',
 											'notes_' + str(question_with_notes.pk): 'test_notes'
 											}
 									)
@@ -3731,5 +3794,5 @@ def test_questions_remove_question_keep_note(self):
 		# get the notes
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
-		self.assertEqual(answer_note,'new_notes')
+		self.assertEqual(answer_note.notes,'test_notes')
 

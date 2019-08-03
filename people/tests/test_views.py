@@ -1,7 +1,7 @@
 from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
 							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type, \
-							Age_Status, Area, Ward, Post_Code, Street
+							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -137,6 +137,26 @@ def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
 											end_time = datetime.datetime.strptime('11:00','%H:%M'),
 											location = 'Test location'
 											)
+
+def set_up_test_questions(name_root,number=1,notes=False,notes_label=''):
+	# set up the number of test questions asked for
+	for n in range(number):
+		# create a question
+		test_question = Question.objects.create(
+											 question_text = name_root + str(n),
+											 notes = notes,
+											 notes_label = notes_label
+											)
+
+def set_up_test_options(name_root,question,number=1):
+	# set up the number of test options asked for
+	for n in range(number):
+		# create an option
+		test_option = Option.objects.create(
+											 option_label = name_root + str(n),
+											 question = question
+											)
+
 
 class PeopleViewTest(TestCase):
 	@classmethod
@@ -3350,4 +3370,366 @@ class AddressToRelationshipsViewTest(TestCase):
 		test_to_person = Person.objects.get(first_name='Test_to_0')
 		self.assertEqual(test_to_person.house_name_or_number,'25')
 		self.assertEqual(test_to_person.street,Street.objects.get(name='Test Street0'))
+
+class Questions(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create a question without notes
+		set_up_test_questions('q_no_notes')
+		# get the question
+		q_no_notes = Question.objects.get(question_text='q_no_notes0')
+		# create the options
+		set_up_test_options('q_no_notes_option_',question=q_no_notes,number=2)
+		# create a question with notes
+		set_up_test_questions('q_with_notes')
+		# get the question
+		q_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# create the options
+		set_up_test_options('q_with_notes_option_',question=q_with_notes,number=2)
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('question_test',number=1)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/answer_questions/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/answer_questions/1')
+
+	def test_invalid_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('answer_questions',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_questions_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('answer_questions',args=[Person.objects.get(first_name='question_test0').pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the questions
+		self.assertContains(response,'q_no_notes0')
+		self.assertContains(response,'q_with_notes0')
+
+	def test_questions_no_answers(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): '0',
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): '0',
+											'notes_' + str(question_with_notes.pk): ''
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we don't have any answers
+		self.assertEqual(Answer.objects.all().exists(),False)
+
+	def test_questions_answer_without_notes(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get an option for the question with no notes
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): '0',
+											'notes_' + str(question_with_notes.pk): ''
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+
+def test_questions_answer_with_notes(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get an option for the question with no notes
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): '0',
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'test_notes')
+
+def test_questions_multiple_answers(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get options
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'test_notes')
+
+def test_questions_note_change(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get options
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'test_notes')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'new_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'new_notes')
+
+def test_questions_note_removal(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get options
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'test_notes')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): ''
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# check that the note has gone
+		self.assertFalse(Answer_Note.objects.all().exists())
+
+def test_questions_answer_and_note_removal(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get options
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'test_notes')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): '',
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): ''
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertFalse(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# check that the note has gone
+		self.assertFalse(Answer_Note.objects.all().exists())
+
+def test_questions_remove_question_keep_note(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='question_test0')
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get options
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'test_notes')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('answer_questions',args=[person.pk]),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'spacer_' + str(question_no_notes.pk): 'spacer',
+											'question_' + str(question_with_notes.pk): '',
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get one answer
+		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
+		# get the other answer
+		self.assertFalse(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
+		# get the notes
+		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
+		# check the note is as expected
+		self.assertEqual(answer_note,'new_notes')
 

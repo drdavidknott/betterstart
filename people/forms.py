@@ -657,6 +657,7 @@ class AnswerQuestionsForm(forms.Form):
 											label=question.notes_label,
 											max_length=50,
 											widget=forms.TextInput(attrs={'class' : 'form-control',}),
+											required=False,
 											initial=question.note
 											)
 				# otherwise create a spacer field

@@ -3104,15 +3104,17 @@ def answer_questions(request,person_id=0):
 		for field in answerquestionsform.fields:
 			# get the question id from the field name
 			question_id = int(extract_id(field))
-			# check whether it is a note or not
-			if 'notes' not in field:
-				# get the option id from the value of the field
-				option_id = int(answerquestionsform.data[field])
-				# build the answer
-				build_answer(request,person,question_id,option_id)
-			# process the note
-			else:
-				build_answer_note(request,person,question_id,answerquestionsform.data[field])
+			# ignore spacers
+			if 'spacer' not in field:
+				# check whether it is a note or not
+				if 'notes' not in field:
+					# get the option id from the value of the field
+					option_id = int(answerquestionsform.data[field])
+					# build the answer
+					build_answer(request,person,question_id,option_id)
+				# process the note
+				else:
+					build_answer_note(request,person,question_id,answerquestionsform.data[field])
 	# otherwise create an empty form
 	else:
 		# create the empty form

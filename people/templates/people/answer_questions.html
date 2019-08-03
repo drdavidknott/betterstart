@@ -20,21 +20,17 @@
 					<form action ="{% url 'answer_questions' person.pk %}" method="post">
 						{% csrf_token %}
 						{% for field in answerquestionsform %}
-							{% if field.is_hidden %}
-								{{ field }}
+							{% if 'question' in field.name %}
+								<div class = "row form-group">
+									<div class='col-md-5'>{{ field.label }}</div>
+									<div class='col-md-2'>{{ field }}</div>
+							{% elif 'notes' in field.name %}
+									<div class='col-md-1'>{{ field.label }}:</div>
+									<div class='col-md-4'>{{ field }}</div>
+								</div>
 							{% else %}
-								{% if 'notes' in field.name %}
-									<div class = "row form-group">
-										<div class = "col-md-4">{{ field.label }}</b></div>
-										<div class = "col-md-8">{{ field }}</div>
-									</div>
-									<div class="col-md-12">&nbsp</div>
-								{% else %}
-									<div class = "row form-group">
-										<div class = "col-md-8">{{ field.label }}</b></div>
-										<div class = "col-md-4">{{ field }}</div>
-									</div>
-								{% endif %}
+									<div class='col-md-5'>&nbsp</div>
+								</div>
 							{% endif %}
 						{% endfor %}
 						<div class = "row">

@@ -633,6 +633,8 @@ class AnswerQuestionsForm(forms.Form):
 			field_name = 'question_' + str(question.pk)
 			# and the notes names
 			notes_name = 'notes_' + str(question.pk)
+			# and the spacer name
+			spacer_name = 'spacer_' + str(question.pk)
 			# set an empty option list
 			option_list = []
 			# set the non-answer
@@ -656,4 +658,12 @@ class AnswerQuestionsForm(forms.Form):
 											max_length=50,
 											widget=forms.TextInput(attrs={'class' : 'form-control',}),
 											initial=question.note
+											)
+				# otherwise create a spacer field
+				else:
+					self.fields[spacer_name]= forms.CharField(
+											label='spacer',
+											max_length=50,
+											widget=forms.HiddenInput(attrs={'class' : 'form-control',}),
+											initial='spacer'
 											)

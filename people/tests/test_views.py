@@ -1808,6 +1808,33 @@ class EventsViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6])
 
+	def test_search_with_event_category_and_date(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the event category record
+		test_event_category_3 = Event_Category.objects.get(name='test_event_category_3')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '20/01/2019',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : str(test_event_category_3.pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],20)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),20)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
 class EventViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

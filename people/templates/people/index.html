@@ -39,7 +39,7 @@
 			 			</div>
 				 		<div class="panel-body">
 				 			{% if panel.show_column_names %}
-				 				<div class="col-xs-12">
+				 				<div>
 					 				<div class="col-xs-{{ panel.label_width }}"></div>
 									{% for column_name in panel.column_names %}
 										<div class="col-xs-{{ panel.column_width }}" align="right">
@@ -53,7 +53,7 @@
 							{% endif %}
 				 			{% for row in panel.rows %}
 				 				{% if panel.display_zeroes or row.has_data %}
-				 					<div class="col-xs-12">
+				 					<div>
 						 				<div class="col-xs-{{ panel.label_width }}">
 						 					{% if row.url %}
 						 						{% if row.parameter %}
@@ -79,7 +79,7 @@
 								{% endif %}
 							{% endfor %}
 							{% if panel.totals %}
-								<div class="col-xs-12">
+								<div>
 									<strong>
 										<div class="col-xs-{{ panel.label_width }}">
 											TOTAL:

@@ -1103,7 +1103,7 @@ def get_event_types_with_counts(date_from=0, date_to=0):
 
 def get_event_categories_with_counts(date_from=0, date_to=0):
 	# get the event categories
-	event_categories = Event_Category.objects.all()
+	event_categories = Event_Category.objects.all().order_by('name')
 	# go throught the event categories
 	for event_category in event_categories:
 		# get the registrations

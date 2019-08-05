@@ -2079,6 +2079,62 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 
+	def test_update_profile_blank_middle_name(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : '',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'english_is_second_language' : True,
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child').pk),
+											'trained_champion' : True,
+											'active_champion' : True
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(first_name='updated_first_name')
+		# check the record contents
+		self.assertEqual(test_person.first_name,'updated_first_name')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
+		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.english_is_second_language,True)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Child')
+		self.assertEqual(test_person.trained_champion,True)
+		self.assertEqual(test_person.active_champion,True)
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+
 class AddEventViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

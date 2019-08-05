@@ -95,6 +95,7 @@ class ProfileForm(forms.Form):
 									label="Middle names",
 									max_length=50,
 									initial='',
+									required=False,
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	last_name = forms.CharField(
 									label="Last name",

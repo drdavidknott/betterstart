@@ -142,10 +142,6 @@ class ProfileForm(forms.Form):
 									required=False,
 									choices=gender_choices,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
-	english_is_second_language = forms.BooleanField(
-									label = "English is a second language",
-									required = False,
-									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	pregnant = forms.BooleanField(
 									label = "Pregnant (or partner is pregnant)",
 									required = False,

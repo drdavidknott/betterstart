@@ -2038,7 +2038,6 @@ class ProfileViewTest(TestCase):
 											'email_address' : 'updated_email_address@test.com',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'english_is_second_language' : True,
 											'pregnant' : True,
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
@@ -2065,7 +2064,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.english_is_second_language,True)
 		self.assertEqual(test_person.pregnant,True)
 		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
@@ -2094,7 +2092,6 @@ class ProfileViewTest(TestCase):
 											'email_address' : 'updated_email_address@test.com',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'english_is_second_language' : True,
 											'pregnant' : True,
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
@@ -2121,7 +2118,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.english_is_second_language,True)
 		self.assertEqual(test_person.pregnant,True)
 		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')

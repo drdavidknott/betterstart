@@ -1821,7 +1821,6 @@ def update_person(
 					email_address,
 					date_of_birth,
 					gender,
-					english_is_second_language,
 					pregnant,
 					due_date,
 					default_role_id,
@@ -1884,7 +1883,6 @@ def update_person(
 	person.email_address = email_address
 	person.date_of_birth = date_of_birth
 	person.gender = gender
-	person.english_is_second_language = english_is_second_language
 	person.pregnant = pregnant
 	person.due_date = due_date
 	person.trained_champion = trained_champion
@@ -2384,7 +2382,6 @@ def profile(request, person_id=0):
 								email_address = profileform.cleaned_data['email_address'],
 								date_of_birth = profileform.cleaned_data['date_of_birth'],
 								gender = profileform.cleaned_data['gender'],
-								english_is_second_language = profileform.cleaned_data['english_is_second_language'],
 								pregnant = profileform.cleaned_data['pregnant'],
 								due_date = profileform.cleaned_data['due_date'],
 								default_role_id = profileform.cleaned_data['role_type'],
@@ -2407,7 +2404,6 @@ def profile(request, person_id=0):
 						'role_type' : person.default_role.pk,
 						'ethnicity' : person.ethnicity.pk,
 						'gender' : person.gender,
-						'english_is_second_language' : person.english_is_second_language,
 						'pregnant' : person.pregnant,
 						'due_date' : person.due_date,
 						'ABSS_type' : person.ABSS_type.pk,

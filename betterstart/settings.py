@@ -28,7 +28,9 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'betterstart-236907.appspot.com',
     '127.0.0.1',
-    'oysta.org'
+    'oysta.org',
+    'www.oysta.org',
+    'betterstart.oysta.org'
 ]
 
 # Application definition

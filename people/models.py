@@ -202,7 +202,6 @@ class Person(models.Model):
 	children_centres = models.ManyToManyField(Children_Centre, through='CC_Registration')
 	events = models.ManyToManyField(Event, through='Event_Registration')
 	answers = models.ManyToManyField(Option, through='Answer')
-	english_is_second_language = models.BooleanField(default=False)
 	pregnant = models.BooleanField(default=False)
 	due_date = models.DateField(null=True, blank=True)
 	ethnicity = models.ForeignKey(Ethnicity, default=1, on_delete=models.SET_DEFAULT)

@@ -54,7 +54,6 @@ def set_up_test_people(
 											gender = 'Gender',
 											notes = 'test notes',
 											default_role = Role_Type.objects.get(role_type_name=role_type),
-											english_is_second_language = False,
 											pregnant = False,
 											due_date = None,
 											ABSS_type = ABSS_Type.objects.get(name=ABSS_type),
@@ -1914,7 +1913,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.english_is_second_language,False)
 		self.assertEqual(test_person.pregnant,False)
 		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
@@ -1978,7 +1976,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.english_is_second_language,False)
 		self.assertEqual(test_person.pregnant,False)
 		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
@@ -2264,7 +2261,6 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.relationships.all().exists(),True)
 		self.assertEqual(test_new_person.children_centres.all().exists(),False)
 		self.assertEqual(test_new_person.events.all().exists(),False)
-		self.assertEqual(test_new_person.english_is_second_language,False)
 		self.assertEqual(test_new_person.pregnant,False)
 		self.assertEqual(test_new_person.due_date,None)
 		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')

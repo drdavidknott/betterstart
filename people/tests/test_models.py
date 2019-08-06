@@ -28,7 +28,6 @@ def set_up_test_person():
 										gender = 'Gender',
 										notes = 'test notes',
 										default_role = test_role_type,
-										english_is_second_language = False,
 										pregnant = False,
 										due_date = None,
 										capture_type = test_capture_type,

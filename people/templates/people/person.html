@@ -10,7 +10,7 @@
 	
 	{% include "people/person_header.html" %}
 
- 	<div class="row col-md-12">
+ 	<div class="row">
  		<div class="panel panel-default">
  			<div class="panel-heading">
  				<h4 class="panel-title">
@@ -18,61 +18,61 @@
  				</h4>
  			</div>
 	 		<div class="panel-body">
-	 			<div class="col-xs-12">
+	 			<div class="row">
 		 			<div class="col-xs-3">First name:</div>
 		 			<div class="col-xs-9">{{ person.first_name }}</div>
 		 		</div>
 		 		{% if person.middle_names %}
-		 			<div class="col-xs-12">
+		 			<div class="row">
 			 			<div class="col-xs-3">Middle names:</div>
 			 			<div class="col-xs-9">{{ person.middle_names }}&nbsp</div>
 			 		</div>
 		 		{% endif %}
-	 			<div class="col-xs-12">
+	 			<div class="row">
 		 			<div class="col-xs-3">Last name:</div>
 		 			<div class="col-xs-9">{{ person.last_name }}</div>
 		 		</div>
-	 			<div class="col-xs-12">
+	 			<div class="row">
 		 			<div class="col-xs-3">Email:</div>
 		 			<div class="col-xs-9">{{ person.email_address}}&nbsp</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Date of birth:</div>
 		 			<div class="col-xs-9">{{ person.date_of_birth }}</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Adult or Child:</div>
 		 			<div class="col-xs-9">{{ person.age_status.status }}</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">ABSS TYPE:</div>
 		 			<div class="col-xs-9">{{ person.ABSS_type.name }}</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Trained Parent Champion:</div>
 		 			<div class="col-xs-9">{{ person.trained_champion|yesno:'Yes,No' }}</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Active Parent Champion:</div>
 		 			<div class="col-xs-9">{{ person.active_champion|yesno:'Yes,No' }}</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Role:</div>
 		 			<div class="col-xs-9">{{ person.default_role.role_type_name }}</div>
 		 		</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Gender:</div>
 		 			<div class="col-xs-9">{{ person.gender }}&nbsp</div>
 				</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Ethnicity:</div>
 		 			<div class="col-xs-9">{{ person.ethnicity }}</div>
 				</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Pregnant (or partner is pregnant):</div>
 		 			<div class="col-xs-9">{{ person.pregnant|yesno:'Yes,No' }}</div>
 				</div>
-		 		<div class="col-xs-12">
+		 		<div class="row">
 		 			<div class="col-xs-3">Due date:</div>
 		 			<div class="col-xs-9">{{ person.due_date }}</div>
 				</div>
@@ -86,7 +86,7 @@
 	 				</h4>
  			</div>
 	 		<div class="panel-body">
-	 			<div class="col-md-12">
+	 			<div class="row">
 		 			{% for relationship_to in relationships_to %}
 		 				<div class="col-xs-12">
 							{{ person }} is the 
@@ -107,7 +107,7 @@
 	 				</h4>
  			</div>
 	 		<div class="panel-body">
-	 			<div class='col-md-12'>
+	 			<div class='row'>
 					{% if person.house_name_or_number %}
 				 			<div class="col-xs-12">
 				 				Address: {{ person.house_name_or_number }} {{ person.street.name }}
@@ -132,7 +132,7 @@
 	 				<h4 class="panel-title">EVENT REGISTRATIONS</h4>
  			</div>
 	 		<div class="panel-body">
-	 			<div class="col-md-12">
+	 			<div class="row">
 			 		{% for registration in registrations %}
 		 				<div class="col-md-12">
 		 					<a href="{% url 'event' registration.event.pk %}">{{ registration.event }}</a>:
@@ -151,7 +151,7 @@
 	 				</h4>
  			</div>
 	 		<div class="panel-body">
-	 			<div class="col-md-12">
+	 			<div class="row">
 			 		{% for question in questions %}
 			 			{% if question.answer or question.note %}
 			 				<div class="col-md-12">

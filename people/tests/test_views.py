@@ -1907,6 +1907,8 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.default_role.role_type_name,'UNKNOWN')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_person.email_address,'')
+		self.assertEqual(test_person.home_phone,'')
+		self.assertEqual(test_person.mobile_phone,'')
 		self.assertEqual(test_person.date_of_birth,None)
 		self.assertEqual(test_person.gender,'')
 		self.assertEqual(test_person.notes,'')
@@ -1970,6 +1972,8 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.default_role.role_type_name,'UNKNOWN')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_person.email_address,'')
+		self.assertEqual(test_person.home_phone,'')
+		self.assertEqual(test_person.mobile_phone,'')
 		self.assertEqual(test_person.date_of_birth,None)
 		self.assertEqual(test_person.gender,'')
 		self.assertEqual(test_person.notes,'')
@@ -2033,6 +2037,8 @@ class ProfileViewTest(TestCase):
 											'middle_names' : 'updated_middle_names',
 											'last_name' : 'updated_last_name',
 											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
 											'pregnant' : True,
@@ -2055,6 +2061,8 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.last_name,'updated_last_name')
 		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
 		self.assertEqual(test_person.notes,'test notes')
@@ -2087,6 +2095,8 @@ class ProfileViewTest(TestCase):
 											'middle_names' : '',
 											'last_name' : 'updated_last_name',
 											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
 											'pregnant' : True,
@@ -2109,6 +2119,8 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.last_name,'updated_last_name')
 		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
 		self.assertEqual(test_person.notes,'test notes')
@@ -2257,6 +2269,8 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_new_person.email_address,'')
+		self.assertEqual(test_new_person.home_phone,'')
+		self.assertEqual(test_new_person.mobile_phone,'')
 		self.assertEqual(test_new_person.notes,'')
 		self.assertEqual(test_new_person.relationships.all().exists(),True)
 		self.assertEqual(test_new_person.children_centres.all().exists(),False)

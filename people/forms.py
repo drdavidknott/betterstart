@@ -106,6 +106,16 @@ class ProfileForm(forms.Form):
 									max_length=50,
 									required = False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	home_phone = forms.CharField(
+									label="Home phone number",
+									max_length=50,
+									required = False,
+									widget=forms.NumberInput(attrs={'class' : 'form-control',}))
+	mobile_phone = forms.CharField(
+									label="Mobile phone number",
+									max_length=50,
+									required = False,
+									widget=forms.NumberInput(attrs={'class' : 'form-control',}))
 	date_of_birth = forms.DateField(
 									label="Date of birth",
 									required=False,

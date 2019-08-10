@@ -266,7 +266,7 @@ def index(request):
 	# add the areas panel
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'AREAS',
+															title = 'PEOPLE IN AREA',
 															title_icon = 'glyphicon-globe',
 															column_names = ['counts'],
 															rows = get_areas_with_people_counts(),
@@ -281,7 +281,7 @@ def index(request):
 	# add the wards panel
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'WARDS',
+															title = 'PEOPLE IN WARD',
 															title_icon = 'glyphicon-globe',
 															column_names = ['counts'],
 															rows = get_wards_with_people_counts(),

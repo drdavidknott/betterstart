@@ -296,42 +296,35 @@ class AddRelationshipForm(forms.Form):
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['relationship_type'].choices = relationship_type_choices(Relationship_Type.objects.all())
+		self.fields['relationship_type'].choices = relationship_type_choices(
+														Relationship_Type.objects.all().order_by('relationship_type'))
 		self.fields['relationship_type'].initial = Relationship_Type.objects.get(relationship_type='parent').pk
-		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all())
+		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all().order_by('status'))
 		self.fields['age_status'].initial = Age_Status.objects.get(status='Child').pk
-		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all())
-		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all())
+		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all().order_by('role_type_name'))
+		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all().order_by('name'))
 		self.fields['first_name'].initial = first_name
 		self.fields['last_name'].initial = last_name
 
 class AddRelationshipToExistingPersonForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
-		# pull the relationship types list out of the parameters
-		relationship_types = kwargs.pop('relationship_types')
 		# pull the person list out of the parameter
 		people = kwargs.pop('people')
 		# call the built in constructor
 		super(AddRelationshipToExistingPersonForm, self).__init__(*args, **kwargs)
-		# set the choice field for relationship types
-		relationship_type_list = []
-		# add an initial option
-		relationship_type_list.append((0,'none'))
-		# go through the relationship types to build the options
-		for relationship_type in relationship_types:
-			# append a list of value and display value to the list
-			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
 		# now go through the people and build fields
 		for person in people:
 			# set the field name
 			field_name = 'relationship_type_' + str(person.pk)
 			# create the field
 			self.fields[field_name]= forms.ChoiceField(
-														label="Relationship",
-														widget=forms.Select(),
-														choices=relationship_type_list,
-														)
+										label="Relationship",
+										widget=forms.Select(),
+										choices=relationship_type_choices(
+													Relationship_Type.objects.all().order_by('relationship_type')),
+										initial=Relationship_Type.objects.get(relationship_type='parent').pk
+										)
 
 class EditExistingRelationshipsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

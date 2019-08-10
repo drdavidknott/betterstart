@@ -2478,7 +2478,6 @@ def add_relationship(request,person_id=0):
 					# create the form
 					addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
 															request.POST,
-															relationship_types=relationship_types,
 															people=search_results
 															)
 					# go through the search results and add a field name to the object

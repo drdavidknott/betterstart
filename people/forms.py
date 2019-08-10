@@ -7,9 +7,13 @@ from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity
 from django.contrib.auth import authenticate
 import datetime
 
-def relationship_type_choices(relationship_types):
+def relationship_type_choices(relationship_types,none=False):
 	# set the choice field for relationship types
 	relationship_type_list = []
+	# append 'none' if none is True
+	if none:
+		# append 'none'
+		relationship_type_list.append((0,'none'))
 	# go through the relationship types
 	for relationship_type in relationship_types:
 		# append a list of value and display value to the list
@@ -322,8 +326,8 @@ class AddRelationshipToExistingPersonForm(forms.Form):
 										label="Relationship",
 										widget=forms.Select(),
 										choices=relationship_type_choices(
-													Relationship_Type.objects.all().order_by('relationship_type')),
-										initial=Relationship_Type.objects.get(relationship_type='parent').pk
+													Relationship_Type.objects.all().order_by('relationship_type'),
+													none=True)
 										)
 
 class EditExistingRelationshipsForm(forms.Form):

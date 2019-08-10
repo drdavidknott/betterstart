@@ -334,30 +334,22 @@ class EditExistingRelationshipsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
 		# pull the relationship types list out of the parameters
-		relationship_types = kwargs.pop('relationship_types')
-		# pull the relationship list out of the parameters
 		relationships = kwargs.pop('relationships')
 		# call the built in constructor
 		super(EditExistingRelationshipsForm, self).__init__(*args, **kwargs)
-		# set the choice field for relationship types
-		relationship_type_list = []
-		# add an initial option
-		relationship_type_list.append((0,'none'))
-		# go through the relationship types to build the options
-		for relationship_type in relationship_types:
-			# append a list of value and display value to the list
-			relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
 		# now go through the people and build fields
 		for person in relationships:
 			# set the field name for the relationship type
 			field_name = 'relationship_type_' + str(person.pk)
 			# create the field
 			self.fields[field_name] = forms.ChoiceField(
-														label="Relationship",
-														widget=forms.Select(),
-														choices=relationship_type_list,
-														initial=person.relationship_type_pk
-														)
+											label="Relationship",
+											widget=forms.Select(),
+											choices=relationship_type_choices(
+														Relationship_Type.objects.all().order_by('relationship_type'),
+														none=True),
+											initial=person.relationship_type_pk
+											)
 
 class AddressSearchForm(forms.Form):
 	# Define the fields that we need in the form to search for the address

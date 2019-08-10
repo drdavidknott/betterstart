@@ -2542,8 +2542,7 @@ def add_relationship(request,person_id=0):
 	if relationships_to:
 		# build the form
 		editexistingrelationshipsform = EditExistingRelationshipsForm(
-																		relationships=relationships_to,
-																		relationship_types=get_relationship_types()
+																		relationships=relationships_to
 																		)
 		# and go through the relationships, adding the name of the select field and the hidden field
 		for relationship_to in relationships_to:

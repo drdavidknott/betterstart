@@ -971,6 +971,17 @@ def get_street(street_id):
 	# return the street
 	return street
 
+def get_ward(ward_id):
+	# try to get ward
+	try:
+		ward = Ward.objects.get(pk=ward_id)
+	# handle the exception
+	except Ward.DoesNotExist:
+		# set a false value
+		ward = False
+	# return the ward
+	return ward
+
 def get_ethnicity(ethnicity_id):
 	# try to get ethnicity
 	try:
@@ -1509,12 +1520,13 @@ def create_relationship(person_from, person_to, relationship_type_from):
 	# that's it!
 	return success
 
-def create_event(name, description, date, start_time, end_time, event_type, location):
+def create_event(name, description, date, start_time, end_time, event_type, location, ward):
 	# create an event
 	event = Event(
 					name = name,
 					description = description,
 					location = location,
+					ward = ward,
 					date = date,
 					start_time = start_time,
 					end_time = end_time,
@@ -1611,9 +1623,11 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 	# return the result
 	return success
 
-def build_event(request, name, description, date, start_time, end_time, event_type_id, location):
+def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id):
 	# get the event type
 	event_type = get_event_type(event_type_id)
+	# get the ward
+	ward = get_ward(ward_id)
 	# if we got an event type, create the event
 	if event_type:
 		# create the event
@@ -1621,6 +1635,7 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 								name = name,
 								description = description,
 								location = location,
+								ward = ward,
 								date = date,
 								start_time = start_time,
 								end_time = end_time,
@@ -2735,7 +2750,7 @@ def addevent(request):
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
-		addeventform = EventForm(request.POST, event_types=event_types)
+		addeventform = EventForm(request.POST)
 		# check whether the form is valid
 		if addeventform.is_valid():
 			# create the event
@@ -2744,6 +2759,7 @@ def addevent(request):
 								name = addeventform.cleaned_data['name'],
 								description = addeventform.cleaned_data['description'],
 								location = addeventform.cleaned_data['location'],
+								ward_id = addeventform.cleaned_data['ward'],
 								date = addeventform.cleaned_data['date'],
 								start_time = addeventform.cleaned_data['start_time'],
 								end_time = addeventform.cleaned_data['end_time'],
@@ -2756,7 +2772,7 @@ def addevent(request):
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		addeventform = EventForm(event_types=event_types)
+		addeventform = EventForm()
 	# get the template
 	addevent_template = loader.get_template('people/addevent.html')
 	# set the context
@@ -2925,7 +2941,6 @@ def edit_event(request, event_id=0):
 		# create a form
 		editeventform = EventForm(
 									request.POST,
-									event_types=get_event_types()
 									)
 		# check whether the entry is valid
 		if editeventform.is_valid():
@@ -2946,6 +2961,16 @@ def edit_event(request, event_id=0):
 			else:
 				# set the banner
 				return make_banner(request, 'Event type does not exist.')
+			# attempt to get the ward
+			ward = get_ward(editeventform.cleaned_data['ward'])
+			# set the value for the event
+			if ward:
+				# set the value
+				event.ward = ward
+			# otherwise crash out to a banner
+			else:
+				# set the banner
+				return make_banner(request, 'Event type does not exist.')
 			# save the record
 			event.save()
 			# set a success message
@@ -2958,6 +2983,7 @@ def edit_event(request, event_id=0):
 						'name' : event.name,
 						'description' : event.description,
 						'location' : event.location,
+						'ward' : event.ward.pk,
 						'date' : event.date,
 						'start_time' : event.start_time,
 						'end_time' : event.end_time,
@@ -2966,7 +2992,6 @@ def edit_event(request, event_id=0):
 		# create the form
 		editeventform = EventForm(
 									event_dict,
-									event_types=get_event_types()
 									)
 	# load the template
 	edit_event_template = loader.get_template('people/edit_event.html')

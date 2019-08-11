@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category
+							Event_Category, Ward
 from django.contrib.auth import authenticate
 import datetime
 
@@ -50,6 +50,16 @@ def role_type_choices(role_types):
 		role_type_list.append((role_type.pk, role_type.role_type_name))
 	# return the list
 	return role_type_list
+
+def ward_choices(wards):
+	# set the choice field for wards
+	ward_list = []
+	# go through the wards
+	for ward in wards:
+		# append a list of value and display value to the list
+		ward_list.append((ward.pk, ward.ward_name))
+	# return the list
+	return ward_list
 
 def ethnicity_choices(ethnicities):
 	# set the choice field for ethnicities
@@ -446,6 +456,9 @@ class EventForm(forms.Form):
 									max_length=50,
 									required=False, 
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	ward = forms.ChoiceField(
+									label="Ward",
+									widget=forms.Select())
 	event_type = forms.ChoiceField(
 									label="Event Type",
 									widget=forms.Select())
@@ -465,18 +478,20 @@ class EventForm(forms.Form):
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# pull the choices field out of the parameters
-		event_types = kwargs.pop('event_types')
 		# call the built in constructor
 		super(EventForm, self).__init__(*args, **kwargs)
 		# set the choice field for event types
 		event_type_list = []
 		# go through the event types
-		for event_type in event_types:
+		for event_type in Event_Type.objects.all().order_by('name'):
 			# append a list of value and display value to the list
 			event_type_list.append((event_type.pk, event_type.name))
 		# set the choices
 		self.fields['event_type'].choices = event_type_list
+		# and for the wards
+		self.fields['ward'].choices = ward_choices(Ward.objects.all().order_by('ward_name'))
+		# and the initial choice for the ward
+		self.fields['ward'].initial = str(Ward.objects.get(ward_name='Unknown').pk)
 
 class AddRegistrationForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

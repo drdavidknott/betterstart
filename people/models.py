@@ -156,6 +156,7 @@ class Event(models.Model):
 	start_time = models.TimeField()
 	end_time = models.TimeField()
 	location = models.CharField(max_length=100)
+	ward = models.ForeignKey(Ward, null=True, blank=True, on_delete=models.SET_NULL)
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name + ' on '  + self.date.strftime('%d/%m/%Y') + \

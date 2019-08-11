@@ -2978,6 +2978,10 @@ def edit_event(request, event_id=0):
 			# send the user back to the main person page
 			return redirect('/event/' + str(event.pk))
 	else:
+		# check whether we have a ward
+		if not event.ward:
+			# set the id to the 'unknown' ward
+			event.ward = Ward.objects.get(ward_name='Unknown')
 		# there is an event, so build a dictionary of initial values we want to set
 		event_dict = {
 						'name' : event.name,

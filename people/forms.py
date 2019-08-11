@@ -54,6 +54,8 @@ def role_type_choices(role_types):
 def ward_choices(wards):
 	# set the choice field for wards
 	ward_list = []
+	# append 'none'
+	ward_list.append((0,'None'))
 	# go through the wards
 	for ward in wards:
 		# append a list of value and display value to the list
@@ -491,7 +493,7 @@ class EventForm(forms.Form):
 		# and for the wards
 		self.fields['ward'].choices = ward_choices(Ward.objects.all().order_by('ward_name'))
 		# and the initial choice for the ward
-		self.fields['ward'].initial = str(Ward.objects.get(ward_name='Unknown').pk)
+		self.fields['ward'].initial = 0
 
 class AddRegistrationForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

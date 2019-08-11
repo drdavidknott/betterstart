@@ -2462,6 +2462,36 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
 
+	def test_create_event_no_ward(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addevent'),
+									data = { 
+												'name' : 'Testevent',
+												'description' : 'Testeventdesc',
+												'location' : 'Testeventloc',
+												'ward' : '0',
+												'date' : '01/02/2010',
+												'start_time' : '10:00',
+												'end_time' : '11:00',
+												'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/event_registration/' + str(Event.objects.get(name='Testevent').pk))
+		# get the record
+		test_event = Event.objects.get(name='Testevent')
+		# check the record contents
+		self.assertEqual(test_event.name,'Testevent')
+		self.assertEqual(test_event.description,'Testeventdesc')
+		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.ward,None)
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
+
 class EventRegistrationViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

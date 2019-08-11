@@ -1626,8 +1626,14 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id):
 	# get the event type
 	event_type = get_event_type(event_type_id)
-	# get the ward
-	ward = get_ward(ward_id)
+	# check whether we have a ward
+	if ward_id != '0':
+		# get the ward
+		ward = get_ward(ward_id)
+	# otherwise set null
+	else:
+		# set the ward to null
+		ward = None
 	# if we got an event type, create the event
 	if event_type:
 		# create the event
@@ -2962,15 +2968,23 @@ def edit_event(request, event_id=0):
 				# set the banner
 				return make_banner(request, 'Event type does not exist.')
 			# attempt to get the ward
-			ward = get_ward(editeventform.cleaned_data['ward'])
-			# set the value for the event
-			if ward:
-				# set the value
-				event.ward = ward
-			# otherwise crash out to a banner
+			ward_id = editeventform.cleaned_data['ward']
+			# check whether we have a ward id
+			if ward_id != '0':
+				# get the ward
+				ward = get_ward(ward_id)
+				# set the value for the event
+				if ward:
+					# set the value
+					event.ward = ward
+				# otherwise crash out to a banner
+				else:
+					# set the banner
+					return make_banner(request, 'Ward does not exist.')
+			# otherwise, set null
 			else:
-				# set the banner
-				return make_banner(request, 'Event type does not exist.')
+				# set the ward to none
+				event.ward = None
 			# save the record
 			event.save()
 			# set a success message
@@ -2981,13 +2995,17 @@ def edit_event(request, event_id=0):
 		# check whether we have a ward
 		if not event.ward:
 			# set the id to the 'unknown' ward
-			event.ward = Ward.objects.get(ward_name='Unknown')
+			ward_id = 0
+		# otherwise, get the ward id
+		else:
+			# get the ward id
+			ward_id = event.ward.pk
 		# there is an event, so build a dictionary of initial values we want to set
 		event_dict = {
 						'name' : event.name,
 						'description' : event.description,
 						'location' : event.location,
-						'ward' : event.ward.pk,
+						'ward' : ward_id,
 						'date' : event.date,
 						'start_time' : event.start_time,
 						'end_time' : event.end_time,

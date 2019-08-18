@@ -85,7 +85,13 @@
 									{{ event.location }}
 								</td>
 								<td>
-									{{ event.ward.ward_name }}
+									{% if event.ward %}
+										<a href="{% url 'event_ward' event.ward.pk %}">
+											{{ event.ward.ward_name }}
+										</a>
+									{% else %}
+										&nbsp;
+									{% endif %}
 								</td>
 								<td>
 									{{ event.date }}

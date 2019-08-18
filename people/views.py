@@ -263,13 +263,30 @@ def index(request):
 	dashboard.columns.append(events_dashboard_column)
 	# create the geo column for the dashboard
 	geo_dashboard_column = Dashboard_Column(width=4)
-	# add the people in areas panel
+	# add the events in wards panel
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'PEOPLE IN AREA',
+															title = 'EVENTS IN WARD',
 															title_icon = 'glyphicon-globe',
 															column_names = ['counts'],
-															rows = get_areas_with_people_counts(),
+															rows = get_wards_with_event_counts(),
+															row_name = 'ward_name',
+															row_values = ['count'],
+															row_url = 'event_ward',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the events in areas panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS IN AREA',
+															title_icon = 'glyphicon-globe',
+															column_names = ['counts'],
+															rows = get_areas_with_event_counts(),
 															row_name = 'area_name',
 															row_values = ['count'],
 															totals = True,
@@ -293,32 +310,15 @@ def index(request):
 															right_margin = 1,
 															)
 											)
-	# add the events in areas panel
+	# add the people in areas panel
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'EVENTS IN AREA',
+															title = 'PEOPLE IN AREA',
 															title_icon = 'glyphicon-globe',
 															column_names = ['counts'],
-															rows = get_areas_with_event_counts(),
+															rows = get_areas_with_people_counts(),
 															row_name = 'area_name',
 															row_values = ['count'],
-															totals = True,
-															label_width = 8,
-															column_width = 3,
-															right_margin = 1,
-															)
-											)
-	# add the events in wards panel
-	geo_dashboard_column.panels.append(
-											Dashboard_Panel(
-															title = 'EVENTS IN WARD',
-															title_icon = 'glyphicon-globe',
-															column_names = ['counts'],
-															rows = get_wards_with_event_counts(),
-															row_name = 'ward_name',
-															row_values = ['count'],
-															row_url = 'event_ward',
-															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
 															column_width = 3,

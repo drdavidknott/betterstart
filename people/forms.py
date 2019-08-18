@@ -7,40 +7,6 @@ from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity
 from django.contrib.auth import authenticate
 import datetime
 
-def relationship_type_choices(relationship_types,none=False):
-	# set the choice field for relationship types
-	relationship_type_list = []
-	# append 'none' if none is True
-	if none:
-		# append 'none'
-		relationship_type_list.append((0,'none'))
-	# go through the relationship types
-	for relationship_type in relationship_types:
-		# append a list of value and display value to the list
-		relationship_type_list.append((relationship_type.pk, relationship_type.relationship_type))
-	# return the list
-	return relationship_type_list
-
-def age_status_choices(age_statuses):
-	# set the choice field for age statuses
-	age_status_list = []
-	# go through the age statuses
-	for age_status in age_statuses:
-		# append a list of value and display value to the list
-		age_status_list.append((age_status.pk, age_status.status))
-	# return the list
-	return age_status_list
-
-def ABSS_type_choices(ABSS_types):
-	# set the choice field for ABSS types
-	ABSS_type_list = []
-	# go through the ABSS types
-	for ABSS_type in ABSS_types:
-		# append a list of value and display value to the list
-		ABSS_type_list.append((ABSS_type.pk, ABSS_type.name))
-	# return the choices
-	return ABSS_type_list
-
 def role_type_choices(role_types):
 	# set the choice field for role types
 	role_type_list = []
@@ -50,18 +16,6 @@ def role_type_choices(role_types):
 		role_type_list.append((role_type.pk, role_type.role_type_name))
 	# return the list
 	return role_type_list
-
-def ward_choices(wards):
-	# set the choice field for wards
-	ward_list = []
-	# append 'none'
-	ward_list.append((0,'None'))
-	# go through the wards
-	for ward in wards:
-		# append a list of value and display value to the list
-		ward_list.append((ward.pk, ward.ward_name))
-	# return the list
-	return ward_list
 
 def build_choices(choice_class,choice_field,default=False,default_label=''):
 	# create a blank list
@@ -76,16 +30,6 @@ def build_choices(choice_class,choice_field,default=False,default_label=''):
 		choice_list.append((choice.pk, getattr(choice,choice_field)))
 	# return the list
 	return choice_list
-
-def ethnicity_choices(ethnicities):
-	# set the choice field for ethnicities
-	ethnicity_list = []
-	# go through the ethnicities
-	for ethnicity in ethnicities:
-		# append a list of value and display value to the list
-		ethnicity_list.append((ethnicity.pk, ethnicity.description))
-	# return the list
-	return ethnicity_list
 
 class LoginForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -202,11 +146,11 @@ class ProfileForm(forms.Form):
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice fields
-		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all().order_by('status'))
+		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
 		self.fields['role_type'].choices = role_type_choices(
 												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
-		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all().order_by('name'))
-		self.fields['ethnicity'].choices = ethnicity_choices(Ethnicity.objects.all().order_by('description'))
+		self.fields['ABSS_type'].choices = build_choices(choice_class=ABSS_Type,choice_field='name')
+		self.fields['ethnicity'].choices = build_choices(choice_class=Ethnicity,choice_field='description')
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function
@@ -255,8 +199,16 @@ class PersonSearchForm(forms.Form):
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
 											role_type_choices(Role_Type.objects.filter(use_for_people=True))
-		self.fields['ABSS_type'].choices = [(0,'Any')] + ABSS_type_choices(ABSS_Type.objects.all())
-		self.fields['age_status'].choices = [(0,'Any')] + age_status_choices(Age_Status.objects.all())
+		self.fields['ABSS_type'].choices = build_choices(
+															choice_class=ABSS_Type,
+															choice_field='name',
+															default=True,
+															default_label='Any')
+		self.fields['age_status'].choices = build_choices(
+															choice_class=Age_Status,
+															choice_field='status',
+															default=True,
+															default_label='Any')
 		self.fields['champions'].choices = [(0,'N/A'),('trained','Trained Champions'),('active','Active Champions')]
 
 class PersonNameSearchForm(forms.Form):
@@ -326,13 +278,13 @@ class AddRelationshipForm(forms.Form):
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['relationship_type'].choices = relationship_type_choices(
-														Relationship_Type.objects.all().order_by('relationship_type'))
+		self.fields['relationship_type'].choices = build_choices(choice_class=Relationship_Type,
+																	choice_field='relationship_type')
 		self.fields['relationship_type'].initial = Relationship_Type.objects.get(relationship_type='parent').pk
-		self.fields['age_status'].choices = age_status_choices(Age_Status.objects.all().order_by('status'))
+		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
 		self.fields['age_status'].initial = Age_Status.objects.get(status='Child').pk
-		self.fields['role_type'].choices = role_type_choices(Role_Type.objects.all().order_by('role_type_name'))
-		self.fields['ABSS_type'].choices = ABSS_type_choices(ABSS_Type.objects.all().order_by('name'))
+		self.fields['role_type'].choices = build_choices(choice_class=Role_Type,choice_field='role_type_name')
+		self.fields['ABSS_type'].choices = build_choices(choice_class=ABSS_Type,choice_field='name')
 		self.fields['first_name'].initial = first_name
 		self.fields['last_name'].initial = last_name
 
@@ -351,9 +303,10 @@ class AddRelationshipToExistingPersonForm(forms.Form):
 			self.fields[field_name]= forms.ChoiceField(
 										label="Relationship",
 										widget=forms.Select(),
-										choices=relationship_type_choices(
-													Relationship_Type.objects.all().order_by('relationship_type'),
-													none=True)
+										choices=build_choices(choice_class=Relationship_Type,
+																	choice_field='relationship_type',
+																	default=True,
+																	default_label='none')
 										)
 
 class EditExistingRelationshipsForm(forms.Form):
@@ -371,9 +324,10 @@ class EditExistingRelationshipsForm(forms.Form):
 			self.fields[field_name] = forms.ChoiceField(
 											label="Relationship",
 											widget=forms.Select(),
-											choices=relationship_type_choices(
-														Relationship_Type.objects.all().order_by('relationship_type'),
-														none=True),
+											choices=build_choices(choice_class=Relationship_Type,
+																	choice_field='relationship_type',
+																	default=True,
+																	default_label='none'),
 											initial=person.relationship_type_pk
 											)
 
@@ -496,16 +450,13 @@ class EventForm(forms.Form):
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
 		super(EventForm, self).__init__(*args, **kwargs)
-		# set the choice field for event types
-		event_type_list = []
-		# go through the event types
-		for event_type in Event_Type.objects.all().order_by('name'):
-			# append a list of value and display value to the list
-			event_type_list.append((event_type.pk, event_type.name))
 		# set the choices
-		self.fields['event_type'].choices = event_type_list
+		self.fields['event_type'].choices = build_choices(choice_class=Event_Type,choice_field='name')
 		# and for the wards
-		self.fields['ward'].choices = ward_choices(Ward.objects.all().order_by('ward_name'))
+		self.fields['ward'].choices = build_choices(choice_class=Ward,
+													choice_field='ward_name',
+													default=True,
+													default_label='None')
 		# and the initial choice for the ward
 		self.fields['ward'].initial = 0
 
@@ -641,30 +592,16 @@ class EventSearchForm(forms.Form):
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
 		super(EventSearchForm, self).__init__(*args, **kwargs)
-		# set the choice field for event types
-		event_type_list = []
-		# add the default choice
-		event_type_list.append((0,'Any'))
-		# get the event types
-		event_types = Event_Type.objects.all().order_by('name')
-		# go through the event types
-		for event_type in event_types:
-			# append a list of value and display value to the list
-			event_type_list.append((event_type.pk, event_type.name))
 		# set the choices
-		self.fields['event_type'].choices = event_type_list
-		# set the choice field for event categories
-		event_category_list = []
-		# add the default choice
-		event_category_list.append((0,'Any'))
-		# get the event categories
-		event_categories = Event_Category.objects.all().order_by('name')
-		# go through the event categories
-		for event_category in event_categories:
-			# append a list of value and display value to the list
-			event_category_list.append((event_category.pk, event_category.name))
+		self.fields['event_type'].choices = build_choices(choice_class=Event_Type,
+															choice_field='name',
+															default=True,
+															default_label='Any')
 		# set the choices
-		self.fields['event_category'].choices = event_category_list
+		self.fields['event_category'].choices = build_choices(choice_class=Event_Category,
+																choice_field='name',
+																default=True,
+																default_label='Any')
 		# set the wards
 		self.fields['ward'].choices = build_choices(choice_class=Ward,
 													choice_field='ward_name',

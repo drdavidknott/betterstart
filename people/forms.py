@@ -224,16 +224,16 @@ class PersonSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	role_type = forms.ChoiceField(
 									label="Role",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	ABSS_type = forms.ChoiceField(
 									label="ABSS",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	age_status = forms.ChoiceField(
 									label="Adult or Child",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	champions = forms.ChoiceField(
 									label="Champions",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -598,10 +598,10 @@ class EventSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	event_category = forms.ChoiceField(
 									label="Event Category",
-									widget=forms.Select(attrs={'class' : 'select-fixed-width',}))
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
 	event_type = forms.ChoiceField(
 									label="Event Type",
-									widget=forms.Select(attrs={'class' : 'select-fixed-width',}))
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
 	date_from = forms.DateField(
 									label="From",
 									required=False,

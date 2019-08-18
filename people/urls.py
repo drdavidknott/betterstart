@@ -20,6 +20,7 @@ urlpatterns = [
     url(r'^event/(?P<event_id>[0-9]+)$', views.event, name='event'),
     url(r'^event_type/(?P<event_group>[0-9]+)$', views.event_group, name='event_type'),
     url(r'^event_category/(?P<event_group>[0-9]+)$', views.event_group, name='event_category'),
+    url(r'^event_ward/(?P<event_group>[0-9]+)$', views.event_group, name='event_ward'),
     url(r'^event_type_this_month/(?P<event_group>[0-9]+)$', views.event_group, name='event_type_this_month'),
     url(r'^event_category_this_month/(?P<event_group>[0-9]+)$', views.event_group, name='event_category_this_month'),
     url(r'^events_this_month$', views.event_group, name='events_this_month'),

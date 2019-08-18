@@ -63,6 +63,20 @@ def ward_choices(wards):
 	# return the list
 	return ward_list
 
+def build_choices(choice_class,choice_field,default=False,default_label=''):
+	# create a blank list
+	choice_list = []
+	# check whether we have a default
+	if default:
+		# add a default
+		choice_list.append((0,default_label))
+	# go through the choices, based on the supplied class
+	for choice in choice_class.objects.all().order_by(choice_field):
+		# append a list of value and display value to the list
+		choice_list.append((choice.pk, getattr(choice,choice_field)))
+	# return the list
+	return choice_list
+
 def ethnicity_choices(ethnicities):
 	# set the choice field for ethnicities
 	ethnicity_list = []
@@ -602,6 +616,9 @@ class EventSearchForm(forms.Form):
 	event_type = forms.ChoiceField(
 									label="Event Type",
 									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
+	ward = forms.ChoiceField(
+									label="Ward",
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
 	date_from = forms.DateField(
 									label="From",
 									required=False,
@@ -648,6 +665,11 @@ class EventSearchForm(forms.Form):
 			event_category_list.append((event_category.pk, event_category.name))
 		# set the choices
 		self.fields['event_category'].choices = event_category_list
+		# set the wards
+		self.fields['ward'].choices = build_choices(choice_class=Ward,
+													choice_field='ward_name',
+													default=True,
+													default_label='Any')
 
 class AnswerQuestionsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

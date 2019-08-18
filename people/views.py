@@ -263,7 +263,7 @@ def index(request):
 	dashboard.columns.append(events_dashboard_column)
 	# create the geo column for the dashboard
 	geo_dashboard_column = Dashboard_Column(width=4)
-	# add the areas panel
+	# add the people in areas panel
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'PEOPLE IN AREA',
@@ -278,7 +278,7 @@ def index(request):
 															right_margin = 1,
 															)
 											)
-	# add the wards panel
+	# add the people in wards panel
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'PEOPLE IN WARD',
@@ -287,6 +287,38 @@ def index(request):
 															rows = get_wards_with_people_counts(),
 															row_name = 'ward_name',
 															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the events in areas panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS IN AREA',
+															title_icon = 'glyphicon-globe',
+															column_names = ['counts'],
+															rows = get_areas_with_event_counts(),
+															row_name = 'area_name',
+															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the events in wards panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS IN WARD',
+															title_icon = 'glyphicon-globe',
+															column_names = ['counts'],
+															rows = get_wards_with_event_counts(),
+															row_name = 'ward_name',
+															row_values = ['count'],
+															row_url = 'event_ward',
+															row_parameter_name = 'pk',
 															totals = True,
 															label_width = 8,
 															column_width = 3,
@@ -1033,7 +1065,7 @@ def get_events():
 	# return the list of people
 	return events
 
-def get_events_by_name_dates_and_type(name,event_type,event_category,date_from,date_to):
+def search_events(name='',event_type=0,event_category=0,ward=0,date_from=None,date_to=None):
 	# check whether we have any search terms, otherwise return all events
 	# start by getting all the events
 	events = Event.objects.all()
@@ -1057,6 +1089,10 @@ def get_events_by_name_dates_and_type(name,event_type,event_category,date_from,d
 	if event_category != 0:
 		# filter by type
 		events = events.filter(event_type__event_category_id=event_category)
+	# if we have a ward, filter by that
+	if ward != 0:
+		# filter by type
+		events = events.filter(ward_id=ward)
 	# return the list of events
 	return events
 
@@ -1202,6 +1238,26 @@ def get_areas_with_people_counts():
 	for area in areas:
 		# get the count
 		area.count = Person.objects.filter(street__post_code__ward__area=area).count()
+	# return the results
+	return areas
+
+def get_wards_with_event_counts():
+	# return a list of all the wards with event counts
+	wards = Ward.objects.all()
+	# now go through the wards
+	for ward in wards:
+		# get the count
+		ward.count = Event.objects.filter(ward=ward).count()
+	# return the results
+	return wards
+
+def get_areas_with_event_counts():
+	# return a list of all the areas with people counts
+	areas = Area.objects.all()
+	# now go through the areas
+	for area in areas:
+		# get the count
+		area.count = Event.objects.filter(ward__area=area).count()
 	# return the results
 	return areas
 
@@ -2810,18 +2866,22 @@ def event(request, event_id=0):
 
 @login_required
 def event_group(request, event_group='0'):
+	# set the variables to zero
+	event_type = 0
+	event_category = 0
+	ward = 0
 	# get the calling url
 	path = request.get_full_path()
 	# set the grouping based on the path
 	if 'type' in path:
 		# we have an event type
 		event_type = event_group
-		event_category = '0'
-	# otherwise we have a category (or nothing)
-	else:
-		# set the type and group
-		event_type = '0'
+	elif 'category' in path:
+		# we have an event category
 		event_category = event_group
+	elif 'ward' in path:
+		# we have a ward
+		ward = event_group
 	# get the dashboard dates
 	dashboard_dates = get_dashboard_dates()
 	# set blank dates
@@ -2847,6 +2907,7 @@ def event_group(request, event_group='0'):
 	copy_POST['action'] = 'search'
 	copy_POST['event_type'] = event_type
 	copy_POST['event_category'] = event_category
+	copy_POST['ward'] = ward
 	copy_POST['name'] = ''
 	copy_POST['date_from'] = date_from
 	copy_POST['date_to'] = date_to
@@ -2866,9 +2927,11 @@ def events(request):
 	page_list = []
 	# and blank search terms
 	name = ''
-	event_type = 0,
-	date_from = 0,
+	event_type = 0
+	event_category = 0
+	date_from = 0
 	date_to = 0
+	ward = 0
 	# set a blank search_error
 	search_error = ''
 	# and a zero number of results
@@ -2889,14 +2952,16 @@ def events(request):
 				date_to = eventsearchform.cleaned_data['date_to']
 				event_type = eventsearchform.cleaned_data['event_type']
 				event_category = eventsearchform.cleaned_data['event_category']
+				ward = eventsearchform.cleaned_data['ward']
 				# conduct a search
-				events = get_events_by_name_dates_and_type(
-															name=name,
-															date_from=date_from,
-															date_to=date_to,
-															event_type=int(event_type),
-															event_category=int(event_category)
-															)
+				events = search_events(
+										name=name,
+										date_from=date_from,
+										date_to=date_to,
+										event_type=int(event_type),
+										event_category=int(event_category),
+										ward=int(ward)
+										)
 				# set the number of results
 				number_of_events = len(events)
 				# get the page number
@@ -2925,6 +2990,8 @@ def events(request):
 				'eventsearchform' : eventsearchform,
 				'name' : name,
 				'event_type' : event_type,
+				'event_category' : event_category,
+				'ward' : ward,
 				'date_from' : date_from,
 				'date_to' : date_to,
 				'page_list' : page_list,

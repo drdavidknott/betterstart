@@ -123,7 +123,7 @@ def set_up_test_streets(
 									post_code = Post_Code.objects.get(post_code=post_code)
 									)
 
-def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
+def set_up_test_events(name_root,event_type,number,date='2019-01-01',ward=None):
 	# set up the number of people asked for
 	# create the number of people needed
 	for n in range(number):
@@ -132,6 +132,7 @@ def set_up_test_events(name_root,event_type,number,date='2019-01-01'):
 											name = name_root + str(n),
 											description = 'Test event description',
 											event_type = event_type,
+											ward = ward,
 											date = datetime.datetime.strptime(date,'%Y-%m-%d'),
 											start_time = datetime.datetime.strptime('10:00','%H:%M'),
 											end_time = datetime.datetime.strptime('11:00','%H:%M'),
@@ -1480,6 +1481,8 @@ class EventsViewTest(TestCase):
 	def setUpTestData(cls):
 		# create a test user
 		user = set_up_test_user()
+		# set up address base data
+		set_up_address_base_data()
 		# create an event category
 		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
 		# and another couple of event categories
@@ -1518,7 +1521,7 @@ class EventsViewTest(TestCase):
 		set_up_test_events('Test_Event_Type_1_', test_event_type_1,50)
 		set_up_test_events('Test_Event_Type_2_', test_event_type_2,50)
 		set_up_test_events('Test_Event_Type_3_', test_event_type_3,50)
-		set_up_test_events('Test_Event_Type_4_', test_event_type_4,50)
+		set_up_test_events('Test_Event_Type_4_', test_event_type_4,50,ward=Ward.objects.get(ward_name='Test ward'))
 		# and 50 of each of the two test event types with different names
 		set_up_test_events('Different_Name_',test_event_type_1,50)
 		set_up_test_events('Another_Name_',test_event_type_2,50)
@@ -1567,6 +1570,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '',
 											'event_type' : '0',
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1592,6 +1596,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '20/02/2019',
 											'event_type' : '0',
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1617,6 +1622,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '20/02/2019',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1642,6 +1648,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '20/02/2019',
 											'event_type' : '0',
 											'event_category' : str(Event_Category.objects.get(name='test_event_category_3').pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1667,6 +1674,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '',
 											'event_type' : '0',
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1692,6 +1700,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1717,6 +1726,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '20/01/2019',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1742,6 +1752,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '20/01/2019',
 											'event_type' : '0',
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1769,6 +1780,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '20/02/2019',
 											'event_type' : str(test_event_type_6.pk),
 											'event_category' : '0',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1796,6 +1808,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '',
 											'event_type' : '0',
 											'event_category' : str(test_event_category_2.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1823,6 +1836,7 @@ class EventsViewTest(TestCase):
 											'date_to' : '',
 											'event_type' : '0',
 											'event_category' : str(test_event_category_3.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1834,6 +1848,32 @@ class EventsViewTest(TestCase):
 		self.assertEqual(len(response.context['events']),20)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_ward(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
 
 class EventViewTest(TestCase):
 	@classmethod

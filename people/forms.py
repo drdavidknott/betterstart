@@ -460,7 +460,7 @@ class EventForm(forms.Form):
 		# and the initial choice for the ward
 		self.fields['ward'].initial = 0
 		# now go through the areas and build fields
-		for area in Area.objects.filter(use_for_events=True):
+		for area in Area.objects.filter(use_for_events=True).order_by('area_name'):
 			# set the field name for the area
 			field_name = 'area_' + str(area.pk)
 			# create the field
@@ -560,7 +560,7 @@ class EditRegistrationForm(forms.Form):
 			# create the field
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
-														widget=forms.Select(),
+														widget=forms.Select(attrs={'class' : 'form-control'}),
 														initial=registration.role_type.pk,
 														choices=role_type_list,
 														)
@@ -645,7 +645,7 @@ class AnswerQuestionsForm(forms.Form):
 				# create the field
 				self.fields[field_name]= forms.ChoiceField(
 															label=question.question_text,
-															widget=forms.Select(),
+															widget=forms.Select(attrs={'class' : 'form-control'}),
 															choices=option_list,
 															initial=question.answer
 															)

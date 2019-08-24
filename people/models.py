@@ -252,6 +252,9 @@ class Relationship(models.Model):
 		return self.relationship_from.first_name + ' ' + self.relationship_from.last_name + \
 			' is the ' + self.relationship_type.relationship_type + ' of ' + \
 				self.relationship_to.first_name + ' ' + self.relationship_to.last_name
+	def short_desc(self):
+		return self.relationship_type.relationship_type + ' of ' + \
+			self.relationship_to.first_name + ' ' + self.relationship_to.last_name
 
 # Role model: records that a person plays a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role

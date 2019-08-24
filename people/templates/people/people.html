@@ -78,7 +78,10 @@
 								<td>
 									{% for rel_from in person.rel_from.all %}
 										<div>
-											{{ rel_from }}
+											{{ rel_from.relationship_type|capfirst }} of
+												<a href="{% url 'person' rel_from.relationship_to.pk %}"> 
+													{{ rel_from.relationship_to }}
+												</a>
 										</div>
 									{% endfor %}
 								</td>

@@ -97,8 +97,7 @@
 	 			<div class="row">
 		 			{% for relationship_to in relationships_to %}
 		 				<div class="col-xs-12">
-							{{ person }} is the 
-							{{ relationship_to.relationship_type }} of
+							{{ relationship_to.relationship_type|capfirst }} of
 							<a href="{% url 'person' relationship_to.pk %}"> 
 								{{ relationship_to }}
 							</a>

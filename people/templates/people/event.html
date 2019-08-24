@@ -27,14 +27,6 @@
 		 			<div class="col-xs-10">{{ event.description }}&nbsp</div>
 		 		</div>
 	 			<div>
-		 			<div class="col-xs-2">Location:</div>
-		 			<div class="col-xs-10">{{ event.location }}&nbsp</div>
-		 		</div>
-	 			<div>
-		 			<div class="col-xs-2">Ward:</div>
-		 			<div class="col-xs-10">{{ event.ward.ward_name }}&nbsp</div>
-		 		</div>
-	 			<div>
 		 			<div class="col-xs-2">Type:</div>
 		 			<div class="col-xs-10">{{ event.event_type.name }}</div>
 		 		</div>
@@ -50,6 +42,24 @@
 		 			<div class="col-xs-2">End Time:</div>
 		 			<div class="col-xs-10">{{ event.end_time }}</div>
 				</div>
+	 			<div>
+		 			<div class="col-xs-2">Location:</div>
+		 			<div class="col-xs-10">{{ event.location }}&nbsp</div>
+		 		</div>
+	 			<div>
+		 			<div class="col-xs-2">Ward:</div>
+		 			<div class="col-xs-10">{{ event.ward.ward_name }}&nbsp</div>
+		 		</div>
+		 		{% if event.areas.exists %}
+		 			<div>
+			 			<div class="col-xs-2">Available to areas:</div>
+			 			<div class="col-xs-10">
+			 				{% for area in event.areas.all %}
+			 					<div>{{ area.area_name }}</div>
+			 				{% endfor %}
+			 			</div>
+			 		</div>
+			 	{% endif %}
 			</div>
 		</div>
 

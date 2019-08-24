@@ -81,6 +81,7 @@ class Children_Centre(models.Model):
 # Area model: represents valid areeas (which contain wards)
 class Area(models.Model):
 	area_name = models.CharField(max_length=50)
+	use_for_events = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.area_name

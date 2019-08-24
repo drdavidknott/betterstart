@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward
+							Event_Category, Ward, Area
 from django.contrib.auth import authenticate
 import datetime
 
@@ -421,14 +421,6 @@ class EventForm(forms.Form):
 									label="Description",
 									max_length=1000,
 									widget=forms.Textarea(attrs={'class' : 'form-control', 'cols' : 100, 'rows' : 6}))
-	location = forms.CharField(
-									label="Location",
-									max_length=50,
-									required=False, 
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	ward = forms.ChoiceField(
-									label="Ward",
-									widget=forms.Select())
 	event_type = forms.ChoiceField(
 									label="Event Type",
 									widget=forms.Select())
@@ -446,6 +438,14 @@ class EventForm(forms.Form):
 	end_time = forms.TimeField(
 									label="End Time",
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
+	location = forms.CharField(
+									label="Location",
+									max_length=50,
+									required=False, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	ward = forms.ChoiceField(
+									label="Ward",
+									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -459,6 +459,17 @@ class EventForm(forms.Form):
 													default_label='None')
 		# and the initial choice for the ward
 		self.fields['ward'].initial = 0
+		# now go through the areas and build fields
+		for area in Area.objects.filter(use_for_events=True):
+			# set the field name for the area
+			field_name = 'area_' + str(area.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = area.area_name,
+														required = False,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'})
+														)
+			# set the field name for participation
 
 class AddRegistrationForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

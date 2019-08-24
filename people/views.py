@@ -1679,7 +1679,7 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 	# return the result
 	return success
 
-def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id):
+def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id, areas):
 	# get the event type
 	event_type = get_event_type(event_type_id)
 	# check whether we have a ward
@@ -1705,6 +1705,13 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 							)
 		# set a message
 		messages.success(request, 'New event (' + str(event) + ') created.')
+		print(areas)
+		# got through the areas
+		for area_id in areas.keys():
+			# determine whether the event is available to this area
+			if (areas[area_id] == True) or (ward and ward.area.pk == area_id):
+				# add the area
+				event.areas.add(Area.objects.get(id=area_id))
 	# otherwise set a message
 	else:
 		# set the failed creation message
@@ -2140,6 +2147,17 @@ def get_dashboard_dates(date=0):
 		date_dict['first_day_of_this_year'] = first_day_of_this_year.replace(year=first_day_of_this_year.year-1)
 	# return the dictionary
 	return date_dict
+
+def build_event_area_dict(form_dict):
+	# go through the cleaned data dict from a form and build a list of areas
+	# create the dict
+	area_dict = {}
+	# got through the areas
+	for area in Area.objects.filter(use_for_events=True):
+		# get the value
+		area_dict[area.pk] = form_dict['area_' + str(area.pk)]
+	# return the new dict
+	return area_dict
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -2825,7 +2843,8 @@ def addevent(request):
 								date = addeventform.cleaned_data['date'],
 								start_time = addeventform.cleaned_data['start_time'],
 								end_time = addeventform.cleaned_data['end_time'],
-								event_type_id = addeventform.cleaned_data['event_type']
+								event_type_id = addeventform.cleaned_data['event_type'],
+								areas = build_event_area_dict(addeventform.cleaned_data)
 								)
 			# if we were successful, redirect to the registration page
 			if event:
@@ -3056,7 +3075,19 @@ def edit_event(request, event_id=0):
 			event.save()
 			# set a success message
 			messages.success(request, str(event) + ' updated.')
-			# send the user back to the main person page
+			# get the dictionary
+			area_dict = build_event_area_dict(editeventform.cleaned_data)
+			# go through the areas and update the area relationships
+			for area_id in area_dict.keys():
+				# check whether the box is unchecked but the record exists
+				if not area_dict[area_id] and event.areas.filter(pk=area_id).exists():
+					# remove the record
+					event.areas.remove(Area.objects.get(pk=area_id))
+				# if the box is checked or this is the area for the ward, add the record
+				if area_dict[area_id] or (event.ward and area_id == event.ward.area.pk):
+					# add the record
+					event.areas.add(Area.objects.get(pk=area_id))
+			# send the user back to the main event page
 			return redirect('/event/' + str(event.pk))
 	else:
 		# check whether we have a ward
@@ -3078,6 +3109,16 @@ def edit_event(request, event_id=0):
 						'end_time' : event.end_time,
 						'event_type' : event.event_type.pk
 						}
+		# go through the areas and add the values
+		for area in Area.objects.all():
+			# set the initial value
+			available_in_area = False
+			# check whether the event is available in the area
+			if area in event.areas.all():
+				# set the value to True
+				available_in_area = True
+			# now update the dict
+			event_dict['area_' + str(area.pk)] = available_in_area
 		# create the form
 		editeventform = EventForm(
 									event_dict,

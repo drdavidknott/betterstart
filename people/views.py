@@ -1705,7 +1705,6 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 							)
 		# set a message
 		messages.success(request, 'New event (' + str(event) + ') created.')
-		print(areas)
 		# got through the areas
 		for area_id in areas.keys():
 			# determine whether the event is available to this area
@@ -3318,6 +3317,8 @@ def answer_questions(request,person_id=0):
 				# process the note
 				else:
 					build_answer_note(request,person,question_id,answerquestionsform.data[field])
+		# send the user back to the main person page
+		return redirect('/person/' + str(person.pk))
 	# otherwise create an empty form
 	else:
 		# create the empty form

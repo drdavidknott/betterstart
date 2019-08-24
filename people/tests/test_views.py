@@ -3828,7 +3828,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# check that we don't have any answers
 		self.assertEqual(Answer.objects.all().exists(),False)
 
@@ -3853,7 +3853,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get the answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 
@@ -3878,7 +3878,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get the answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_with_notes,option=option_with_notes).exists())
 		# get the notes
@@ -3908,7 +3908,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -3940,7 +3940,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -3960,7 +3960,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -3992,7 +3992,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -4012,7 +4012,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -4042,7 +4042,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -4062,7 +4062,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertFalse(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -4092,7 +4092,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer
@@ -4112,7 +4112,7 @@ class Questions(TestCase):
 											}
 									)
 		# check that we got a response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get one answer
 		self.assertTrue(Answer.objects.filter(person=person,question=question_no_notes,option=option_no_notes).exists())
 		# get the other answer

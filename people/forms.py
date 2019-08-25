@@ -192,9 +192,6 @@ class ProfileForm(forms.Form):
 		# the validation function
 		# start by calling the built in validation function
 		valid = super(ProfileForm, self).is_valid()
-		# set the return value if the built in validation function fails
-		if valid == False:
-			return valid
 		# now perform the additional checks
 		# start by checking whether the active champion is set without the trained champion
 		if self.cleaned_data['active_champion'] and not self.cleaned_data['trained_champion']:
@@ -214,6 +211,12 @@ class ProfileForm(forms.Form):
 			self._errors['date_of_birth'] = "Must be less than " + str(age_status.maximum_age) + " years old."
 			# set the validity flag
 			valid = False
+		# check whether the only error is due to a change in age status: if so, set the default
+		if 'role_type' in self._errors.keys() and len(self._errors) == 1:
+			# set the value to the default
+			self.cleaned_data['role_type'] = str(age_status.role_types.get(default_for_age_status=True).pk)
+			# reset the valid flag
+			valid = True
 		# return the result
 		return valid
 

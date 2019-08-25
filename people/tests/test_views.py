@@ -17,7 +17,10 @@ def set_up_people_base_data():
 	# and the capture type
 	test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
 	# create a test role
-	test_role = Role_Type.objects.create(role_type_name='test_role_type',use_for_events=True,use_for_people=True)
+	test_role = Role_Type.objects.create(role_type_name='test_role_type',
+											use_for_events=True,
+											use_for_people=True,
+											default_for_age_status=True)
 	# and a second test role type
 	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type',use_for_events=True,use_for_people=True)
 	# and an UNKNOWN role type
@@ -31,7 +34,14 @@ def set_up_people_base_data():
 	# create a test age status
 	test_age_status = Age_Status.objects.create(status='Adult')
 	# create a second test age status
-	test_age_status = Age_Status.objects.create(status='Child')
+	test_age_status_2 = Age_Status.objects.create(status='Child under four')
+	# allow the role type of each age status
+	test_age_status.role_types.add(test_role)
+	test_age_status.role_types.add(second_test_role)
+	test_age_status.role_types.add(unknown_test_role)
+	test_age_status_2.role_types.add(test_role)
+	test_age_status_2.role_types.add(second_test_role)
+	test_age_status_2.role_types.add(unknown_test_role)
 
 def set_up_test_people(
 						name_root,
@@ -1937,6 +1947,7 @@ class AddPersonViewTest(TestCase):
 									data = { 
 												'first_name' : 'Testfirst',
 												'last_name' : 'Testlast',
+												'age_status' : str(Age_Status.objects.get(status='Adult').pk)
 											}
 									)
 		# check that we got a redirect response
@@ -1947,7 +1958,7 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Testfirst')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Testlast')
-		self.assertEqual(test_person.default_role.role_type_name,'UNKNOWN')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_person.email_address,'')
 		self.assertEqual(test_person.home_phone,'')
@@ -1980,9 +1991,8 @@ class AddPersonViewTest(TestCase):
 									reverse('addperson'),
 									data = { 
 												'first_name' : 'Person_0',
-												'middle_names' : '',
 												'last_name' : 'Person_0',
-												'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk)
+												'age_status' : str(Age_Status.objects.get(status='Adult').pk)
 											}
 									)
 		# check that we got a valid response
@@ -2002,6 +2012,7 @@ class AddPersonViewTest(TestCase):
 												'action' : 'CONFIRM',
 												'first_name' : 'Person_0',
 												'last_name' : 'Person_0',
+												'age_status' : str(Age_Status.objects.get(status='Adult').pk)
 											}
 									)
 		# check that we got a redirect response
@@ -2012,7 +2023,7 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Person_0')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person_0')
-		self.assertEqual(test_person.default_role.role_type_name,'UNKNOWN')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_person.email_address,'')
 		self.assertEqual(test_person.home_phone,'')
@@ -2089,7 +2100,7 @@ class ProfileViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
-											'age_status' : str(Age_Status.objects.get(status='Child').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
 											'trained_champion' : True,
 											'active_champion' : True
 											}
@@ -2119,7 +2130,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
-		self.assertEqual(test_person.age_status.status,'Child')
+		self.assertEqual(test_person.age_status.status,'Child under four')
 		self.assertEqual(test_person.trained_champion,True)
 		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
@@ -2147,7 +2158,7 @@ class ProfileViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
-											'age_status' : str(Age_Status.objects.get(status='Child').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
 											'trained_champion' : True,
 											'active_champion' : True
 											}
@@ -2177,7 +2188,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
-		self.assertEqual(test_person.age_status.status,'Child')
+		self.assertEqual(test_person.age_status.status,'Child under four')
 		self.assertEqual(test_person.trained_champion,True)
 		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
@@ -2294,26 +2305,18 @@ class AddRelationshipViewTest(TestCase):
 											'first_name' : 'new_first_name',
 											'middle_names' : 'new_middle_names',
 											'last_name' : 'new_last_name',
-											'email_address' : 'new_email_address@test.com',
-											'date_of_birth' : '01/01/2001',
-											'gender' : 'Male',
-											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'relationship_type' : str(Relationship_Type.objects.get(relationship_type='parent').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk)
 											}
 									)
 		# check the response
-		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.status_code, 302)
 		# get the newly created person record
 		test_new_person = Person.objects.get(first_name='new_first_name')
 		# check the record contents
 		self.assertEqual(test_new_person.first_name,'new_first_name')
 		self.assertEqual(test_new_person.middle_names,'new_middle_names')
 		self.assertEqual(test_new_person.last_name,'new_last_name')
-		self.assertEqual(test_new_person.default_role.role_type_name,'second_test_role_type')
-		self.assertEqual(test_new_person.gender,'Male')
-		self.assertEqual(test_new_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		# check the record contents which have not been set yet
 		self.assertEqual(test_new_person.email_address,'')
 		self.assertEqual(test_new_person.home_phone,'')
@@ -2327,7 +2330,6 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_new_person.families.all().exists(),False)
 		self.assertEqual(test_new_person.savs_id,None)
-		self.assertEqual(test_new_person.ABSS_type.name,'test_ABSS_type')
 		self.assertEqual(test_new_person.age_status.status,'Adult')
 		self.assertEqual(test_new_person.house_name_or_number,'')
 		self.assertEqual(test_new_person.street,None)

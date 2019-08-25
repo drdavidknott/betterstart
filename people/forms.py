@@ -52,6 +52,16 @@ class AddPersonForm(forms.Form):
 									label="Surname",
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	age_status = forms.ChoiceField(
+									label="Age status",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+
+	def __init__(self, *args, **kwargs):
+		# over-ride the __init__ method to set the choices
+		# call the built in constructor
+		super(AddPersonForm, self).__init__(*args, **kwargs)
+		# set the choice fields
+		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
 
 class ProfileForm(forms.Form):
 	# Define the choices for gender
@@ -104,7 +114,7 @@ class ProfileForm(forms.Form):
 									label="ABSS Type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	age_status = forms.ChoiceField(
-									label="Adult or Child",
+									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	role_type = forms.ChoiceField(
 									label="Role",
@@ -147,10 +157,37 @@ class ProfileForm(forms.Form):
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice fields
 		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
-		self.fields['role_type'].choices = role_type_choices(
-												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
 		self.fields['ABSS_type'].choices = build_choices(choice_class=ABSS_Type,choice_field='name')
 		self.fields['ethnicity'].choices = build_choices(choice_class=Ethnicity,choice_field='description')
+		# get the age status
+		if self.is_bound:
+			# we have an age status, so get the age status object
+			age_status = Age_Status.objects.get(id=int(self['age_status'].value()))
+			# get the role types via the age status
+			self.fields['role_type'].choices = role_type_choices(
+												age_status.role_types.filter(use_for_people=True).order_by('role_type_name'))
+			# hide fields if they should not be shown by age status
+			if not age_status.can_have_contact_details:
+				# hide the contact fields
+				self.fields['email_address'].widget = forms.HiddenInput()
+				self.fields['home_phone'].widget = forms.HiddenInput()
+				self.fields['mobile_phone'].widget = forms.HiddenInput()
+			# and the champion fields
+			if not age_status.can_be_parent_champion:
+				# hide the parent champion fields
+				self.fields['trained_champion'].widget = forms.HiddenInput()
+				self.fields['active_champion'].widget = forms.HiddenInput()
+			# and the pregnancy fields
+			if not age_status.can_be_pregnant:
+				# hide the parent champion fields
+				self.fields['pregnant'].widget = forms.HiddenInput()
+				self.fields['due_date'].widget = forms.HiddenInput()
+		else:
+			# get the full set of role types
+			self.fields['role_type'].choices = role_type_choices(
+												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
+		# hide fields depending on age status
+
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function
@@ -163,6 +200,18 @@ class ProfileForm(forms.Form):
 		if self.cleaned_data['active_champion'] and not self.cleaned_data['trained_champion']:
 			#set the error message
 			self._errors['active_champion'] = "Only trained champions can be active champions."
+			# set the validity flag
+			valid = False
+		# now check whether we have a child under four whose date of birth is more than four years ago
+		# get the age status
+		age_status = Age_Status.objects.get(id=self.cleaned_data['age_status'])
+		# get today's date
+		today = datetime.date.today()
+		# now check the age
+		if self.cleaned_data['date_of_birth'] != None and \
+			self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
+			#set the error message
+			self._errors['date_of_birth'] = "Must be less than " + str(age_status.maximum_age) + " years old."
 			# set the validity flag
 			valid = False
 		# return the result
@@ -225,12 +274,6 @@ class PersonNameSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 
 class AddRelationshipForm(forms.Form):
-	# Define the choices for gender
-	gender_choices = (
-					('Not specified','Not specified'),
-					('Male' , 'Male'),
-					('Female' , 'Female'),
-					)
 	# Define the fields that we need in the form to capture the basics of the person's profile
 	first_name = forms.CharField(
 									label="First name",
@@ -240,32 +283,13 @@ class AddRelationshipForm(forms.Form):
 									label="Middle names",
 									max_length=50,
 									required=False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	last_name = forms.CharField(
 									label="Last name",
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	date_of_birth = forms.DateField(
-									label="Date of birth",
-									widget=forms.DateInput(
-																format='%d/%m/%Y',
-																attrs={
-																	'class' : 'form-control datepicker',
-																	'autocomplete' : 'off'
-																	}),
-									input_formats=('%d/%m/%Y',))
-	gender = forms.ChoiceField(
-									label="Gender",
-									choices=gender_choices,
-									widget=forms.Select(attrs={'class' : 'form-control'}))
-	role_type = forms.ChoiceField(
-									label="Role",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
-	ABSS_type = forms.ChoiceField(
-									label="ABSS",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
 	age_status = forms.ChoiceField(
-									label="Adult or Child",
+									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	relationship_type = forms.ChoiceField(
 									label="Relationship",
@@ -282,9 +306,7 @@ class AddRelationshipForm(forms.Form):
 																	choice_field='relationship_type')
 		self.fields['relationship_type'].initial = Relationship_Type.objects.get(relationship_type='parent').pk
 		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
-		self.fields['age_status'].initial = Age_Status.objects.get(status='Child').pk
-		self.fields['role_type'].choices = build_choices(choice_class=Role_Type,choice_field='role_type_name')
-		self.fields['ABSS_type'].choices = build_choices(choice_class=ABSS_Type,choice_field='name')
+		self.fields['age_status'].initial = Age_Status.objects.get(status='Child under four').pk
 		self.fields['first_name'].initial = first_name
 		self.fields['last_name'].initial = last_name
 
@@ -502,15 +524,14 @@ class AddRegistrationForm(forms.Form):
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 			# set the field name for role
 			field_name = 'role_type_' + str(person.pk)
-			# TODO: change the approach below to an alternate relationship
 			# if this is a parent, make them a carer
 			if person.default_role.role_type_name == 'Parent':
 				# swith the role type id to carer
 				role_type_id = Role_Type.objects.get(role_type_name='Carer').pk
 			# check whether the role type exists
 			elif not person.default_role.use_for_events:
-				# set the role type to UNKNOWN
-				role_type_id = Role_Type.objects.get(role_type_name='UNKNOWN').pk
+				# set the role type to the default for the age status
+				role_type_id = person.age_status.role_types.get(default_for_age_status=True)
 			# otherwise set the id
 			else:
 				# set the id
@@ -519,7 +540,8 @@ class AddRegistrationForm(forms.Form):
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
 														widget=forms.Select(),
-														choices=role_type_list,
+														choices=role_type_choices(
+																	person.age_status.role_types.filter(use_for_people=True).order_by('role_type_name')),
 														initial=role_type_id
 														)
 
@@ -562,7 +584,8 @@ class EditRegistrationForm(forms.Form):
 														label="Role",
 														widget=forms.Select(attrs={'class' : 'form-control'}),
 														initial=registration.role_type.pk,
-														choices=role_type_list,
+														choices=role_type_choices(
+																	registration.person.age_status.role_types.filter(use_for_people=True).order_by('role_type_name')),
 														)
 
 class EventSearchForm(forms.Form):

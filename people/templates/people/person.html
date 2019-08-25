@@ -32,38 +32,42 @@
 		 			<div class="col-xs-3">Last name:</div>
 		 			<div class="col-xs-9">{{ person.last_name }}</div>
 		 		</div>
-	 			<div class="row">
-		 			<div class="col-xs-3">Email:</div>
-		 			<div class="col-xs-9">{{ person.email_address}}&nbsp</div>
-		 		</div>
-	 			<div class="row">
-		 			<div class="col-xs-3">Home phone:</div>
-		 			<div class="col-xs-9">{{ person.home_phone}}&nbsp</div>
-		 		</div>
-	 			<div class="row">
-		 			<div class="col-xs-3">Mobile phone:</div>
-		 			<div class="col-xs-9">{{ person.mobile_phone}}&nbsp</div>
-		 		</div>
+		 		{% if person.age_status.can_have_contact_details %}
+		 			<div class="row">
+			 			<div class="col-xs-3">Email:</div>
+			 			<div class="col-xs-9">{{ person.email_address}}&nbsp</div>
+			 		</div>
+		 			<div class="row">
+			 			<div class="col-xs-3">Home phone:</div>
+			 			<div class="col-xs-9">{{ person.home_phone}}&nbsp</div>
+			 		</div>
+		 			<div class="row">
+			 			<div class="col-xs-3">Mobile phone:</div>
+			 			<div class="col-xs-9">{{ person.mobile_phone}}&nbsp</div>
+			 		</div>
+		 		{% endif %}
 		 		<div class="row">
 		 			<div class="col-xs-3">Date of birth:</div>
 		 			<div class="col-xs-9">{{ person.date_of_birth }}</div>
 		 		</div>
 		 		<div class="row">
-		 			<div class="col-xs-3">Adult or Child:</div>
+		 			<div class="col-xs-3">Age status:</div>
 		 			<div class="col-xs-9">{{ person.age_status.status }}</div>
 		 		</div>
 		 		<div class="row">
 		 			<div class="col-xs-3">ABSS TYPE:</div>
 		 			<div class="col-xs-9">{{ person.ABSS_type.name }}</div>
 		 		</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">Trained Parent Champion:</div>
-		 			<div class="col-xs-9">{{ person.trained_champion|yesno:'Yes,No' }}</div>
-		 		</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">Active Parent Champion:</div>
-		 			<div class="col-xs-9">{{ person.active_champion|yesno:'Yes,No' }}</div>
-		 		</div>
+		 		{% if person.age_status.can_be_parent_champion %}
+			 		<div class="row">
+			 			<div class="col-xs-3">Trained Parent Champion:</div>
+			 			<div class="col-xs-9">{{ person.trained_champion|yesno:'Yes,No' }}</div>
+			 		</div>
+			 		<div class="row">
+			 			<div class="col-xs-3">Active Parent Champion:</div>
+			 			<div class="col-xs-9">{{ person.active_champion|yesno:'Yes,No' }}</div>
+			 		</div>
+		 		{% endif %}
 		 		<div class="row">
 		 			<div class="col-xs-3">Role:</div>
 		 			<div class="col-xs-9">{{ person.default_role.role_type_name }}</div>
@@ -76,14 +80,16 @@
 		 			<div class="col-xs-3">Ethnicity:</div>
 		 			<div class="col-xs-9">{{ person.ethnicity }}</div>
 				</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">Pregnant (or partner is pregnant):</div>
-		 			<div class="col-xs-9">{{ person.pregnant|yesno:'Yes,No' }}</div>
-				</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">Due date:</div>
-		 			<div class="col-xs-9">{{ person.due_date }}</div>
-				</div>
+				{% if person.age_status.can_be_pregnant %}
+			 		<div class="row">
+			 			<div class="col-xs-3">Pregnant (or partner is pregnant):</div>
+			 			<div class="col-xs-9">{{ person.pregnant|yesno:'Yes,No' }}</div>
+					</div>
+			 		<div class="row">
+			 			<div class="col-xs-3">Due date:</div>
+			 			<div class="col-xs-9">{{ person.due_date }}</div>
+					</div>
+				{% endif %}
 			</div>
 		</div>
 

@@ -28,6 +28,7 @@ class Role_Type(models.Model):
 	role_type_name = models.CharField(max_length=50)
 	use_for_events = models.BooleanField(default=False)
 	use_for_people = models.BooleanField(default=False)
+	default_for_age_status = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.role_type_name
@@ -50,6 +51,11 @@ class ABSS_Type(models.Model):
 # This is reference data.
 class Age_Status(models.Model):
 	status = models.CharField(max_length=50)
+	role_types = models.ManyToManyField(Role_Type)
+	can_be_parent_champion = models.BooleanField(default=False)
+	can_be_pregnant = models.BooleanField(default=False)
+	can_have_contact_details = models.BooleanField(default=False)
+	maximum_age = models.IntegerField(default=999)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.status

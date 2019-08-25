@@ -945,7 +945,8 @@ def get_children_over_four():
 	# get today's date
 	today = datetime.date.today()
 	# return the results
-	return Person.objects.filter(date_of_birth__lt=today.replace(year=today.year-4),age_status__status='Child')
+	return Person.objects.filter(date_of_birth__lt=today.replace(year=today.year-4),
+									age_status__status='Child under four')
 
 def get_parent_champions():
 	# return a dict of two lists: trained parent champions and active parent champions
@@ -1478,23 +1479,28 @@ def create_person(
 					age_status=0,
 					trained_champion=False,
 					active_champion=False):
+	# get the age status
+	if not age_status:
+		# set the default to adult
+		age_status = Age_Status.objects.get(status='Adult').pk
+	# otherwise get the actual age status
+	else:
+		# get the age status
+		age_status = get_age_status(age_status)
 	# check whether we have a role type
 	if default_role:
 		# get the role
 		default_role = get_role_type(default_role)
 	# otherwise set unknown
 	else:
-		# get the UNKNOWN role type
-		default_role = get_role_type_by_name('UNKNOWN')
+		# get the role type dependent on the age status
+		default_role = age_status.role_types.get(default_for_age_status=True)
 	# get the default values for ethnicity, ABSS Type and age_status
 	if not ethnicity:
 		ethnicity = Ethnicity.objects.get(description='Prefer not to say').pk
 	# and the ABSS type
 	if not ABSS_type:
 		ABSS_type = ABSS_Type.objects.get(name='ABSS beneficiary').pk
-	# and the age status
-	if not age_status:
-		age_status = Age_Status.objects.get(status='Adult').pk
 	# create a person
 	person = Person(
 					first_name = first_name,
@@ -1505,7 +1511,7 @@ def create_person(
 					default_role = default_role,
 					ethnicity = get_ethnicity(ethnicity),
 					ABSS_type = get_ABSS_type(ABSS_type),
-					age_status = get_age_status(age_status),
+					age_status = age_status,
 					trained_champion=trained_champion,
 					active_champion=active_champion
 						)
@@ -2388,6 +2394,7 @@ def addperson(request):
 			# get the names
 			first_name = addpersonform.cleaned_data['first_name']
 			last_name = addpersonform.cleaned_data['last_name']
+			age_status = addpersonform.cleaned_data['age_status']
 			# see whether this is a confirmation action
 			# get the action from the request
 			action = request.POST.get('action','')
@@ -2397,6 +2404,7 @@ def addperson(request):
 				person = create_person(
 										first_name = first_name,
 										last_name = last_name,
+										age_status = age_status
 										)
 				# set a success message
 				messages.success(request,
@@ -2411,7 +2419,8 @@ def addperson(request):
 			# create the person
 			person = create_person(
 									first_name = first_name,
-									last_name = last_name
+									last_name = last_name,
+									age_status = age_status
 									)
 			# set a success message
 			messages.success(request,
@@ -2614,18 +2623,14 @@ def add_relationship(request,person_id=0):
 											first_name = addrelationshipform.cleaned_data['first_name'],
 											middle_names = addrelationshipform.cleaned_data['middle_names'],
 											last_name = addrelationshipform.cleaned_data['last_name'],
-											date_of_birth = addrelationshipform.cleaned_data['date_of_birth'],
-											default_role = addrelationshipform.cleaned_data['role_type'],
-											gender = addrelationshipform.cleaned_data['gender'],
-											ABSS_type = addrelationshipform.cleaned_data['ABSS_type'],
 											age_status = addrelationshipform.cleaned_data['age_status']
 											)
 				# set a message to say that we have create a new person
 				messages.success(request, str(person_to) + ' created.')
 				# now create the relationship
 				edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
-				# clear the add relationship form so that it doesn't display
-				addrelationshipform = ''
+				# redirect to the profile form for the new person
+				return redirect('/profile/' + str(person_to.pk))
 	# otherwise we didn't get a post
 	else:
 		# create a blank form

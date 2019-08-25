@@ -118,7 +118,7 @@ def index(request):
 											)
 	# create the exceptions dashboard panel
 	exceptions_dashboard_panel = Dashboard_Panel(
-														title = 'EXCEPTIONS',
+														title = 'EXCEPTIONS: PARENTS',
 														title_icon = 'glyphicon-warning-sign',
 														column_names = ['counts'],
 														label_width = 8,
@@ -151,17 +151,26 @@ def index(request):
 																parameter = 1
 																)
 											)
-	# add the overdue parents row to the panel
-	exceptions_dashboard_panel.rows.append(
-											Dashboard_Panel_Row(
-																label = 'Children older than four',
-																values = [len(get_children_over_four())],
-																url = 'children_over_four',
-																parameter = 1
-																)
-											)
-	# append the parent champions panel to the column
+	# append the parent exceptions panel to the column
 	roles_dashboard_column.panels.append(exceptions_dashboard_panel)
+	# add the children age exceptions panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EXCEPTIONS: AGE STATUS',
+															title_icon = 'glyphicon-warning-sign',
+															title_url = '',
+															column_names = ['counts'],
+															rows = get_age_status_exceptions(),
+															row_name = 'status',
+															row_values = ['count'],
+															row_url = 'age_exceptions',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
 	# append the roles column to the dashboard
 	dashboard.columns.append(roles_dashboard_column)
 	# create the events column for the dashboard
@@ -947,6 +956,25 @@ def get_children_over_four():
 	# return the results
 	return Person.objects.filter(date_of_birth__lt=today.replace(year=today.year-4),
 									age_status__status='Child under four')
+
+def get_age_status_exceptions():
+	# return a list of all the age statuses, supplemented with counts of people outside the age range
+	age_statuses = []
+	# get today's date
+	today = datetime.date.today()
+	# now go through the age statuses
+	for age_status in Age_Status.objects.all():
+		# get the exceptions
+		age_exceptions = age_status.person_set.filter(
+								date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age))
+		# see whether we got any exceptions
+		if age_exceptions.count() > 0:
+			# add the count to the object
+			age_status.count = age_exceptions.count()
+			# add the object to the list
+			age_statuses.append(age_status)
+	# return the results
+	return age_statuses
 
 def get_parent_champions():
 	# return a dict of two lists: trained parent champions and active parent champions
@@ -2380,6 +2408,28 @@ def exceptions(request, page=1):
 				})
 	# return the HttpResponse
 	return HttpResponse(exceptions_template.render(context=context, request=request))
+
+@login_required
+def age_exceptions(request, age_status_id=0):
+	# load the template
+	age_exceptions_template = loader.get_template('people/age_exceptions.html')
+	# get the age status
+	age_status = get_age_status(age_status_id)
+	# if the age status doesn't exist, crash to a banner
+	if not age_status:
+		return make_banner(request, 'Age status does not exist.')
+	# get today's date
+	today = datetime.date.today()
+	# get the exceptions
+	age_exceptions = age_status.person_set.filter(
+							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age))
+	# set the context from the person based on person id
+	context = build_context({
+				'age_status' : age_status,
+				'people' : age_exceptions,
+				})
+	# return the response
+	return HttpResponse(age_exceptions_template.render(context=context, request=request))
 
 @login_required
 def addperson(request):

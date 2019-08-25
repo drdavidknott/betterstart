@@ -8,7 +8,15 @@
 
 <div class="container">
 
-	{% include "people/person_header.html" %}
+	<div class="row">
+		<div class="col-md-12">
+			<h2>
+				<a href="{% url 'person' person.pk %}">
+					{{ person }}
+				</a>
+			</h2>
+		</div>
+	</div>
 
  	<div class="row">
  		<div class="col-md-12">

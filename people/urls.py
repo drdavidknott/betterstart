@@ -47,5 +47,6 @@ urlpatterns = [
     	views.exceptions, name='parents_with_overdue_children'),
     url(r'^children_over_four/(?P<page>[0-9]+)$', 
     	views.exceptions, name='children_over_four'),
-    url(r'^answer_questions/(?P<person_id>[0-9]+)$', views.answer_questions, name='answer_questions')
+    url(r'^answer_questions/(?P<person_id>[0-9]+)$', views.answer_questions, name='answer_questions'),
+    url(r'^age_exceptions/(?P<age_status_id>[0-9]+)$', views.age_exceptions, name='age_exceptions'),
 ]

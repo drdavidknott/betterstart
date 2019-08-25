@@ -1,0 +1,67 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-md-12">
+			<h2>
+				EXCEPTIONS: {{ age_status.status }} older than {{ age_status.maximum_age }}
+			</h2>
+		</div>
+	</div>
+
+	{% if people %}
+
+		<div class="row">
+			<div class="col-md-12">
+				<table class="table table-striped panel panel-default">
+					<thead><tr>
+						<th>NAME:</th>
+						<th>DATE OF BIRTH:</th>
+						<th>GENDER:</th>
+						<th>ROLE:</th>
+					</tr></thead>
+					<tbody>
+				 		{% for person in people %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'person' person.pk %}">
+										{{ person }}
+									</a>
+								</td>
+								<td>
+									{{ person.date_of_birth }}
+								</td>
+								<td>
+									{{ person.gender }}
+								</td>
+								<td>
+									{{ person.default_role.role_type_name }}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% else %}
+
+		<div class="row">
+			<div class="col-md-12">
+				No exceptions.
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

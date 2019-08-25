@@ -19,12 +19,13 @@ def set_up_people_base_data():
 	# create a test role
 	test_role = Role_Type.objects.create(role_type_name='test_role_type',
 											use_for_events=True,
-											use_for_people=True,
-											default_for_age_status=True)
+											use_for_people=True)
 	# and a second test role type
 	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type',use_for_events=True,use_for_people=True)
 	# and an UNKNOWN role type
 	unknown_test_role = Role_Type.objects.create(role_type_name='UNKNOWN',use_for_events=True,use_for_people=True)
+	# and a test role for an age status default
+	age_test_role = Role_Type.objects.create(role_type_name='age_test_role',use_for_events=True,use_for_people=True)
 	# create a test ABSS type
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
 	# create a second test ABSS type
@@ -35,6 +36,8 @@ def set_up_people_base_data():
 	test_age_status = Age_Status.objects.create(status='Adult',default_role_type=test_role)
 	# create a second test age status
 	test_age_status_2 = Age_Status.objects.create(status='Child under four',default_role_type=test_role)
+	# and a third test age status
+	test_age_status_3 = Age_Status.objects.create(status='Default role age status',default_role_type=age_test_role,default_role_type_only=True)
 	# allow the role type of each age status
 	test_age_status.role_types.add(test_role)
 	test_age_status.role_types.add(second_test_role)
@@ -2100,7 +2103,7 @@ class ProfileViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
-											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
 											'trained_champion' : True,
 											'active_champion' : True
 											}
@@ -2113,7 +2116,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'updated_first_name')
 		self.assertEqual(test_person.middle_names,'updated_middle_names')
 		self.assertEqual(test_person.last_name,'updated_last_name')
-		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
+		self.assertEqual(test_person.default_role.role_type_name,'age_test_role')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
 		self.assertEqual(test_person.home_phone,'123456')
 		self.assertEqual(test_person.mobile_phone,'678901')
@@ -2130,7 +2133,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
-		self.assertEqual(test_person.age_status.status,'Child under four')
+		self.assertEqual(test_person.age_status.status,'Default role age status')
 		self.assertEqual(test_person.trained_champion,True)
 		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
@@ -2193,6 +2196,95 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+
+	def test_update_profile_age_status_default_only(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : '',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : '99',
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
+											'trained_champion' : True,
+											'active_champion' : True
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(first_name='updated_first_name')
+		# check the record contents
+		self.assertEqual(test_person.first_name,'updated_first_name')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.default_role.role_type_name,'age_test_role')
+		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'678901')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Default role age status')
+		self.assertEqual(test_person.trained_champion,True)
+		self.assertEqual(test_person.active_champion,True)
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+
+	def test_update_profile_age_status_multiple_choices(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','age_test_role',1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : '',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'trained_champion' : True,
+											'active_champion' : True
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Select a valid role for this age status.')
 
 class AddEventViewTest(TestCase):
 	@classmethod

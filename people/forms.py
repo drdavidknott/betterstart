@@ -182,6 +182,10 @@ class ProfileForm(forms.Form):
 				# hide the parent champion fields
 				self.fields['pregnant'].widget = forms.HiddenInput()
 				self.fields['due_date'].widget = forms.HiddenInput()
+			# and the role type
+			if age_status.default_role_type_only:
+				# hide the role type field
+				self.fields['role_type'].widget = forms.HiddenInput()
 		else:
 			# get the full set of role types
 			self.fields['role_type'].choices = role_type_choices(
@@ -212,11 +216,23 @@ class ProfileForm(forms.Form):
 			# set the validity flag
 			valid = False
 		# check whether the only error is due to a change in age status: if so, set the default
-		if 'role_type' in self._errors.keys() and len(self._errors) == 1:
+		if 'role_type' in self._errors.keys():
+			# set a relevant error message
+			self._errors['role_type'] = 'Select a valid role for this age status.'
 			# set the value to the default
 			self.cleaned_data['role_type'] = str(age_status.default_role_type.pk)
-			# reset the valid flag
-			valid = True
+			# check whether this is the only error and if only defaults are allowed
+			if len(self._errors) == 1 and age_status.default_role_type_only:
+				# set the valid flag
+				valid = True
+			# otherwise set the default on the page
+			else:
+				# set the value, remembering that self.data is immutable unless we copy it
+				form_data_copy = self.data.copy()
+				# set the value
+				form_data_copy['role_type'] = str(age_status.default_role_type.pk)
+				# replace with the copy
+				self.data = form_data_copy
 		# return the result
 		return valid
 
@@ -239,7 +255,7 @@ class PersonSearchForm(forms.Form):
 									label="ABSS",
 									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	age_status = forms.ChoiceField(
-									label="Adult or Child",
+									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	champions = forms.ChoiceField(
 									label="Champions",

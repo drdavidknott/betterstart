@@ -28,7 +28,6 @@ class Role_Type(models.Model):
 	role_type_name = models.CharField(max_length=50)
 	use_for_events = models.BooleanField(default=False)
 	use_for_people = models.BooleanField(default=False)
-	default_for_age_status = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.role_type_name

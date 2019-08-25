@@ -1494,7 +1494,7 @@ def create_person(
 	# otherwise set unknown
 	else:
 		# get the role type dependent on the age status
-		default_role = age_status.role_types.get(default_for_age_status=True)
+		default_role = age_status.default_role_type
 	# get the default values for ethnicity, ABSS Type and age_status
 	if not ethnicity:
 		ethnicity = Ethnicity.objects.get(description='Prefer not to say').pk

@@ -32,9 +32,9 @@ def set_up_people_base_data():
 	# and another type
 	test_ABSS_type = ABSS_Type.objects.create(name='ABSS beneficiary')
 	# create a test age status
-	test_age_status = Age_Status.objects.create(status='Adult')
+	test_age_status = Age_Status.objects.create(status='Adult',default_role_type=test_role)
 	# create a second test age status
-	test_age_status_2 = Age_Status.objects.create(status='Child under four')
+	test_age_status_2 = Age_Status.objects.create(status='Child under four',default_role_type=test_role)
 	# allow the role type of each age status
 	test_age_status.role_types.add(test_role)
 	test_age_status.role_types.add(second_test_role)

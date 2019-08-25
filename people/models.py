@@ -52,6 +52,12 @@ class ABSS_Type(models.Model):
 class Age_Status(models.Model):
 	status = models.CharField(max_length=50)
 	role_types = models.ManyToManyField(Role_Type)
+	default_role_type = models.ForeignKey(Role_Type,
+											blank=True,
+											null=True,
+											on_delete=models.SET_NULL,
+											related_name='age_status_default')
+	default_role_type_only = models.BooleanField(default=False)
 	can_be_parent_champion = models.BooleanField(default=False)
 	can_be_pregnant = models.BooleanField(default=False)
 	can_have_contact_details = models.BooleanField(default=False)

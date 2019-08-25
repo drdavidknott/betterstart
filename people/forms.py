@@ -214,7 +214,7 @@ class ProfileForm(forms.Form):
 		# check whether the only error is due to a change in age status: if so, set the default
 		if 'role_type' in self._errors.keys() and len(self._errors) == 1:
 			# set the value to the default
-			self.cleaned_data['role_type'] = str(age_status.role_types.get(default_for_age_status=True).pk)
+			self.cleaned_data['role_type'] = str(age_status.default_role_type.pk)
 			# reset the valid flag
 			valid = True
 		# return the result

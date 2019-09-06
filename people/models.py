@@ -28,6 +28,7 @@ class Role_Type(models.Model):
 	role_type_name = models.CharField(max_length=50)
 	use_for_events = models.BooleanField(default=False)
 	use_for_people = models.BooleanField(default=False)
+	trained = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.role_type_name
@@ -215,6 +216,7 @@ class Person(models.Model):
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	relationships = models.ManyToManyField('self', through='Relationship', symmetrical=False)
 	default_role = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
+	trained_roles = models.ManyToManyField(Role_Type, through='Trained_Role', related_name='trained_people')
 	children_centres = models.ManyToManyField(Children_Centre, through='CC_Registration')
 	events = models.ManyToManyField(Event, through='Event_Registration')
 	answers = models.ManyToManyField(Option, through='Answer')
@@ -267,29 +269,22 @@ class Relationship(models.Model):
 		return self.relationship_type.relationship_type + ' of ' + \
 			self.relationship_to.first_name + ' ' + self.relationship_to.last_name
 
-# Role model: records that a person plays a particular type of role
+# Trained Role model: records that a person is trained to play a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role
-class Role(models.Model):
+class Trained_Role(models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
-	trained = models.BooleanField()
 	active = models.BooleanField()
 	# define the function that will return a string showing the relationship as the object reference
 	def __str__(self):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \
-			+ ' (' + self.trained_status() + ' and ' + self.active_status() + ')'
+			+ ' (' + self.active_status() + ')'
 	# define a function for returning active status as a string
 	def active_status(self):
 		if self.active:
 			return 'active'
 		else:
 			return 'inactive'
-	# define a function for returing trained status as a string
-	def trained_status(self):
-		if self.trained:
-			return 'trained'
-		else:
-			return 'untrained'
 
 # Role history model: records that a person has played a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role

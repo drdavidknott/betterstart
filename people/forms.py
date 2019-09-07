@@ -70,6 +70,12 @@ class ProfileForm(forms.Form):
 					('Male' , 'Male'),
 					('Female' , 'Female'),
 					)
+	# and the choices for trained roles
+	trained_role_choices = (
+							('none','Not trained'),
+							('trained' , 'Trained'),
+							('active' , 'Trained and active'),
+							)
 	# Define the fields that we need in the form to capture the basics of the person's profile
 	first_name = forms.CharField(
 									label="First name",
@@ -119,14 +125,6 @@ class ProfileForm(forms.Form):
 	role_type = forms.ChoiceField(
 									label="Role",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
-	trained_champion = forms.BooleanField(
-									label = "Trained Parent Champion",
-									required = False,
-									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
-	active_champion = forms.BooleanField(
-									label = "Active Parent Champion",
-									required = False,
-									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	ethnicity = forms.ChoiceField(
 									label="Ethnicity",
 									required=False,
@@ -172,14 +170,9 @@ class ProfileForm(forms.Form):
 				self.fields['email_address'].widget = forms.HiddenInput()
 				self.fields['home_phone'].widget = forms.HiddenInput()
 				self.fields['mobile_phone'].widget = forms.HiddenInput()
-			# and the champion fields
-			if not age_status.can_be_parent_champion:
-				# hide the parent champion fields
-				self.fields['trained_champion'].widget = forms.HiddenInput()
-				self.fields['active_champion'].widget = forms.HiddenInput()
 			# and the pregnancy fields
 			if not age_status.can_be_pregnant:
-				# hide the parent champion fields
+				# hide the pregnancy fields
 				self.fields['pregnant'].widget = forms.HiddenInput()
 				self.fields['due_date'].widget = forms.HiddenInput()
 			# and the role type
@@ -190,31 +183,25 @@ class ProfileForm(forms.Form):
 			# get the full set of role types
 			self.fields['role_type'].choices = role_type_choices(
 												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
-		# hide fields depending on age status
+		# get the trained roles and set up fields for them
+		for trained_role in age_status.role_types.filter(trained=True):
+			# set the field name for role
+			field_name = 'trained_role_' + str(trained_role.pk)
+			# create the field
+			self.fields[field_name]= forms.ChoiceField(
+														label=trained_role.role_type_name,
+														widget=forms.Select(attrs={'class' : 'form-control'}),
+														choices=self.trained_role_choices,
+														required=False
+														)
 
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function
 		valid = super(ProfileForm, self).is_valid()
 		# now perform the additional checks
-		# start by checking whether the active champion is set without the trained champion
-		if self.cleaned_data['active_champion'] and not self.cleaned_data['trained_champion']:
-			#set the error message
-			self._errors['active_champion'] = "Only trained champions can be active champions."
-			# set the validity flag
-			valid = False
-		# now check whether we have a child under four whose date of birth is more than four years ago
 		# get the age status
 		age_status = Age_Status.objects.get(id=self.cleaned_data['age_status'])
-		# get today's date
-		today = datetime.date.today()
-		# now check the age
-		if self.cleaned_data['date_of_birth'] != None and \
-			self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
-			#set the error message
-			self._errors['date_of_birth'] = "Must be less than " + str(age_status.maximum_age) + " years old."
-			# set the validity flag
-			valid = False
 		# check whether the only error is due to a change in age status: if so, set the default
 		if 'role_type' in self._errors.keys():
 			# set a relevant error message
@@ -233,6 +220,26 @@ class ProfileForm(forms.Form):
 				form_data_copy['role_type'] = str(age_status.default_role_type.pk)
 				# replace with the copy
 				self.data = form_data_copy
+		# get the role type to determine whether it must be trained
+		role_type = Role_Type.objects.get(pk=self.cleaned_data['role_type'])
+		# check the role type
+		if role_type.trained:
+			# check the corresponding field
+			if self.cleaned_data['trained_role_' + str(role_type.pk)] not in ['trained','active']:
+				# set an error
+				self._errors['role_type'] = 'Must be trained to perform this role.'
+				# and the validity flag
+				valid = False
+		# now check whether we have a child under four whose date of birth is more than four years ago
+		# get today's date
+		today = datetime.date.today()
+		# now check the age
+		if self.cleaned_data['date_of_birth'] != None and \
+			self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
+			#set the error message
+			self._errors['date_of_birth'] = "Must be less than " + str(age_status.maximum_age) + " years old."
+			# set the validity flag
+			valid = False
 		# return the result
 		return valid
 
@@ -257,8 +264,8 @@ class PersonSearchForm(forms.Form):
 	age_status = forms.ChoiceField(
 									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
-	champions = forms.ChoiceField(
-									label="Champions",
+	trained_role = forms.ChoiceField(
+									label="Trained role",
 									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
@@ -277,7 +284,15 @@ class PersonSearchForm(forms.Form):
 															choice_field='status',
 															default=True,
 															default_label='Any')
-		self.fields['champions'].choices = [(0,'N/A'),('trained','Trained Champions'),('active','Active Champions')]
+		# build the choices for the trained roles, starting with a default entry
+		trained_role_choices = [('none','N/A')]
+		# now go through the trained role types
+		for trained_role in Role_Type.objects.filter(trained=True):
+			# add the two different entries to the list
+			trained_role_choices.append(('trained_'+str(trained_role.pk),'Trained ' + trained_role.role_type_name))
+			trained_role_choices.append(('active_'+str(trained_role.pk),'Active ' + trained_role.role_type_name))
+		# now set the list
+		self.fields['trained_role'].choices = trained_role_choices
 
 class PersonNameSearchForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -555,12 +570,20 @@ class AddRegistrationForm(forms.Form):
 			else:
 				# set the id
 				role_type_id = person.default_role.pk
+			# get the list of roles available
+			role_types = person.age_status.role_types.filter(use_for_events=True).order_by('role_type_name')
+			# go through the role types and exclude any where the role requires training and the person is not trained
+			# and active
+			for role_type in role_types:
+				# check to see if the role is trained
+				if role_type.trained and not person.trained_role_set.filter(role_type=role_type,active=True).exists():
+					# remove the role type from the query set
+					role_types = role_types.exclude(pk=role_type.pk)
 			# create the field
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
 														widget=forms.Select(),
-														choices=role_type_choices(
-																	person.age_status.role_types.filter(use_for_people=True).order_by('role_type_name')),
+														choices=role_type_choices(role_types),
 														initial=role_type_id
 														)
 
@@ -604,7 +627,7 @@ class EditRegistrationForm(forms.Form):
 														widget=forms.Select(attrs={'class' : 'form-control'}),
 														initial=registration.role_type.pk,
 														choices=role_type_choices(
-																	registration.person.age_status.role_types.filter(use_for_people=True).order_by('role_type_name')),
+																	registration.person.age_status.role_types.filter(use_for_events=True).order_by('role_type_name')),
 														)
 
 class EventSearchForm(forms.Form):

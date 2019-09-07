@@ -1,7 +1,8 @@
 from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
 							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type, \
-							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note
+							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note, \
+							Trained_Role
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -52,8 +53,6 @@ def set_up_test_people(
 						number=1,
 						ABSS_type='test_ABSS_type',
 						age_status='Adult',
-						trained_champion=False,
-						active_champion=False
 						):
 	# create the number of people needed
 	for n in range(number):
@@ -71,8 +70,6 @@ def set_up_test_people(
 											due_date = None,
 											ABSS_type = ABSS_Type.objects.get(name=ABSS_type),
 											age_status = Age_Status.objects.get(status=age_status),
-											trained_champion = trained_champion,
-											active_champion = active_champion,
 											capture_type = Capture_Type.objects.get(capture_type_name='test_capture_type'),
 											ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 											)
@@ -248,7 +245,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -276,7 +273,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(parent_role_type.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -302,7 +299,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -328,7 +325,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -354,7 +351,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -380,7 +377,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -404,7 +401,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -432,7 +429,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -460,7 +457,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -486,7 +483,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -512,7 +509,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -540,7 +537,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_4.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -568,7 +565,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_3.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -596,7 +593,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(test_role_type_5.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '2'
 											}
 									)
@@ -622,7 +619,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '2'
 											}
 									)
@@ -650,7 +647,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -679,7 +676,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -708,7 +705,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -738,7 +735,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -766,7 +763,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -794,7 +791,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -823,7 +820,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -852,7 +849,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -882,7 +879,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -913,7 +910,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -941,7 +938,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(age_status.pk),
-											'champions' : '0',
+											'trained_role' : 'none',
 											'page' : '1'
 											}
 									)
@@ -956,7 +953,17 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_champions(self):
 		# create some extra people
-		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Adult',True)
+		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -969,7 +976,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
-											'champions' : 'trained',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -984,8 +991,18 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_champion_and_age_status(self):
 		# create some extra people
-		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Child',True)
-		set_up_test_people('trained_champion_test_','test role 1',27,'test_ABSS_type','Adult',True)
+		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('trained_champion_test_','test role 1',27,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -998,7 +1015,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : 'trained',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1013,8 +1030,18 @@ class PeopleViewTest(TestCase):
 
 	def test_trained_champion_search_on_champion_and_name(self):
 		# create some extra people
-		set_up_test_people('trained_test_find_','test role 1',30,'test_ABSS_type','Child',True)
-		set_up_test_people('trained_not_found_','test role 1',30,'test_ABSS_type','Child',True)
+		set_up_test_people('trained_test_find_','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('trained_not_found_','test role 1',30,'test_ABSS_type','Child')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1027,7 +1054,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'trained',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1043,7 +1070,17 @@ class PeopleViewTest(TestCase):
 	def test_trained_search_on_role(self):
 		# create some extra people
 		set_up_test_people('trained_test_role_1','test role 1',30,'test_ABSS_type','Adult')
-		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Adult',True)
+		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_test_role_2'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1056,7 +1093,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'trained',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1073,7 +1110,17 @@ class PeopleViewTest(TestCase):
 		# create some extra people
 		set_up_test_people('trained_test_role_1','test role 1',30,'test_ABSS_type','Adult')
 		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Adult')
-		set_up_test_people('trained_test_find','test role 2',37,'test_ABSS_type','Adult',True)
+		set_up_test_people('trained_test_find','test role 2',37,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_test_find'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1086,7 +1133,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1104,7 +1151,17 @@ class PeopleViewTest(TestCase):
 		set_up_test_people('trained_test_role_1','test role 1',30,'test_ABSS_type','Child')
 		set_up_test_people('trained_test_role_2','test role 2',35,'test_ABSS_type','Child')
 		set_up_test_people('trained_test_role_3','test role 3',37,'test_ABSS_type','Child')
-		set_up_test_people('trained_test_find','test role 2',39,'second_test_ABSS_type','Child',True)
+		set_up_test_people('trained_test_find','test role 2',39,'second_test_ABSS_type','Child')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_test_find'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1117,7 +1174,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
-											'champions' : 'trained',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1133,6 +1190,12 @@ class PeopleViewTest(TestCase):
 	def test_trained_search_with_no_results(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
 		# attempt to get the people page
 		response = self.client.post(
 									reverse('listpeople'),
@@ -1143,7 +1206,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'trained',
+											'trained_role' : 'trained_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1158,7 +1221,17 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champions(self):
 		# create some extra people
-		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Adult',True,True)
+		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1171,7 +1244,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1186,8 +1259,22 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champions_only(self):
 		# create some extra people
-		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Adult',True,True)
-		set_up_test_people('trained_champion_test_','test role 1',17,'test_ABSS_type','Adult',True)
+		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Adult')
+		set_up_test_people('trained_champion_test_','test role 1',17,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create active status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1200,7 +1287,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1215,8 +1302,18 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champion_and_age_status(self):
 		# create some extra people
-		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Child',True,True)
-		set_up_test_people('active_champion_test_','test role 1',27,'test_ABSS_type','Adult',True,True)
+		set_up_test_people('active_champion_test_','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('active_champion_test_','test role 1',27,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1229,7 +1326,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1244,8 +1341,18 @@ class PeopleViewTest(TestCase):
 
 	def test_active_champion_search_on_champion_and_name(self):
 		# create some extra people
-		set_up_test_people('active_test_find_','test role 1',30,'test_ABSS_type','Child',True,True)
-		set_up_test_people('active_not_found_','test role 1',30,'test_ABSS_type','Child',True,True)
+		set_up_test_people('active_test_find_','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('active_not_found_','test role 1',30,'test_ABSS_type','Child')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1258,7 +1365,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1274,7 +1381,17 @@ class PeopleViewTest(TestCase):
 	def test_active_search_on_role(self):
 		# create some extra people
 		set_up_test_people('active_test_role_1','test role 1',30,'test_ABSS_type','Adult')
-		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Adult',True,True)
+		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_test_role_2'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1287,7 +1404,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1304,7 +1421,17 @@ class PeopleViewTest(TestCase):
 		# create some extra people
 		set_up_test_people('active_test_role_1','test role 1',30,'test_ABSS_type','Adult')
 		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Adult')
-		set_up_test_people('active_test_find','test role 2',37,'test_ABSS_type','Adult',True,True)
+		set_up_test_people('active_test_find','test role 2',37,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_test_find'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1317,7 +1444,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : '0',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1335,7 +1462,17 @@ class PeopleViewTest(TestCase):
 		set_up_test_people('active_test_role_1','test role 1',30,'test_ABSS_type','Child')
 		set_up_test_people('active_test_role_2','test role 2',35,'test_ABSS_type','Child')
 		set_up_test_people('active_test_role_3','test role 3',37,'test_ABSS_type','Child')
-		set_up_test_people('active_test_find','test role 2',39,'second_test_ABSS_type','Adult',True,True)
+		set_up_test_people('active_test_find','test role 2',39,'second_test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 2')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='active_test_find'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type,active=True)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
@@ -1348,7 +1485,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1364,6 +1501,12 @@ class PeopleViewTest(TestCase):
 	def test_active_search_with_no_results(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
 		# attempt to get the people page
 		response = self.client.post(
 									reverse('listpeople'),
@@ -1374,7 +1517,7 @@ class PeopleViewTest(TestCase):
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
-											'champions' : 'active',
+											'trained_role' : 'active_' + str(role_type.pk),
 											'page' : '1'
 											}
 									)
@@ -1979,8 +2122,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
 		self.assertEqual(test_person.age_status.status,'Adult')
-		self.assertEqual(test_person.trained_champion,False)
-		self.assertEqual(test_person.active_champion,False)
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 
@@ -2044,8 +2185,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
 		self.assertEqual(test_person.age_status.status,'Adult')
-		self.assertEqual(test_person.trained_champion,False)
-		self.assertEqual(test_person.active_champion,False)
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 
@@ -2104,8 +2243,6 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
-											'trained_champion' : True,
-											'active_champion' : True
 											}
 									)
 		# check the response
@@ -2134,8 +2271,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
 		self.assertEqual(test_person.age_status.status,'Default role age status')
-		self.assertEqual(test_person.trained_champion,True)
-		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 
@@ -2162,8 +2297,6 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
-											'trained_champion' : True,
-											'active_champion' : True
 											}
 									)
 		# check the response
@@ -2192,8 +2325,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
 		self.assertEqual(test_person.age_status.status,'Child under four')
-		self.assertEqual(test_person.trained_champion,True)
-		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 
@@ -2220,8 +2351,6 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
-											'trained_champion' : True,
-											'active_champion' : True
 											}
 									)
 		# check the response
@@ -2250,8 +2379,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
 		self.assertEqual(test_person.age_status.status,'Default role age status')
-		self.assertEqual(test_person.trained_champion,True)
-		self.assertEqual(test_person.active_champion,True)
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 
@@ -2278,8 +2405,6 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
-											'trained_champion' : True,
-											'active_champion' : True
 											}
 									)
 		# check the response

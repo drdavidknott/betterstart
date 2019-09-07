@@ -274,7 +274,7 @@ class Relationship(models.Model):
 class Trained_Role(models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
-	active = models.BooleanField()
+	active = models.BooleanField(default=False)
 	# define the function that will return a string showing the relationship as the object reference
 	def __str__(self):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \
@@ -285,6 +285,9 @@ class Trained_Role(models.Model):
 			return 'active'
 		else:
 			return 'inactive'
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'trained roles'
 
 # Role history model: records that a person has played a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role

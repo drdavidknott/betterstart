@@ -25,10 +25,6 @@ from django.db.models import Sum, Count
 def index(request):
 	# get the template
 	index_template = loader.get_template('people/index.html')
-	# get the lists of people who have ever been parent champions
-	parent_champions = get_parent_champions()
-	# get the parent champion role type
-	parent_champion_role_type = get_role_type_by_name('Parent Champion')
 	# get the exceptions
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
 	# get parents with overdue children
@@ -54,34 +50,24 @@ def index(request):
 															right_margin = 1,
 															)
 											)
-	# create the parent champions dashboard panel
-	parent_champions_dashboard_panel = Dashboard_Panel(
-														title = 'PARENT CHAMPIONS',
-														title_icon = 'glyphicon-user',
-														column_names = ['counts'],
-														label_width = 8,
-														column_width = 3,
-														right_margin = 1)
-	# add the current parent champions row to the panel
-	parent_champions_dashboard_panel.rows.append(
-													Dashboard_Panel_Row(
-																		label = 'Trained parent champions',
-																		values = [len(parent_champions['trained'])],
-																		url = 'champions',
-																		parameter = 'trained'
-																		)
-													)
-	# and add the all time parent champions row to the panel
-	parent_champions_dashboard_panel.rows.append(
-													Dashboard_Panel_Row(
-																		label = 'Active parent champions',
-																		values = [len(parent_champions['active'])],
-																		url = 'champions',
-																		parameter = 'active'
-																		)
-													)
-	# append the parent champions panel to the column
-	roles_dashboard_column.panels.append(parent_champions_dashboard_panel)
+	# add the trained roles dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'TRAINED ROLES',
+															title_icon = 'glyphicon-user',
+															column_names = ['Trained','Active'],
+															show_column_names=True,
+															rows = get_trained_role_types_with_people_counts(),
+															row_name = 'role_type_name',
+															row_values = ['trained_count','active_count'],
+															row_url = 'trained_role',
+															row_parameter_name = 'trained_role_key',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
 	# add the age status dashboard panel
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
@@ -838,6 +824,31 @@ def get_relationships_to(person):
 	# return the relationships
 	return relationships_to
 
+def get_trained_status(person,role_type):
+	# determine whether a person is trained to perform this role and whether they are active
+	# attempt to get the record
+	try:
+		# do the database call
+		trained_role = Trained_Role.objects.get(person=person,role_type=role_type)
+	# handle the exception
+	except Trained_Role.DoesNotExist:
+		# set the trained role to false
+		trained_role = False
+	# set the value
+	if not trained_role:
+		# set the default trained status
+		trained_status = 'none'
+	# otherwise check if the role is active
+	elif not trained_role.active:
+		# set the text to trained only
+		trained_status = 'trained'
+	# otherwise the role must be active
+	else:
+		# set the text to active
+		trained_status = 'active'
+	# return the result
+	return trained_status
+
 def get_people():
 	# get a list of people
 	people = Person.objects.order_by('last_name', 'first_name')
@@ -856,7 +867,7 @@ def people_search(
 					role_type='0',
 					ABSS_type='0',
 					age_status='0',
-					champions='0'):
+					trained_role='none'):
 	# get all people
 	people = Person.objects.all()
 	# check whether we have a first name
@@ -869,14 +880,8 @@ def people_search(
 		people = people.filter(last_name__icontains=last_name)
 	# if we have a role type, filter by the role type
 	if role_type != '0':
-		# check whether this was an all parent champions enquiry
-		if role_type == 'Has ever been a Parent Champion':
-			# do the filter
-			people = people.filter(role_history__role_type__role_type_name='Parent Champion').distinct()
-		# otherwise just check for a normal role type
-		else:
-			# apply the filter
-			people = people.filter(default_role_id=int(role_type))
+		# do the filter
+		people = people.filter(default_role_id=int(role_type))
 	# if we have an ABSS type, filter by the ABSS type
 	if ABSS_type != '0':
 		# do the filter
@@ -885,20 +890,24 @@ def people_search(
 	if age_status != '0':
 		# do the filter
 		people = people.filter(age_status_id=int(age_status))
-	# if we have a champion setting, filter by the champion flags
-	if champions != '0':
-		# check what type of query we got
-		if champions == 'trained':
-			# get the trained champions
-			people = people.filter(trained_champion=True)
-		# otherwise we got a different request
-		elif champions == 'active':
-			# get the active champions
-			people = people.filter(active_champion=True)
 	# if we have an age status, filter by the age status
 	if age_status != '0':
 		# do the filter
 		people = people.filter(age_status_id=int(age_status))
+	# if we have a trained role, filter by the trained role
+	if trained_role != 'none':
+		# get the role type
+		role_type = Role_Type.objects.get(pk=int(extract_id(trained_role)))
+		# do the filter
+		people = people.filter(trained_roles=role_type)
+		# and check whether we want active only
+		if 'active' in trained_role:
+			# got through the people
+			for person in people:
+				# attempt to get the active record
+				if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
+					# exclude the person
+					people = people.exclude(pk=person.pk)
 	# return the list of people
 	return people
 
@@ -975,17 +984,6 @@ def get_age_status_exceptions():
 			age_statuses.append(age_status)
 	# return the results
 	return age_statuses
-
-def get_parent_champions():
-	# return a dict of two lists: trained parent champions and active parent champions
-	# declare the dict
-	parent_champions = {}
-	# get the trained parent champions
-	parent_champions['trained'] = Person.objects.filter(trained_champion=True)
-	# get actie parent champions
-	parent_champions['active'] = Person.objects.filter(active_champion=True)
-	# return the dict
-	return parent_champions
 
 def get_addresses_by_number_or_street(house_name_or_number,street):
 	# try to get addresses with the matching properties
@@ -1176,6 +1174,19 @@ def get_event_types_with_counts(date_from=0, date_to=0):
 		event_type.participated_count = event_participations.count()
 	# return the results
 	return event_types
+
+def get_trained_role_types_with_people_counts():
+	# return a list of all the trained role type objects, supplemented with counts
+	role_types = Role_Type.objects.filter(trained=True)
+	# now go through the role types
+	for role_type in role_types:
+		# set the counts
+		role_type.trained_count = role_type.trained_people.count()
+		role_type.active_count = role_type.trained_role_set.filter(active=True).count()
+		# and the key for the url
+		role_type.trained_role_key = 'trained_' + str(role_type.pk)
+	# return the results
+	return role_types
 
 def get_event_categories_with_counts(date_from=0, date_to=0):
 	# get the event categories
@@ -1505,8 +1516,7 @@ def create_person(
 					ethnicity=0,
 					ABSS_type=0,
 					age_status=0,
-					trained_champion=False,
-					active_champion=False):
+					):
 	# get the age status
 	if not age_status:
 		# set the default to adult
@@ -1540,8 +1550,6 @@ def create_person(
 					ethnicity = get_ethnicity(ethnicity),
 					ABSS_type = get_ABSS_type(ABSS_type),
 					age_status = age_status,
-					trained_champion=trained_champion,
-					active_champion=active_champion
 						)
 	# save the record
 	person.save()
@@ -1946,8 +1954,6 @@ def update_person(
 					ethnicity_id,
 					ABSS_type_id,
 					age_status_id,
-					trained_champion,
-					active_champion
 				):
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
@@ -2006,8 +2012,6 @@ def update_person(
 	person.gender = gender
 	person.pregnant = pregnant
 	person.due_date = due_date
-	person.trained_champion = trained_champion
-	person.active_champion = active_champion
 	# save the record
 	person.save()
 	# and save a role history if the role has changed
@@ -2065,6 +2069,49 @@ def remove_address(
 	person.save()
 	# set the message
 	messages.success(request, 'Address removed for ' + str(person))
+
+def build_trained_role(person,role_type_id,trained_status):
+	# create, delete or modify a trained role record, based on its current state and the desired trained status
+	# get the role type
+	role_type = Role_Type.objects.get(pk=role_type_id)
+	print(role_type)
+	print(person.age_status.role_types.filter(pk=role_type.pk).exists())
+	# check that the combination of role type and age status is valid
+	if not person.age_status.role_types.filter(pk=role_type.pk).exists():
+		# set the status to 'none'
+		trained_status = 'none'
+	# attempt to get the record
+	try:
+		# do the database call
+		trained_role = Trained_Role.objects.get(person=person,role_type=role_type)
+	# handle the exception
+	except Trained_Role.DoesNotExist:
+		# set the trained role to false
+		trained_role = False
+	# delete an unwanted trained status
+	if trained_status == 'none':
+		# check whether a status exist
+		if trained_role:
+			# delete the record
+			trained_role.delete()
+	# deal with a trained status which is required
+	else:
+		# set up a trained role if one is required
+		if not trained_role:
+			# create the role
+			trained_role = Trained_Role(person=person,role_type=role_type)
+		# set the active status if required
+		if trained_status == 'active':
+			# set the flag
+			trained_role.active = True
+		# otherwise set the flag to false
+		else:
+			# set the flag
+			trained_role.active = False
+		# save the record
+		trained_role.save()
+	# go back to where we came from
+	return
 
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
@@ -2264,7 +2311,7 @@ def people(request):
 	role_type = 0
 	ABSS_type = 0
 	age_status = 0
-	champions = 0
+	trained_role = 'none'
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -2283,7 +2330,7 @@ def people(request):
 			role_type = personsearchform.cleaned_data['role_type']
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			age_status = personsearchform.cleaned_data['age_status']
-			champions = personsearchform.cleaned_data['champions']
+			trained_role = personsearchform.cleaned_data['trained_role']
 			# conduct a search
 			people = people_search(
 													first_name=first_name,
@@ -2291,7 +2338,7 @@ def people(request):
 													role_type=role_type,
 													ABSS_type=ABSS_type,
 													age_status=age_status,
-													champions=champions
+													trained_role=trained_role
 													)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -2319,7 +2366,7 @@ def people(request):
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,
 				'age_status' : age_status,
-				'champions' : champions,
+				'trained_role' : trained_role,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})
@@ -2335,7 +2382,7 @@ def people_query(request, id):
 					'role_type' : '0',
 					'ABSS_type' : '0',
 					'age_status' : '0',
-					'champions' : '0'
+					'trained_role' : 'none'
 					}
 	# set the value based on the url
 	form_values[resolve(request.path_info).url_name] = id
@@ -2348,7 +2395,7 @@ def people_query(request, id):
 	copy_POST['last_name'] = ''
 	copy_POST['ABSS_type'] = form_values['ABSS_type']
 	copy_POST['age_status'] = form_values['age_status']
-	copy_POST['champions'] = form_values['champions']
+	copy_POST['trained_role'] = form_values['trained_role']
 	copy_POST['page'] = '1'
 	# now copy it back
 	request.POST = copy_POST
@@ -2547,9 +2594,19 @@ def profile(request, person_id=0):
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
 								ABSS_type_id = profileform.cleaned_data['ABSS_type'],
 								age_status_id = profileform.cleaned_data['age_status'],
-								trained_champion = profileform.cleaned_data['trained_champion'],
-								active_champion = profileform.cleaned_data['active_champion']
 									)
+			# clear out the existing trained roles
+			person.trained_role_set.all().delete()
+			# process the trained role entries by going through the keys
+			for field_name in profileform.cleaned_data.keys():
+				# check the field
+				if 'trained_role_' in field_name:
+					# build the trained role
+					build_trained_role(
+										person=person,
+										role_type_id=int(extract_id(field_name)),
+										trained_status=profileform.cleaned_data[field_name]
+										)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
 	else:
@@ -2569,9 +2626,11 @@ def profile(request, person_id=0):
 						'due_date' : person.due_date,
 						'ABSS_type' : person.ABSS_type.pk,
 						'age_status' : person.age_status.pk,
-						'trained_champion' : person.trained_champion,
-						'active_champion' : person.active_champion
 						}
+		# add the trained role values to the profile dictionary
+		for trained_role in Role_Type.objects.filter(trained=True):
+			# set the profile dictionary value
+			profile_dict['trained_role_' + str(trained_role.pk)] = get_trained_status(person,trained_role)
 		# create the form
 		profileform = ProfileForm(profile_dict)
 	# load the template

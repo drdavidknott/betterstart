@@ -1239,7 +1239,7 @@ def get_registration(person, event):
 
 def get_role_types(events_or_people='all'):
 	# get a list of the role type objects
-	role_types = Role_Type.objects.all()
+	role_types = Role_Type.objects.all().order_by('role_type_name')
 	# now filter if necessary
 	if events_or_people == 'events':
 		# filter on event flag

@@ -6,6 +6,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					ABSS_Type, Age_Status, Street, Answer_Note
 import os
 import csv
+import copy
 from django.contrib.auth.decorators import login_required
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
@@ -55,15 +56,14 @@ def index(request):
 											Dashboard_Panel(
 															title = 'TRAINED ROLES',
 															title_icon = 'glyphicon-user',
-															column_names = ['Trained','Active'],
-															show_column_names=True,
+															column_names = ['counts'],
 															rows = get_trained_role_types_with_people_counts(),
-															row_name = 'role_type_name',
-															row_values = ['trained_count','active_count'],
+															row_name = 'trained_role_name',
+															row_values = ['count'],
 															row_url = 'trained_role',
 															row_parameter_name = 'trained_role_key',
 															totals = True,
-															label_width = 5,
+															label_width = 8,
 															column_width = 3,
 															right_margin = 1,
 															)
@@ -1176,17 +1176,32 @@ def get_event_types_with_counts(date_from=0, date_to=0):
 	return event_types
 
 def get_trained_role_types_with_people_counts():
+	# create the list
+	trained_role_list = []
 	# return a list of all the trained role type objects, supplemented with counts
 	role_types = Role_Type.objects.filter(trained=True)
 	# now go through the role types
 	for role_type in role_types:
-		# set the counts
-		role_type.trained_count = role_type.trained_people.count()
-		role_type.active_count = role_type.trained_role_set.filter(active=True).count()
-		# and the key for the url
+		# set the count for trained
+		role_type.count = role_type.trained_people.count()
+		# and the key for trained
 		role_type.trained_role_key = 'trained_' + str(role_type.pk)
+		# and the name for trained
+		role_type.trained_role_name = 'Trained ' + role_type.role_type_name
+		# and append a copy of the object to the list
+		trained_role_list.append(role_type)
+		# create a new object
+		active_role_type = copy.deepcopy(role_type)
+		# now set the count for active
+		active_role_type.count = active_role_type.trained_role_set.filter(active=True).count()
+		# and the key for the url
+		active_role_type.trained_role_key = 'active_' + str(active_role_type.pk)
+		# and the name for active
+		role_type.trained_role_name = 'Active ' + role_type.role_type_name
+		# and append the object to the list
+		trained_role_list.append(active_role_type)
 	# return the results
-	return role_types
+	return trained_role_list
 
 def get_event_categories_with_counts(date_from=0, date_to=0):
 	# get the event categories

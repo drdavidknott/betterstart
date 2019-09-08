@@ -2074,8 +2074,6 @@ def build_trained_role(person,role_type_id,trained_status):
 	# create, delete or modify a trained role record, based on its current state and the desired trained status
 	# get the role type
 	role_type = Role_Type.objects.get(pk=role_type_id)
-	print(role_type)
-	print(person.age_status.role_types.filter(pk=role_type.pk).exists())
 	# check that the combination of role type and age status is valid
 	if not person.age_status.role_types.filter(pk=role_type.pk).exists():
 		# set the status to 'none'

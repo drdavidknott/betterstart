@@ -1197,7 +1197,7 @@ def get_trained_role_types_with_people_counts():
 		# and the key for the url
 		active_role_type.trained_role_key = 'active_' + str(active_role_type.pk)
 		# and the name for active
-		role_type.trained_role_name = 'Active ' + role_type.role_type_name
+		active_role_type.trained_role_name = 'Active ' + role_type.role_type_name
 		# and append the object to the list
 		trained_role_list.append(active_role_type)
 	# return the results

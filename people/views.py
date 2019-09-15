@@ -1796,6 +1796,18 @@ def build_event_area_dict(form_dict):
 	# return the new dict
 	return area_dict
 
+def convert_optional_ddmmyy(date):
+	# set the date
+	if date != '':
+		# parse the value
+		date = datetime.datetime.strptime(date,'%d/%m/%Y')
+	# otherwise set the value to None
+	else:
+		# set it to None
+		date = None
+	# return the value
+	return date
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -3018,6 +3030,7 @@ def uploaddata(request):
 						'Role Types' : 'load_role_types',
 						'Relationship Types' : 'load_relationship_types',
 						'Reference Data' : 'load_reference_data',
+						'People' : 'load_people'
 						}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -3445,3 +3458,123 @@ def load_relationship_types(records):
 			results.append(message)
 	# return the results
 	return results
+
+def load_people(records):
+	# check the file format
+	results = file_fields_valid(
+									records.fieldnames.copy(),
+									[
+										'first_name',
+										'last_name',
+										'email_address',
+										'home_phone',
+										'mobile_phone',
+										'date_of_birth',
+										'gender',
+										'pregnant',
+										'due_date',
+										'default_role',
+										'ethnicity',
+										'ABSS_type',
+										'age_status'
+									]
+								)
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for person in records:
+			# set a label
+			person_label = person['first_name'] + ' ' + person['last_name']
+			# validate the record
+			errors = validate_person_record(person)
+			# check whether we go any errors
+			if not errors:
+				# create a person
+				new_person = Person.objects.create(
+								first_name = person['first_name'],
+								middle_names = '',
+								last_name = person['last_name'],
+								email_address = person['email_address'],
+								home_phone = person['home_phone'],
+								mobile_phone = person['mobile_phone'],
+								date_of_birth = convert_optional_ddmmyy(person['date_of_birth']),
+								gender = person['gender'],
+								pregnant = (person['pregnant'] == 'True'),
+								due_date = convert_optional_ddmmyy(person['due_date']),
+								default_role = Role_Type.objects.get(role_type_name = person['default_role']),
+								ethnicity = Ethnicity.objects.get(description = person['ethnicity']),
+								ABSS_type = ABSS_Type.objects.get(name = person['ABSS_type']),
+								age_status = Age_Status.objects.get(status = person['age_status'])
+									)
+				# set the message to show that the creation was successful
+				results.append(person_label + ' created.')
+			# otherwise append the errors
+			else:
+				# add the error list to the results list
+				results += errors
+	# return the results
+	return results
+
+def validate_person_record(person):
+	# check whether a person record is valid
+	# set the error list
+	errors = []
+	# and some dummy values
+	role_type = False
+	age_status = False
+	# set a label
+	person_label = person['first_name'] + ' ' + person['last_name']
+	# set the date of birth
+	date_of_birth = convert_optional_ddmmyy(person['date_of_birth'])
+	# now attempt to get a matching person
+	if Person.objects.filter(
+								first_name = person['first_name'],
+								last_name = person['last_name'],
+								date_of_birth = date_of_birth
+								).exists():
+		# set the message to show that it exists
+		errors.append(person_label + ' not created: person already exists.')
+	# check the role type
+	try:
+		# attempt to get the record
+		role_type = Role_Type.objects.get(role_type_name = person['default_role'])
+	# deal with a role type that doesn't exist		
+	except (Role_Type.DoesNotExist):
+		# set the error
+		errors.append(person_label + ' not created: role type ' + person['role_type'] + ' does not exist.')
+	# check whether the ABSS type exists
+	try:
+		# attempt to get the record
+		ABSS_type = ABSS_Type.objects.get(name = person['ABSS_type'])
+	# deal with an ABSS type that doesn't exist		
+	except (ABSS_Type.DoesNotExist):
+		# set the error
+		errors.append(person_label + ' not created: ABSS type ' + person['ABSS_type'] + ' does not exist.')
+	# and check whether the ethnicity exists
+	try:
+		# attempt to get the record
+		ethnicity = Ethnicity.objects.get(description = person['ethnicity'])
+	# and deal with an ethnicity that doesn't exist
+	except (Ethnicity.DoesNotExist):
+		# set the error
+		errors.append(person_label + ' not created: ethnicity ' + person['ethnicity'] + ' does not exist.')
+	# and check whether the age status exists
+	try:
+		# attempt to get the record
+		age_status = Age_Status.objects.get(status = person['age_status'])
+	# deal with an age status not existing
+	except (Age_Status.DoesNotExist):
+		# set the error
+		errors.append(person_label + ' not created: age status ' + person['age_status'] + ' does not exist.')
+	# check whether the role is valid for the age status
+	if age_status and role_type and not age_status.role_types.filter(pk=role_type.pk).exists():
+		# set the error
+		errors.append(person_label + ' not created: role type is not valid for age status.')
+	# get today's date
+	today = datetime.date.today()
+	# check whether the age is correct
+	if age_status and date_of_birth and date_of_birth.date() < today.replace(year=today.year-age_status.maximum_age):
+		# set the error
+		errors.append(person_label + ' not created: too old for age status')
+	# return the errors
+	return errors

@@ -7,12 +7,12 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 import os
 import csv
 import copy
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
-					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm
+					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm
 from .utilities import get_page_list, make_banner
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
@@ -21,6 +21,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
+from io import TextIOWrapper
 
 @login_required
 def index(request):
@@ -328,463 +329,6 @@ def index(request):
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
-
-@login_required
-def dataload(request):
-	# get the template
-	index_template = loader.get_template('people/dataload.html')
-	# create a list of messages
-	messages = []
-	# get the directory
-	directory = os.path.dirname(__file__)
-	# load simple reference data
-	messages = messages + load_reference_data(directory)
-	# load relationship types
-	messages = messages + load_relationship_types(directory)
-	# load event categories
-	messages = messages + load_event_categories(directory)
-	# load event types
-	messages = messages + load_event_types(directory)
-	# load role types
-	messages = messages + load_role_types(directory)
-	# load areas
-	messages = messages + load_areas(directory)
-	# load wards
-	messages = messages + load_wards(directory)
-	# load post codes and get the results as messages
-	messages = messages + load_post_code(directory)
-	# load streets and get the results as messages
-	messages = messages + load_streets(directory)
-	# add the messages to the context
-	context = {
-				'load_messages' : messages,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
-	# return the HttpResponse
-	return HttpResponse(index_template.render(context=context, request=request))
-
-# DATA LOAD FUNCTIONS
-# A set of functions which read csv files and use them to load data
-
-def load_event_categories(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	event_categories_file_name = os.path.join(directory, 'data/event_categories.csv')
-	# open the event_categories file
-	event_categories_file = open(event_categories_file_name,'r')
-	# read it as a csv file
-	event_categories = csv.DictReader(event_categories_file)
-	# go through the csv file and process it
-	for event_category_record in event_categories:
-		# get the event category name
-		name = event_category_record['name']
-		# create a label for use in messages
-		event_category_label = 'Event Category: ' + name
-		# check whether the event_category already exists
-		try:
-			event_category = Event_Category.objects.get(name=name)
-			# set the message to show that it exists
-			messages.append(event_category_label + ' not created: event_category already exists.')
-		except (Event_Category.DoesNotExist):
-			# the event_category does not exist, so create it
-			event_category = Event_Category(
-											name=name,
-											description=event_category_record['description']
-											)
-			# save the event_category
-			event_category.save()
-			# set the message
-			messages.append(event_category_label + ' created.')
-	# return the messages
-	return messages
-
-def load_event_types(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	event_types_file_name = os.path.join(directory, 'data/event_types.csv')
-	# open the areas file
-	event_types_file = open(event_types_file_name,'r')
-	# read it as a csv file
-	event_type_rows = csv.DictReader(event_types_file)
-	# go through the csv file and process it
-	for event_type_row in event_type_rows:
-		# get the category name
-		event_category_name = event_type_row['event_category']
-		# get the event_type name
-		event_type_name = event_type_row['name']
-		# create a label for use in messages
-		event_type_label = 'Event type: ' + event_type_name + ' (Category: ' + event_category_name + ')'
-		# check whether the area exists
-		try:
-			event_category = Event_Category.objects.get(name=event_category_name)
-			# now try to find the event_type
-			try:
-				event_type = Event_Type.objects.get(name=event_type_name)
-				# set the message to show that it exists
-				messages.append(event_type_label + ' not created: event type already exists.')
-			except (Event_Type.DoesNotExist):
-				# create the event_type
-				event_type = Event_Type(
-										name = event_type_name,
-										description = event_type_row['description'],
-										event_category = event_category
-							)
-				# save the event_type
-				event_type.save()
-				# and set the message
-				messages.append(event_type_label + ' created.')
-		except (Event_Category.DoesNotExist):
-			# the area does not exist, so set an error message
-			messages.append(event_type_label + ' not created: event category does not exist.')
-	# return the messages
-	return messages
-
-def load_areas(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	areas_file_name = os.path.join(directory, 'data/areas.csv')
-	# open the areas file
-	areas_file = open(areas_file_name,'r')
-	# read it as a csv file
-	areas = csv.DictReader(areas_file)
-	# go through the csv file and process it
-	for area in areas:
-		# get the area name
-		area_name = area['area']
-		# create a label for use in messages
-		area_label = 'Area: ' + area_name
-		# check whether the area already exists
-		try:
-			area = Area.objects.get(area_name=area_name)
-			# set the message to show that it exists
-			messages.append(area_label + ' not created: area already exists.')
-		except (Area.DoesNotExist):
-			# the area does not exist, so create it
-			area = Area(area_name=area_name)
-			# save the area
-			area.save()
-			# set the message
-			messages.append(area_label + ' created.')
-	# return the messages
-	return messages
-
-def load_wards(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	wards_file_name = os.path.join(directory, 'data/wards.csv')
-	# open the areas file
-	wards_file = open(wards_file_name,'r')
-	# read it as a csv file
-	ward_rows = csv.DictReader(wards_file)
-	# go through the csv file and process it
-	for ward_row in ward_rows:
-		# get the area name
-		area_name = ward_row['area']
-		# get the ward name
-		ward_name = ward_row['ward']
-		# create a label for use in messages
-		ward_label = 'Ward: ' + ward_name + ' (Area: ' + area_name + ')'
-		# check whether the area exists
-		try:
-			area = Area.objects.get(area_name=area_name)
-			# now try to find the ward
-			try:
-				ward = Ward.objects.get(ward_name=ward_name)
-				# set the message to show that it exists
-				messages.append(ward_label + ' not created: ward already exists.')
-			except (Ward.DoesNotExist):
-				# create the ward
-				ward = Ward(
-							ward_name = ward_name,
-							area = area
-							)
-				# save the ward
-				ward.save()
-				# and set the message
-				messages.append(ward_label + ' created.')
-		except (Area.DoesNotExist):
-			# the area does not exist, so set an error message
-			messages.append(ward_label + ' not created: area does not exist.')
-	# return the messages
-	return messages
-
-def load_post_code(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	postcodes_file_name = os.path.join(directory, 'data/postcodes.csv')
-	# open the post code file
-	postcodes_file = open(postcodes_file_name,'r')
-	# read it as a csv file
-	postcode_rows = csv.DictReader(postcodes_file)
-	# go through the csv file and process it
-	for postcode_row in postcode_rows:
-		# get the post code
-		post_code_name = postcode_row['postcode']
-		# and the ward
-		ward_name = postcode_row['ward']
-		# create a label for use in messages
-		post_code_label = 'Post code: ' + post_code_name + ' (Ward: ' + ward_name + ')'
-		# check whether the ward exists
-		try:
-			ward = Ward.objects.get(ward_name=ward_name)
-			# now try to find the post code
-			try:
-				post_code = Post_Code.objects.get(post_code=post_code_name)
-				# set the message to show that it exists
-				messages.append(post_code_label + ' not created: postcode already exists.')
-			except (Post_Code.DoesNotExist):
-				# create the ward
-				post_code = Post_Code(
-										post_code = post_code_name,
-										ward = ward
-									)
-				# save the ward
-				post_code.save()
-				# and set the message
-				messages.append(post_code_label + ' created.')
-		except (Ward.DoesNotExist):
-			# the area does not exist, so set an error messaage
-			messages.append(post_code_label + ' not created: ward does not exist.')
-	# return the messages
-	return messages
-
-def load_streets(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	streets_file_name = os.path.join(directory, 'data/streets_and_post_codes.csv')
-	# open the streets file
-	streets_file = open(streets_file_name,'r')
-	# read it as a csv file
-	streets_rows = csv.DictReader(streets_file)
-	# go through the csv file and process it
-	for street_row in streets_rows:
-		# get the street
-		street_name = street_row['name']
-		# and the post code
-		post_code_name = street_row['post_code']
-		# create a label for use in messages
-		street_label = 'Street: ' + street_name + ' (Post Code: ' + post_code_name + ')'
-		# check whether the post_code exists
-		try:
-			post_code = Post_Code.objects.get(post_code=post_code_name)
-			# now try to find the street
-			try:
-				street = Street.objects.get(name=street_name,post_code=post_code)
-				# set the message to show that it exists
-				messages.append(street_label + ' not created: street already exists.')
-			except (Street.DoesNotExist):
-				# create the street
-				street = Street(
-										name = street_name,
-										post_code = post_code
-									)
-				# save the street
-				street.save()
-				# and set the message
-				messages.append(street_label + ' created.')
-		except (Post_Code.DoesNotExist):
-			# the area does not exist, so set an error messaage
-			messages.append(street_label + ' not created: street does not exist.')
-	# return the messages
-	return messages
-
-def load_reference_data(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	data_file_name = os.path.join(directory, 'data/reference_data.csv')
-	# open the areas file
-	data_file = open(data_file_name,'r')
-	# read it as a csv file
-	records = csv.DictReader(data_file)
-	# go through the csv file and process it
-	for record in records:
-		# get the data type
-		data_type = record['data_type']
-		# get the value
-		value = record['value']
-		# try to create the record, starting with capture type
-		if data_type == 'capture_type':
-			messages.append(load_capture_type(value))
-		# now ethnicity
-		elif data_type == 'ethnicity':
-			messages.append(load_ethnicity(value))
-		# then relationship type
-		elif data_type == 'relationship_type':
-			messages.append(load_relationship_type(value))
-		# then children centres
-		elif data_type == 'children_centre':
-			messages.append(load_children_centre(value))
-		# and abss type
-		elif data_type == 'ABSS_type':
-			messages.append(load_ABSS_type(value))
-		# and age status
-		elif data_type == 'age_status':
-			messages.append(load_age_status(value))	
-		# and deal with any unknown type
-		else:
-			# set an error message
-			messages = messages + ['Data type: ' + data_type + ' is not recognised.']
-	# return the messages
-	return messages
-
-def load_role_types(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	role_types_file_name = os.path.join(directory, 'data/role_types.csv')
-	# open the role types file
-	role_types_file = open(role_types_file_name,'r')
-	# read it as a csv file
-	role_types = csv.DictReader(role_types_file)
-	# go through the csv file and process it
-	for role_type_record in role_types:
-		# get the name
-		role_type_name = role_type_record['role_type_name']
-		# create a label for use in messages
-		role_type_label = 'Role Type: ' + role_type_name
-		# check whether the role type already exists
-		try:
-			role_type = Role_Type.objects.get(role_type_name=role_type_name)
-			# set the message to show that it exists
-			messages.append(role_type_label + ' not created: Role Type already exists.')
-		# we didn't find a record
-		except (Role_Type.DoesNotExist):
-			# the role_type does not exist, so create it
-			role_type = Role_Type(
-									role_type_name = role_type_name,
-									use_for_events = (role_type_record['use_for_events'] == 'True'),
-									use_for_people = (role_type_record['use_for_people'] == 'True')
-									)
-			# save the role type
-			role_type.save()
-			# set the message
-			messages.append(role_type_label + ' created.')
-	# return the messages
-	return messages
-
-def load_capture_type(value):
-	# create a label for use in messages
-	capture_type_label = 'Capture type: ' + value
-	# check whether the capture type already exists
-	try:
-		capture_type = Capture_Type.objects.get(capture_type_name=value)
-		# set the message to show that it exists
-		message = capture_type_label + ' not created: capture type already exists.'
-	except (Capture_Type.DoesNotExist):
-		# the capture type does not exist, so create it
-		capture_type = Capture_Type.objects.create(capture_type_name=value)
-		# set the message
-		message = capture_type_label + ' created.'
-	# return the messages
-	return message
-
-def load_ethnicity(value):
-	# create a label for use in messages
-	ethnicity_label = 'Ethnicity: ' + value
-	# check whether the capture type already exists
-	try:
-		ethnicity = Ethnicity.objects.get(description=value)
-		# set the message to show that it exists
-		message = ethnicity_label + ' not created: ethnicity already exists.'
-	except (Ethnicity.DoesNotExist):
-		# the capture type does not exist, so create it
-		ethnicity = Ethnicity.objects.create(description=value)
-		# set the message
-		message = ethnicity_label + ' created.'
-	# return the messages
-	return message
-
-def load_children_centre(value):
-	# create a label for use in messages
-	children_centre_label = 'Children centre: ' + value
-	# check whether the capture type already exists
-	try:
-		children_centre = Children_Centre.objects.get(children_centre_name=value)
-		# set the message to show that it exists
-		message = children_centre_label + ' not created: children centre already exists.'
-	except (Children_Centre.DoesNotExist):
-		# the capture type does not exist, so create it
-		children_centre = Children_Centre.create(children_centre_name=value)
-		# set the message
-		message = children_centre_label + ' created.'
-	# return the messages
-	return message
-
-def load_ABSS_type(value):
-	# create a label for use in messages
-	ABSS_type_label = 'ABSS type: ' + value
-	# check whether the record already exists
-	try:
-		ABSS_type = ABSS_Type.objects.get(name=value)
-		# set the message to show that it exists
-		message = ABSS_type_label + ' not created: ABSS type already exists.'
-	except (ABSS_Type.DoesNotExist):
-		# the type does not exist, so create it
-		ABSS_type = ABSS_Type.objects.create(name=value)
-		# set the message
-		message = ABSS_type_label + ' created.'
-	# return the messages
-	return message
-
-def load_age_status(value):
-	# create a label for use in messages
-	age_status_label = 'Age status: ' + value
-	# check whether the record already exists
-	try:
-		age_status = Age_Status.objects.get(status=value)
-		# set the message to show that it exists
-		message = age_status_label + ' not created: Age status already exists.'
-	except (Age_Status.DoesNotExist):
-		# the type does not exist, so create it
-		age_status = Age_Status.objects.create(status=value)
-		# set the message
-		message = age_status_label + ' created.'
-	# return the messages
-	return message
-
-def load_relationship_types(directory):
-	# set a blank messages lists
-	messages = []
-	# set the file name
-	relationship_types_file_name = os.path.join(directory, 'data/relationship_types.csv')
-	# open the relationship types file
-	relationship_types_file = open(relationship_types_file_name,'r')
-	# read it as a csv file
-	relationship_type_records = csv.DictReader(relationship_types_file)
-	# go through the csv file and process it
-	for relationship_type_record in relationship_type_records:
-		# get the values
-		relationship_type = relationship_type_record['relationship_type']
-		relationship_counterpart = relationship_type_record['relationship_counterpart']
-		# create a label for use in messages
-		relationship_type_label = 'Relationship type: ' + relationship_type
-		# check whether the relationship type already exists
-		try:
-			this_relationship_type = Relationship_Type.objects.get(relationship_type=relationship_type)
-			# set the message to show that it exists
-			message = relationship_type_label + ' not created: relationship type already exists.'
-		# handle the exception (which is what we expect)
-		except (Relationship_Type.DoesNotExist):
-			# the relationship type does not exist, so create it
-			this_relationship_type = Relationship_Type(
-														relationship_type=relationship_type,
-														relationship_counterpart=relationship_counterpart
-														)
-			# save the relationship type
-			this_relationship_type.save()
-			# set the message
-			message = relationship_type_label + ' created.'
-		# append the message
-		messages.append(message)
-	# return the messages
-	return messages
 
 # DATA ACCESS FUNCTIONS
 # A set of functions which carry out simple and complex data access, filtering and updates.
@@ -3458,5 +3002,480 @@ def answer_questions(request,person_id=0):
 	# return the response
 	return HttpResponse(answer_questions_template.render(context=context, request=request))
 
+@login_required
+@user_passes_test(lambda user: user.is_superuser)
+def uploaddata(request):
+	# set results to empty
+	results = []
+	# define the functions for each file type
+	load_functions = {
+						'Event Categories' : 'load_event_categories',
+						'Event Types' : 'load_event_types',
+						'Areas' : 'load_areas',
+						'Wards' : 'load_wards',
+						'Post Codes' : 'load_post_codes',
+						'Streets' : 'load_streets',
+						'Role Types' : 'load_role_types',
+						'Relationship Types' : 'load_relationship_types',
+						'Reference Data' : 'load_reference_data',
+						}
+	# see whether we got a post or not
+	if request.method == 'POST':
+		# create a form from the POST to retain data and trigger validation
+		uploaddataform = UploadDataForm(request.POST, request.FILES)
+		# check whether the form is valid
+		if uploaddataform.is_valid():
+			# decode the file
+			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding)
+			# read it as a csv file
+			records = csv.DictReader(file)
+			# call the relevant function to load the data
+			results = globals()[load_functions[uploaddataform.cleaned_data['file_type']]](records)
+	# otherwise create a fresh form
+	else:
+		# create the fresh form
+		uploaddataform = UploadDataForm()
+	# get the template
+	upload_data_template = loader.get_template('people/upload_data.html')
+	# set the context
+	context = build_context({
+				'uploaddataform' : uploaddataform,
+				'results' : results
+				})
+	# return the HttpResponse
+	return HttpResponse(upload_data_template.render(context=context, request=request))
 
+@login_required
+def dataload(request):
+	# get the template
+	index_template = loader.get_template('people/dataload.html')
+	# create a list of messages
+	messages = []
+	# get the directory
+	directory = os.path.dirname(__file__)
+	# load simple reference data
+	messages = messages + load_reference_data(directory)
+	# load relationship types
+	messages = messages + load_relationship_types(directory)
+	# load event categories
+	messages = messages + load_event_categories(directory)
+	# load event types
+	messages = messages + load_event_types(directory)
+	# load role types
+	messages = messages + load_role_types(directory)
+	# load areas
+	messages = messages + load_areas(directory)
+	# load wards
+	messages = messages + load_wards(directory)
+	# load post codes and get the results as messages
+	messages = messages + load_post_code(directory)
+	# load streets and get the results as messages
+	messages = messages + load_streets(directory)
+	# add the messages to the context
+	context = {
+				'load_messages' : messages,
+				'site_name': os.getenv('BETTERSTART_NAME', None)
+				}
+	# return the HttpResponse
+	return HttpResponse(index_template.render(context=context, request=request))
 
+# DATA LOAD FUNCTIONS
+# A set of functions which read csv files and use them to load data
+
+def file_fields_valid(file_keys,fields):
+	# set results to a blank list
+	results = []
+	# sort them
+	file_keys.sort()
+	fields.sort()
+	# now check that they match
+	if file_keys != fields:
+		# set the message to a failure message
+		results.append('File cannot be loaded as it does not contain the right fields.')
+		results.append('Expected ' + str(fields) + ' but got ' + str(file_keys) + '.')
+	# return the result
+	return results
+
+def load_event_categories(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['name','description'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for event_category_record in records:
+			# get the event category name
+			name = event_category_record['name']
+			# create a label for use in messages
+			event_category_label = 'Event Category: ' + name
+			# check whether the event_category already exists
+			try:
+				event_category = Event_Category.objects.get(name=name)
+				# set the message to show that it exists
+				results.append(event_category_label + ' not created: event_category already exists.')
+			except (Event_Category.DoesNotExist):
+				# the event_category does not exist, so create it
+				event_category = Event_Category(
+												name=name,
+												description=event_category_record['description']
+												)
+				# save the event_category
+				event_category.save()
+				# set the message
+				results.append(event_category_label + ' created.')
+	# return the messages
+	return results
+
+def load_event_types(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['name','description','event_category'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for event_type_row in records:
+			# get the category name
+			event_category_name = event_type_row['event_category']
+			# get the event_type name
+			event_type_name = event_type_row['name']
+			# create a label for use in messages
+			event_type_label = 'Event type: ' + event_type_name + ' (Category: ' + event_category_name + ')'
+			# check whether the area exists
+			try:
+				event_category = Event_Category.objects.get(name=event_category_name)
+				# now try to find the event_type
+				try:
+					event_type = Event_Type.objects.get(name=event_type_name)
+					# set the message to show that it exists
+					results.append(event_type_label + ' not created: event type already exists.')
+				except (Event_Type.DoesNotExist):
+					# create the event_type
+					event_type = Event_Type(
+											name = event_type_name,
+											description = event_type_row['description'],
+											event_category = event_category
+								)
+					# save the event_type
+					event_type.save()
+					# and set the message
+					results.append(event_type_label + ' created.')
+			except (Event_Category.DoesNotExist):
+				# the area does not exist, so set an error message
+				results.append(event_type_label + ' not created: event category does not exist.')
+	# return the messages
+	return results
+
+def load_areas(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['area'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for area in records:
+			# get the area name
+			area_name = area['area']
+			# create a label for use in messages
+			area_label = 'Area: ' + area_name
+			# check whether the area already exists
+			try:
+				area = Area.objects.get(area_name=area_name)
+				# set the message to show that it exists
+				results.append(area_label + ' not created: area already exists.')
+			except (Area.DoesNotExist):
+				# the area does not exist, so create it
+				area = Area(area_name=area_name)
+				# save the area
+				area.save()
+				# set the message
+				results.append(area_label + ' created.')
+	# return the messages
+	return results
+
+def load_wards(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['ward','area'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for ward_row in records:
+			# get the area name
+			area_name = ward_row['area']
+			# get the ward name
+			ward_name = ward_row['ward']
+			# create a label for use in results
+			ward_label = 'Ward: ' + ward_name + ' (Area: ' + area_name + ')'
+			# check whether the area exists
+			try:
+				area = Area.objects.get(area_name=area_name)
+				# now try to find the ward
+				try:
+					ward = Ward.objects.get(ward_name=ward_name)
+					# set the message to show that it exists
+					results.append(ward_label + ' not created: ward already exists.')
+				except (Ward.DoesNotExist):
+					# create the ward
+					ward = Ward(
+								ward_name = ward_name,
+								area = area
+								)
+					# save the ward
+					ward.save()
+					# and set the message
+					results.append(ward_label + ' created.')
+			except (Area.DoesNotExist):
+				# the area does not exist, so set an error message
+				results.append(ward_label + ' not created: area does not exist.')
+	# return the results
+	return results
+
+def load_post_codes(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['postcode','ward'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for postcode_row in records:
+			# get the post code
+			post_code_name = postcode_row['postcode']
+			# and the ward
+			ward_name = postcode_row['ward']
+			# create a label for use in results
+			post_code_label = 'Post code: ' + post_code_name + ' (Ward: ' + ward_name + ')'
+			# check whether the ward exists
+			try:
+				ward = Ward.objects.get(ward_name=ward_name)
+				# now try to find the post code
+				try:
+					post_code = Post_Code.objects.get(post_code=post_code_name)
+					# set the message to show that it exists
+					results.append(post_code_label + ' not created: postcode already exists.')
+				except (Post_Code.DoesNotExist):
+					# create the ward
+					post_code = Post_Code(
+											post_code = post_code_name,
+											ward = ward
+										)
+					# save the ward
+					post_code.save()
+					# and set the message
+					results.append(post_code_label + ' created.')
+			except (Ward.DoesNotExist):
+				# the area does not exist, so set an error messaage
+				results.append(post_code_label + ' not created: ward does not exist.')
+	# return the results
+	return results
+
+def load_streets(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['post_code','name'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for street_row in records:
+			# get the street
+			street_name = street_row['name']
+			# and the post code
+			post_code_name = street_row['post_code']
+			# create a label for use in results
+			street_label = 'Street: ' + street_name + ' (Post Code: ' + post_code_name + ')'
+			# check whether the post_code exists
+			try:
+				post_code = Post_Code.objects.get(post_code=post_code_name)
+				# now try to find the street
+				try:
+					street = Street.objects.get(name=street_name,post_code=post_code)
+					# set the message to show that it exists
+					results.append(street_label + ' not created: street already exists.')
+				except (Street.DoesNotExist):
+					# create the street
+					street = Street(
+											name = street_name,
+											post_code = post_code
+										)
+					# save the street
+					street.save()
+					# and set the message
+					results.append(street_label + ' created.')
+			except (Post_Code.DoesNotExist):
+				# the area does not exist, so set an error messaage
+				results.append(street_label + ' not created: post code does not exist.')
+	# return the results
+	return results
+
+def load_reference_data(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['data_type','value'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for record in records:
+			# get the data type
+			data_type = record['data_type']
+			# get the value
+			value = record['value']
+			# try to create the record, starting with capture type
+			if data_type == 'capture_type':
+				results.append(load_capture_type(value))
+			# now ethnicity
+			elif data_type == 'ethnicity':
+				results.append(load_ethnicity(value))
+			# then relationship type
+			elif data_type == 'relationship_type':
+				results.append(load_relationship_type(value))
+			# then children centres
+			elif data_type == 'children_centre':
+				results.append(load_children_centre(value))
+			# and abss type
+			elif data_type == 'ABSS_type':
+				results.append(load_ABSS_type(value))
+			# and age status
+			elif data_type == 'age_status':
+				results.append(load_age_status(value))	
+			# and deal with any unknown type
+			else:
+				# set an error message
+				results = results + ['Data type: ' + data_type + ' is not recognised.']
+	# return the results
+	return results
+
+def load_role_types(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['role_type_name','use_for_events','use_for_people'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for role_type_record in records:
+			# get the name
+			role_type_name = role_type_record['role_type_name']
+			# create a label for use in results
+			role_type_label = 'Role Type: ' + role_type_name
+			# check whether the role type already exists
+			try:
+				role_type = Role_Type.objects.get(role_type_name=role_type_name)
+				# set the message to show that it exists
+				results.append(role_type_label + ' not created: Role Type already exists.')
+			# we didn't find a record
+			except (Role_Type.DoesNotExist):
+				# the role_type does not exist, so create it
+				role_type = Role_Type(
+										role_type_name = role_type_name,
+										use_for_events = (role_type_record['use_for_events'] == 'True'),
+										use_for_people = (role_type_record['use_for_people'] == 'True')
+										)
+				# save the role type
+				role_type.save()
+				# set the message
+				results.append(role_type_label + ' created.')
+	# return the results
+	return results
+
+def load_capture_type(value):
+	# create a label for use in results
+	capture_type_label = 'Capture type: ' + value
+	# check whether the capture type already exists
+	try:
+		capture_type = Capture_Type.objects.get(capture_type_name=value)
+		# set the message to show that it exists
+		message = capture_type_label + ' not created: capture type already exists.'
+	except (Capture_Type.DoesNotExist):
+		# the capture type does not exist, so create it
+		capture_type = Capture_Type.objects.create(capture_type_name=value)
+		# set the message
+		message = capture_type_label + ' created.'
+	# return the results
+	return message
+
+def load_ethnicity(value):
+	# create a label for use in results
+	ethnicity_label = 'Ethnicity: ' + value
+	# check whether the capture type already exists
+	try:
+		ethnicity = Ethnicity.objects.get(description=value)
+		# set the message to show that it exists
+		message = ethnicity_label + ' not created: ethnicity already exists.'
+	except (Ethnicity.DoesNotExist):
+		# the capture type does not exist, so create it
+		ethnicity = Ethnicity.objects.create(description=value)
+		# set the message
+		message = ethnicity_label + ' created.'
+	# return the results
+	return message
+
+def load_children_centre(value):
+	# create a label for use in results
+	children_centre_label = 'Children centre: ' + value
+	# check whether the capture type already exists
+	try:
+		children_centre = Children_Centre.objects.get(children_centre_name=value)
+		# set the message to show that it exists
+		message = children_centre_label + ' not created: children centre already exists.'
+	except (Children_Centre.DoesNotExist):
+		# the capture type does not exist, so create it
+		children_centre = Children_Centre.create(children_centre_name=value)
+		# set the message
+		message = children_centre_label + ' created.'
+	# return the results
+	return message
+
+def load_ABSS_type(value):
+	# create a label for use in results
+	ABSS_type_label = 'ABSS type: ' + value
+	# check whether the record already exists
+	try:
+		ABSS_type = ABSS_Type.objects.get(name=value)
+		# set the message to show that it exists
+		message = ABSS_type_label + ' not created: ABSS type already exists.'
+	except (ABSS_Type.DoesNotExist):
+		# the type does not exist, so create it
+		ABSS_type = ABSS_Type.objects.create(name=value)
+		# set the message
+		message = ABSS_type_label + ' created.'
+	# return the results
+	return message
+
+def load_age_status(value):
+	# create a label for use in results
+	age_status_label = 'Age status: ' + value
+	# check whether the record already exists
+	try:
+		age_status = Age_Status.objects.get(status=value)
+		# set the message to show that it exists
+		message = age_status_label + ' not created: Age status already exists.'
+	except (Age_Status.DoesNotExist):
+		# the type does not exist, so create it
+		age_status = Age_Status.objects.create(status=value)
+		# set the message
+		message = age_status_label + ' created.'
+	# return the results
+	return message
+
+def load_relationship_types(records):
+	# check the file format
+	results = file_fields_valid(records.fieldnames.copy(),['relationship_counterpart','relationship_type'])
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for relationship_type_record in records:
+			# get the values
+			relationship_type = relationship_type_record['relationship_type']
+			relationship_counterpart = relationship_type_record['relationship_counterpart']
+			# create a label for use in results
+			relationship_type_label = 'Relationship type: ' + relationship_type
+			# check whether the relationship type already exists
+			try:
+				this_relationship_type = Relationship_Type.objects.get(relationship_type=relationship_type)
+				# set the message to show that it exists
+				message = relationship_type_label + ' not created: relationship type already exists.'
+			# handle the exception (which is what we expect)
+			except (Relationship_Type.DoesNotExist):
+				# the relationship type does not exist, so create it
+				this_relationship_type = Relationship_Type(
+															relationship_type=relationship_type,
+															relationship_counterpart=relationship_counterpart
+															)
+				# save the relationship type
+				this_relationship_type.save()
+				# set the message
+				message = relationship_type_label + ' created.'
+			# append the message
+			results.append(message)
+	# return the results
+	return results

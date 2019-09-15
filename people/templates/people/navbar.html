@@ -35,6 +35,9 @@ $(document).ready(function() {
 					<li><a href="{% url 'addperson' %}">ADD PERSON</a></li>
 					<li><a href="{% url 'events' %}">EVENTS</a></li>
 					<li><a href="{% url 'addevent' %}">ADD EVENT</a></li>
+					{% if request.user.is_superuser %}
+						<li><a href="{% url 'uploaddata' %}">UPLOAD DATA</a></li>
+					{% endif %}
 					<li><a href="{% url 'logout' %}">LOGOUT</a></li>
 			    </ul>
 			</div>

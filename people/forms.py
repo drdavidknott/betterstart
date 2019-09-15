@@ -42,6 +42,29 @@ class LoginForm(forms.Form):
 										max_length=30,
 										widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
 
+class UploadDataForm(forms.Form):
+	# Define the choices for file type
+	file_type_choices = (
+							('Event Categories','Event Categories'),
+							('Event Types','Event Types'),
+							('Areas','Areas'),
+							('Wards','Wards'),
+							('Post Codes','Post Codes'),
+							('Streets','Streets'),
+							('Reference Data','Reference Data'),
+							('Relationship Types','Relationship Types'),
+							('Role Types','Role Types')
+						)
+	# Define the fields that we need in the form.
+	file_type = forms.ChoiceField(
+									label="File Type",
+									widget=forms.Select(attrs={'class' : 'form-control'}),
+									choices=file_type_choices)
+	file = forms.FileField(
+									label="Data File",
+									widget=forms.ClearableFileInput(attrs={'class' : 'form-control'}))
+
+
 class AddPersonForm(forms.Form):
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(

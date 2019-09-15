@@ -3045,40 +3045,6 @@ def uploaddata(request):
 	# return the HttpResponse
 	return HttpResponse(upload_data_template.render(context=context, request=request))
 
-@login_required
-def dataload(request):
-	# get the template
-	index_template = loader.get_template('people/dataload.html')
-	# create a list of messages
-	messages = []
-	# get the directory
-	directory = os.path.dirname(__file__)
-	# load simple reference data
-	messages = messages + load_reference_data(directory)
-	# load relationship types
-	messages = messages + load_relationship_types(directory)
-	# load event categories
-	messages = messages + load_event_categories(directory)
-	# load event types
-	messages = messages + load_event_types(directory)
-	# load role types
-	messages = messages + load_role_types(directory)
-	# load areas
-	messages = messages + load_areas(directory)
-	# load wards
-	messages = messages + load_wards(directory)
-	# load post codes and get the results as messages
-	messages = messages + load_post_code(directory)
-	# load streets and get the results as messages
-	messages = messages + load_streets(directory)
-	# add the messages to the context
-	context = {
-				'load_messages' : messages,
-				'site_name': os.getenv('BETTERSTART_NAME', None)
-				}
-	# return the HttpResponse
-	return HttpResponse(index_template.render(context=context, request=request))
-
 # DATA LOAD FUNCTIONS
 # A set of functions which read csv files and use them to load data
 

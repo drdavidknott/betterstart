@@ -7,7 +7,6 @@ urlpatterns = [
     path('', views.index, name='index'),
 	url(r'^login$', views.log_user_in, name='login'),
 	url(r'^logout$', views.log_user_out, name='logout'),
-    url(r'^dataload$', views.dataload, name='dataload'),
     url(r'^uploaddata$', views.uploaddata, name='uploaddata'),
     url(r'^listpeople$', views.people, name='listpeople'),
     url(r'^addperson$', views.addperson, name='addperson'),

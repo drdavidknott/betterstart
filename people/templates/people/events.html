@@ -123,14 +123,14 @@
 							{% if date_from == 'None' %}
 								""
 							{% else %}
-								"{{ date_from|date:'Y-m-d' }}"
+								"{{ date_from|date:'d/m/Y' }}"
 							{% endif %}
 							>
 						<input type="hidden" name="date_to" value=
 							{% if date_to == 'None' %}
 								""
 							{% else %}
-								"{{ date_to|date:'Y-m-d' }}"
+								"{{ date_to|date:'d/m/Y' }}"
 							{% endif %}
 							>
 						{% for target_page in page_list %}

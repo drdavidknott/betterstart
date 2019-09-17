@@ -1,0 +1,12 @@
+name,description,event_type,date,start_time,end_time,location,ward,areas
+Test event 1,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 2,Big test event,Coffee session,01/01/2018,10:00,,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 3,Big test event,Coffee session,01/01/2018,,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 4,Big test event,Coffee session,,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 5,Big test event,Non existent event,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 6,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Non existent ward,"Cluster,Shoebury"
+Test event 7,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 8,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 9,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 10,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"
+Test event 11,Big test event,Coffee session,01/01/2018,10:00,11:00,Coffee shop,Victoria,"Cluster,Shoebury"

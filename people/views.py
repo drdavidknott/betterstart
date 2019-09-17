@@ -3021,16 +3021,17 @@ def uploaddata(request):
 	results = []
 	# define the functions for each file type
 	load_functions = {
-						'Event Categories' : 'load_event_categories',
-						'Event Types' : 'load_event_types',
-						'Areas' : 'load_areas',
-						'Wards' : 'load_wards',
-						'Post Codes' : 'load_post_codes',
-						'Streets' : 'load_streets',
-						'Role Types' : 'load_role_types',
-						'Relationship Types' : 'load_relationship_types',
-						'Reference Data' : 'load_reference_data',
-						'People' : 'load_people'
+						'Event Categories' : load_event_categories,
+						'Event Types' : load_event_types,
+						'Areas' : load_areas,
+						'Wards' : load_wards,
+						'Post Codes' : load_post_codes,
+						'Streets' : load_streets,
+						'Role Types' : load_role_types,
+						'Relationship Types' : load_relationship_types,
+						'Reference Data' : load_reference_data,
+						'People' : load_people,
+						'Events' : load_events
 						}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -3042,8 +3043,10 @@ def uploaddata(request):
 			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding)
 			# read it as a csv file
 			records = csv.DictReader(file)
-			# call the relevant function to load the data
-			results = globals()[load_functions[uploaddataform.cleaned_data['file_type']]](records)
+			# get the load function
+			load_function = load_functions[uploaddataform.cleaned_data['file_type']]
+			# call the load functions
+			results = load_function(records)
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
@@ -3074,6 +3077,18 @@ def file_fields_valid(file_keys,fields):
 		results.append('Expected ' + str(fields) + ' but got ' + str(file_keys) + '.')
 	# return the result
 	return results
+
+def check_mandatory_fields(record,label,fields):
+	# set the error list
+	errors = []
+	# go through the fields
+	for field in fields:
+		# check the field
+		if not record[field]:
+			# set the error
+			errors.append(label + ' not created: mandatory field ' + field + ' not provided.')
+	# return the errors
+	return errors
 
 def load_event_categories(records):
 	# check the file format
@@ -3524,6 +3539,12 @@ def validate_person_record(person):
 	age_status = False
 	# set a label
 	person_label = person['first_name'] + ' ' + person['last_name']
+	# check for mandatory fields
+	errors += check_mandatory_fields(
+										record=person,
+										label=person_label,
+										fields=['first_name','last_name','date_of_birth']
+									)
 	# set the date of birth
 	date_of_birth = convert_optional_ddmmyy(person['date_of_birth'])
 	# now attempt to get a matching person
@@ -3576,5 +3597,118 @@ def validate_person_record(person):
 	if age_status and date_of_birth and date_of_birth.date() < today.replace(year=today.year-age_status.maximum_age):
 		# set the error
 		errors.append(person_label + ' not created: too old for age status')
+	# return the errors
+	return errors
+
+def load_events(records):
+	# check the file format
+	results = file_fields_valid(
+									records.fieldnames.copy(),
+									[
+										'name',
+										'description',
+										'event_type',
+										'date',
+										'start_time',
+										'end_time',
+										'location',
+										'ward',
+										'areas',
+									]
+								)
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for event in records:
+			# set a label
+			event_label = event['name']
+			# validate the record
+			errors = validate_event_record(event)
+			# check whether we got any errors
+			if not errors:
+				# create an event
+				new_event = Event.objects.create(
+								name = event['name'],
+								description = event['description'],
+								event_type = Event_Type.objects.get(name = event['event_type']),
+								date = convert_optional_ddmmyy(event['date']),
+								start_time = datetime.datetime.strptime(event['start_time'],'%H:%M'),
+								end_time = datetime.datetime.strptime(event['end_time'],'%H:%M'),
+								location = event['location'],
+								ward = Ward.objects.get(ward_name = event['ward']),
+									)
+				# set the message to show that the creation was successful
+				results.append(event_label + ' created.')
+				# check whether we also have areas
+				if event['areas']:
+					# break the areas string down into areas
+					areas = event['areas'].split(',')
+					# now go through the areas
+					for area_name in areas:
+						# get the area
+						area = Area.objects.get(area_name = area_name)
+						# create the area
+						new_event.areas.add(area)
+						# and add a message
+						results.append(event_label + ': area ' + area_name + ' created.')
+			# otherwise append the errors
+			else:
+				# add the error list to the results list
+				results += errors
+	# return the results
+	return results
+
+def validate_event_record(event):
+	# check whether an event record is valid
+	# set the error list
+	print(event)
+	errors = []
+	# set a label
+	event_label = event['name']
+	# check for mandatory fields
+	errors += check_mandatory_fields(
+										record=event,
+										label=event_label,
+										fields=['name','description','date','start_time','end_time']
+									)
+	# set the date
+	date = convert_optional_ddmmyy(event['date'])
+	# now attempt to get a matching event
+	if Event.objects.filter(
+								name = event['name'],
+								date = convert_optional_ddmmyy(event['date']),
+								).exists():
+		# set the message to show that it exists
+		errors.append(event_label + ' not created: event already exists.')
+	# check the event type
+	try:
+		# attempt to get the record
+		event_type = Event_Type.objects.get(name = event['event_type'])
+	# deal with an event type that doesn't exist		
+	except (Event_Type.DoesNotExist):
+		# set the error
+		errors.append(event_label + ' not created: event type ' + event['event_type'] + ' does not exist.')
+	# check whether the ward exists
+	try:
+		# attempt to get the record
+		ward = Ward.objects.get(ward_name = event['ward'])
+	# deal with a ward that doesn't exist		
+	except (Ward.DoesNotExist):
+		# set the error
+		errors.append(event_label + ' not created: ward ' + event['ward'] + ' does not exist.')
+	# check the areas
+	if event['areas']:
+		# break the areas string down into areas
+		areas = event['areas'].split(',')
+		# now go through the areas
+		for area_name in areas:
+			# try to get the area
+			try:
+				# attempt to get the record
+				area = Area.objects.get(area_name = area_name)
+			# deal with the exception
+			except (Area.DoesNotExist):
+				# set the error
+				errors.append(event_label + ' not created: area ' + area_name + ' does not exist.')
 	# return the errors
 	return errors

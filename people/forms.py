@@ -66,7 +66,6 @@ class UploadDataForm(forms.Form):
 									label="Data File",
 									widget=forms.ClearableFileInput(attrs={'class' : 'form-control'}))
 
-
 class AddPersonForm(forms.Form):
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(
@@ -679,7 +678,7 @@ class EventSearchForm(forms.Form):
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
 																	}),
-									input_formats=('%d/%m/%Y',))
+									input_formats=['%d/%m/%Y'])
 	date_to = forms.DateField(
 									label="To",
 									required=False,
@@ -688,7 +687,7 @@ class EventSearchForm(forms.Form):
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
 																	}),
-									input_formats=('%d/%m/%Y',))
+									input_formats=['%d/%m/%Y'])
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor

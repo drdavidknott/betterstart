@@ -1808,6 +1808,19 @@ def convert_optional_ddmmyy(date):
 	# return the value
 	return date
 
+def datetime_valid(datetime_value,datetime_format):
+	# check the datetime
+	try:
+		datetime.datetime.strptime(datetime_value, datetime_format)
+		# set the result
+		result = True
+	# deal with the exception
+	except ValueError:
+		# set the result
+		result = False
+	# return the result
+	return result
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -3545,16 +3558,58 @@ def validate_person_record(person):
 										label=person_label,
 										fields=['first_name','last_name','date_of_birth']
 									)
-	# set the date of birth
-	date_of_birth = convert_optional_ddmmyy(person['date_of_birth'])
-	# now attempt to get a matching person
-	if Person.objects.filter(
-								first_name = person['first_name'],
-								last_name = person['last_name'],
-								date_of_birth = date_of_birth
-								).exists():
-		# set the message to show that it exists
-		errors.append(person_label + ' not created: person already exists.')
+	# and check whether the age status exists
+	try:
+		# attempt to get the record
+		age_status = Age_Status.objects.get(status = person['age_status'])
+	# deal with an age status not existing
+	except (Age_Status.DoesNotExist):
+		# set the error
+		errors.append(person_label + ' not created: age status ' + person['age_status'] + ' does not exist.')
+	# check whether the role is valid for the age status
+	if age_status and role_type and not age_status.role_types.filter(pk=role_type.pk).exists():
+		# set the error
+		errors.append(person_label + ' not created: role type is not valid for age status.')
+	# get today's date
+	today = datetime.date.today()
+	# get the date of birth
+	date_of_birth = person['date_of_birth']
+	# check the date of birth if we have it
+	if date_of_birth and not datetime_valid(date_of_birth,'%d/%m/%Y'):
+		# set the messages
+		errors.append(person_label + ' not created: date of birth is not in DD/MM/YYYY format.')
+	# otherwise convert the date of birth
+	else:
+		# set the date of birth
+		date_of_birth = convert_optional_ddmmyy(person['date_of_birth'])
+		# and try to get the person
+		if Person.objects.filter(
+									first_name = person['first_name'],
+									last_name = person['last_name'],
+									date_of_birth = date_of_birth
+									).exists():
+			# set the message to show that it exists
+			errors.append(person_label + ' not created: person already exists.')
+		# check whether the age is correct
+		if age_status and date_of_birth and date_of_birth.date() < today.replace(year=today.year-age_status.maximum_age):
+			# set the error
+			errors.append(person_label + ' not created: too old for age status')
+	# get the due date
+	due_date = person['due_date']
+	# check the due date if we have it
+	if due_date and not datetime_valid(due_date,'%d/%m/%Y'):
+		# set the messages
+		errors.append(person_label + ' not created: due date is not in DD/MM/YYYY format.')
+	# get the pregnant flag
+	pregnant = (person['pregnant'] == 'True')
+	# now check whether we have a due date without a pregnancy flag
+	if due_date and not pregnant:
+		# set the messages
+		errors.append(person_label + ' not created: has due date but is not pregnant.')
+	# now check the other way around
+	if not due_date and  pregnant:
+		# set the messages
+		errors.append(person_label + ' not created: has no due date but is pregnant.')
 	# check the role type
 	try:
 		# attempt to get the record
@@ -3579,24 +3634,6 @@ def validate_person_record(person):
 	except (Ethnicity.DoesNotExist):
 		# set the error
 		errors.append(person_label + ' not created: ethnicity ' + person['ethnicity'] + ' does not exist.')
-	# and check whether the age status exists
-	try:
-		# attempt to get the record
-		age_status = Age_Status.objects.get(status = person['age_status'])
-	# deal with an age status not existing
-	except (Age_Status.DoesNotExist):
-		# set the error
-		errors.append(person_label + ' not created: age status ' + person['age_status'] + ' does not exist.')
-	# check whether the role is valid for the age status
-	if age_status and role_type and not age_status.role_types.filter(pk=role_type.pk).exists():
-		# set the error
-		errors.append(person_label + ' not created: role type is not valid for age status.')
-	# get today's date
-	today = datetime.date.today()
-	# check whether the age is correct
-	if age_status and date_of_birth and date_of_birth.date() < today.replace(year=today.year-age_status.maximum_age):
-		# set the error
-		errors.append(person_label + ' not created: too old for age status')
 	# return the errors
 	return errors
 
@@ -3626,6 +3663,8 @@ def load_events(records):
 			errors = validate_event_record(event)
 			# check whether we got any errors
 			if not errors:
+				# get the ward
+				ward = Ward.objects.get(ward_name = event['ward'])
 				# create an event
 				new_event = Event.objects.create(
 								name = event['name'],
@@ -3635,22 +3674,26 @@ def load_events(records):
 								start_time = datetime.datetime.strptime(event['start_time'],'%H:%M'),
 								end_time = datetime.datetime.strptime(event['end_time'],'%H:%M'),
 								location = event['location'],
-								ward = Ward.objects.get(ward_name = event['ward']),
+								ward = ward,
 									)
 				# set the message to show that the creation was successful
 				results.append(event_label + ' created.')
-				# check whether we also have areas
-				if event['areas']:
-					# break the areas string down into areas
-					areas = event['areas'].split(',')
-					# now go through the areas
-					for area_name in areas:
-						# get the area
-						area = Area.objects.get(area_name = area_name)
-						# create the area
-						new_event.areas.add(area)
-						# and add a message
-						results.append(event_label + ': area ' + area_name + ' created.')
+				# get the areas
+				areas = event['areas'].split(',')
+				# now go through the areas
+				for area_name in areas:
+					# get the area
+					area = Area.objects.get(area_name = area_name)
+					# create the area
+					new_event.areas.add(area)
+					# and add a message
+					results.append(event_label + ': area ' + area_name + ' created.')
+				# add the area which the ward is in, if it hasn't been created already
+				if ward.area.area_name not in areas:
+					# add the area
+					new_event.areas.add(ward.area)
+					# and add a message
+					results.append(event_label + ': area ' + ward.area.area_name + ' created.')
 			# otherwise append the errors
 			else:
 				# add the error list to the results list
@@ -3671,15 +3714,21 @@ def validate_event_record(event):
 										label=event_label,
 										fields=['name','description','date','start_time','end_time']
 									)
-	# set the date
-	date = convert_optional_ddmmyy(event['date'])
-	# now attempt to get a matching event
-	if Event.objects.filter(
-								name = event['name'],
-								date = convert_optional_ddmmyy(event['date']),
-								).exists():
-		# set the message to show that it exists
-		errors.append(event_label + ' not created: event already exists.')
+	# check the date
+	if not datetime_valid(event['date'],'%d/%m/%Y'):
+		# set the messages
+		errors.append(event_label + ' not created: date is not in DD/MM/YYYY format.')
+	# otherwise convert the date
+	else:
+		# set the date
+		date = convert_optional_ddmmyy(event['date'])
+		# now attempt to get a matching event
+		if Event.objects.filter(
+									name = event['name'],
+									date = convert_optional_ddmmyy(event['date']),
+									).exists():
+			# set the message to show that it exists
+			errors.append(event_label + ' not created: event already exists.')
 	# check the event type
 	try:
 		# attempt to get the record
@@ -3710,5 +3759,13 @@ def validate_event_record(event):
 			except (Area.DoesNotExist):
 				# set the error
 				errors.append(event_label + ' not created: area ' + area_name + ' does not exist.')
+	# check the start_time
+	if not datetime_valid(event['start_time'],'%H:%M'):
+		# set the messages
+		errors.append(event_label + ' not created: start time is not in HH:MM format.')
+	# and the end_time
+	if not datetime_valid(event['end_time'],'%H:%M'):
+		# set the messages
+		errors.append(event_label + ' not created: end time is not in HH:MM format.')
 	# return the errors
 	return errors

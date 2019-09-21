@@ -405,6 +405,28 @@ def get_people_by_name(first_name,last_name):
 	# return the people
 	return people
 
+def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
+	# set a blank error
+	error = ''
+	# check whether the from person exists
+	try:
+		# attempt to get the record
+		person_from = Person.objects.get(
+											first_name = first_name,
+											last_name = last_name,
+											age_status__status = age_status_status
+										)
+	# deal with the record not existing
+	except (Person.DoesNotExist):
+		# set the error
+		error = ' does not exist.'
+	# deal with more than one match
+	except (Person.MultipleObjectsReturned):
+		# set the error
+		error = ' duplicate with name and age status.'
+	# return the errors
+	return error
+
 def people_search(
 					first_name='',
 					last_name='',
@@ -1327,22 +1349,26 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 	# return the event
 	return event
 
-def build_registration(request, event, person_id, registered, participated, role_type_id):
+def build_registration(request, event, person_id, registered, participated, role_type_id, show_messages=True):
 	# attempt to create a new registration, checking first that the registration does not exit
 	# first get the person
 	person = get_person(person_id)
 	# if that didn't work, set an error and return
 	if not person:
-		# set the message
-		messages.error(request,'Registration for person ' + str(person_id) + ' failed: person does not exist.')
+		# check whether messages are needed
+		if show_messages:
+			# set the message
+			messages.error(request,'Registration for person ' + str(person_id) + ' failed: person does not exist.')
 		# and return
 		return False
 	# now attempt to get the role type
 	role_type = get_role_type(role_type_id)
 	# if that didn't work, set an error and return
 	if not role_type:
-		# set the message
-		messages.error(request,'Registration for person ' + str(person_id) + ' failed: role type does not exist.')
+		# check whether messages are needed
+		if show_messages:
+			# set the message
+			messages.error(request,'Registration for person ' + str(person_id) + ' failed: role type does not exist.')
 		# and return
 		return False
 	# now attempt to get the registration
@@ -1357,8 +1383,10 @@ def build_registration(request, event, person_id, registered, participated, role
 											participated = participated,
 											role_type = role_type
 											)
-		# set the success message
-		messages.success(request,'New registration (' + str(registration) + ') created.')
+		# check whether messages are needed
+		if show_messages:
+			# set the success message
+			messages.success(request,'New registration (' + str(registration) + ') created.')
 	# otherwise set a warning message
 	else:
 		# check whether there is any change
@@ -1371,9 +1399,11 @@ def build_registration(request, event, person_id, registered, participated, role
 												registered = registered,
 												participated = participated,
 												role_type = role_type)
-			# set the success message
-			messages.success(request,'Registration (' + str(registration) + ') updated.')
-	# return the residence
+			# check whether messages are needed
+			if show_messages:
+				# set the success message
+				messages.success(request,'Registration (' + str(registration) + ') updated.')
+	# return the registration
 	return registration
 
 def remove_registration(request, event, person_id):
@@ -3053,7 +3083,8 @@ def uploaddata(request):
 						'Reference Data' : load_reference_data,
 						'People' : load_people,
 						'Events' : load_events,
-						'Relationships' : load_relationships
+						'Relationships' : load_relationships,
+						'Registrations' : load_registrations
 						}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -3735,7 +3766,7 @@ def load_relationships(records):
 									person_from = person_from,
 									person_to = person_to,
 									relationship_type_id = relationship_type.pk,
-									messages = False
+									show_messages = False
 									)
 				# set a message
 				results.append(relationship_label + ' created.')
@@ -3804,27 +3835,146 @@ def validate_relationship_record(relationship):
 	# return the errors
 	return errors
 
-def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
-	# set a blank error
-	error = ''
-	# check whether the from person exists
-	try:
-		# attempt to get the record
-		person_from = Person.objects.get(
-											first_name = first_name,
-											last_name = last_name,
-											age_status__status = age_status_status
-										)
-	# deal with the record not existing
-	except (Person.DoesNotExist):
-		# set the error
-		error = ' does not exist.'
-	# deal with more than one match
-	except (Person.MultipleObjectsReturned):
-		# set the error
-		error = 'duplicate person with name and age status.'
+def load_registrations(records):
+	# check the file format
+	results = file_fields_valid(
+									records.fieldnames.copy(),
+									[
+										'first_name',
+										'last_name',
+										'age_status',
+										'event_name',
+										'event_date',
+										'registered',
+										'participated',
+										'role_type'
+									]
+								)
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for registration in records:
+			# validate the record
+			errors = validate_registration_record(registration)
+			# check whether we got any errors
+			if not errors:
+				# get the records, starting with the person from
+				person = Person.objects.get(
+											first_name = registration['first_name'],
+											last_name = registration['last_name'],
+											age_status__status = registration['age_status']
+											)
+				# and the event
+				event = Event.objects.get(
+											name = registration['event_name'],
+											date = datetime.datetime.strptime(registration['event_date'],'%d/%m/%Y')
+											)
+				# and the role type
+				role_type = Role_Type.objects.get(role_type_name = registration['role_type'])
+				# build the registration using the function
+				registration = build_registration(
+													request = '',
+													event = event,
+													person_id = person.pk,
+													registered = (registration['registered'] == 'True'),
+													participated = (registration['participated'] == 'True'),
+													role_type_id = role_type.pk,
+													show_messages = False
+													)
+				# set a message
+				results.append(str(registration) + ' created.')
+			# otherwise append the errors
+			else:
+				# add the error list to the results list
+				results += errors
+	# return the results
+	return results
+
+def validate_registration_record(registration):
+	# check whether a registration record is valid
+	# set the error list
+	errors = []
+	# and some dummy values
+	role_type = False
+	age_status = False
+	# set a label
+	registration_label = str(registration['first_name']) + ' ' + str(registration['last_name']) \
+							+ ' (' + str(registration['age_status']) + ') ' \
+							+ ' at ' + str(registration['event_name'])
+	# check for mandatory fields
+	errors += check_mandatory_fields(
+										record=registration,
+										label=registration_label,
+										fields=[
+												'first_name',
+												'last_name',
+												'age_status',
+												'event_name',
+												'event_date',
+												'role_type',
+												]
+									)
+	# only do the rest of the check if we have the right fields
+	if not errors:
+		# check whether the from person exists
+		error = check_person_by_name_and_age_status(
+														first_name = registration['first_name'],
+														last_name = registration['last_name'],
+														age_status_status = registration['age_status']
+													)
+		# if there was an error, add it
+		if error:
+			# append the error message
+			errors.append(registration_label + ' not created: person ' + error)
+		# check whether the role type exists
+		try:
+			# get the role type
+			role_type = Role_Type.objects.get(role_type_name = registration['role_type'])
+		# deal with the exception
+		except (Role_Type.DoesNotExist):
+			# set the error
+			errors.append(
+							registration_label + ' not created: role type ' + 
+							registration['role_type'] + ' does not exist.'
+						)
+		# check whether the age status exists
+		try:
+			# get the age status
+			age_status = Age_Status.objects.get(status = registration['age_status'])
+		# deal with the exception
+		except (Age_Status.DoesNotExist):
+			# set the error
+			errors.append(
+							registration_label + ' not created: age status ' + 
+							registration['age_status'] + ' does not exist.'
+						)
+		# check whether the role type is valid for the age status
+		if role_type and age_status and role_type not in age_status.role_types.all():
+			# set the error
+			errors.append(
+							registration_label + ' not created: ' + str(role_type) + 
+							' is not valid for ' + str(age_status) + '.'
+						)
+		# get the event date
+		event_date = registration['event_date']
+		# check whether the date is valid
+		if not datetime_valid(event_date,'%d/%m/%Y'):
+			# set the error
+			errors.append(registration_label + ' not created: event date ' + str(event_date) + ' is not valid.')
+		# otherwise do the rest of the checks
+		else:
+			# set the date
+			event_date = convert_optional_ddmmyy(registration['event_date'])
+			# try to get the event record
+			try:
+				# get the event record
+				event = Event.objects.get(name = registration['event_name'], date = event_date)
+			# deal with the exception
+			except (Event.DoesNotExist):
+				# set the error
+				errors.append(registration_label + ' not created: event does not exist.')
 	# return the errors
-	return error
+	return errors
 
 def load_events(records):
 	# check the file format

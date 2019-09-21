@@ -1222,7 +1222,7 @@ def update_registration(registration, registered, participated, role_type):
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
 # setting messsages.
 
-def edit_relationship(request, person_from, person_to, relationship_type_id):
+def edit_relationship(request, person_from, person_to, relationship_type_id, show_messages=True):
 	# edit a relationship: this includes deletion of existing relationships and creation of new relationships
 	# if we have been passed a relationship type id of zero of False, we just do the deletion
 	# set a flag
@@ -1233,8 +1233,10 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 		relationship_type_from = get_relationship_type(relationship_type_id)
 		# if we didn't get one, set an error message and crash out
 		if not relationship_type_from:
-			# set the messages
-			messages.error(request, 'Relationship type ' + str(relationship_type_id) + ' does not exist.')
+			# set the messages if messages are required
+			if show_messages:
+				 # set the message
+				messages.error(request, 'Relationship type ' + str(relationship_type_id) + ' does not exist.')
 			# crash out
 			return success
 	# see whether we have an existing relationship
@@ -1246,9 +1248,11 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 			# delete the existing relationships
 			relationship_from.delete()
 			relationship_to.delete()
-			# set a message
-			messages.success(request,'Relationship between ' + str(person_from) + ' and ' 
-								+ str(person_to) + ' deleted.')
+			# set a message if messages are required
+			if show_messages:
+				# set the message
+				messages.success(request,'Relationship between ' + str(person_from) + ' and ' 
+									+ str(person_to) + ' deleted.')
 		# if nothing has changed, we are done, so we can return success
 		else:
 			# set the flag
@@ -1263,20 +1267,24 @@ def edit_relationship(request, person_from, person_to, relationship_type_id):
 							 person_to = person_to,
 							 relationship_type_from = relationship_type_from
 							):
-			# set the success message
-			messages.success(request,
-				'Relationship created: ' + str(person_from) + 
-				' is the ' + relationship_type_from.relationship_type + ' of ' + str(person_to))
-			# and the other success message
-			messages.success(request,
-				'Relationship created: ' + str(person_to) + 
-				' is the ' + relationship_type_from.relationship_counterpart + ' of ' + str(person_from))
+			# set the success message if messages are required
+			if show_messages:
+				# set the message
+				messages.success(request,
+					'Relationship created: ' + str(person_from) + 
+					' is the ' + relationship_type_from.relationship_type + ' of ' + str(person_to))
+				# and the other success message
+				messages.success(request,
+					'Relationship created: ' + str(person_to) + 
+					' is the ' + relationship_type_from.relationship_counterpart + ' of ' + str(person_from))
 			# set the success flag
 			success = True
 		# otherwise set the failure message
 		else:
-			# set the message
-			messages.error(request, 'Relationship could not be created.')
+			# set the message if messages are required
+			if show_messages:
+				# set the message
+				messages.error(request, 'Relationship could not be created.')
 	# return the result
 	return success
 
@@ -3044,7 +3052,8 @@ def uploaddata(request):
 						'Relationship Types' : load_relationship_types,
 						'Reference Data' : load_reference_data,
 						'People' : load_people,
-						'Events' : load_events
+						'Events' : load_events,
+						'Relationships' : load_relationships
 						}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -3526,7 +3535,10 @@ def load_people(records):
 				if street:
 					# swap the street text for the street record
 					street = Street.objects.get(name = street,post_code__post_code = person['post_code'])
-					# get the street
+				# otherwise deal with a blank street
+				else:
+					# set it to None
+					street = None
 				# create a person
 				new_person = Person.objects.create(
 								first_name = person['first_name'],
@@ -3563,7 +3575,7 @@ def validate_person_record(person):
 	role_type = False
 	age_status = False
 	# set a label
-	person_label = person['first_name'] + ' ' + person['last_name']
+	person_label = str(person['first_name']) + ' ' + str(person['last_name'])
 	# check for mandatory fields
 	errors += check_mandatory_fields(
 										record=person,
@@ -3678,6 +3690,141 @@ def validate_person_record(person):
 	  			errors.append(person_label + ' not created: street ' + street + ' does not exist.')
 	# return the errors
 	return errors
+
+def load_relationships(records):
+	# check the file format
+	results = file_fields_valid(
+									records.fieldnames.copy(),
+									[
+										'from_first_name',
+										'from_last_name',
+										'from_age_status',
+										'to_first_name',
+										'to_last_name',
+										'to_age_status',
+										'relationship_type',
+									]
+								)
+	# check whether we got any results: if we did, something went wrong
+	if not results:
+		# go through the csv file and process it
+		for relationship in records:
+			# validate the record
+			errors = validate_relationship_record(relationship)
+			# check whether we got any errors
+			if not errors:
+				# get the records, starting with the person from
+				person_from = Person.objects.get(
+													first_name = relationship['from_first_name'],
+													last_name = relationship['from_last_name'],
+													age_status__status = relationship['from_age_status']
+												)
+				# and the person to
+				person_to = Person.objects.get(
+													first_name = relationship['to_first_name'],
+													last_name = relationship['to_last_name'],
+													age_status__status = relationship['to_age_status']
+												)
+				# and the relationship type
+				relationship_type = Relationship_Type.objects.get(relationship_type = relationship['relationship_type'])
+				# set a label
+				relationship_label = str(person_from) + ' is ' + str(relationship_type) + ' of ' + str(person_to)
+				# build the relationship using the edit relationship function
+				edit_relationship(
+									request = '',
+									person_from = person_from,
+									person_to = person_to,
+									relationship_type_id = relationship_type.pk,
+									messages = False
+									)
+				# set a message
+				results.append(relationship_label + ' created.')
+			# otherwise append the errors
+			else:
+				# add the error list to the results list
+				results += errors
+	# return the results
+	return results
+
+def validate_relationship_record(relationship):
+	# check whether a relationship record is valid
+	# set the error list
+	errors = []
+	# set a label
+	relationship_label = str(relationship['from_first_name']) + ' ' + str(relationship['from_last_name']) \
+							+ ' is ' + str(relationship['relationship_type']) + ' of ' \
+							+ str(relationship['to_first_name']) + ' ' + str(relationship['to_last_name'])
+	# check for mandatory fields
+	errors += check_mandatory_fields(
+										record=relationship,
+										label=relationship_label,
+										fields=[
+												'from_first_name',
+												'from_last_name',
+												'from_age_status',
+												'to_first_name',
+												'to_last_name',
+												'to_age_status',
+												'relationship_type'
+												]
+									)
+	# only do the rest of the check if we have the right fields
+	if not errors:
+		# check whether the from person exists
+		error = check_person_by_name_and_age_status(
+														first_name = relationship['from_first_name'],
+														last_name = relationship['from_last_name'],
+														age_status_status = relationship['from_age_status']
+													)
+		# if there was an error, add it
+		if error:
+			# append the error message
+			errors.append(relationship_label + ' not created: from ' + error)
+		# check whether the to person exists
+		error = check_person_by_name_and_age_status(
+														first_name = relationship['to_first_name'],
+														last_name = relationship['to_last_name'],
+														age_status_status = relationship['to_age_status']
+													)
+		# if there was an error, add it
+		if error:
+			# append the error message
+			errors.append(relationship_label + ' not created: to ' + error)
+		# check whether the relationship type exists
+		try:
+			# get the relationship type
+			relationship_type = Relationship_Type.objects.get(relationship_type = relationship['relationship_type'])
+		# deal with the exception
+		except (Relationship_Type.DoesNotExist):
+			# set the error
+			errors.append(
+							relationship_label + ' not created: relationship type ' + 
+							relationship['relationship_type'] + ' does not exist.'
+						)
+	# return the errors
+	return errors
+
+def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
+	# set a blank error
+	error = ''
+	# check whether the from person exists
+	try:
+		# attempt to get the record
+		person_from = Person.objects.get(
+											first_name = first_name,
+											last_name = last_name,
+											age_status__status = age_status_status
+										)
+	# deal with the record not existing
+	except (Person.DoesNotExist):
+		# set the error
+		error = ' does not exist.'
+	# deal with more than one match
+	except (Person.MultipleObjectsReturned):
+		# set the error
+		error = 'duplicate person with name and age status.'
+	# return the errors
+	return error
 
 def load_events(records):
 	# check the file format

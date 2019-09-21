@@ -1,0 +1,6 @@
+from_first_name,from_last_name,from_age_status,to_first_name,to_last_name,to_age_status,relationship_type
+dont,exist,invalid,dont,exist,invalid,invalid
+Joey,Bloggs,Adult,Joking,Bloggs,Child under four,parent
+Woking,Bloggs,Adult,Winking,Bloggs,Child under four,child
+Woking,Bloggs,Child under four,Winking,Bloggs,Adult,child
+Woking,Bloggs,Child under four,Winking Bloggs,Adult,child

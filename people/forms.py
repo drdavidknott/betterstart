@@ -56,6 +56,7 @@ class UploadDataForm(forms.Form):
 							('Role Types','Role Types'),
 							('People','People'),
 							('Events','Events'),
+							('Relationships','Relationships')
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

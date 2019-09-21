@@ -3504,7 +3504,10 @@ def load_people(records):
 										'default_role',
 										'ethnicity',
 										'ABSS_type',
-										'age_status'
+										'age_status',
+										'house_name_or_number',
+										'street',
+										'post_code'
 									]
 								)
 	# check whether we got any results: if we did, something went wrong
@@ -3517,6 +3520,13 @@ def load_people(records):
 			errors = validate_person_record(person)
 			# check whether we go any errors
 			if not errors:
+				# set the street
+				street = person['street']
+				# check if we have a street
+				if street:
+					# swap the street text for the street record
+					street = Street.objects.get(name = street,post_code__post_code = person['post_code'])
+					# get the street
 				# create a person
 				new_person = Person.objects.create(
 								first_name = person['first_name'],
@@ -3532,7 +3542,9 @@ def load_people(records):
 								default_role = Role_Type.objects.get(role_type_name = person['default_role']),
 								ethnicity = Ethnicity.objects.get(description = person['ethnicity']),
 								ABSS_type = ABSS_Type.objects.get(name = person['ABSS_type']),
-								age_status = Age_Status.objects.get(status = person['age_status'])
+								age_status = Age_Status.objects.get(status = person['age_status']),
+								house_name_or_number = person['house_name_or_number'],
+								street = street
 									)
 				# set the message to show that the creation was successful
 				results.append(person_label + ' created.')
@@ -3634,6 +3646,36 @@ def validate_person_record(person):
 	except (Ethnicity.DoesNotExist):
 		# set the error
 		errors.append(person_label + ' not created: ethnicity ' + person['ethnicity'] + ' does not exist.')
+	# do the address processing
+	# set the post code
+	post_code = person['post_code']
+	# and the street
+	street = person['street']
+	# and the house name or number
+	house_name_or_number = person['house_name_or_number']
+	# check whether we have any address details
+	if (post_code or street or house_name_or_number):
+		# now check whether we have ALL address details
+	  	if not (post_code and street and house_name_or_number):
+	  		# set the error
+	  		errors.append(person_label + ' not created: all of post code, street and name/number needed for address.')
+	  	# else check the details
+	  	else:
+	  		# check the post code
+	  		try:
+	  			# get the post code record
+	  			this_post_code = Post_Code.objects.get(post_code = post_code)
+	  		# deal with the exception
+	  		except (Post_Code.DoesNotExist):
+	  			# set the error
+	  			errors.append(person_label + ' not created: post code ' + post_code + ' does not exist.')
+	  		try:
+	  			# get the street record
+	  			this_street = Street.objects.get(name = street,post_code__post_code = post_code)
+	  		# deal with the exception
+	  		except (Street.DoesNotExist):
+	  			# set the error
+	  			errors.append(person_label + ' not created: street ' + street + ' does not exist.')
 	# return the errors
 	return errors
 

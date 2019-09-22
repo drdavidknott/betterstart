@@ -85,6 +85,12 @@ def set_up_test_user():
 	# return the user
 	return test_user
 
+def set_up_test_superuser():
+	# create a test superuser
+	test_superuser = User.objects.create_user(username='testsuper', password='superword', is_superuser=True)
+	# return the user
+	return test_superuser
+
 def set_up_event_base_data():
 	# create an event category
 	test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
@@ -3776,7 +3782,7 @@ class EditEventViewTest(TestCase):
 		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
 		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
 
-class Address(TestCase):
+class AddressViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# create a test user
@@ -4243,7 +4249,7 @@ class AddressToRelationshipsViewTest(TestCase):
 		self.assertEqual(test_to_person.house_name_or_number,'25')
 		self.assertEqual(test_to_person.street,Street.objects.get(name='Test Street0'))
 
-class Questions(TestCase):
+class QuestionsViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# create a test user
@@ -4605,3 +4611,72 @@ class Questions(TestCase):
 		# check the note is as expected
 		self.assertEqual(answer_note.notes,'test_notes')
 
+class UploadDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# and a test superuser
+		superuser = set_up_test_superuser()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/uploaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/uploaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/uploaddata')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/uploaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_invalid_file_format_event_categories(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		invalid_file = open('people/tests/data/invalid.csv')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Categories',
+											'file' : invalid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'File cannot be loaded as it does not contain the right fields.')
+
+	def test_upload_event_categories(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/event_categories.csv')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Categories',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_event_category_1 = Event_Category.objects.get(name='test event category 1')
+		test_event_category_2 = Event_Category.objects.get(name='test event category 2')
+		# check that the data is correct
+		self.assertEqual(test_event_category_1.description,'event category 1 description')
+		self.assertEqual(test_event_category_2.description,'event category 2 description')

@@ -3066,7 +3066,7 @@ def answer_questions(request,person_id=0):
 	return HttpResponse(answer_questions_template.render(context=context, request=request))
 
 @login_required
-@user_passes_test(lambda user: user.is_superuser)
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
 def uploaddata(request):
 	# set results to empty
 	results = []
@@ -4043,7 +4043,6 @@ def load_events(records):
 def validate_event_record(event):
 	# check whether an event record is valid
 	# set the error list
-	print(event)
 	errors = []
 	# set a label
 	event_label = event['name']

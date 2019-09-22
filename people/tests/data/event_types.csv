@@ -1,4 +1,3 @@
 name,description,event_category
-UNKNOWN,UNKNOWN,UNKNOWN
-Coffee session,A meeting for coffee.,Coffee session
-Volunteer training,Training session for volunteers,Training
+test event type 1,event type 1 description,test event category 1
+test event type 2,event type 2 description,test event category 2

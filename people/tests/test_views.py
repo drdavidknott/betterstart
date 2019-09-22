@@ -5755,3 +5755,67 @@ class UploadDataViewTest(TestCase):
 		self.assertEqual(ABSS_Type.objects.all().count(),1)
 		self.assertEqual(Age_Status.objects.all().count(),1)
 
+class UploadPeopleDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and other base data
+		set_up_address_base_data()
+		set_up_test_post_codes('test_post_code_')
+		set_up_test_streets('test_street_','test_post_code_0')
+
+	def test_upload_people_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' No first name not created: mandatory field first_name not provided')
+		self.assertContains(response,'No last name  not created: mandatory field last_name not provided')
+		self.assertContains(response,'No age status not created: mandatory field age_status not provided')
+		self.assertContains(response,'No ABSS type not created: mandatory field ABSS_type not provided')
+		self.assertContains(response,'No ethnicity not created: mandatory field ethnicity not provided')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+	def test_upload_people_data_missing_corresponding_records(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_missing_corresponding_records.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Missing age status not created: age status missing age status does not exist')
+		self.assertContains(response,'Missing role type not created: role type missing role type does not exist')
+		self.assertContains(response,'Missing ethnicity not created: ethnicity missing ethnicity does not exist')
+		self.assertContains(response,'Missing ABSS type not created: ABSS type missing ABSS type does not exist')
+		self.assertContains(response,'Missing street not created: street missing street does not exist')
+		self.assertContains(response,'Missing post code not created: post code missing post code does not exist')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+
+
+

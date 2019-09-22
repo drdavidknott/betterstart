@@ -1,0 +1,7 @@
+first_name,last_name,email_address,home_phone,mobile_phone,date_of_birth,gender,pregnant,due_date,default_role,ethnicity,ABSS_type,age_status,house_name_or_number,street,post_code
+,No first name,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,Adult,999,test_street_0,test_post_code_0
+No last name,,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,Adult,999,test_street_0,test_post_code_0
+No,age status,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,,999,test_street_0,test_post_code_0
+No,ethnicity,test email,123456,789123,01/01/1990,Male,False,,test_role_type,,test_ABSS_type,Adult,999,test_street_0,test_post_code_0
+No,ABSS type,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,,Adult,999,test_street_0,test_post_code_0
+No,default role,test email,123456,789123,01/01/1990,Male,False,,,test_ethnicity,test_ABSS_type,Adult,999,test_street_0,test_post_code_0

@@ -3610,7 +3610,14 @@ def validate_person_record(person):
 	errors += check_mandatory_fields(
 										record=person,
 										label=person_label,
-										fields=['first_name','last_name','date_of_birth']
+										fields=[
+													'first_name',
+													'last_name',
+													'age_status',
+													'default_role',
+													'ethnicity',
+													'ABSS_type'
+												]
 									)
 	# and check whether the age status exists
 	try:
@@ -3620,6 +3627,14 @@ def validate_person_record(person):
 	except (Age_Status.DoesNotExist):
 		# set the error
 		errors.append(person_label + ' not created: age status ' + person['age_status'] + ' does not exist.')
+	# check the role type
+	try:
+		# attempt to get the record
+		role_type = Role_Type.objects.get(role_type_name = person['default_role'])
+	# deal with a role type that doesn't exist		
+	except (Role_Type.DoesNotExist):
+		# set the error
+		errors.append(person_label + ' not created: role type ' + person['default_role'] + ' does not exist.')
 	# check whether the role is valid for the age status
 	if age_status and role_type and not age_status.role_types.filter(pk=role_type.pk).exists():
 		# set the error
@@ -3664,14 +3679,6 @@ def validate_person_record(person):
 	if not due_date and  pregnant:
 		# set the messages
 		errors.append(person_label + ' not created: has no due date but is pregnant.')
-	# check the role type
-	try:
-		# attempt to get the record
-		role_type = Role_Type.objects.get(role_type_name = person['default_role'])
-	# deal with a role type that doesn't exist		
-	except (Role_Type.DoesNotExist):
-		# set the error
-		errors.append(person_label + ' not created: role type ' + person['role_type'] + ' does not exist.')
 	# check whether the ABSS type exists
 	try:
 		# attempt to get the record

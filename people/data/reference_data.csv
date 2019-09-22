@@ -1,19 +1,8 @@
 data_type,value
-capture_type,UNKNOWN
 ethnicity,Prefer not to say
-children_centre,UNKNOWN
-children_centre,Blenheim
-children_centre,Cambridge Road
-children_centre,Centre Place
-children_centre,Eastwood
-children_centre,Friars
-children_centre,Hamstel
-children_centre,Prince Avenue
-children_centre,Summercourt
-children_centre,Temple Sutton
-children_centre,None of these
 ABSS_type,ABSS beneficiary
 ABSS_type,Not ABSS
 ABSS_type,ABSS deliverer
 age_status,Adult
-age_status,Child
+age_status,Child under four
+age_status,Child over four

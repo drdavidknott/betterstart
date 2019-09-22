@@ -3350,33 +3350,30 @@ def load_streets(records):
 def load_reference_data(records):
 	# check the file format
 	results = file_fields_valid(records.fieldnames.copy(),['data_type','value'])
+	# define the load functions
+		# define the functions for each file type
+	load_functions = {
+						'ethnicity' : load_ethnicity,
+						'ABSS_type' : load_ABSS_type,
+						'age_status' : load_age_status
+						}
 	# check whether we got any results: if we did, something went wrong
 	if not results:
 		# go through the csv file and process it
 		for record in records:
 			# get the data type
 			data_type = record['data_type']
-			# get the value
-			value = record['value']
-			# try to create the record, starting with capture type
-			if data_type == 'capture_type':
-				results.append(load_capture_type(value))
-			# now ethnicity
-			elif data_type == 'ethnicity':
-				results.append(load_ethnicity(value))
-			# then relationship type
-			elif data_type == 'relationship_type':
-				results.append(load_relationship_type(value))
-			# then children centres
-			elif data_type == 'children_centre':
-				results.append(load_children_centre(value))
-			# and abss type
-			elif data_type == 'ABSS_type':
-				results.append(load_ABSS_type(value))
-			# and age status
-			elif data_type == 'age_status':
-				results.append(load_age_status(value))	
-			# and deal with any unknown type
+			# check the data type
+			if data_type in load_functions.keys():
+				# get the load function
+				load_function = load_functions[data_type]
+				# get the value
+				value = record['value']
+				# try to create the record
+				result = load_function(value)
+				# append the result
+				results.append(result)
+				# and deal with any unknown type
 			else:
 				# set an error message
 				results = results + ['Data type: ' + data_type + ' is not recognised.']

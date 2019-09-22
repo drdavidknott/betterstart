@@ -5673,5 +5673,85 @@ class UploadDataViewTest(TestCase):
 		# check that no additional event categories have been created
 		self.assertEqual(Relationship_Type.objects.all().count(),3)
 
+	def test_upload_reference_data_invalid_data_type(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/reference_data_invalid_data_type.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Reference Data',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Data type: invalid data type is not recognised.')
+		# check that no records have been created
+		self.assertEqual(Ethnicity.objects.all().exists(),False)
+		self.assertEqual(ABSS_Type.objects.all().exists(),False)
+		self.assertEqual(Age_Status.objects.all().exists(),False)
 
+	def test_upload_reference_data(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/reference_data.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Reference Data',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the records have been created
+		self.assertEqual(Ethnicity.objects.filter(description='test ethnicity').exists(),True)
+		self.assertEqual(ABSS_Type.objects.filter(name='test ABSS type').exists(),True)
+		self.assertEqual(Age_Status.objects.filter(status='test age status').exists(),True)
+
+	def test_upload_reference_data_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/reference_data.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Reference Data',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the records have been created
+		self.assertEqual(Ethnicity.objects.filter(description='test ethnicity').exists(),True)
+		self.assertEqual(ABSS_Type.objects.filter(name='test ABSS type').exists(),True)
+		self.assertEqual(Age_Status.objects.filter(status='test age status').exists(),True)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/reference_data.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Reference Data',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional records have been created
+		self.assertEqual(Ethnicity.objects.all().count(),1)
+		self.assertEqual(ABSS_Type.objects.all().count(),1)
+		self.assertEqual(Age_Status.objects.all().count(),1)
 

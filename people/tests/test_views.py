@@ -5766,6 +5766,13 @@ class UploadPeopleDataViewTest(TestCase):
 		set_up_address_base_data()
 		set_up_test_post_codes('test_post_code_')
 		set_up_test_streets('test_street_','test_post_code_0')
+		# and some additional records
+		test_age_status_limit = Age_Status.objects.create(
+															status='Under five',
+															default_role_type=Role_Type.objects.get(
+																				role_type_name='test_role_type'),
+															maximum_age=5
+															)
 
 	def test_upload_people_data_missing_mandatory_fields(self):
 		# log the user in as a superuser
@@ -5816,6 +5823,156 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
+	def test_upload_people_data_cross_field_validation(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_cross_field_validation.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Address missing house number not created: all of post code, street and name/number needed for address')
+		self.assertContains(response,'Address missing street not created: all of post code, street and name/number needed for address')
+		self.assertContains(response,'Address missing post code not created: all of post code, street and name/number needed for address')
+		self.assertContains(response,'Pregnant missing due date not created: has no due date but is pregnant')
+		self.assertContains(response,'Not pregnant with due date not created: has due date but is not pregnant')
+		self.assertContains(response,'Role invalid for age status not created: role type is not valid for age status')
+		self.assertContains(response,'Too old for age status not created: too old for age status')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+	def test_upload_people_data_invalid_dates(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_invalid_dates.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Invalid date of birth not created: date of birth is not in DD/MM/YYYY format')
+		self.assertContains(response,'Invalid due date not created: due date is not in DD/MM/YYYY format')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+	def test_upload_people(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		# check that we only have one person
+		self.assertEqual(Person.objects.all().count(),1)
+
+	def test_upload_people_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		# check that we only have one person
+		self.assertEqual(Person.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event categories have been created
+		self.assertEqual(Person.objects.all().count(),1)
 
 
 

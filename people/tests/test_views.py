@@ -5528,3 +5528,150 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional event types have been created
 		self.assertEqual(Street.objects.all().count(),2)
+
+	def test_upload_role_types(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/role_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Role Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test role types that should have been loaded
+		test_role_type_events_and_people = Role_Type.objects.get(role_type_name='test role events and people')
+		test_role_type_events_only = Role_Type.objects.get(role_type_name='test role events only')
+		test_role_type_people_only = Role_Type.objects.get(role_type_name='test role people only')
+		test_trained_role_type = Role_Type.objects.get(role_type_name='test trained role')
+		# check that the data is correct
+		self.assertEqual(test_role_type_events_and_people.use_for_events,True)
+		self.assertEqual(test_role_type_events_and_people.use_for_people,True)
+		self.assertEqual(test_role_type_events_and_people.trained,False)
+		self.assertEqual(test_role_type_events_only.use_for_events,True)
+		self.assertEqual(test_role_type_events_only.use_for_people,False)
+		self.assertEqual(test_role_type_people_only.use_for_events,False)
+		self.assertEqual(test_role_type_people_only.use_for_people,True)
+		self.assertEqual(test_trained_role_type.trained,True)
+
+	def test_upload_role_types_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/role_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Role Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test role types that should have been loaded
+		test_role_type_events_and_people = Role_Type.objects.get(role_type_name='test role events and people')
+		test_role_type_events_only = Role_Type.objects.get(role_type_name='test role events only')
+		test_role_type_people_only = Role_Type.objects.get(role_type_name='test role people only')
+		test_trained_role_type = Role_Type.objects.get(role_type_name='test trained role')
+		# check that the data is correct
+		self.assertEqual(test_role_type_events_and_people.use_for_events,True)
+		self.assertEqual(test_role_type_events_and_people.use_for_people,True)
+		self.assertEqual(test_role_type_events_and_people.trained,False)
+		self.assertEqual(test_role_type_events_only.use_for_events,True)
+		self.assertEqual(test_role_type_events_only.use_for_people,False)
+		self.assertEqual(test_role_type_people_only.use_for_events,False)
+		self.assertEqual(test_role_type_people_only.use_for_people,True)
+		self.assertEqual(test_trained_role_type.trained,True)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/role_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Role Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event categories have been created
+		self.assertEqual(Role_Type.objects.all().count(),4)
+
+	def test_upload_relationship_types(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/relationship_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationship Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test relationship types that should have been loaded
+		test_relationship_type_1 = Relationship_Type.objects.get(relationship_type='test relationship type 1')
+		test_relationship_type_2 = Relationship_Type.objects.get(relationship_type='test relationship type 2')
+		test_relationship_type_3 = Relationship_Type.objects.get(relationship_type='test relationship type 3')
+		# check that the data is correct
+		self.assertEqual(test_relationship_type_1.relationship_counterpart,'test relationship type 2')
+		self.assertEqual(test_relationship_type_2.relationship_counterpart,'test relationship type 1')
+		self.assertEqual(test_relationship_type_3.relationship_counterpart,'test relationship type 3')
+
+	def test_upload_relationship_types_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/relationship_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationship Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test relationship types that should have been loaded
+		test_relationship_type_1 = Relationship_Type.objects.get(relationship_type='test relationship type 1')
+		test_relationship_type_2 = Relationship_Type.objects.get(relationship_type='test relationship type 2')
+		test_relationship_type_3 = Relationship_Type.objects.get(relationship_type='test relationship type 3')
+		# check that the data is correct
+		self.assertEqual(test_relationship_type_1.relationship_counterpart,'test relationship type 2')
+		self.assertEqual(test_relationship_type_2.relationship_counterpart,'test relationship type 1')
+		self.assertEqual(test_relationship_type_3.relationship_counterpart,'test relationship type 3')
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/relationship_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationship Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event categories have been created
+		self.assertEqual(Relationship_Type.objects.all().count(),3)
+
+
+

@@ -3385,7 +3385,8 @@ def load_reference_data(records):
 
 def load_role_types(records):
 	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['role_type_name','use_for_events','use_for_people'])
+	results = file_fields_valid(records.fieldnames.copy(),
+								['role_type_name','use_for_events','use_for_people','trained'])
 	# check whether we got any results: if we did, something went wrong
 	if not results:
 		# go through the csv file and process it
@@ -3405,7 +3406,8 @@ def load_role_types(records):
 				role_type = Role_Type(
 										role_type_name = role_type_name,
 										use_for_events = (role_type_record['use_for_events'] == 'True'),
-										use_for_people = (role_type_record['use_for_people'] == 'True')
+										use_for_people = (role_type_record['use_for_people'] == 'True'),
+										trained = (role_type_record['trained'] == 'True')
 										)
 				# save the role type
 				role_type.save()

@@ -1,10 +1,5 @@
-role_type_name,use_for_events,use_for_people
-UNKNOWN,True,True
-Carer,True,True
-Parent,False,True
-Parent Champion,True,False
-Child,True,True
-Ambassador,True,True
-Volunteer,True,True
-Childcare,True,False
-Staff,True,True
+role_type_name,use_for_events,use_for_people,trained
+test role events and people,True,True,False
+test role events only,True,False,False
+test role people only,False,True,False
+test trained role,True,True,True

@@ -264,6 +264,32 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
 
+	def test_search_with_no_criteria_second_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],492)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+
 	def test_search_for_parent_role_type(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -1736,6 +1762,32 @@ class EventsViewTest(TestCase):
 											'event_category' : '0',
 											'ward' : '0',
 											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],502)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21])
+
+	def test_search_with_no_criteria_second_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : '0',
+											'page' : '2'
 											}
 									)
 		# check that we got a response
@@ -4662,7 +4714,7 @@ class UploadDataViewTest(TestCase):
 							]:
 			# open the file
 			invalid_file = open('people/tests/data/invalid.csv')
-			# submit the page with no answers
+			# submit the page to load the file
 			response = self.client.post(
 										reverse('uploaddata'),
 										data = { 
@@ -4682,7 +4734,7 @@ class UploadDataViewTest(TestCase):
 		self.client.login(username='testsuper', password='superword')
 		# open the file
 		valid_file = open('people/tests/data/event_categories.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4704,7 +4756,7 @@ class UploadDataViewTest(TestCase):
 		self.client.login(username='testsuper', password='superword')
 		# open the file
 		valid_file = open('people/tests/data/event_categories.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4724,7 +4776,7 @@ class UploadDataViewTest(TestCase):
 		valid_file.close()
 		# open the file
 		valid_file = open('people/tests/data/event_categories.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4745,7 +4797,7 @@ class UploadDataViewTest(TestCase):
 		# load some event categories first
 		# open the file
 		event_categories_file = open('people/tests/data/event_categories.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4763,7 +4815,7 @@ class UploadDataViewTest(TestCase):
 		self.assertEqual(test_event_category_2.description,'event category 2 description')
 		# now load event types
 		event_types_file = open('people/tests/data/event_types.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4788,7 +4840,7 @@ class UploadDataViewTest(TestCase):
 		# load some event categories first
 		# open the file
 		event_categories_file = open('people/tests/data/event_categories.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4806,7 +4858,7 @@ class UploadDataViewTest(TestCase):
 		self.assertEqual(test_event_category_2.description,'event category 2 description')
 		# now load event types
 		event_types_file = open('people/tests/data/event_types.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4848,7 +4900,7 @@ class UploadDataViewTest(TestCase):
 		self.client.login(username='testsuper', password='superword')
 		# open the file
 		valid_file = open('people/tests/data/areas.csv')
-		# submit the page with no answers
+		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
@@ -4862,5 +4914,235 @@ class UploadDataViewTest(TestCase):
 		test_area_1 = Area.objects.get(area_name='test area 1')
 		test_area_2 = Area.objects.get(area_name='test area 2')
 
+	def test_upload_areas_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/areas.csv')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test areas that should have been loaded
+		test_area_1 = Area.objects.get(area_name='test area 1')
+		test_area_2 = Area.objects.get(area_name='test area 2')
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/areas.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event types have been created
+		self.assertEqual(Area.objects.all().count(),2)
 
+	def test_upload_wards_invalid_areas(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		areas_file = open('people/tests/data/areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : areas_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test areas that should have been loaded
+		test_area_1 = Area.objects.get(area_name='test area 1')
+		test_area_2 = Area.objects.get(area_name='test area 2')
+		# now load wards
+		# open the file
+		wards_file = open('people/tests/data/wards_with_invalid_areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Wards',
+											'file' : wards_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'area does not exist')
+		# check that no additional event types have been created
+		self.assertEqual(Ward.objects.all().exists(),False)
 
+	def test_upload_wards_valid_areas(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		areas_file = open('people/tests/data/areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : areas_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test areas that should have been loaded
+		test_area_1 = Area.objects.get(area_name='test area 1')
+		test_area_2 = Area.objects.get(area_name='test area 2')
+		# now load wards
+		# open the file
+		wards_file = open('people/tests/data/wards_with_valid_areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Wards',
+											'file' : wards_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_ward_1 = Ward.objects.get(ward_name = 'test ward 1')
+		test_ward_2 = Ward.objects.get(ward_name = 'test ward 2')
+		# check the area
+		self.assertEqual(test_ward_1.area,test_area_1)
+		self.assertEqual(test_ward_2.area,test_area_2)
+
+	def test_upload_postcodes_invalid_wards(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		areas_file = open('people/tests/data/areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : areas_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test areas that should have been loaded
+		test_area_1 = Area.objects.get(area_name='test area 1')
+		test_area_2 = Area.objects.get(area_name='test area 2')
+		# now load wards
+		# open the file
+		wards_file = open('people/tests/data/wards_with_valid_areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Wards',
+											'file' : wards_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_ward_1 = Ward.objects.get(ward_name = 'test ward 1')
+		test_ward_2 = Ward.objects.get(ward_name = 'test ward 2')
+		# check the area
+		self.assertEqual(test_ward_1.area,test_area_1)
+		self.assertEqual(test_ward_2.area,test_area_2)
+		# now load postcodes
+		# open the file
+		postcodes_file = open('people/tests/data/postcodes_with_invalid_wards.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Post Codes',
+											'file' : postcodes_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'ward does not exist')
+		# check that no additional event types have been created
+		self.assertEqual(Post_Code.objects.all().exists(),False)
+
+	def test_upload_postcodes_valid_wards(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		areas_file = open('people/tests/data/areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : areas_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test areas that should have been loaded
+		test_area_1 = Area.objects.get(area_name='test area 1')
+		test_area_2 = Area.objects.get(area_name='test area 2')
+		# now load wards
+		# open the file
+		wards_file = open('people/tests/data/wards_with_valid_areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Wards',
+											'file' : wards_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_ward_1 = Ward.objects.get(ward_name = 'test ward 1')
+		test_ward_2 = Ward.objects.get(ward_name = 'test ward 2')
+		# check the area
+		self.assertEqual(test_ward_1.area,test_area_1)
+		self.assertEqual(test_ward_2.area,test_area_2)
+		# now load postcodes
+		# open the file
+		postcodes_file = open('people/tests/data/postcodes_with_valid_wards.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Post Codes',
+											'file' : postcodes_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test postcode 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test postcode 2')
+		# check the area
+		self.assertEqual(test_postcode_1.ward,test_ward_1)
+		self.assertEqual(test_postcode_2.ward,test_ward_2)

@@ -5813,7 +5813,7 @@ class UploadPeopleDataViewTest(TestCase):
 									)
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
-		# check that we got an already exists message
+		# check that we got a does not exist
 		self.assertContains(response,'Missing age status not created: age status missing age status does not exist')
 		self.assertContains(response,'Missing role type not created: role type missing role type does not exist')
 		self.assertContains(response,'Missing ethnicity not created: ethnicity missing ethnicity does not exist')
@@ -5974,5 +5974,126 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that no additional event categories have been created
 		self.assertEqual(Person.objects.all().count(),1)
 
+	def test_upload_people_same_name_different_age_status(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_same_name_different_age_status.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first person
+		test_person = Person.objects.get(first_name='Test',last_name='Person',age_status__status='Adult')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		# get the second person
+		test_person = Person.objects.get(first_name='Test',last_name='Person',age_status__status='Child under four')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2019')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,False)
+		self.assertEqual(test_person.due_date,None)
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Child under four')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		# check that we only have two people
+		self.assertEqual(Person.objects.all().count(),2)
 
+class UploadEventsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_event_base_data()
+		# and other base data
+		set_up_address_base_data()
 
+	def test_upload_events_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' not created: mandatory field name not provided')
+		self.assertContains(response,'No description not created: mandatory field description not provided')
+		self.assertContains(response,'No date not created: mandatory field date not provided')
+		self.assertContains(response,'No start time not created: mandatory field start_time not provided')
+		self.assertContains(response,'No end time not created: mandatory field end_time not provided')
+		# check that no records have been created
+		self.assertFalse(Event.objects.all().exists())
+
+	def test_upload_events_data_missing_corresponding_records(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events_missing_corresponding_records.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check the message
+		self.assertContains(response,'Missing event type not created: event type missing_test_event_type does not exist')
+		self.assertContains(response,'Missing ward not created: ward Missing test ward does not exist')
+		self.assertContains(response,'Missing area not created: area Missing test area 2 does not exist')
+		# check that no records have been created
+		self.assertFalse(Event.objects.all().exists())

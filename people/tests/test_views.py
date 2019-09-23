@@ -4087,7 +4087,7 @@ class AddressViewTest(TestCase):
 			test_person = Person.objects.get(first_name='address_test0')
 			# check the record contents
 			self.assertEqual(test_person.house_name_or_number,'55')
-			self.assertEqual(test_person.street.pk,1)
+			self.assertEqual(test_person.street,Street.objects.get(name='ABC streets 10'))
 			# submit an address update
 			response = self.client.post(
 										reverse('address',args=[Person.objects.get(first_name='address_test0').pk]),

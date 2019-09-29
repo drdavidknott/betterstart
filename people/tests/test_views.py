@@ -5196,8 +5196,8 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_postcode_1 = Post_Code.objects.get(post_code = 'test postcode 1')
-		test_postcode_2 = Post_Code.objects.get(post_code = 'test postcode 2')
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
 		# check the area
 		self.assertEqual(test_postcode_1.ward,test_ward_1)
 		self.assertEqual(test_postcode_2.ward,test_ward_2)
@@ -5255,8 +5255,8 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_postcode_1 = Post_Code.objects.get(post_code = 'test postcode 1')
-		test_postcode_2 = Post_Code.objects.get(post_code = 'test postcode 2')
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
 		# check the area
 		self.assertEqual(test_postcode_1.ward,test_ward_1)
 		self.assertEqual(test_postcode_2.ward,test_ward_2)
@@ -5332,8 +5332,8 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_postcode_1 = Post_Code.objects.get(post_code = 'test postcode 1')
-		test_postcode_2 = Post_Code.objects.get(post_code = 'test postcode 2')
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
 		# check the area
 		self.assertEqual(test_postcode_1.ward,test_ward_1)
 		self.assertEqual(test_postcode_2.ward,test_ward_2)
@@ -5408,8 +5408,8 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_postcode_1 = Post_Code.objects.get(post_code = 'test postcode 1')
-		test_postcode_2 = Post_Code.objects.get(post_code = 'test postcode 2')
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
 		# check the area
 		self.assertEqual(test_postcode_1.ward,test_ward_1)
 		self.assertEqual(test_postcode_2.ward,test_ward_2)
@@ -5486,8 +5486,8 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_postcode_1 = Post_Code.objects.get(post_code = 'test postcode 1')
-		test_postcode_2 = Post_Code.objects.get(post_code = 'test postcode 2')
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
 		# check the area
 		self.assertEqual(test_postcode_1.ward,test_ward_1)
 		self.assertEqual(test_postcode_2.ward,test_ward_2)
@@ -5764,8 +5764,8 @@ class UploadPeopleDataViewTest(TestCase):
 		set_up_people_base_data()
 		# and other base data
 		set_up_address_base_data()
-		set_up_test_post_codes('test_post_code_')
-		set_up_test_streets('test_street_','test_post_code_0')
+		set_up_test_post_codes('test_pc_')
+		set_up_test_streets('test_street_','test_pc_0')
 		# and some additional records
 		test_age_status_limit = Age_Status.objects.create(
 															status='Under five',
@@ -5819,7 +5819,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'Missing ethnicity not created: ethnicity missing ethnicity does not exist')
 		self.assertContains(response,'Missing ABSS type not created: ABSS type missing ABSS type does not exist')
 		self.assertContains(response,'Missing street not created: street missing street does not exist')
-		self.assertContains(response,'Missing post code not created: post code missing post code does not exist')
+		self.assertContains(response,'Missing post code not created: post code missing pc does not exist')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
@@ -6097,3 +6097,56 @@ class UploadEventsDataViewTest(TestCase):
 		self.assertContains(response,'Missing area not created: area Missing test area 2 does not exist')
 		# check that no records have been created
 		self.assertFalse(Event.objects.all().exists())
+
+	def test_upload_events_invalid_dates_and_times(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events_invalid_dates_and_times.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check the message
+		self.assertContains(response,'Invalid date not created: date is not in DD/MM/YYYY format')
+		self.assertContains(response,'Invalid start time not created: start time is not in HH:MM format')
+		self.assertContains(response,'Invalid end time not created: end time is not in HH:MM format')
+		# check that no records have been created
+		self.assertFalse(Event.objects.all().exists())
+
+	def test_upload_events(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)

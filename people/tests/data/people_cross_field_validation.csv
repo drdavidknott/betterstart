@@ -1,8 +1,8 @@
 first_name,last_name,email_address,home_phone,mobile_phone,date_of_birth,gender,pregnant,due_date,default_role,ethnicity,ABSS_type,age_status,house_name_or_number,street,post_code
-Address,missing house number,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,,test_street_0,test_post_code_0
-Address,missing street,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,,test_post_code_0
+Address,missing house number,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,,test_street_0,test_pc_0
+Address,missing street,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,,test_pc_0
 Address,missing post code,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,test_street_0,
-Pregnant,missing due date,test email,123456,789123,01/01/1990,Male,True,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,test_street_0,test_post_code_0
-Not pregnant,with due date,test email,123456,789123,01/01/1990,Male,False,01/01/2019,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,test_street_0,test_post_code_0
-Too old,for age status,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,Under five,999,test_street_0,test_post_code_0
-Role,invalid for age status,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,Under five,999,test_street_0,test_post_code_0
+Pregnant,missing due date,test email,123456,789123,01/01/1990,Male,True,,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,test_street_0,test_pc_0
+Not pregnant,with due date,test email,123456,789123,01/01/1990,Male,False,01/01/2019,test_role_type,test_ethnicity,test_ABSS_type,test_age_status,999,test_street_0,test_pc_0
+Too old,for age status,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,Under five,999,test_street_0,test_pc_0
+Role,invalid for age status,test email,123456,789123,01/01/1990,Male,False,,test_role_type,test_ethnicity,test_ABSS_type,Under five,999,test_street_0,test_pc_0

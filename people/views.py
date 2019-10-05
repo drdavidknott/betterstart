@@ -3093,7 +3093,7 @@ def uploaddata(request):
 		# check whether the form is valid
 		if uploaddataform.is_valid():
 			# decode the file
-			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding)
+			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
 			# read it as a csv file
 			records = csv.DictReader(file)
 			# get the load function

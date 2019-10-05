@@ -6150,3 +6150,52 @@ class UploadEventsDataViewTest(TestCase):
 		self.assertTrue(event.areas.filter(area_name='Test area 2'))
 		# check that we only have one event
 		self.assertEqual(Event.objects.all().count(),1)
+
+	def test_upload_events_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# check the response
+		self.assertContains(response,'test event not created: event already exists')
+		# check that we still only have one event
+		self.assertEqual(Event.objects.all().count(),1)

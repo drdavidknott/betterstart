@@ -3816,7 +3816,7 @@ def validate_relationship_record(relationship):
 		# if there was an error, add it
 		if error:
 			# append the error message
-			errors.append(relationship_label + ' not created: from ' + error)
+			errors.append(relationship_label + ' not created: from' + error)
 		# check whether the to person exists
 		error = check_person_by_name_and_age_status(
 														first_name = relationship['to_first_name'],
@@ -3826,7 +3826,7 @@ def validate_relationship_record(relationship):
 		# if there was an error, add it
 		if error:
 			# append the error message
-			errors.append(relationship_label + ' not created: to ' + error)
+			errors.append(relationship_label + ' not created: to' + error)
 		# check whether the relationship type exists
 		try:
 			# get the relationship type

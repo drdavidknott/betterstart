@@ -6238,3 +6238,62 @@ class UploadRelationshipsDataViewTest(TestCase):
 		self.assertContains(response,'missing relationship type from last name is  of to first name to last name not created: mandatory field relationship_type not provided')
 		# check that no records have been created
 		self.assertFalse(Relationship.objects.all().exists())
+
+	def test_upload_relationship_duplicates_and_missing_records(self):
+		# create multiple people records
+		set_up_test_people('test_duplicate_',number=1,age_status='Adult')
+		set_up_test_people('test_duplicate_',number=1,age_status='Adult')
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/relationships_duplicate_and_missing_records.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationships',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_duplicate_0 test_duplicate_0 is parent of test_child_0 test_child_0 not created: from duplicate with name and age status')
+		self.assertContains(response,'test_child_0 test_child_0 is child of test_duplicate_0 test_duplicate_0 not created: to duplicate with name and age status')
+		self.assertContains(response,'missing from person from last name is parent of test_child_0 test_child_0 not created: from does not exist')
+		self.assertContains(response,'test_parent_0 test_parent_0 is parent of missing to person to last name not created: to does not exist')
+		self.assertContains(response,'test_parent_0 test_parent_0 is missing relationship type of test_child_0 test_child_0 not created: relationship type missing relationship type does not exist')
+		# check that no records have been created
+		self.assertFalse(Relationship.objects.all().exists())
+
+	def test_upload_relationships(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/relationships.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationships',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we have two records
+		self.assertEqual(Relationship.objects.all().count(),2)
+		# get the people
+		parent = Person.objects.get(first_name='test_parent_0')
+		child = Person.objects.get(first_name='test_child_0')
+		# get the reletaionship types
+		parent_relationship_type = Relationship_Type.objects.get(relationship_type='parent')
+		child_relationship_type = Relationship_Type.objects.get(relationship_type='child')
+		# get the from relationship
+		parent_relationship = Relationship.objects.get(relationship_from=parent,relationship_to=child)
+		# check the relationship type
+		self.assertEqual(parent_relationship.relationship_type,parent_relationship_type)
+		# get the to relationship
+		child_relationship = Relationship.objects.get(relationship_from=child,relationship_to=parent)
+		# check the relationship type
+		self.assertEqual(child_relationship.relationship_type,child_relationship_type)

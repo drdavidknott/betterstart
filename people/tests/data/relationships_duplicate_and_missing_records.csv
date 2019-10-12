@@ -1,0 +1,6 @@
+from_first_name,from_last_name,from_age_status,to_first_name,to_last_name,to_age_status,relationship_type
+test_duplicate_0,test_duplicate_0,Adult,test_child_0,test_child_0,Child under four,parent
+test_child_0,test_child_0,Child under four,test_duplicate_0,test_duplicate_0,Adult,child
+missing from person,from last name,Adult,test_child_0,test_child_0,Child under four,parent
+test_parent_0,test_parent_0,Adult,missing to person,to last name,Child under four,parent
+test_parent_0,test_parent_0,Adult,test_child_0,test_child_0,Child under four,missing relationship type

@@ -6199,3 +6199,42 @@ class UploadEventsDataViewTest(TestCase):
 		self.assertContains(response,'test event not created: event already exists')
 		# check that we still only have one event
 		self.assertEqual(Event.objects.all().count(),1)
+
+class UploadRelationshipsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create a parent
+		set_up_test_people('test_parent_',number=1,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+
+	def test_upload_relationship_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/relationships_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationships',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' missing from first name is parent of to first name to last name not created: mandatory field from_first_name not provided')
+		self.assertContains(response,'missing from last name  is parent of to first name to last name not created: mandatory field from_last_name not provided')
+		self.assertContains(response,'missing from age status from last name is parent of to first name to last name not created: mandatory field from_age_status not provided')
+		self.assertContains(response,'missing to first name from last name is parent of  to last name not created: mandatory field to_first_name not provided')
+		self.assertContains(response,'missing to last name from last name is parent of to first name  not created: mandatory field to_last_name not provided')
+		self.assertContains(response,'missing relationship type from last name is  of to first name to last name not created: mandatory field relationship_type not provided')
+		# check that no records have been created
+		self.assertFalse(Relationship.objects.all().exists())

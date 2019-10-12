@@ -27,6 +27,8 @@ def set_up_people_base_data():
 	unknown_test_role = Role_Type.objects.create(role_type_name='UNKNOWN',use_for_events=True,use_for_people=True)
 	# and a test role for an age status default
 	age_test_role = Role_Type.objects.create(role_type_name='age_test_role',use_for_events=True,use_for_people=True)
+	# and a test role for adults only
+	adult_test_role = Role_Type.objects.create(role_type_name='adult_test_role',use_for_events=True,use_for_people=True)
 	# create a test ABSS type
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
 	# create a second test ABSS type
@@ -43,6 +45,7 @@ def set_up_people_base_data():
 	test_age_status.role_types.add(test_role)
 	test_age_status.role_types.add(second_test_role)
 	test_age_status.role_types.add(unknown_test_role)
+	test_age_status.role_types.add(adult_test_role)
 	test_age_status_2.role_types.add(test_role)
 	test_age_status_2.role_types.add(second_test_role)
 	test_age_status_2.role_types.add(unknown_test_role)
@@ -6297,3 +6300,223 @@ class UploadRelationshipsDataViewTest(TestCase):
 		child_relationship = Relationship.objects.get(relationship_from=child,relationship_to=parent)
 		# check the relationship type
 		self.assertEqual(child_relationship.relationship_type,child_relationship_type)
+
+class UploadRegistrationsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+
+	def test_upload_registration_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' missing first name (Adult) at test_event_0 not created: mandatory field first_name not provided')
+		self.assertContains(response,'missing last name  (Adult) at test_event_0 not created: mandatory field last_name not provided')
+		self.assertContains(response,'missing age status last name () at test_event_0 not created: mandatory field age_status not provided')
+		self.assertContains(response,'missing event name last name (Adult) at  not created: mandatory field event_name not provided')
+		self.assertContains(response,'missing event date last name (Adult) at test_event_0 not created: mandatory field event_date not provided')
+		self.assertContains(response,'missing role type last name (Adult) at test_event_0 not created: mandatory field role_type not provided')
+		# check that no records have been created
+		self.assertFalse(Event_Registration.objects.all().exists())
+
+	def test_upload_registration_data_invalid_fields(self):
+		# create multiple people records
+		set_up_test_people('test_duplicate_',number=1,age_status='Adult')
+		set_up_test_people('test_duplicate_',number=1,age_status='Adult')
+		# create multiple event records
+		set_up_test_events(
+							'test_duplicate_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+		set_up_test_events(
+							'test_duplicate_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations_invalid_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'invalid age status last name (invalid) at test_event_0 not created: age status invalid does not exist')
+		self.assertContains(response,'invalid event date last name (Adult) at test_event_0 not created: event date 01/xx/2019 is not valid')
+		self.assertContains(response,'invalid role type last name (Adult) at test_event_0 not created: role type invalid does not exist')
+		self.assertContains(response,'invalid person last name (Adult) at test_event_0 not created: person does not exist')
+		self.assertContains(response,'test_duplicate_0 test_duplicate_0 (Adult) at test_event_0 not created: person duplicate with name and age status')
+		self.assertContains(response,'invalid event last name (Adult) at invalid not created: event does not exist')
+		self.assertContains(response,'duplicate event last name (Adult) at test_duplicate_0 not created: multiple matching events exist')
+		self.assertContains(response,'test_child_0 test_child_0 (Child under four) at test_event_0 not created: adult_test_role is not valid for Child under four')
+		self.assertContains(response,'invalid registered participated last name (Adult) at test_event_0 not created: neither registered nor participated is True')
+		# check that no records have been created
+		self.assertFalse(Event_Registration.objects.all().exists())
+
+	def test_upload_registrations(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+
+	def test_upload_registrations_modified(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# process the modified file
+		# open the file
+		valid_file = open('people/tests/data/registrations_updated.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		second_role_type = Role_Type.objects.get(role_type_name='second_test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,second_role_type)
+		self.assertEqual(registration_adult_0.registered,True)
+		self.assertEqual(registration_adult_0.participated,False)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,second_role_type)
+		self.assertEqual(registration_child_0.registered,False)
+		self.assertEqual(registration_child_0.participated,True)
+		# check that the unmodified record hasn't changed
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+

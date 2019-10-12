@@ -1,10 +1,4 @@
 first_name,last_name,age_status,event_name,event_date,registered,participated,role_type
-,,,,,,,
-invalid first,invalid last,invalid age,invalid event name,invalid event date,False,False,invalid role type
-Joey,Bloggs,Adult,Test event 1,01/01/2018,True,True,Carer
-Joey,Bloggs,Adult,Test event 1,01/01/2018,True,True,Child under four
-Woking,Bloggs,Adult,Test event 1,01/01/2018,True,True,Carer
-Woking,Bloggs,Child under four,Test event 1,01/01/2018,True,True,Child under four
-Winking,Bloggs,Adult,Test event 1,01/01/2018,False,True,Carer
-Joella,Bloggs,Adult,Zest event 11,01/01/2018,True,False,Carer
-Qoella,Bloggs,Adult,Zest event 11,01/01/2018,True,False,Carer
+test_adult_0,test_adult_0,Adult,test_event_0,01/01/2019,False,True,test_role_type
+test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,False,test_role_type
+test_adult_1,test_adult_1,Adult,test_event_0,01/01/2019,True,True,test_role_type

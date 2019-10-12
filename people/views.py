@@ -3905,7 +3905,7 @@ def validate_registration_record(registration):
 	age_status = False
 	# set a label
 	registration_label = str(registration['first_name']) + ' ' + str(registration['last_name']) \
-							+ ' (' + str(registration['age_status']) + ') ' \
+							+ ' (' + str(registration['age_status']) + ')' \
 							+ ' at ' + str(registration['event_name'])
 	# check for mandatory fields
 	errors += check_mandatory_fields(
@@ -3931,7 +3931,7 @@ def validate_registration_record(registration):
 		# if there was an error, add it
 		if error:
 			# append the error message
-			errors.append(registration_label + ' not created: person ' + error)
+			errors.append(registration_label + ' not created: person' + error)
 		# check whether the role type exists
 		try:
 			# get the role type
@@ -3975,10 +3975,18 @@ def validate_registration_record(registration):
 			try:
 				# get the event record
 				event = Event.objects.get(name = registration['event_name'], date = event_date)
-			# deal with the exception
+			# deal with missing event
 			except (Event.DoesNotExist):
 				# set the error
 				errors.append(registration_label + ' not created: event does not exist.')
+			# deal with more than one match
+			except (Event.MultipleObjectsReturned):
+				# set the error
+				errors.append(registration_label + ' not created: multiple matching events exist.')
+		# check that one of registered or participated is set
+		if (not registration['registered'] == 'True') and (not registration['participated'] == 'True'):
+			# set the error
+			errors.append(registration_label + ' not created: neither registered nor participated is True.')
 	# return the errors
 	return errors
 

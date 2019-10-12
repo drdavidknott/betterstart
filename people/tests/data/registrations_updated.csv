@@ -1,0 +1,3 @@
+first_name,last_name,age_status,event_name,event_date,registered,participated,role_type
+test_adult_0,test_adult_0,Adult,test_event_0,01/01/2019,True,False,second_test_role_type
+test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,False,True,second_test_role_type

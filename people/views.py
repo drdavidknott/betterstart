@@ -1551,6 +1551,7 @@ def update_person(
 					ethnicity_id,
 					ABSS_type_id,
 					age_status_id,
+					notes
 				):
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
@@ -1609,6 +1610,7 @@ def update_person(
 	person.gender = gender
 	person.pregnant = pregnant
 	person.due_date = due_date
+	person.notes = notes
 	# save the record
 	person.save()
 	# and save a role history if the role has changed
@@ -2214,6 +2216,7 @@ def profile(request, person_id=0):
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
 								ABSS_type_id = profileform.cleaned_data['ABSS_type'],
 								age_status_id = profileform.cleaned_data['age_status'],
+								notes = profileform.cleaned_data['notes'],
 									)
 			# clear out the existing trained roles
 			person.trained_role_set.all().delete()
@@ -2246,6 +2249,7 @@ def profile(request, person_id=0):
 						'due_date' : person.due_date,
 						'ABSS_type' : person.ABSS_type.pk,
 						'age_status' : person.age_status.pk,
+						'notes' : person.notes
 						}
 		# add the trained role values to the profile dictionary
 		for trained_role in Role_Type.objects.filter(trained=True):

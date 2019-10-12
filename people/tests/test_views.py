@@ -2304,6 +2304,7 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
+											'notes' : 'updated notes'
 											}
 									)
 		# check the response
@@ -2320,7 +2321,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -2358,6 +2359,7 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'notes' : 'updated notes'
 											}
 									)
 		# check the response
@@ -2374,7 +2376,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -2412,6 +2414,7 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
+											'notes' : 'updated notes',
 											}
 									)
 		# check the response
@@ -2428,7 +2431,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -2466,6 +2469,7 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'notes' : 'updated notes',
 											}
 									)
 		# check the response
@@ -2503,7 +2507,8 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
-											'trained_role_' + str(role_type.pk) : 'trained'
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'notes' : 'updated notes',
 											}
 									)
 		# check the response
@@ -2520,7 +2525,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -2570,7 +2575,8 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
-											'trained_role_' + str(role_type.pk) : 'active'
+											'trained_role_' + str(role_type.pk) : 'active',
+											'notes' : 'updated notes',
 											}
 									)
 		# check the response
@@ -2587,7 +2593,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -2637,7 +2643,8 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
-											'trained_role_' + str(role_type.pk) : 'none'
+											'trained_role_' + str(role_type.pk) : 'none',
+											'notes' : 'updated notes',
 											}
 									)
 		# check the response
@@ -2654,7 +2661,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -2702,7 +2709,8 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
-											'trained_role_' + str(role_type.pk) : 'trained'
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'notes' : 'updated notes',
 											}
 									)
 		# check the response
@@ -2719,7 +2727,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'678901')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.notes,'updated notes')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)

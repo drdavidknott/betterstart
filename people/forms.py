@@ -174,6 +174,12 @@ class ProfileForm(forms.Form):
 																	'autocomplete' : 'off'
 																	}),
 									input_formats=('%d/%m/%Y',))
+	notes = forms.CharField(
+								label="Notes",
+								required=False,
+								max_length=1500,
+								widget=forms.Textarea(attrs={'class' : 'form-control',})
+								)
 	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices

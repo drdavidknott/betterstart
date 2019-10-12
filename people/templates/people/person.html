@@ -90,6 +90,12 @@
 			 			<div class="col-xs-9">{{ person.due_date }}</div>
 					</div>
 				{% endif %}
+				{% if person.notes %}
+			 		<div class="row">
+			 			<div class="col-xs-3">Notes:</div>
+			 			<div class="col-xs-9">{{ person.notes|linebreaks }}</div>
+					</div>
+				{% endif %}
 			</div>
 		</div>
 

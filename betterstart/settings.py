@@ -94,10 +94,10 @@ elif os.getenv('GAE_APPLICATION', None):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'HOST': '/cloudsql/betterstart-236907:europe-west1:betterstart',
-            'USER': 'betterstart-test',
+            'HOST': os.getenv('BETTERSTART_DB_HOST', None),
+            'USER': os.getenv('BETTERSTART_DB_USER', None),
             'PASSWORD': os.getenv('BETTERSTART_PW', None),
-            'NAME': 'betterstart_test_v2',
+            'NAME': os.getenv('BETTERSTART_DB_NAME', None),
         }
     }
 else:
@@ -106,8 +106,8 @@ else:
             'ENGINE': 'django.db.backends.mysql',
             'HOST': '127.0.0.1',
             'PORT': '3306',
-            'NAME': 'betterstart_test_v2',
-            'USER': 'betterstart-test',
+            'NAME': os.getenv('BETTERSTART_DB_NAME', None),
+            'USER': os.getenv('BETTERSTART_DB_USER', None),
             'PASSWORD': os.getenv('BETTERSTART_PW', None),
         }
     }

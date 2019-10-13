@@ -35,6 +35,7 @@ ALLOWED_HOSTS = [
     'oysta.org',
     'www.oysta.org',
     'betterstart.oysta.org'
+    'betterstart-uat.appspot.com'
 ]
 
 # Application definition

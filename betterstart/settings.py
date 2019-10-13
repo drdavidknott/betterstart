@@ -105,7 +105,7 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'HOST': '127.0.0.1',
-            'PORT': '3306',
+            'PORT': os.getenv('BETTERSTART_DB_PORT', None),
             'NAME': os.getenv('BETTERSTART_DB_NAME', None),
             'USER': os.getenv('BETTERSTART_DB_USER', None),
             'PASSWORD': os.getenv('BETTERSTART_PW', None),

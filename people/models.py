@@ -227,6 +227,8 @@ class Person(models.Model):
 	families = models.ManyToManyField(Family, blank=True)
 	savs_id = models.IntegerField(blank=True, null=True)
 	ABSS_type = models.ForeignKey(ABSS_Type, default=1, on_delete=models.SET_DEFAULT)
+	ABSS_start_date = models.DateField(null=True, blank=True, default=None)
+	ABSS_end_date = models.DateField(null=True, blank=True, default=None)
 	age_status = models.ForeignKey(Age_Status, default=1, on_delete=models.SET_DEFAULT)
 	trained_champion = models.BooleanField(default=False)
 	active_champion = models.BooleanField(default=False)

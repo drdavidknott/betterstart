@@ -3563,7 +3563,11 @@ def load_people(records):
 										'age_status',
 										'house_name_or_number',
 										'street',
-										'post_code'
+										'post_code',
+										'notes',
+										'ABSS_start_date',
+										'ABSS_end_date',
+										'emergency_contact_details'
 									]
 								)
 	# check whether we got any results: if we did, something went wrong
@@ -3603,7 +3607,11 @@ def load_people(records):
 								ABSS_type = ABSS_Type.objects.get(name = person['ABSS_type']),
 								age_status = Age_Status.objects.get(status = person['age_status']),
 								house_name_or_number = person['house_name_or_number'],
-								street = street
+								street = street,
+								notes = person['notes'],
+								ABSS_start_date = convert_optional_ddmmyy(person['ABSS_start_date']),
+								ABSS_end_date = convert_optional_ddmmyy(person['ABSS_end_date']),
+								emergency_contact_details = person['emergency_contact_details']
 									)
 				# set the message to show that the creation was successful
 				results.append(person_label + ' created.')
@@ -3742,6 +3750,29 @@ def validate_person_record(person):
 	  		except (Street.DoesNotExist):
 	  			# set the error
 	  			errors.append(person_label + ' not created: street ' + street + ' does not exist.')
+	# get the ABSS start date
+	ABSS_start_date = person['ABSS_start_date']
+	# check the date if we have it
+	if ABSS_start_date and not datetime_valid(ABSS_start_date,'%d/%m/%Y'):
+		# set the messages
+		errors.append(person_label + ' not created: ABSS start date is not in DD/MM/YYYY format.')
+	# get the ABSS end date
+	ABSS_end_date = person['ABSS_end_date']
+	# check the date if we have it
+	if ABSS_end_date and not datetime_valid(ABSS_end_date,'%d/%m/%Y'):
+		# set the messages
+		errors.append(person_label + ' not created: ABSS end date is not in DD/MM/YYYY format.')
+	# check whether we have an ABSS end date without a start date
+	if ABSS_end_date and not ABSS_start_date:
+		# set the message
+		errors.append(person_label + ' not created: ABSS end date is provided but not ABSS start date.')
+	# check whether the end date is greater than the start date
+	if (ABSS_start_date and ABSS_end_date 
+		and datetime_valid(ABSS_start_date,'%d/%m/%Y') and datetime_valid(ABSS_end_date,'%d/%m/%Y')):
+		# check the dates
+		if convert_optional_ddmmyy(ABSS_start_date) >= convert_optional_ddmmyy(ABSS_end_date):
+			# set the message
+			errors.append(person_label + ' not created: ABSS end date is not greater than ABSS start date.')
 	# return the errors
 	return errors
 

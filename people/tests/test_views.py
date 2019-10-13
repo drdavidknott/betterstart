@@ -5974,6 +5974,8 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'Not pregnant with due date not created: has due date but is not pregnant')
 		self.assertContains(response,'Role invalid for age status not created: role type is not valid for age status')
 		self.assertContains(response,'Too old for age status not created: too old for age status')
+		self.assertContains(response,'ABSS end date without start date not created: ABSS end date is provided but not ABSS start date')
+		self.assertContains(response,'ABSS end date before start date not created: ABSS end date is not greater than ABSS start date')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
@@ -5995,6 +5997,8 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'Invalid date of birth not created: date of birth is not in DD/MM/YYYY format')
 		self.assertContains(response,'Invalid due date not created: due date is not in DD/MM/YYYY format')
+		self.assertContains(response,'Invalid ABSS start date not created: ABSS start date is not in DD/MM/YYYY format')
+		self.assertContains(response,'Invalid ABSS end date not created: ABSS end date is not in DD/MM/YYYY format')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
@@ -6025,7 +6029,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'789123')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -6038,6 +6041,10 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'999')
 		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
 		# check that we only have one person
 		self.assertEqual(Person.objects.all().count(),1)
 
@@ -6068,7 +6075,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'789123')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -6081,6 +6087,9 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'999')
 		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
 		# check that we only have one person
 		self.assertEqual(Person.objects.all().count(),1)
 		# close the file
@@ -6129,7 +6138,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'789123')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -6142,6 +6150,9 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'999')
 		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
 		# get the second person
 		test_person = Person.objects.get(first_name='Test',last_name='Person',age_status__status='Child under four')
 		# check the fields
@@ -6154,7 +6165,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'789123')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2019')
 		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
@@ -6167,6 +6177,9 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Child under four')
 		self.assertEqual(test_person.house_name_or_number,'999')
 		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
 		# check that we only have two people
 		self.assertEqual(Person.objects.all().count(),2)
 

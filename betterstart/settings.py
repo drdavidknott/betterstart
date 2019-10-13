@@ -19,11 +19,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '=lnd59!%m+51yz(h&-ud07cs8a(1kzw&_utqjoxi+50+=45f44'
+# Get the secret key from the environment variable; default is only here to support local development
+SECRET_KEY = os.getenv('BETTERSTART_SK','=lnd59!%m+51yz(h&-ud07cs8a(1kzw&_utqjoxi+50+=45f44')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Get the debug flag from the relevant environment variable
+if os.getenv('BETTERSTART_DEBUG',None) == 'True':
+    DEBUG = True
+# otherwise turn off debug
+else:
+    DEBUG = False
 
 ALLOWED_HOSTS = [
     'betterstart-236907.appspot.com',

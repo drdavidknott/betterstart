@@ -1543,6 +1543,7 @@ def update_person(
 					email_address,
 					home_phone,
 					mobile_phone,
+					emergency_contact_details,
 					date_of_birth,
 					gender,
 					pregnant,
@@ -1550,6 +1551,8 @@ def update_person(
 					default_role_id,
 					ethnicity_id,
 					ABSS_type_id,
+					ABSS_start_date,
+					ABSS_end_date,
 					age_status_id,
 					notes
 				):
@@ -1611,6 +1614,9 @@ def update_person(
 	person.pregnant = pregnant
 	person.due_date = due_date
 	person.notes = notes
+	person.ABSS_start_date = ABSS_start_date
+	person.ABSS_end_date = ABSS_end_date
+	person.emergency_contact_details = emergency_contact_details
 	# save the record
 	person.save()
 	# and save a role history if the role has changed
@@ -2172,6 +2178,7 @@ def person(request, person_id=0):
 		return make_banner(request, 'Person does not exist.')
 	# get the relationships for the person
 	relationships_to = get_relationships_to(person)
+	# get the 
 	# set the context from the person based on person id
 	context = build_context({
 				'person' : person,
@@ -2208,6 +2215,7 @@ def profile(request, person_id=0):
 								email_address = profileform.cleaned_data['email_address'],
 								home_phone = profileform.cleaned_data['home_phone'],
 								mobile_phone = profileform.cleaned_data['mobile_phone'],
+								emergency_contact_details = profileform.cleaned_data['emergency_contact_details'],
 								date_of_birth = profileform.cleaned_data['date_of_birth'],
 								gender = profileform.cleaned_data['gender'],
 								pregnant = profileform.cleaned_data['pregnant'],
@@ -2215,6 +2223,8 @@ def profile(request, person_id=0):
 								default_role_id = profileform.cleaned_data['role_type'],
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
 								ABSS_type_id = profileform.cleaned_data['ABSS_type'],
+								ABSS_start_date = profileform.cleaned_data['ABSS_start_date'],
+								ABSS_end_date = profileform.cleaned_data['ABSS_end_date'],
 								age_status_id = profileform.cleaned_data['age_status'],
 								notes = profileform.cleaned_data['notes'],
 									)
@@ -2241,6 +2251,7 @@ def profile(request, person_id=0):
 						'email_address' : person.email_address,
 						'home_phone' : person.home_phone,
 						'mobile_phone' : person.mobile_phone,
+						'emergency_contact_details' : person.emergency_contact_details,
 						'date_of_birth' : person.date_of_birth,
 						'role_type' : person.default_role.pk,
 						'ethnicity' : person.ethnicity.pk,
@@ -2248,6 +2259,8 @@ def profile(request, person_id=0):
 						'pregnant' : person.pregnant,
 						'due_date' : person.due_date,
 						'ABSS_type' : person.ABSS_type.pk,
+						'ABSS_start_date' : person.ABSS_start_date,
+						'ABSS_end_date' : person.ABSS_end_date,
 						'age_status' : person.age_status.pk,
 						'notes' : person.notes
 						}

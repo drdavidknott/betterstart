@@ -2185,6 +2185,9 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
 
 	def test_person_already_exists(self):
 		# log the user in
@@ -2248,6 +2251,9 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
 
 class ProfileViewTest(TestCase):
 	@classmethod
@@ -2304,7 +2310,10 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
-											'notes' : 'updated notes'
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2335,6 +2344,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Default role age status')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 
 	def test_update_profile_blank_middle_name(self):
 		# log the user in
@@ -2359,7 +2371,10 @@ class ProfileViewTest(TestCase):
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
-											'notes' : 'updated notes'
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2390,6 +2405,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Child under four')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 
 	def test_update_profile_age_status_default_only(self):
 		# log the user in
@@ -2415,6 +2433,9 @@ class ProfileViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
 											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2445,6 +2466,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Default role age status')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 
 	def test_update_profile_age_status_multiple_choices(self):
 		# log the user in
@@ -2470,11 +2494,80 @@ class ProfileViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
 											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Select a valid role for this age status.')
+
+	def test_update_profile_ABSS_end_date_no_start_date(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','age_test_role',1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : '',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '',
+											'ABSS_end_date' : '01/01/2015',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'ABSS end date can only be entered if ABSS start date is entered.')
+
+	def test_update_profile_ABSS_end_date_before_start_date(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','age_test_role',1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : '',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2016',
+											'ABSS_end_date' : '01/01/2015',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'ABSS end date must be after ABSS start date.')
 
 	def test_update_profile_trained_role(self):
 		# log the user in
@@ -2509,6 +2602,9 @@ class ProfileViewTest(TestCase):
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'trained',
 											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2539,6 +2635,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 		# get the trained role record
 		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
 		# check the active status
@@ -2577,6 +2676,9 @@ class ProfileViewTest(TestCase):
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'active',
 											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2607,6 +2709,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 		# get the trained role record
 		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
 		# check the active status
@@ -2645,6 +2750,9 @@ class ProfileViewTest(TestCase):
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'none',
 											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2675,6 +2783,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 		# check that no trained role records exist
 		self.assertEqual(test_person.trained_roles.all().exists(),False)
 
@@ -2711,6 +2822,9 @@ class ProfileViewTest(TestCase):
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
 											'trained_role_' + str(role_type.pk) : 'trained',
 											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
 											}
 									)
 		# check the response
@@ -2741,6 +2855,9 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.age_status.status,'Default role age status')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 		# check that no trained role records exist
 		self.assertEqual(test_person.trained_roles.all().exists(),False)
 

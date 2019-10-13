@@ -132,6 +132,12 @@ class ProfileForm(forms.Form):
 									max_length=50,
 									required = False,
 									widget=forms.NumberInput(attrs={'class' : 'form-control',}))
+	emergency_contact_details = forms.CharField(
+									label="Emergency contact details",
+									required=False,
+									max_length=1500,
+									widget=forms.Textarea(attrs={'class' : 'form-control',})
+									)
 	date_of_birth = forms.DateField(
 									label="Date of birth",
 									required=False,
@@ -143,8 +149,28 @@ class ProfileForm(forms.Form):
 																	}),
         							input_formats=('%d/%m/%Y',))
 	ABSS_type = forms.ChoiceField(
-									label="ABSS Type",
+									label="ABSS type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	ABSS_start_date = forms.DateField(
+									label="ABSS start date",
+									required=False,
+									widget=forms.DateInput(
+																format='%d/%m/%Y',
+																attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}),
+									input_formats=('%d/%m/%Y',))
+	ABSS_end_date = forms.DateField(
+									label="ABSS end date",
+									required=False,
+									widget=forms.DateInput(
+																format='%d/%m/%Y',
+																attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}),
+									input_formats=('%d/%m/%Y',))
 	age_status = forms.ChoiceField(
 									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
@@ -271,6 +297,19 @@ class ProfileForm(forms.Form):
 			#set the error message
 			self._errors['date_of_birth'] = "Must be less than " + str(age_status.maximum_age) + " years old."
 			# set the validity flag
+			valid = False
+		# and check that we don't have an ABSS end date without a start date
+		if self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] == None:
+			# set the error message
+			self._errors['ABSS_end_date'] = 'ABSS end date can only be entered if ABSS start date is entered.'
+			# set the flag
+			valid = False
+		# and check that we don't have an ABSS end date before the start date
+		if (self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] != None 
+				and self.cleaned_data['ABSS_end_date'] <= self.cleaned_data['ABSS_start_date'] ):
+			# set the error message
+			self._errors['ABSS_end_date'] = 'ABSS end date must be after ABSS start date.'
+			# set the flag
 			valid = False
 		# return the result
 		return valid

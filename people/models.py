@@ -211,6 +211,7 @@ class Person(models.Model):
 	email_address = models.CharField(max_length=50, default='', blank=True)
 	home_phone = models.CharField(max_length=50, default='', blank=True)
 	mobile_phone = models.CharField(max_length=50, default='', blank=True)
+	emergency_contact_details = models.TextField(max_length=1000, default='', blank=True)
 	date_of_birth = models.DateField(null=True, blank=True)
 	gender = models.CharField(max_length=25, default='', blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)

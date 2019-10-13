@@ -34,7 +34,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'oysta.org',
     'www.oysta.org',
-    'betterstart.oysta.org'
+    'betterstart.oysta.org',
     'betterstart-uat.appspot.com'
 ]
 

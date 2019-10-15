@@ -68,6 +68,17 @@ class UploadDataForm(forms.Form):
 									label="Data File",
 									widget=forms.ClearableFileInput(attrs={'class' : 'form-control'}))
 
+class DownloadDataForm(forms.Form):
+	# Define the choices for file type
+	file_type_choices = (
+							('People','People'),
+						)
+	# Define the fields that we need in the form.
+	file_type = forms.ChoiceField(
+									label="File Type",
+									widget=forms.Select(attrs={'class' : 'form-control'}),
+									choices=file_type_choices)
+
 class AddPersonForm(forms.Form):
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(

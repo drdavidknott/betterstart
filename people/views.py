@@ -12,7 +12,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
-					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm
+					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
+					DownloadDataForm
 from .utilities import get_page_list, make_banner
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
@@ -1854,6 +1855,18 @@ def convert_optional_ddmmyy(date):
 	# return the value
 	return date
 
+def convert_optional_date(this_date):
+	# set the date
+	if this_date != None:
+		# parse the value
+		this_date = this_date.strftime('%d/%m/%Y')
+	# otherwise set the value to None
+	else:
+		# set it to blank
+		this_date = ''
+	# return the value
+	return this_date
+
 def datetime_valid(datetime_value,datetime_format):
 	# check the datetime
 	try:
@@ -1866,6 +1879,32 @@ def datetime_valid(datetime_value,datetime_format):
 		result = False
 	# return the result
 	return result
+
+def build_records(data_class,fields):
+	# create the blank list of records
+	records = []
+	# now go through the people
+	for record in data_class.objects.all():
+		# create a blank set of csv fields
+		field_list = []
+		# go through the fields
+		for field in fields:
+			# get the atter
+			field_list.append(getattr(record,field))
+		# append a record
+		records.append(field_list)
+	# return the results
+	return records
+
+def wrap_csv_fields(fields):
+	# go through the fields
+	for field in fields:
+		# replace any double quotes with single quotes
+		field = str(field).replace('"',"'")
+		# wrap the field
+		field = '"' + field + '"'
+	# return the fields
+	return fields
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -3131,6 +3170,55 @@ def uploaddata(request):
 	# return the HttpResponse
 	return HttpResponse(upload_data_template.render(context=context, request=request))
 
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def downloaddata(request):
+	# set results to empty
+	results = []
+	# define the functions for each file type
+	download_functions = {
+							'People' : people_download
+							}
+	# see whether we got a post or not
+	if request.method == 'POST':
+		# create a form from the POST to retain data and trigger validation
+		downloaddataform = DownloadDataForm(request.POST)
+		# check whether the form is valid
+		if downloaddataform.is_valid():
+			# get the file type
+			file_type = downloaddataform.cleaned_data['file_type']
+			# get the function
+			download_function = download_functions[file_type]
+			# get the fields and the records from the download function
+			fields, records = download_function()
+			# create the response
+			response = HttpResponse(content_type='text/csv')
+			# set the content details
+			response['Content-Disposition'] = 'attachment; filename="' + file_type + '.csv"'
+			# now create the writer
+			writer = csv.writer(response)
+			# write the keys
+			writer.writerow(fields)
+			# and go through the records
+			for record in records:
+				# write the record
+				writer.writerow(record)
+			# return the response
+			return response
+	# otherwise create a fresh form
+	else:
+		# create the fresh form
+		downloaddataform = DownloadDataForm()
+	# get the template
+	download_data_template = loader.get_template('people/download_data.html')
+	# set the context
+	context = build_context({
+				'downloaddataform' : downloaddataform,
+				'results' : results
+				})
+	# return the HttpResponse
+	return HttpResponse(download_data_template.render(context=context, request=request))
+
 # DATA LOAD FUNCTIONS
 # A set of functions which read csv files and use them to load data
 
@@ -4169,3 +4257,75 @@ def validate_event_record(event):
 		errors.append(event_label + ' not created: end time is not in HH:MM format.')
 	# return the errors
 	return errors
+
+# DOWNLOAD FUNCTIONS
+# functions that return records for download as csv files
+
+def people_download():
+	# set the fields
+	fields = [
+				'first_name',
+				'last_name',
+				'email_address',
+				'home_phone',
+				'mobile_phone',
+				'date_of_birth',
+				'gender',
+				'pregnant',
+				'due_date',
+				'default_role',
+				'ethnicity',
+				'ABSS_type',
+				'age_status',
+				'house_name_or_number',
+				'street',
+				'street.post_code',
+				'notes',
+				'ABSS_start_date',
+				'ABSS_end_date',
+				'emergency_contact_details'
+				]
+	# and a blank list of records
+	records = []
+	# go through the records
+	for person in Person.objects.all():
+		# set the post_code
+		if person.street:
+			# set the post_code
+			post_code = person.street.post_code
+		# otherwise set a blank
+		else:
+			# set the blank
+			post_code = ''
+		# set the field list
+		field_list = [
+						person.first_name,
+						person.last_name,
+						person.email_address,
+						person.home_phone,
+						person.mobile_phone,
+						convert_optional_date(person.date_of_birth),
+						person.gender,
+						person.pregnant,
+						convert_optional_date(person.due_date),
+						person.default_role,
+						person.ethnicity,
+						person.ABSS_type,
+						person.age_status,
+						person.house_name_or_number,
+						person.street,
+						post_code,
+						person.notes,
+						convert_optional_date(person.ABSS_start_date),
+						convert_optional_date(person.ABSS_end_date),
+						person.emergency_contact_details
+						]
+		# wrap the fields for csv
+		field_list = wrap_csv_fields(field_list)
+		# append the record
+		records.append(field_list)
+	# return the values
+	return fields, records
+
+
+

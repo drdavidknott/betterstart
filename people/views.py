@@ -3185,7 +3185,9 @@ def downloaddata(request):
 	# define the functions for each file type
 	download_functions = {
 							'People' : people_download,
-							'Events' : events_download
+							'Events' : events_download,
+							'Relationships' : relationships_download,
+							'Registrations' : registrations_download
 							}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -4385,3 +4387,65 @@ def events_download():
 	# return the values
 	return fields, records
 
+def relationships_download():
+	# set the fields
+	fields = [
+				'from_first_name',
+				'from_last_name',
+				'from_age_status',
+				'to_first_name',
+				'to_last_name',
+				'to_age_status',
+				'relationship_type',
+				]
+	# and a blank list of records
+	records = []
+	# go through the records
+	for relationship in Relationship.objects.all():
+		# set the field list
+		field_list = [
+						relationship.relationship_from.first_name,
+						relationship.relationship_from.last_name,
+						relationship.relationship_from.age_status.status,
+						relationship.relationship_to.first_name,
+						relationship.relationship_to.last_name,
+						relationship.relationship_to.age_status.status,
+						relationship.relationship_type.relationship_type
+						]
+		# append the record
+		records.append(field_list)
+	# return the values
+	return fields, records
+
+def registrations_download():
+	# set the fields
+	fields = [
+				'first_name',
+				'last_name',
+				'age_status',
+				'event_name',
+				'event_date',
+				'registered',
+				'participated',
+				'role_type'
+				]
+	# and a blank list of records
+	records = []
+	# go through the records
+	for registration in Event_Registration.objects.all():
+		# set the field list
+		field_list = [
+						registration.person.first_name,
+						registration.person.last_name,
+						registration.person.age_status.status,
+						registration.event.name,
+						convert_optional_datetime(registration.event.date),
+						registration.registered,
+						registration.participated,
+						registration.role_type.role_type_name
+
+						]
+		# append the record
+		records.append(field_list)
+	# return the values
+	return fields, records

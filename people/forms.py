@@ -72,6 +72,7 @@ class DownloadDataForm(forms.Form):
 	# Define the choices for file type
 	file_type_choices = (
 							('People','People'),
+							('Events','Events'),
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

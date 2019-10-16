@@ -1855,17 +1855,17 @@ def convert_optional_ddmmyy(date):
 	# return the value
 	return date
 
-def convert_optional_date(this_date):
-	# set the date
-	if this_date != None:
+def convert_optional_datetime(this_datetime,format='%d/%m/%Y'):
+	# set the datetime
+	if this_datetime != None:
 		# parse the value
-		this_date = this_date.strftime('%d/%m/%Y')
-	# otherwise set the value to None
+		this_datetime = this_datetime.strftime(format)
+	# otherwise set the value to blank
 	else:
 		# set it to blank
-		this_date = ''
+		this_datetime = ''
 	# return the value
-	return this_date
+	return this_datetime
 
 def datetime_valid(datetime_value,datetime_format):
 	# check the datetime
@@ -1897,14 +1897,21 @@ def build_records(data_class,fields):
 	return records
 
 def wrap_csv_fields(fields):
+	# create a new list
+	field_list = []
 	# go through the fields
 	for field in fields:
+		print(field)
 		# replace any double quotes with single quotes
 		field = str(field).replace('"',"'")
+		print(field)
 		# wrap the field
 		field = '"' + field + '"'
-	# return the fields
-	return fields
+		print(field)
+		# append the value
+		field_list.append(field)
+	# return the field list
+	return field_list
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -3177,7 +3184,8 @@ def downloaddata(request):
 	results = []
 	# define the functions for each file type
 	download_functions = {
-							'People' : people_download
+							'People' : people_download,
+							'Events' : events_download
 							}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -4304,10 +4312,10 @@ def people_download():
 						person.email_address,
 						person.home_phone,
 						person.mobile_phone,
-						convert_optional_date(person.date_of_birth),
+						convert_optional_datetime(person.date_of_birth),
 						person.gender,
 						person.pregnant,
-						convert_optional_date(person.due_date),
+						convert_optional_datetime(person.due_date),
 						person.default_role,
 						person.ethnicity,
 						person.ABSS_type,
@@ -4316,16 +4324,64 @@ def people_download():
 						person.street,
 						post_code,
 						person.notes,
-						convert_optional_date(person.ABSS_start_date),
-						convert_optional_date(person.ABSS_end_date),
+						convert_optional_datetime(person.ABSS_start_date),
+						convert_optional_datetime(person.ABSS_end_date),
 						person.emergency_contact_details
 						]
-		# wrap the fields for csv
-		field_list = wrap_csv_fields(field_list)
 		# append the record
 		records.append(field_list)
 	# return the values
 	return fields, records
 
-
+def events_download():
+	# set the fields
+	fields = [
+				'name',
+				'description',
+				'event_type',
+				'date',
+				'start_time',
+				'end_time',
+				'location',
+				'ward',
+				'areas',
+				]
+	# and a blank list of records
+	records = []
+	# go through the records
+	for event in Event.objects.all():
+		# set the ward
+		if event.ward:
+			# set the ward
+			ward = event.ward.ward_name
+		# otherwise set a blank
+		else:
+			# set the blank
+			ward = ''
+		# set the blank list of areas
+		areas = ''
+		# go through the areas
+		for area in event.areas.all():
+			# check whether we need a comma
+			if len(areas):
+				# add a comma
+				areas += ','
+			# add the area name to the list
+			areas += area.area_name
+		# set the field list
+		field_list = [
+						event.name,
+						event.description,
+						event.event_type.name,
+						convert_optional_datetime(event.date),
+						convert_optional_datetime(event.start_time,format='%H:%M'),
+						convert_optional_datetime(event.end_time,format='%H:%M'),
+						event.location,
+						ward,
+						areas
+						]
+		# append the record
+		records.append(field_list)
+	# return the values
+	return fields, records
 

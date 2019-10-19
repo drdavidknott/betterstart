@@ -23,7 +23,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 from io import TextIOWrapper
-from .file_handlers import Event_Categories_File_Handler
+from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler
 
 @login_required
 def index(request):
@@ -3119,8 +3119,8 @@ def uploaddata(request):
 	results = []
 	# define the functions for each file type
 	load_functions = {
-						'Event Categories' : load_event_categories,
-						'Event Types' : load_event_types,
+						'Event Categories' : Event_Categories_File_Handler,
+						'Event Types' : Event_Types_File_Handler,
 						'Areas' : load_areas,
 						'Wards' : load_wards,
 						'Post Codes' : load_post_codes,
@@ -3139,7 +3139,7 @@ def uploaddata(request):
 		uploaddataform = UploadDataForm(request.POST, request.FILES)
 		# check whether the form is valid
 		if uploaddataform.is_valid():
-			if uploaddataform.cleaned_data['file_type'] != 'Event Categories':
+			if uploaddataform.cleaned_data['file_type'] not in ['Event Categories','Event Types']:
 				# decode the file
 				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
 				# read it as a csv file
@@ -3152,7 +3152,7 @@ def uploaddata(request):
 				# decode the file
 				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
 				# create a file handler
-				file_handler = Event_Categories_File_Handler()
+				file_handler = load_functions[uploaddataform.cleaned_data['file_type']]()
 				# handle the uploaded file
 				file_handler.handle_uploaded_file(file)
 				# get the results

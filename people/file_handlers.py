@@ -216,3 +216,61 @@ class Event_Categories_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Event Category ' + record['name']
+
+class Event_Types_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Event_Types_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Event_Type
+		# set the file fields
+		self.name = File_Field(name='name',mandatory=True)	
+		self.description = File_Field(name='description',mandatory=True)
+		self.event_category = File_Field(name='event_category',mandatory=True)
+		# and a list of the fields
+		self.fields = ['name','description','event_category']
+
+	def corresponding_records_valid(self,record):
+		# set result to True
+		result = True
+		# get the event category name
+		name = record['name']
+		# check whether the event_type already exists
+		try:
+			event_type = Event_Type.objects.get(name=name)
+			# set the message to show that it exists
+			self.add_record_results(record,[' not created: event type already exists.'])
+			# and set the result
+			result = False
+		# otherwise deal with the failure
+		except (Event_Type.DoesNotExist):
+			# pass
+			pass
+		# check whether the event category exists
+		try:
+			event_category = Event_Category.objects.get(name=record['event_category'])
+		# deal with the exception
+		except (Event_Category.DoesNotExist):
+			# set the message
+			self.add_record_results(record,[' not created: event category ' + record['event_category'] + ' does not exist.'])
+			# and set the result
+			result = False
+		# return the result
+		return result
+
+	def create_record(self,record):
+		# create the record
+		event_type = Event_Type(
+								name = record['name'],
+								description = record['description'],
+								event_category = Event_Category.objects.get(name=record['event_category'])
+								)
+		# save the event_category
+		event_type.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+
+	def label(self,record):
+		# return the label
+		return 'Event Type ' + record['name']

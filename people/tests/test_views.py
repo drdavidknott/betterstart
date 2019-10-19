@@ -4879,6 +4879,27 @@ class UploadDataViewTest(TestCase):
 		self.assertEqual(test_event_category_1.description,'event category 1 description')
 		self.assertEqual(test_event_category_2.description,'event category 2 description')
 
+	def test_upload_event_categories_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/event_categories_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Categories',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		self.assertContains(response,' not created: mandatory field name not provided')
+		self.assertContains(response,'Missing description not created: mandatory field description not provided')
+		# check that no records have been created
+		self.assertFalse(Event_Category.objects.all().exists())
+
 	def test_upload_event_categories_already_exists(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
@@ -4918,110 +4939,6 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional event categories have been created
 		self.assertEqual(Event_Category.objects.all().count(),2)
-
-	def test_upload_event_types(self):
-		# log the user in as a superuser
-		self.client.login(username='testsuper', password='superword')
-		# load some event categories first
-		# open the file
-		event_categories_file = open('people/tests/data/event_categories.csv')
-		# submit the page to load the file
-		response = self.client.post(
-									reverse('uploaddata'),
-									data = { 
-											'file_type' : 'Event Categories',
-											'file' : event_categories_file
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# get the test event categories that should have been loaded
-		test_event_category_1 = Event_Category.objects.get(name='test event category 1')
-		test_event_category_2 = Event_Category.objects.get(name='test event category 2')
-		# check that the data is correct
-		self.assertEqual(test_event_category_1.description,'event category 1 description')
-		self.assertEqual(test_event_category_2.description,'event category 2 description')
-		# now load event types
-		event_types_file = open('people/tests/data/event_types.csv')
-		# submit the page to load the file
-		response = self.client.post(
-									reverse('uploaddata'),
-									data = { 
-											'file_type' : 'Event Types',
-											'file' : event_types_file
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# get the test event categories that should have been loaded
-		test_event_type_1 = Event_Type.objects.get(name='test event type 1')
-		test_event_type_2 = Event_Type.objects.get(name='test event type 2')
-		# check that the data is correct
-		self.assertEqual(test_event_type_1.description,'event type 1 description')
-		self.assertEqual(test_event_type_2.description,'event type 2 description')
-		self.assertEqual(test_event_type_1.event_category,test_event_category_1)
-		self.assertEqual(test_event_type_2.event_category,test_event_category_2)
-
-	def test_upload_event_types_already_exist(self):
-		# log the user in as a superuser
-		self.client.login(username='testsuper', password='superword')
-		# load some event categories first
-		# open the file
-		event_categories_file = open('people/tests/data/event_categories.csv')
-		# submit the page to load the file
-		response = self.client.post(
-									reverse('uploaddata'),
-									data = { 
-											'file_type' : 'Event Categories',
-											'file' : event_categories_file
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# get the test event categories that should have been loaded
-		test_event_category_1 = Event_Category.objects.get(name='test event category 1')
-		test_event_category_2 = Event_Category.objects.get(name='test event category 2')
-		# check that the data is correct
-		self.assertEqual(test_event_category_1.description,'event category 1 description')
-		self.assertEqual(test_event_category_2.description,'event category 2 description')
-		# now load event types
-		event_types_file = open('people/tests/data/event_types.csv')
-		# submit the page to load the file
-		response = self.client.post(
-									reverse('uploaddata'),
-									data = { 
-											'file_type' : 'Event Types',
-											'file' : event_types_file
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# get the test event categories that should have been loaded
-		test_event_type_1 = Event_Type.objects.get(name='test event type 1')
-		test_event_type_2 = Event_Type.objects.get(name='test event type 2')
-		# check that the data is correct
-		self.assertEqual(test_event_type_1.description,'event type 1 description')
-		self.assertEqual(test_event_type_2.description,'event type 2 description')
-		self.assertEqual(test_event_type_1.event_category,test_event_category_1)
-		self.assertEqual(test_event_type_2.event_category,test_event_category_2)
-		# close the file
-		event_types_file.close()
-		# now load event types again
-		event_types_file = open('people/tests/data/event_types.csv')
-		# submit the page with no answers
-		response = self.client.post(
-									reverse('uploaddata'),
-									data = { 
-											'file_type' : 'Event Types',
-											'file' : event_types_file
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# check that we got an already exists message
-		self.assertContains(response,'already exists')
-		# check that no additional event types have been created
-		self.assertEqual(Event_Type.objects.all().count(),2)
 
 	def test_upload_areas(self):
 		# log the user in as a superuser
@@ -5882,6 +5799,111 @@ class UploadDataViewTest(TestCase):
 		self.assertEqual(Ethnicity.objects.all().count(),1)
 		self.assertEqual(ABSS_Type.objects.all().count(),1)
 		self.assertEqual(Age_Status.objects.all().count(),1)
+
+	def test_upload_event_types(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load some event categories first
+		# open the file
+		event_categories_file = open('people/tests/data/event_categories.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Categories',
+											'file' : event_categories_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_event_category_1 = Event_Category.objects.get(name='test event category 1')
+		test_event_category_2 = Event_Category.objects.get(name='test event category 2')
+		# check that the data is correct
+		self.assertEqual(test_event_category_1.description,'event category 1 description')
+		self.assertEqual(test_event_category_2.description,'event category 2 description')
+		# now load event types
+		event_types_file = open('people/tests/data/event_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Types',
+											'file' : event_types_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_event_type_1 = Event_Type.objects.get(name='test event type 1')
+		test_event_type_2 = Event_Type.objects.get(name='test event type 2')
+		# check that the data is correct
+		self.assertEqual(test_event_type_1.description,'event type 1 description')
+		self.assertEqual(test_event_type_2.description,'event type 2 description')
+		self.assertEqual(test_event_type_1.event_category,test_event_category_1)
+		self.assertEqual(test_event_type_2.event_category,test_event_category_2)
+
+	def test_upload_event_types_already_exist(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load some event categories first
+		# open the file
+		event_categories_file = open('people/tests/data/event_categories.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Categories',
+											'file' : event_categories_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_event_category_1 = Event_Category.objects.get(name='test event category 1')
+		test_event_category_2 = Event_Category.objects.get(name='test event category 2')
+		# check that the data is correct
+		self.assertEqual(test_event_category_1.description,'event category 1 description')
+		self.assertEqual(test_event_category_2.description,'event category 2 description')
+		# now load event types
+		event_types_file = open('people/tests/data/event_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Types',
+											'file' : event_types_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_event_type_1 = Event_Type.objects.get(name='test event type 1')
+		test_event_type_2 = Event_Type.objects.get(name='test event type 2')
+		# check that the data is correct
+		self.assertEqual(test_event_type_1.description,'event type 1 description')
+		self.assertEqual(test_event_type_2.description,'event type 2 description')
+		self.assertEqual(test_event_type_1.event_category,test_event_category_1)
+		self.assertEqual(test_event_type_2.event_category,test_event_category_2)
+		# close the file
+		event_types_file.close()
+		# now load event types again
+		event_types_file = open('people/tests/data/event_types.csv')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Event Types',
+											'file' : event_types_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event types have been created
+		self.assertEqual(Event_Type.objects.all().count(),2)
+
 
 class UploadPeopleDataViewTest(TestCase):
 	@classmethod

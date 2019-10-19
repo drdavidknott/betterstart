@@ -23,6 +23,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 from io import TextIOWrapper
+from .file_handlers import Event_Categories_File_Handler
 
 @login_required
 def index(request):
@@ -1883,35 +1884,18 @@ def datetime_valid(datetime_value,datetime_format):
 def build_records(data_class,fields):
 	# create the blank list of records
 	records = []
-	# now go through the people
+	# now go through the reccords
 	for record in data_class.objects.all():
 		# create a blank set of csv fields
 		field_list = []
 		# go through the fields
 		for field in fields:
-			# get the atter
+			# get the attritbute
 			field_list.append(getattr(record,field))
 		# append a record
 		records.append(field_list)
 	# return the results
 	return records
-
-def wrap_csv_fields(fields):
-	# create a new list
-	field_list = []
-	# go through the fields
-	for field in fields:
-		print(field)
-		# replace any double quotes with single quotes
-		field = str(field).replace('"',"'")
-		print(field)
-		# wrap the field
-		field = '"' + field + '"'
-		print(field)
-		# append the value
-		field_list.append(field)
-	# return the field list
-	return field_list
 
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
@@ -3155,14 +3139,24 @@ def uploaddata(request):
 		uploaddataform = UploadDataForm(request.POST, request.FILES)
 		# check whether the form is valid
 		if uploaddataform.is_valid():
-			# decode the file
-			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
-			# read it as a csv file
-			records = csv.DictReader(file)
-			# get the load function
-			load_function = load_functions[uploaddataform.cleaned_data['file_type']]
-			# call the load functions
-			results = load_function(records)
+			if uploaddataform.cleaned_data['file_type'] != 'Event Categories':
+				# decode the file
+				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
+				# read it as a csv file
+				records = csv.DictReader(file)
+				# get the load function
+				load_function = load_functions[uploaddataform.cleaned_data['file_type']]
+				# call the load functions
+				results = load_function(records)
+			else:
+				# decode the file
+				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
+				# create a file handler
+				file_handler = Event_Categories_File_Handler()
+				# handle the uploaded file
+				file_handler.handle_uploaded_file(file)
+				# get the results
+				results = file_handler.results
 	# otherwise create a fresh form
 	else:
 		# create the fresh form

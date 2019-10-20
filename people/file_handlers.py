@@ -10,10 +10,22 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 
 class File_Field():
 	# this class defines a field witin a file
-	def __init__(self, name, mandatory=False):
+	def __init__(
+					self,
+					name,
+					mandatory=False,
+					corresponding_model=None,
+					corresponding_field=None,
+					corresponding_must_exist=False,
+					corresponding_must_not_exist=False,
+					):
 		# set the attributes
 		self.name = name
 		self.mandatory = mandatory
+		self.corresponding_model = corresponding_model
+		self.corresponding_field = corresponding_field
+		self.corresponding_must_exist = corresponding_must_exist
+		self.corresponding_must_not_exist = corresponding_must_not_exist
 		self.default = ''
 		self.errors = []
 		self.converter = False
@@ -31,10 +43,42 @@ class File_Field():
 		if self.mandatory and self.value == '':
 			# set the error
 			self.errors.append(' not created: mandatory field ' + self.name + ' not provided')
+		# check whether we have a corresponding record that should not exist
+		if self.corresponding_must_not_exist and self.corresponding_exists():
+			# set the error
+			self.errors.append(
+								' not created: ' + 
+								str(self.corresponding_model.__name__) + ' ' +
+								str(self.value)	+
+								' already exists.')
+		# check whether we have a corresponding record that should exist
+		if self.corresponding_must_exist and not self.corresponding_exists():
+			# set the error
+			self.errors.append(
+								' not created: ' + 
+								str(self.corresponding_model.__name__) + ' ' +
+								str(self.value)	+
+								' does not exist.')
 
 	def set_download_value(self, object):
 		# set the value from the object
 		self.value = getattr(object,self.name)
+
+	def corresponding_exists(self):
+		# define the query dict
+		filter_dict = { self.corresponding_field : self.value }
+		# attempt to get the record
+		try:
+			# try the read
+			corresponding_record = self.corresponding_model.objects.get(**filter_dict)
+			# set the success flag
+			exists = True
+		# deal with the exception
+		except (self.corresponding_model.DoesNotExist):
+			# set the flag
+			exists = False
+		# return the result
+		return exists
 
 class File_Datetime_Field(File_Field):
 	# this class defines a field within a file of datetime format
@@ -103,7 +147,7 @@ class File_Handler():
 			for record in records:
 				# validate the record
 				if (self.fields_valid(record) and 
-					self.corresponding_records_valid(record) and
+					self.multi_field_corresponding_records_valid(record) and
 					self.cross_field_valid(record)):
 					# create the record
 					self.create_record(record)
@@ -156,7 +200,7 @@ class File_Handler():
 		# return the result
 		return success
 
-	def corresponding_records_valid(self,record):
+	def multi_field_corresponding_records_valid(self,record):
 		# placeholder function to be replaced in sub-classess
 		return True
 
@@ -180,27 +224,15 @@ class Event_Categories_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Event_Category
 		# set the file fields
-		self.name = File_Field(name='name',mandatory=True)	
+		self.name = File_Field(
+								name='name',
+								mandatory=True,
+								corresponding_model=Event_Category,
+								corresponding_field='name',
+								corresponding_must_not_exist=True)	
 		self.description = File_Field(name='description',mandatory=True)
 		# and a list of the fields
 		self.fields = ['name','description']
-
-	def corresponding_records_valid(self,record):
-		# set result to False
-		result = False
-		# get the event category name
-		name = record['name']
-		# check whether the event_category already exists
-		try:
-			event_category = Event_Category.objects.get(name=name)
-			# set the message to show that it exists
-			self.add_record_results(record,[' not created: event category already exists.'])
-		# otherwise deal with the failure
-		except (Event_Category.DoesNotExist):
-			# set the flag
-			result = True
-		# return the result
-		return result
 
 	def create_record(self,record):
 		# create the record
@@ -225,39 +257,22 @@ class Event_Types_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Event_Type
 		# set the file fields
-		self.name = File_Field(name='name',mandatory=True)	
+		self.name = File_Field(
+								name='name',
+								mandatory=True,
+								corresponding_model=Event_Type,
+								corresponding_field='name',
+								corresponding_must_not_exist=True
+								)
 		self.description = File_Field(name='description',mandatory=True)
-		self.event_category = File_Field(name='event_category',mandatory=True)
+		self.event_category = File_Field(
+											name='event_category',
+											mandatory=True,
+											corresponding_model=Event_Category,
+											corresponding_field='name',
+											corresponding_must_exist=True)
 		# and a list of the fields
 		self.fields = ['name','description','event_category']
-
-	def corresponding_records_valid(self,record):
-		# set result to True
-		result = True
-		# get the event category name
-		name = record['name']
-		# check whether the event_type already exists
-		try:
-			event_type = Event_Type.objects.get(name=name)
-			# set the message to show that it exists
-			self.add_record_results(record,[' not created: event type already exists.'])
-			# and set the result
-			result = False
-		# otherwise deal with the failure
-		except (Event_Type.DoesNotExist):
-			# pass
-			pass
-		# check whether the event category exists
-		try:
-			event_category = Event_Category.objects.get(name=record['event_category'])
-		# deal with the exception
-		except (Event_Category.DoesNotExist):
-			# set the message
-			self.add_record_results(record,[' not created: event category ' + record['event_category'] + ' does not exist.'])
-			# and set the result
-			result = False
-		# return the result
-		return result
 
 	def create_record(self,record):
 		# create the record

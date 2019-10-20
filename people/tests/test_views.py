@@ -4834,7 +4834,9 @@ class UploadDataViewTest(TestCase):
 							'Streets',
 							'Role Types',
 							'Relationship Types',
-							'Reference Data',
+							'ABSS Types',
+							'Ethnicities',
+							'Age Statuses',
 							'People',
 							'Events',
 							'Relationships',
@@ -5718,76 +5720,50 @@ class UploadDataViewTest(TestCase):
 		# check that no additional event categories have been created
 		self.assertEqual(Relationship_Type.objects.all().count(),3)
 
-	def test_upload_reference_data_invalid_data_type(self):
+	def test_upload_ethnicities(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
 		# open the file
-		valid_file = open('people/tests/data/reference_data_invalid_data_type.csv')
+		valid_file = open('people/tests/data/ethnicities.csv')
 		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
-											'file_type' : 'Reference Data',
-											'file' : valid_file
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# check that we got an already exists message
-		self.assertContains(response,'Data type: invalid data type is not recognised.')
-		# check that no records have been created
-		self.assertEqual(Ethnicity.objects.all().exists(),False)
-		self.assertEqual(ABSS_Type.objects.all().exists(),False)
-		self.assertEqual(Age_Status.objects.all().exists(),False)
-
-	def test_upload_reference_data(self):
-		# log the user in as a superuser
-		self.client.login(username='testsuper', password='superword')
-		# open the file
-		valid_file = open('people/tests/data/reference_data.csv')
-		# submit the page to load the file
-		response = self.client.post(
-									reverse('uploaddata'),
-									data = { 
-											'file_type' : 'Reference Data',
+											'file_type' : 'Ethnicities',
 											'file' : valid_file
 											}
 									)
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# check that the records have been created
-		self.assertEqual(Ethnicity.objects.filter(description='test ethnicity').exists(),True)
-		self.assertEqual(ABSS_Type.objects.filter(name='test ABSS type').exists(),True)
-		self.assertEqual(Age_Status.objects.filter(status='test age status').exists(),True)
+		self.assertEqual(Ethnicity.objects.filter(description='test_ethnicity').exists(),True)
 
-	def test_upload_reference_data_already_exists(self):
+	def test_upload_ethnicities_already_exists(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
 		# open the file
-		valid_file = open('people/tests/data/reference_data.csv')
+		valid_file = open('people/tests/data/ethnicities.csv')
 		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
-											'file_type' : 'Reference Data',
+											'file_type' : 'Ethnicities',
 											'file' : valid_file
 											}
 									)
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# check that the records have been created
-		self.assertEqual(Ethnicity.objects.filter(description='test ethnicity').exists(),True)
-		self.assertEqual(ABSS_Type.objects.filter(name='test ABSS type').exists(),True)
-		self.assertEqual(Age_Status.objects.filter(status='test age status').exists(),True)
+		self.assertEqual(Ethnicity.objects.filter(description='test_ethnicity').exists(),True)
 		# close the file
 		valid_file.close()
 		# reopen the file
-		valid_file = open('people/tests/data/reference_data.csv')
+		valid_file = open('people/tests/data/ethnicities.csv')
 		# submit the page to load the file
 		response = self.client.post(
 									reverse('uploaddata'),
 									data = { 
-											'file_type' : 'Reference Data',
+											'file_type' : 'Ethnicities',
 											'file' : valid_file
 											}
 									)
@@ -5797,8 +5773,114 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional records have been created
 		self.assertEqual(Ethnicity.objects.all().count(),1)
-		self.assertEqual(ABSS_Type.objects.all().count(),1)
+
+	def test_upload_age_statuses(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/age_statuses.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Age Statuses',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the records have been created
+		self.assertEqual(Age_Status.objects.filter(status='test_age_status').exists(),True)
+
+	def test_upload_age_statuses_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/age_statuses.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Age Statuses',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the records have been created
+		self.assertEqual(Age_Status.objects.filter(status='test_age_status').exists(),True)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/age_statuses.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Age Statuses',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional records have been created
 		self.assertEqual(Age_Status.objects.all().count(),1)
+
+	def test_upload_ABSS_types(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/ABSS_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'ABSS Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the records have been created
+		self.assertEqual(ABSS_Type.objects.filter(name='test_ABSS_type').exists(),True)
+
+	def test_upload_ABSS_types_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/ABSS_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'ABSS Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the records have been created
+		self.assertEqual(ABSS_Type.objects.filter(name='test_ABSS_type').exists(),True)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/ABSS_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'ABSS Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional records have been created
+		self.assertEqual(ABSS_Type.objects.all().count(),1)
 
 	def test_upload_event_types(self):
 		# log the user in as a superuser

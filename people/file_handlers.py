@@ -122,11 +122,33 @@ class File_Boolean_Field(File_Field):
 
 class File_Handler():
 	# this class handles upload and download functions for a file, as well as validation
-	def __init__(self):
-		# set attributes
+	def __init__(self,*args,**kwargs):
+		# set default attributes
 		self.results = []
 		self.fields = []
 		self.file_class = ''
+		# check whether we have received a file class
+		if 'file_class' in kwargs.keys():
+			# set the file class
+			self.file_class = kwargs['file_class']
+		# and do the same for a field
+		if 'field_name' in kwargs.keys():
+			# get the simple load field
+			field_name = kwargs['field_name']
+			# create a file field objects
+			file_field = File_Field(
+									name=field_name,
+									mandatory=True,
+									corresponding_model=self.file_class,
+									corresponding_field=field_name,
+									corresponding_must_not_exist=True,
+									)
+			# set the field
+			setattr(self,field_name,file_field)
+			# and append the name to the fields list
+			self.fields.append(field_name)
+			# and set it to the label field
+			self.label_field = field_name
 
 	# process an uploaded file
 	def handle_uploaded_file(self, file):
@@ -220,7 +242,7 @@ class File_Handler():
 
 	def label(self,record):
 		# placeholder function to be replaced in sub-classes
-		return ''
+		return self.file_class.__name__ + ' ' + record[self.label_field]
 	
 class Event_Categories_File_Handler(File_Handler):
 
@@ -243,7 +265,6 @@ class Event_Categories_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Event Category ' + record['name']
-	
 
 class Event_Types_File_Handler(File_Handler):
 
@@ -273,28 +294,6 @@ class Event_Types_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Event Type ' + record['name']
-
-class Areas_File_Handler(File_Handler):
-
-	def __init__(self,*args,**kwargs):
-		# call the built in constructor
-		super(Areas_File_Handler, self).__init__(*args, **kwargs)
-		# set the class
-		self.file_class = Area
-		# set the file fields
-		self.area_name = File_Field(
-								name='area_name',
-								mandatory=True,
-								corresponding_model=Area,
-								corresponding_field='area_name',
-								corresponding_must_not_exist=True
-								)
-		# and a list of the fields
-		self.fields = ['area_name']
-
-	def label(self,record):
-		# return the label
-		return 'Area ' + record['area_name']
 
 class Wards_File_Handler(File_Handler):
 
@@ -408,3 +407,4 @@ class Role_Types_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Role Type: ' + record['role_type_name']
+

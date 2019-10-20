@@ -23,9 +23,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 from io import TextIOWrapper
-from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, Areas_File_Handler, \
+from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, \
 							Wards_File_Handler, Post_Codes_File_Handler, Streets_File_Handler, \
-							Role_Types_File_Handler 
+							Role_Types_File_Handler, File_Handler
 
 @login_required
 def index(request):
@@ -3119,11 +3119,17 @@ def answer_questions(request,person_id=0):
 def uploaddata(request):
 	# set results to empty
 	results = []
+	# define the records that need simple file handlers
+	simple_file_handlers = {
+							'Areas' : {'file_class' : Area, 'field_name' : 'area_name'},
+							'Age Statuses' : {'file_class' : Age_Status, 'field_name' : 'status'},
+							'Ethnicities' : {'file_class' : Ethnicity, 'field_name' : 'description'},
+							'ABSS Types' : {'file_class' : ABSS_Type, 'field_name' : 'name'},
+							}
 	# define the functions for each file type
 	load_functions = {
 						'Event Categories' : Event_Categories_File_Handler,
 						'Event Types' : Event_Types_File_Handler,
-						'Areas' : Areas_File_Handler,
 						'Wards' : Wards_File_Handler,
 						'Post Codes' : Post_Codes_File_Handler,
 						'Streets' : Streets_File_Handler,
@@ -3141,17 +3147,33 @@ def uploaddata(request):
 		uploaddataform = UploadDataForm(request.POST, request.FILES)
 		# check whether the form is valid
 		if uploaddataform.is_valid():
-			if uploaddataform.cleaned_data['file_type'] not in [
-																'Event Categories',
-																'Event Types',
-																'Areas',
-																'Wards',
-																'Post Codes',
-																'Streets',
-																'Role Types'
-																]:
-				# decode the file
-				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
+			# decode the file
+			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
+			# get the file type
+			file_type = uploaddataform.cleaned_data['file_type']
+			# check to see whether we have a simple loader
+			if file_type in simple_file_handlers.keys():
+				# get the parameters
+				file_handler_kwargs = simple_file_handlers[file_type]
+				# load using a simple file handler
+				file_handler = File_Handler(**file_handler_kwargs)
+				# handle the uploaded file
+				file_handler.handle_uploaded_file(file)
+				# get the results
+				results = file_handler.results
+			# otherwise deal with an old fashioned load functions
+			elif file_type not in [
+									'Event Categories',
+									'Event Types',
+									'Areas',
+									'Wards',
+									'Post Codes',
+									'Streets',
+									'Role Types',
+									'Ethnicity',
+									'ABSS Type',
+									'Age Status',
+									]:
 				# read it as a csv file
 				records = csv.DictReader(file)
 				# get the load function
@@ -3159,8 +3181,6 @@ def uploaddata(request):
 				# call the load functions
 				results = load_function(records)
 			else:
-				# decode the file
-				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
 				# create a file handler
 				file_handler = load_functions[uploaddataform.cleaned_data['file_type']]()
 				# handle the uploaded file
@@ -3292,39 +3312,6 @@ def load_reference_data(records):
 			else:
 				# set an error message
 				results = results + ['Data type: ' + data_type + ' is not recognised.']
-	# return the results
-	return results
-
-def load_role_types(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),
-								['role_type_name','use_for_events','use_for_people','trained'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for role_type_record in records:
-			# get the name
-			role_type_name = role_type_record['role_type_name']
-			# create a label for use in results
-			role_type_label = 'Role Type: ' + role_type_name
-			# check whether the role type already exists
-			try:
-				role_type = Role_Type.objects.get(role_type_name=role_type_name)
-				# set the message to show that it exists
-				results.append(role_type_label + ' not created: Role Type already exists.')
-			# we didn't find a record
-			except (Role_Type.DoesNotExist):
-				# the role_type does not exist, so create it
-				role_type = Role_Type(
-										role_type_name = role_type_name,
-										use_for_events = (role_type_record['use_for_events'] == 'True'),
-										use_for_people = (role_type_record['use_for_people'] == 'True'),
-										trained = (role_type_record['trained'] == 'True')
-										)
-				# save the role type
-				role_type.save()
-				# set the message
-				results.append(role_type_label + ' created.')
 	# return the results
 	return results
 

@@ -70,7 +70,7 @@ class File_Field():
 		# attempt to get the record
 		try:
 			# try the read
-			corresponding_record = self.corresponding_model.objects.get(**filter_dict)
+			self.corresponding_record = self.corresponding_model.objects.get(**filter_dict)
 			# set the success flag
 			exists = True
 		# deal with the exception
@@ -279,7 +279,7 @@ class Event_Types_File_Handler(File_Handler):
 		event_type = Event_Type(
 								name = record['name'],
 								description = record['description'],
-								event_category = Event_Category.objects.get(name=record['event_category'])
+								event_category = self.event_category.corresponding_record
 								)
 		# save the event_category
 		event_type.save()
@@ -289,3 +289,75 @@ class Event_Types_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Event Type ' + record['name']
+
+class Areas_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Areas_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Area
+		# set the file fields
+		self.area = File_Field(
+								name='area',
+								mandatory=True,
+								corresponding_model=Area,
+								corresponding_field='area_name',
+								corresponding_must_not_exist=True
+								)
+		# and a list of the fields
+		self.fields = ['area']
+
+	def create_record(self,record):
+		# create the record
+		event_type = Area(
+							area_name = record['area'],
+							)
+		# save the event_category
+		event_type.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+
+	def label(self,record):
+		# return the label
+		return 'Area ' + record['area']
+
+class Wards_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Wards_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Ward
+		# set the file fields
+		self.ward = File_Field(
+								name='ward',
+								mandatory=True,
+								corresponding_model=Ward,
+								corresponding_field='ward_name',
+								corresponding_must_not_exist=True
+								)
+		self.area = File_Field(
+								name='area',
+								mandatory=True,
+								corresponding_model=Area,
+								corresponding_field='area_name',
+								corresponding_must_exist=True
+								)
+		# and a list of the fields
+		self.fields = ['ward','area']
+
+	def create_record(self,record):
+		# create the record
+		event_type = Ward(
+							ward_name = record['ward'],
+							area = self.area.corresponding_record
+							)
+		# save the event_category
+		event_type.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+
+	def label(self,record):
+		# return the label
+		return 'Ward: ' + record['ward'] + ' (Area: ' + record['area'] + ')'

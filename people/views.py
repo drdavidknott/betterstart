@@ -23,7 +23,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 from io import TextIOWrapper
-from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler
+from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, Areas_File_Handler, \
+							Wards_File_Handler
 
 @login_required
 def index(request):
@@ -3121,7 +3122,7 @@ def uploaddata(request):
 	load_functions = {
 						'Event Categories' : Event_Categories_File_Handler,
 						'Event Types' : Event_Types_File_Handler,
-						'Areas' : load_areas,
+						'Areas' : Areas_File_Handler,
 						'Wards' : load_wards,
 						'Post Codes' : load_post_codes,
 						'Streets' : load_streets,
@@ -3139,7 +3140,11 @@ def uploaddata(request):
 		uploaddataform = UploadDataForm(request.POST, request.FILES)
 		# check whether the form is valid
 		if uploaddataform.is_valid():
-			if uploaddataform.cleaned_data['file_type'] not in ['Event Categories','Event Types']:
+			if uploaddataform.cleaned_data['file_type'] not in [
+																'Event Categories',
+																'Event Types',
+																'Areas'
+																]:
 				# decode the file
 				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
 				# read it as a csv file
@@ -3251,99 +3256,6 @@ def check_mandatory_fields(record,label,fields):
 			errors.append(label + ' not created: mandatory field ' + field + ' not provided.')
 	# return the errors
 	return errors
-
-def load_event_categories(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['name','description'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for event_category_record in records:
-			# get the event category name
-			name = event_category_record['name']
-			# create a label for use in messages
-			event_category_label = 'Event Category: ' + name
-			# check whether the event_category already exists
-			try:
-				event_category = Event_Category.objects.get(name=name)
-				# set the message to show that it exists
-				results.append(event_category_label + ' not created: event_category already exists.')
-			except (Event_Category.DoesNotExist):
-				# the event_category does not exist, so create it
-				event_category = Event_Category(
-												name=name,
-												description=event_category_record['description']
-												)
-				# save the event_category
-				event_category.save()
-				# set the message
-				results.append(event_category_label + ' created.')
-	# return the messages
-	return results
-
-def load_event_types(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['name','description','event_category'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for event_type_row in records:
-			# get the category name
-			event_category_name = event_type_row['event_category']
-			# get the event_type name
-			event_type_name = event_type_row['name']
-			# create a label for use in messages
-			event_type_label = 'Event type: ' + event_type_name + ' (Category: ' + event_category_name + ')'
-			# check whether the area exists
-			try:
-				event_category = Event_Category.objects.get(name=event_category_name)
-				# now try to find the event_type
-				try:
-					event_type = Event_Type.objects.get(name=event_type_name)
-					# set the message to show that it exists
-					results.append(event_type_label + ' not created: event type already exists.')
-				except (Event_Type.DoesNotExist):
-					# create the event_type
-					event_type = Event_Type(
-											name = event_type_name,
-											description = event_type_row['description'],
-											event_category = event_category
-								)
-					# save the event_type
-					event_type.save()
-					# and set the message
-					results.append(event_type_label + ' created.')
-			except (Event_Category.DoesNotExist):
-				# the area does not exist, so set an error message
-				results.append(event_type_label + ' not created: event category does not exist.')
-	# return the messages
-	return results
-
-def load_areas(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['area'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for area in records:
-			# get the area name
-			area_name = area['area']
-			# create a label for use in messages
-			area_label = 'Area: ' + area_name
-			# check whether the area already exists
-			try:
-				area = Area.objects.get(area_name=area_name)
-				# set the message to show that it exists
-				results.append(area_label + ' not created: area already exists.')
-			except (Area.DoesNotExist):
-				# the area does not exist, so create it
-				area = Area(area_name=area_name)
-				# save the area
-				area.save()
-				# set the message
-				results.append(area_label + ' created.')
-	# return the messages
-	return results
 
 def load_wards(records):
 	# check the file format

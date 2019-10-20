@@ -26,6 +26,7 @@ class File_Field():
 		self.corresponding_field = corresponding_field
 		self.corresponding_must_exist = corresponding_must_exist
 		self.corresponding_must_not_exist = corresponding_must_not_exist
+		self.corresponding_record = None
 		self.default = ''
 		self.errors = []
 		self.converter = False
@@ -70,7 +71,7 @@ class File_Field():
 		# attempt to get the record
 		try:
 			# try the read
-			self.corresponding_record = self.corresponding_model.objects.get(**filter_dict)
+			self.value = self.corresponding_model.objects.get(**filter_dict)
 			# set the success flag
 			exists = True
 		# deal with the exception
@@ -90,15 +91,8 @@ class File_Datetime_Field(File_Field):
 		super(File_Datetime_Field, self).__init__(*args, **kwargs)
 		# and set the attributes
 		self.datetime_format = datetime_format
-		self.converter = True
-
-	def set_upload_value(self, record):
-		# set the value to the default
-		self.value = self.default
-		# check whether we have a value in the record
-		if self.name in record.keys():
-		# set the value
-			self.value = record[self.name]
+		self.datetime_converter = True
+		self.datetime_converted = False
 
 	def validate_upload_value(self):
 		# call the built in validator
@@ -107,33 +101,27 @@ class File_Datetime_Field(File_Field):
 		if self.value:
 			# check the value against the date
 			try:
-				datetime.datetime.strptime(self.value, datetime_format)
-				# pass the test
-				pass
+				self.value = datetime.datetime.strptime(self.value, datetime_format)
 			# deal with the exception
 			except ValueError:
 				# set the result
 				self.errors = str(value) + ' is invalid date or time'
 
-	def convert_upload_value(self):
-		# check whether we have a value
-		if self.value:
-			# set the converted value
-			self.value = datetime.datetime.strptime(self.value,self.format)
-
 	def convert_download_value(self):
-		# check whether we have a value
-		if self.value:
+		# check whether we have a value and that we haven't already converted
+		if self.value and not self.converted:
 			# set the converted value
 			self.value = this_datetime.strftime(self.format)
+		# set the converted flag
+		self.converted = True
 
 class File_Handler():
 	# this class handles upload and download functions for a file, as well as validation
 	def __init__(self):
 		# set attributes
 		self.results = []
-		# create a list of class fields
 		self.fields = []
+		self.file_class = ''
 
 	# process an uploaded file
 	def handle_uploaded_file(self, file):
@@ -151,6 +139,7 @@ class File_Handler():
 					self.cross_field_valid(record)):
 					# create the record
 					self.create_record(record)
+		# print(self.results)
 
 	def file_format_valid(self, file_keys):
 		# set the result to false
@@ -209,8 +198,20 @@ class File_Handler():
 		return True
 
 	def create_record(self,record):
-		# placeholder function to be replaced in sub-classes
-		return True
+		# build a dictionary which contains the fields
+		field_dict = {}
+		# go through the fields
+		for field in self.fields:
+			# get the object
+			file_field = getattr(self,field)
+			# set the value from the field
+			field_dict[file_field.name] = file_field.value
+		# create the record object
+		new_record = self.file_class(**field_dict)
+		# save the record
+		new_record.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
 
 	def label(self,record):
 		# placeholder function to be replaced in sub-classes
@@ -234,20 +235,10 @@ class Event_Categories_File_Handler(File_Handler):
 		# and a list of the fields
 		self.fields = ['name','description']
 
-	def create_record(self,record):
-		# create the record
-		event_category = Event_Category(
-										name=record['name'],
-										description=record['description']
-										)
-		# save the event_category
-		event_category.save()
-		# set a message
-		self.add_record_results(record,[' created.'])
-
 	def label(self,record):
 		# return the label
 		return 'Event Category ' + record['name']
+	
 
 class Event_Types_File_Handler(File_Handler):
 
@@ -274,18 +265,6 @@ class Event_Types_File_Handler(File_Handler):
 		# and a list of the fields
 		self.fields = ['name','description','event_category']
 
-	def create_record(self,record):
-		# create the record
-		event_type = Event_Type(
-								name = record['name'],
-								description = record['description'],
-								event_category = self.event_category.corresponding_record
-								)
-		# save the event_category
-		event_type.save()
-		# set a message
-		self.add_record_results(record,[' created.'])
-
 	def label(self,record):
 		# return the label
 		return 'Event Type ' + record['name']
@@ -298,29 +277,19 @@ class Areas_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Area
 		# set the file fields
-		self.area = File_Field(
-								name='area',
+		self.area_name = File_Field(
+								name='area_name',
 								mandatory=True,
 								corresponding_model=Area,
 								corresponding_field='area_name',
 								corresponding_must_not_exist=True
 								)
 		# and a list of the fields
-		self.fields = ['area']
-
-	def create_record(self,record):
-		# create the record
-		event_type = Area(
-							area_name = record['area'],
-							)
-		# save the event_category
-		event_type.save()
-		# set a message
-		self.add_record_results(record,[' created.'])
+		self.fields = ['area_name']
 
 	def label(self,record):
 		# return the label
-		return 'Area ' + record['area']
+		return 'Area ' + record['area_name']
 
 class Wards_File_Handler(File_Handler):
 
@@ -330,13 +299,13 @@ class Wards_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Ward
 		# set the file fields
-		self.ward = File_Field(
-								name='ward',
-								mandatory=True,
-								corresponding_model=Ward,
-								corresponding_field='ward_name',
-								corresponding_must_not_exist=True
-								)
+		self.ward_name = File_Field(
+									name='ward_name',
+									mandatory=True,
+									corresponding_model=Ward,
+									corresponding_field='ward_name',
+									corresponding_must_not_exist=True
+									)
 		self.area = File_Field(
 								name='area',
 								mandatory=True,
@@ -345,19 +314,37 @@ class Wards_File_Handler(File_Handler):
 								corresponding_must_exist=True
 								)
 		# and a list of the fields
-		self.fields = ['ward','area']
-
-	def create_record(self,record):
-		# create the record
-		event_type = Ward(
-							ward_name = record['ward'],
-							area = self.area.corresponding_record
-							)
-		# save the event_category
-		event_type.save()
-		# set a message
-		self.add_record_results(record,[' created.'])
+		self.fields = ['ward_name','area']
 
 	def label(self,record):
 		# return the label
-		return 'Ward: ' + record['ward'] + ' (Area: ' + record['area'] + ')'
+		return 'Ward: ' + record['ward_name'] + ' (Area: ' + record['area'] + ')'
+
+class Post_Codes_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Post_Codes_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Post_Code
+		# set the file fields
+		self.post_code = File_Field(
+								name='post_code',
+								mandatory=True,
+								corresponding_model=Post_Code,
+								corresponding_field='post_code',
+								corresponding_must_not_exist=True
+								)
+		self.ward = File_Field(
+								name='ward',
+								mandatory=True,
+								corresponding_model=Ward,
+								corresponding_field='ward_name',
+								corresponding_must_exist=True
+								)
+		# and a list of the fields
+		self.fields = ['post_code','ward']
+
+	def label(self,record):
+		# return the label
+		return 'Post code: ' + record['post_code'] + ' (Ward: ' + record['ward'] + ')'

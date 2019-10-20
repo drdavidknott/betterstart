@@ -24,7 +24,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 from io import TextIOWrapper
 from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, Areas_File_Handler, \
-							Wards_File_Handler
+							Wards_File_Handler, Post_Codes_File_Handler
 
 @login_required
 def index(request):
@@ -3123,8 +3123,8 @@ def uploaddata(request):
 						'Event Categories' : Event_Categories_File_Handler,
 						'Event Types' : Event_Types_File_Handler,
 						'Areas' : Areas_File_Handler,
-						'Wards' : load_wards,
-						'Post Codes' : load_post_codes,
+						'Wards' : Wards_File_Handler,
+						'Post Codes' : Post_Codes_File_Handler,
 						'Streets' : load_streets,
 						'Role Types' : load_role_types,
 						'Relationship Types' : load_relationship_types,
@@ -3143,7 +3143,9 @@ def uploaddata(request):
 			if uploaddataform.cleaned_data['file_type'] not in [
 																'Event Categories',
 																'Event Types',
-																'Areas'
+																'Areas',
+																'Wards',
+																'Post Codes',
 																]:
 				# decode the file
 				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
@@ -3256,43 +3258,6 @@ def check_mandatory_fields(record,label,fields):
 			errors.append(label + ' not created: mandatory field ' + field + ' not provided.')
 	# return the errors
 	return errors
-
-def load_wards(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['ward','area'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for ward_row in records:
-			# get the area name
-			area_name = ward_row['area']
-			# get the ward name
-			ward_name = ward_row['ward']
-			# create a label for use in results
-			ward_label = 'Ward: ' + ward_name + ' (Area: ' + area_name + ')'
-			# check whether the area exists
-			try:
-				area = Area.objects.get(area_name=area_name)
-				# now try to find the ward
-				try:
-					ward = Ward.objects.get(ward_name=ward_name)
-					# set the message to show that it exists
-					results.append(ward_label + ' not created: ward already exists.')
-				except (Ward.DoesNotExist):
-					# create the ward
-					ward = Ward(
-								ward_name = ward_name,
-								area = area
-								)
-					# save the ward
-					ward.save()
-					# and set the message
-					results.append(ward_label + ' created.')
-			except (Area.DoesNotExist):
-				# the area does not exist, so set an error message
-				results.append(ward_label + ' not created: area does not exist.')
-	# return the results
-	return results
 
 def load_post_codes(records):
 	# check the file format

@@ -24,7 +24,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.db.models import Sum, Count
 from io import TextIOWrapper
 from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, Areas_File_Handler, \
-							Wards_File_Handler, Post_Codes_File_Handler
+							Wards_File_Handler, Post_Codes_File_Handler, Streets_File_Handler, \
+							Role_Types_File_Handler 
 
 @login_required
 def index(request):
@@ -3125,8 +3126,8 @@ def uploaddata(request):
 						'Areas' : Areas_File_Handler,
 						'Wards' : Wards_File_Handler,
 						'Post Codes' : Post_Codes_File_Handler,
-						'Streets' : load_streets,
-						'Role Types' : load_role_types,
+						'Streets' : Streets_File_Handler,
+						'Role Types' : Role_Types_File_Handler,
 						'Relationship Types' : load_relationship_types,
 						'Reference Data' : load_reference_data,
 						'People' : load_people,
@@ -3146,6 +3147,8 @@ def uploaddata(request):
 																'Areas',
 																'Wards',
 																'Post Codes',
+																'Streets',
+																'Role Types'
 																]:
 				# decode the file
 				file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
@@ -3258,80 +3261,6 @@ def check_mandatory_fields(record,label,fields):
 			errors.append(label + ' not created: mandatory field ' + field + ' not provided.')
 	# return the errors
 	return errors
-
-def load_post_codes(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['postcode','ward'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for postcode_row in records:
-			# get the post code
-			post_code_name = postcode_row['postcode']
-			# and the ward
-			ward_name = postcode_row['ward']
-			# create a label for use in results
-			post_code_label = 'Post code: ' + post_code_name + ' (Ward: ' + ward_name + ')'
-			# check whether the ward exists
-			try:
-				ward = Ward.objects.get(ward_name=ward_name)
-				# now try to find the post code
-				try:
-					post_code = Post_Code.objects.get(post_code=post_code_name)
-					# set the message to show that it exists
-					results.append(post_code_label + ' not created: postcode already exists.')
-				except (Post_Code.DoesNotExist):
-					# create the ward
-					post_code = Post_Code(
-											post_code = post_code_name,
-											ward = ward
-										)
-					# save the ward
-					post_code.save()
-					# and set the message
-					results.append(post_code_label + ' created.')
-			except (Ward.DoesNotExist):
-				# the area does not exist, so set an error messaage
-				results.append(post_code_label + ' not created: ward does not exist.')
-	# return the results
-	return results
-
-def load_streets(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['post_code','name'])
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for street_row in records:
-			# get the street
-			street_name = street_row['name']
-			# and the post code
-			post_code_name = street_row['post_code']
-			# create a label for use in results
-			street_label = 'Street: ' + street_name + ' (Post Code: ' + post_code_name + ')'
-			# check whether the post_code exists
-			try:
-				post_code = Post_Code.objects.get(post_code=post_code_name)
-				# now try to find the street
-				try:
-					street = Street.objects.get(name=street_name,post_code=post_code)
-					# set the message to show that it exists
-					results.append(street_label + ' not created: street already exists.')
-				except (Street.DoesNotExist):
-					# create the street
-					street = Street(
-											name = street_name,
-											post_code = post_code
-										)
-					# save the street
-					street.save()
-					# and set the message
-					results.append(street_label + ' created.')
-			except (Post_Code.DoesNotExist):
-				# the area does not exist, so set an error messaage
-				results.append(street_label + ' not created: post code does not exist.')
-	# return the results
-	return results
 
 def load_reference_data(records):
 	# check the file format

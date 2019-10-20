@@ -5396,7 +5396,7 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'post code does not exist')
+		self.assertContains(response,'Post_Code invalid pc does not exist')
 		# check that no additional event types have been created
 		self.assertEqual(Street.objects.all().exists(),False)
 
@@ -5903,7 +5903,6 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional event types have been created
 		self.assertEqual(Event_Type.objects.all().count(),2)
-
 
 class UploadPeopleDataViewTest(TestCase):
 	@classmethod

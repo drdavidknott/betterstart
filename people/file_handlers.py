@@ -91,12 +91,10 @@ class File_Datetime_Field(File_Field):
 		super(File_Datetime_Field, self).__init__(*args, **kwargs)
 		# and set the attributes
 		self.datetime_format = datetime_format
-		self.datetime_converter = True
-		self.datetime_converted = False
 
-	def validate_upload_value(self):
+	def validate_upload_value(self,*args,**kwargs):
 		# call the built in validator
-		super(File_Datetime_Field, self).validate_upload(*args, **kwargs)
+		super(File_Datetime_Field, self).validate_upload_value(*args, **kwargs)
 		# check whether we have a date
 		if self.value:
 			# check the value against the date
@@ -109,11 +107,18 @@ class File_Datetime_Field(File_Field):
 
 	def convert_download_value(self):
 		# check whether we have a value and that we haven't already converted
-		if self.value and not self.converted:
+		if self.value:
 			# set the converted value
 			self.value = this_datetime.strftime(self.format)
-		# set the converted flag
-		self.converted = True
+
+class File_Boolean_Field(File_Field):
+	# this class defines a field within a file of datetime format
+
+	def validate_upload_value(self,*args,**kwargs):
+		# call the built in validator
+		super(File_Boolean_Field, self).validate_upload_value(*args, **kwargs)
+		# set the value
+		self.value = (self.value == 'True')
 
 class File_Handler():
 	# this class handles upload and download functions for a file, as well as validation
@@ -348,3 +353,58 @@ class Post_Codes_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Post code: ' + record['post_code'] + ' (Ward: ' + record['ward'] + ')'
+
+class Streets_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Streets_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Street
+		# set the file fields
+		self.name = File_Field(
+								name='name',
+								mandatory=True,
+								corresponding_model=Street,
+								corresponding_field='name',
+								corresponding_must_not_exist=True
+								)
+		self.post_code = File_Field(
+								name='post_code',
+								mandatory=True,
+								corresponding_model=Post_Code,
+								corresponding_field='post_code',
+								corresponding_must_exist=True
+								)
+		# and a list of the fields
+		self.fields = ['name','post_code']
+
+	def label(self,record):
+		# return the label
+		return 'Street: ' + record['name'] + ' (Post Code: ' + record['post_code'] + ')'
+
+class Role_Types_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Role_Types_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Role_Type
+		# set the file fields
+		self.role_type_name = File_Field(
+								name='role_type_name',
+								mandatory=True,
+								corresponding_model=Role_Type,
+								corresponding_field='role_type_name',
+								corresponding_must_not_exist=True
+								)
+		self.use_for_events = File_Boolean_Field(name='use_for_events',mandatory=True)
+		self.use_for_people = File_Boolean_Field(name='use_for_people',mandatory=True)
+		self.trained = File_Boolean_Field(name='trained',mandatory=True)
+
+		# and a list of the fields
+		self.fields = ['role_type_name','use_for_events','use_for_people','trained']
+
+	def label(self,record):
+		# return the label
+		return 'Role Type: ' + record['role_type_name']

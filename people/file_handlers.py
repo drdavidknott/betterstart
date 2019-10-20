@@ -408,3 +408,27 @@ class Role_Types_File_Handler(File_Handler):
 		# return the label
 		return 'Role Type: ' + record['role_type_name']
 
+class Relationship_Types_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Relationship_Types_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Relationship_Type
+		# set the file fields
+		self.relationship_type = File_Field(
+											name='relationship_type',
+											mandatory=True,
+											corresponding_model=Relationship_Type,
+											corresponding_field='relationship_type',
+											corresponding_must_not_exist=True
+											)
+		self.relationship_counterpart = File_Field(name='relationship_counterpart',mandatory=True)
+
+		# and a list of the fields
+		self.fields = ['relationship_type','relationship_counterpart']
+
+	def label(self,record):
+		# return the label
+		return 'Relationship type: ' + record['relationship_type']
+

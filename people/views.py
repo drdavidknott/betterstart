@@ -25,7 +25,7 @@ from django.db.models import Sum, Count
 from io import TextIOWrapper
 from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, \
 							Wards_File_Handler, Post_Codes_File_Handler, Streets_File_Handler, \
-							Role_Types_File_Handler, File_Handler
+							Role_Types_File_Handler, File_Handler, Relationship_Types_File_Handler
 
 @login_required
 def index(request):
@@ -3126,16 +3126,18 @@ def uploaddata(request):
 							'Ethnicities' : {'file_class' : Ethnicity, 'field_name' : 'description'},
 							'ABSS Types' : {'file_class' : ABSS_Type, 'field_name' : 'name'},
 							}
-	# define the functions for each file type
-	load_functions = {
+	# define the records that need more complex file handlers
+	file_handlers = {
 						'Event Categories' : Event_Categories_File_Handler,
 						'Event Types' : Event_Types_File_Handler,
 						'Wards' : Wards_File_Handler,
 						'Post Codes' : Post_Codes_File_Handler,
 						'Streets' : Streets_File_Handler,
 						'Role Types' : Role_Types_File_Handler,
-						'Relationship Types' : load_relationship_types,
-						'Reference Data' : load_reference_data,
+						'Relationship Types' : Relationship_Types_File_Handler
+					}
+	# define the functions for each file type
+	load_functions = {
 						'People' : load_people,
 						'Events' : load_events,
 						'Relationships' : load_relationships,
@@ -3162,27 +3164,16 @@ def uploaddata(request):
 				# get the results
 				results = file_handler.results
 			# otherwise deal with an old fashioned load functions
-			elif file_type not in [
-									'Event Categories',
-									'Event Types',
-									'Areas',
-									'Wards',
-									'Post Codes',
-									'Streets',
-									'Role Types',
-									'Ethnicity',
-									'ABSS Type',
-									'Age Status',
-									]:
+			elif file_type not in file_handlers.keys():
 				# read it as a csv file
 				records = csv.DictReader(file)
 				# get the load function
-				load_function = load_functions[uploaddataform.cleaned_data['file_type']]
+				load_function = load_functions[file_type]
 				# call the load functions
 				results = load_function(records)
 			else:
 				# create a file handler
-				file_handler = load_functions[uploaddataform.cleaned_data['file_type']]()
+				file_handler = file_handlers[file_type]()
 				# handle the uploaded file
 				file_handler.handle_uploaded_file(file)
 				# get the results
@@ -3281,119 +3272,6 @@ def check_mandatory_fields(record,label,fields):
 			errors.append(label + ' not created: mandatory field ' + field + ' not provided.')
 	# return the errors
 	return errors
-
-def load_reference_data(records):
-	# check the file format
-	results = file_fields_valid(records.fieldnames.copy(),['data_type','value'])
-	# define the load functions
-		# define the functions for each file type
-	load_functions = {
-						'ethnicity' : load_ethnicity,
-						'ABSS_type' : load_ABSS_type,
-						'age_status' : load_age_status
-						}
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for record in records:
-			# get the data type
-			data_type = record['data_type']
-			# check the data type
-			if data_type in load_functions.keys():
-				# get the load function
-				load_function = load_functions[data_type]
-				# get the value
-				value = record['value']
-				# try to create the record
-				result = load_function(value)
-				# append the result
-				results.append(result)
-				# and deal with any unknown type
-			else:
-				# set an error message
-				results = results + ['Data type: ' + data_type + ' is not recognised.']
-	# return the results
-	return results
-
-def load_capture_type(value):
-	# create a label for use in results
-	capture_type_label = 'Capture type: ' + value
-	# check whether the capture type already exists
-	try:
-		capture_type = Capture_Type.objects.get(capture_type_name=value)
-		# set the message to show that it exists
-		message = capture_type_label + ' not created: capture type already exists.'
-	except (Capture_Type.DoesNotExist):
-		# the capture type does not exist, so create it
-		capture_type = Capture_Type.objects.create(capture_type_name=value)
-		# set the message
-		message = capture_type_label + ' created.'
-	# return the results
-	return message
-
-def load_ethnicity(value):
-	# create a label for use in results
-	ethnicity_label = 'Ethnicity: ' + value
-	# check whether the capture type already exists
-	try:
-		ethnicity = Ethnicity.objects.get(description=value)
-		# set the message to show that it exists
-		message = ethnicity_label + ' not created: ethnicity already exists.'
-	except (Ethnicity.DoesNotExist):
-		# the capture type does not exist, so create it
-		ethnicity = Ethnicity.objects.create(description=value)
-		# set the message
-		message = ethnicity_label + ' created.'
-	# return the results
-	return message
-
-def load_children_centre(value):
-	# create a label for use in results
-	children_centre_label = 'Children centre: ' + value
-	# check whether the capture type already exists
-	try:
-		children_centre = Children_Centre.objects.get(children_centre_name=value)
-		# set the message to show that it exists
-		message = children_centre_label + ' not created: children centre already exists.'
-	except (Children_Centre.DoesNotExist):
-		# the capture type does not exist, so create it
-		children_centre = Children_Centre.create(children_centre_name=value)
-		# set the message
-		message = children_centre_label + ' created.'
-	# return the results
-	return message
-
-def load_ABSS_type(value):
-	# create a label for use in results
-	ABSS_type_label = 'ABSS type: ' + value
-	# check whether the record already exists
-	try:
-		ABSS_type = ABSS_Type.objects.get(name=value)
-		# set the message to show that it exists
-		message = ABSS_type_label + ' not created: ABSS type already exists.'
-	except (ABSS_Type.DoesNotExist):
-		# the type does not exist, so create it
-		ABSS_type = ABSS_Type.objects.create(name=value)
-		# set the message
-		message = ABSS_type_label + ' created.'
-	# return the results
-	return message
-
-def load_age_status(value):
-	# create a label for use in results
-	age_status_label = 'Age status: ' + value
-	# check whether the record already exists
-	try:
-		age_status = Age_Status.objects.get(status=value)
-		# set the message to show that it exists
-		message = age_status_label + ' not created: Age status already exists.'
-	except (Age_Status.DoesNotExist):
-		# the type does not exist, so create it
-		age_status = Age_Status.objects.create(status=value)
-		# set the message
-		message = age_status_label + ' created.'
-	# return the results
-	return message
 
 def load_relationship_types(records):
 	# check the file format

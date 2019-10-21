@@ -18,6 +18,7 @@ class File_Field():
 					corresponding_field=None,
 					corresponding_must_exist=False,
 					corresponding_must_not_exist=False,
+					include_in_create=True,
 					):
 		# set the attributes
 		self.name = name
@@ -26,12 +27,16 @@ class File_Field():
 		self.corresponding_field = corresponding_field
 		self.corresponding_must_exist = corresponding_must_exist
 		self.corresponding_must_not_exist = corresponding_must_not_exist
+		self.include_in_create = include_in_create
 		self.corresponding_record = None
 		self.default = ''
 		self.errors = []
 		self.converter = False
+		self.valid = False
 
 	def set_upload_value(self, record):
+		# clear the errors
+		self.errors = []
 		# set the value to the default
 		self.value = self.default
 		# check whether we have a value in the record
@@ -45,7 +50,7 @@ class File_Field():
 			# set the error
 			self.errors.append(' not created: mandatory field ' + self.name + ' not provided')
 		# check whether we have a corresponding record that should not exist
-		if self.corresponding_must_not_exist and self.corresponding_exists():
+		if self.corresponding_must_not_exist and self.corresponding_exists() and self.value != '':
 			# set the error
 			self.errors.append(
 								' not created: ' + 
@@ -53,31 +58,43 @@ class File_Field():
 								str(self.value)	+
 								' already exists.')
 		# check whether we have a corresponding record that should exist
-		if self.corresponding_must_exist and not self.corresponding_exists():
+		if self.corresponding_must_exist and not self.corresponding_exists() and self.value != '':
 			# set the error
 			self.errors.append(
 								' not created: ' + 
 								str(self.corresponding_model.__name__) + ' ' +
 								str(self.value)	+
 								' does not exist.')
+		# set the validity flag
+		self.valid = (not self.errors)
 
 	def set_download_value(self, object):
 		# set the value from the object
 		self.value = getattr(object,self.name)
 
 	def corresponding_exists(self):
-		# define the query dict
-		filter_dict = { self.corresponding_field : self.value }
-		# attempt to get the record
-		try:
-			# try the read
-			self.value = self.corresponding_model.objects.get(**filter_dict)
-			# set the success flag
-			exists = True
-		# deal with the exception
-		except (self.corresponding_model.DoesNotExist):
-			# set the flag
+		# check whether we have a value
+		if self.value != '':
+			# define the query dict
+			filter_dict = { self.corresponding_field : self.value }
+			# attempt to get the record
+			try:
+				# try the read
+				self.value = self.corresponding_model.objects.get(**filter_dict)
+				# set the success flag
+				exists = True
+			# deal with the exception
+			except (self.corresponding_model.DoesNotExist):
+				# set the flag
+				exists = False
+		# otherwise set the values
+		else:
+			# set the exists flag
 			exists = False
+			# and the value
+			self.value = None
+		# set the value
+		self.exists = exists
 		# return the result
 		return exists
 
@@ -96,14 +113,21 @@ class File_Datetime_Field(File_Field):
 		# call the built in validator
 		super(File_Datetime_Field, self).validate_upload_value(*args, **kwargs)
 		# check whether we have a date
-		if self.value:
+		if self.value != '':
 			# check the value against the date
 			try:
-				self.value = datetime.datetime.strptime(self.value, datetime_format)
+				self.value = datetime.datetime.strptime(self.value, self.datetime_format)
 			# deal with the exception
 			except ValueError:
 				# set the result
-				self.errors = str(value) + ' is invalid date or time'
+				self.errors.append(' not created: ' + str(self.name) + ' ' 
+									+ str(self.value) + ' is invalid date or time.')
+		# otherwise set the value to None
+		else:
+			# set the value
+			self.value = None
+		# set the validity flag
+		self.valid = (not self.errors)
 
 	def convert_download_value(self):
 		# check whether we have a value and that we haven't already converted
@@ -160,13 +184,14 @@ class File_Handler():
 		if self.file_format_valid(records.fieldnames.copy()):
 			# go through the records
 			for record in records:
+				# do the simple validation
+				fields_valid = self.fields_valid(record)
+				# and the complex validation
+				complex_valid = self.complex_validation_valid(record)
 				# validate the record
-				if (self.fields_valid(record) and 
-					self.multi_field_corresponding_records_valid(record) and
-					self.cross_field_valid(record)):
+				if (fields_valid and complex_valid):
 					# create the record
 					self.create_record(record)
-		# print(self.results)
 
 	def file_format_valid(self, file_keys):
 		# set the result to false
@@ -216,12 +241,8 @@ class File_Handler():
 		# return the result
 		return success
 
-	def multi_field_corresponding_records_valid(self,record):
+	def complex_validation_valid(self,record):
 		# placeholder function to be replaced in sub-classess
-		return True
-
-	def cross_field_valid(self,record):
-		# placeholder function to be replaced in sub-classes
 		return True
 
 	def create_record(self,record):
@@ -231,8 +252,10 @@ class File_Handler():
 		for field in self.fields:
 			# get the object
 			file_field = getattr(self,field)
-			# set the value from the field
-			field_dict[file_field.name] = file_field.value
+			# check whether the file field is to be include in record creation
+			if file_field.include_in_create:
+				# set the value from the field
+				field_dict[file_field.name] = file_field.value
 		# create the record object
 		new_record = self.file_class(**field_dict)
 		# save the record
@@ -287,7 +310,8 @@ class Event_Types_File_Handler(File_Handler):
 											mandatory=True,
 											corresponding_model=Event_Category,
 											corresponding_field='name',
-											corresponding_must_exist=True)
+											corresponding_must_exist=True
+										)
 		# and a list of the fields
 		self.fields = ['name','description','event_category']
 
@@ -432,3 +456,173 @@ class Relationship_Types_File_Handler(File_Handler):
 		# return the label
 		return 'Relationship type: ' + record['relationship_type']
 
+class People_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(People_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Person
+		# set the file fields
+		self.first_name = File_Field(name='first_name',mandatory=True)
+		self.last_name = File_Field(name='last_name',mandatory=True)
+		self.email_address = File_Field(name='email_address')
+		self.home_phone = File_Field(name='home_phone')
+		self.mobile_phone = File_Field(name='mobile_phone')
+		self.date_of_birth = File_Datetime_Field(name='date_of_birth',datetime_format='%d/%m/%Y')
+		self.gender = File_Field(name='gender')
+		self.pregnant = File_Boolean_Field(name='pregnant')
+		self.due_date = File_Datetime_Field(name='due_date',datetime_format='%d/%m/%Y')
+		self.default_role = File_Field(
+										name='default_role',
+										mandatory=True,
+										corresponding_model=Role_Type,
+										corresponding_field='role_type_name',
+										corresponding_must_exist=True
+										)
+		self.ethnicity = File_Field(
+									name='ethnicity',
+									mandatory=True,
+									corresponding_model=Ethnicity,
+									corresponding_field='description',
+									corresponding_must_exist=True
+									)
+		self.ABSS_type = File_Field(
+									name='ABSS_type',
+									mandatory=True,
+									corresponding_model=ABSS_Type,
+									corresponding_field='name',
+									corresponding_must_exist=True
+									)
+		self.age_status = File_Field(
+									name='age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True
+									)
+		self.house_name_or_number = File_Field(name='house_name_or_number')
+		self.street = File_Field(name='street')
+		self.post_code = File_Field(
+									name='post_code',
+									corresponding_model=Post_Code,
+									corresponding_field='post_code',
+									corresponding_must_exist=True,
+									include_in_create=False
+									)
+		self.notes = File_Field(name='notes')
+		self.ABSS_start_date = File_Datetime_Field(name='ABSS_start_date',datetime_format='%d/%m/%Y')
+		self.ABSS_end_date = File_Datetime_Field(name='ABSS_end_date',datetime_format='%d/%m/%Y')
+		self.emergency_contact_details = File_Field(name='emergency_contact_details')
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'email_address',
+						'home_phone',
+						'mobile_phone',
+						'date_of_birth',
+						'gender',
+						'pregnant',
+						'due_date',
+						'default_role',
+						'ethnicity',
+						'ABSS_type',
+						'age_status',
+						'house_name_or_number',
+						'street',
+						'post_code',
+						'notes',
+						'ABSS_start_date',
+						'ABSS_end_date',
+						'emergency_contact_details'
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether the person exists
+		if self.first_name.valid and self.last_name.valid and self.date_of_birth.valid:
+			# try to get the person
+			if Person.objects.filter(
+										first_name = self.first_name.value,
+										last_name = self.last_name.value,
+										date_of_birth = self.date_of_birth.value
+										).exists():
+				# set the error
+				self.add_record_results(record,[' not created: person already exists.'])
+				# and the flag
+				valid = False
+		# check whether the role is valid for the age status
+		if (self.age_status.exists 
+			and self.default_role.exists 
+			and not self.age_status.value.role_types.filter(pk=self.default_role.value.pk).exists()):
+			# set the error
+			self.add_record_results(record,[' not created: role type is not valid for age status.'])
+			# and the flag
+			valid = False
+		# get today's date
+		today = datetime.date.today()
+		# check whether the age is correct
+		if (self.age_status.valid
+			and self.date_of_birth.valid
+			and self.date_of_birth.value.date() < today.replace(year=today.year-self.age_status.value.maximum_age)):
+			# set the error
+			self.add_record_results(record,[' not created: too old for age status'])
+			# and the flag
+			valid = False
+		# now check whether we have a due date without a pregnancy flag
+		if self.due_date.value and not self.pregnant.value:
+			# set the errors
+			self.add_record_results(record,[' not created: has due date but is not pregnant.'])
+			# and the flag
+			valid = False
+		# now check the other way around
+		if not self.due_date.value and self.pregnant.value:
+			# set the messages
+			self.add_record_results(record,[' not created: has no due date but is pregnant.'])
+			# and the flag
+			valid = False
+		# check whether we have any address details
+		if (self.post_code.value or self.street.value or self.house_name_or_number.value):
+			# now check whether we have ALL address details
+			if not (self.post_code.value and self.street.value and self.house_name_or_number.value):
+				# set the error
+				self.add_record_results(record,[' not created: all of post code, street and name/number needed for address.'])
+				# and the flag
+				valid = False
+			# else check the details if the post code exists
+			elif self.post_code.exists:
+				# check the street and post code combination
+				try:
+					# get the street record
+					self.street.value = Street.objects.get(
+															name = self.street.value,
+															post_code = self.post_code.value
+															)
+				# deal with the exception
+				except (Street.DoesNotExist):
+					# set the error
+					self.add_record_results(record,[' not created: Street ' + self.street.value + ' does not exist.'])
+					# and the flag
+					valid = False
+		# check whether we have an ABSS end date without a start date
+		if self.ABSS_end_date.value and not self.ABSS_start_date.value:
+			# set the message
+			self.add_record_results(record,[' not created: ABSS end date is provided but not ABSS start date.'])
+			# and the flag
+			valid = False
+		# check whether the end date is greater than the start date
+		if (self.ABSS_start_date.value and self.ABSS_end_date.value
+			and self.ABSS_start_date.valid and self.ABSS_end_date.valid
+			and self.ABSS_start_date.value >= self.ABSS_end_date.value): 
+				# set the message
+				self.add_record_results(record,[' not created: ABSS end date is not greater than ABSS start date.'])
+				# and the flag
+				valid = False
+		# return the result
+		return valid
+
+	def label(self,record):
+		# return the label
+		return record['first_name'] + ' ' + record['last_name']

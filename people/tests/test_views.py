@@ -6045,12 +6045,12 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
 		# check that we got a does not exist
-		self.assertContains(response,'Missing age status not created: age status missing age status does not exist')
-		self.assertContains(response,'Missing role type not created: role type missing role type does not exist')
-		self.assertContains(response,'Missing ethnicity not created: ethnicity missing ethnicity does not exist')
-		self.assertContains(response,'Missing ABSS type not created: ABSS type missing ABSS type does not exist')
-		self.assertContains(response,'Missing street not created: street missing street does not exist')
-		self.assertContains(response,'Missing post code not created: post code missing pc does not exist')
+		self.assertContains(response,'Missing age status not created: Age_Status missing age status does not exist')
+		self.assertContains(response,'Missing role type not created: Role_Type missing role type does not exist')
+		self.assertContains(response,'Missing ethnicity not created: Ethnicity missing ethnicity does not exist')
+		self.assertContains(response,'Missing ABSS type not created: ABSS_Type missing ABSS type does not exist')
+		self.assertContains(response,'Missing street not created: Street missing street does not exist')
+		self.assertContains(response,'Missing post code not created: Post_Code missing pc does not exist')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
@@ -6098,10 +6098,10 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'Invalid date of birth not created: date of birth is not in DD/MM/YYYY format')
-		self.assertContains(response,'Invalid due date not created: due date is not in DD/MM/YYYY format')
-		self.assertContains(response,'Invalid ABSS start date not created: ABSS start date is not in DD/MM/YYYY format')
-		self.assertContains(response,'Invalid ABSS end date not created: ABSS end date is not in DD/MM/YYYY format')
+		self.assertContains(response,'Invalid date of birth not created: date_of_birth 01/01/19xx is invalid date or time')
+		self.assertContains(response,'Invalid due date not created: due_date 01/01/19xx is invalid date or time')
+		self.assertContains(response,'Invalid ABSS start date not created: ABSS_start_date 01/xx/2001 is invalid date or time')
+		self.assertContains(response,'Invalid ABSS end date not created: ABSS_end_date 01/xx/2005 is invalid date or time')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 

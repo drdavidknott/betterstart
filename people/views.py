@@ -1172,38 +1172,6 @@ def create_residence(person, address):
 	# return the residence
 	return residence
 
-def create_relationship(person_from, person_to, relationship_type_from):
-	# create a symmetrical relationship between two people
-	# create a flag
-	success = False
-	# check whether the relationship already exists
-	try:
-		# do the database call
-		relationship = Relationship.objects.get(relationship_from=person_from,
-												relationship_to=person_to)
-	# handle the exception
-	except Relationship.DoesNotExist:
-		# start by getting the other half of the relationship
-		relationship_type_to = get_relationship_type_by_type(relationship_type_from.relationship_counterpart)
-		# now create the from part of the relationship
-		relationship_from = Relationship(
-										relationship_from = person_from,
-										relationship_to = person_to,
-										relationship_type = relationship_type_from)
-		# now save it
-		relationship_from.save()
-		# now create the to part of the relationship
-		relationship_to = Relationship(
-										relationship_from = person_to,
-										relationship_to = person_from,
-										relationship_type = relationship_type_to)
-		# now save it
-		relationship_to.save()
-		# set the flag
-		success = True
-	# that's it!
-	return success
-
 def create_event(name, description, date, start_time, end_time, event_type, location, ward):
 	# create an event
 	event = Event(
@@ -1289,11 +1257,11 @@ def edit_relationship(request, person_from, person_to, relationship_type_id, sho
 	# if we have a valid realtionship type, create the relationship
 	if relationship_type_id:
 		# try to create the relationship
-		if create_relationship(
-							 person_from = person_from,
-							 person_to = person_to,
-							 relationship_type_from = relationship_type_from
-							):
+		if Relationship.create_relationship(
+											person_from = person_from,
+											person_to = person_to,
+											relationship_type_from = relationship_type_from
+											):
 			# set the success message if messages are required
 			if show_messages:
 				# set the message

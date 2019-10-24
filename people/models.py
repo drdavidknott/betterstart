@@ -246,6 +246,29 @@ class Person(models.Model):
 	# and a function to return the full name
 	def full_name(self):
 		return self.first_name + ' ' + self.middle_names + ' ' + self.last_name
+	# and a class method to get a person by names and age status
+	@classmethod
+	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status_status):
+		# set a blank error
+		error = ''
+		# check whether the from person exists
+		try:
+			# attempt to get the record
+			person_from = cls.objects.get(
+											first_name = first_name,
+											last_name = last_name,
+											age_status__status = age_status_status
+											)
+		# deal with the record not existing
+		except (cls.DoesNotExist):
+			# set the error
+			error = ' does not exist.'
+		# deal with more than one match
+		except (cls.MultipleObjectsReturned):
+			# set the error
+			error = ' duplicate with name and age status.'
+		# return the errors
+		return error
 
 # Relationship_Type model: represents different types of relationship
 # This is reference data.
@@ -273,6 +296,79 @@ class Relationship(models.Model):
 	def short_desc(self):
 		return self.relationship_type.relationship_type + ' of ' + \
 			self.relationship_to.first_name + ' ' + self.relationship_to.last_name
+	# define the class method to create both sides of a relationship
+	@classmethod
+	def create_relationship(cls, person_from, person_to, relationship_type_from):
+		# create a symmetrical relationship between two people
+		# create a flag
+		success = False
+		# check whether the relationship already exists
+		try:
+			# do the database call
+			relationship = cls.objects.get(relationship_from=person_from,relationship_to=person_to)
+		# handle the exception
+		except Relationship.DoesNotExist:
+			# start by getting the other half of the relationship
+			relationship_type_to = Relationship_Type.objects.get(
+													relationship_type=relationship_type_from.relationship_counterpart)
+			# now create the from part of the relationship
+			relationship_from = cls(
+									relationship_from = person_from,
+									relationship_to = person_to,
+									relationship_type = relationship_type_from)
+			# now save it
+			relationship_from.save()
+			# now create the to part of the relationship
+			relationship_to = cls(
+									relationship_from = person_to,
+									relationship_to = person_from,
+									relationship_type = relationship_type_to)
+			# now save it
+			relationship_to.save()
+			# set the flag
+			success = True
+		# that's it!
+		return success
+	# define the class method to edit both sides of a relationship
+	@classmethod
+	def edit_relationship(cls, person_from, person_to, relationship_type):
+		# edit a relationship: this includes deletion of existing relationships and creation of new relationships
+		# if we have been passed a relationship type id of zero of False, we just do the deletion
+		# set a flag
+		success = False
+		# see whether we have an existing relationship
+		try:
+			# attempt to get the record
+			relationship_from = cls.objects.get(
+												relationship_from=person_from,
+												relationship_to=person_to
+												)
+			# check whether the relationship has changed
+			if (relationship_from.relationship_type != relationship_type):
+				# delete the existing relationships
+				relationship_from.delete()
+				relationship_to.delete()
+			# if nothing has changed, we are done, so we can return success
+			else:
+				# set the flag
+				success = True
+				# return success
+		# deal with the failure to find a record
+		except (cls.DoesNotExist):
+			# nothing to do
+			pass
+		# if we have a valid realtionship type, create the relationship
+		if relationship_type:
+			# try to create the relationship
+			if cls.create_relationship(
+										person_from = person_from,
+										person_to = person_to,
+										relationship_type_from = relationship_type
+										):
+				# set the success flag
+				success = True
+		# return the result
+		return success
 
 # Trained Role model: records that a person is trained to play a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role

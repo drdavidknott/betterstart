@@ -626,3 +626,107 @@ class People_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return record['first_name'] + ' ' + record['last_name']
+
+class Relationships_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Relationships_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Event_Registration
+		# set the file fields
+		self.from_first_name = File_Field(name='from_first_name',mandatory=True)
+		self.from_last_name = File_Field(name='from_last_name',mandatory=True)
+		self.from_age_status = File_Field(
+									name='from_age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True
+									)
+		self.to_first_name = File_Field(name='to_first_name',mandatory=True)
+		self.to_last_name = File_Field(name='to_last_name',mandatory=True)
+		self.to_age_status = File_Field(
+									name='to_age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True
+									)
+		self.relationship_type = File_Field(
+											name='relationship_type',
+											mandatory=True,
+											corresponding_model=Relationship_Type,
+											corresponding_field='relationship_type',
+											corresponding_must_exist=True
+											)
+		# and a list of the fields
+		self.fields = [
+						'from_first_name',
+						'from_last_name',
+						'from_age_status',
+						'to_first_name',
+						'to_last_name',
+						'to_age_status',
+						'relationship_type'
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether the from person exists
+		error = Person.check_person_by_name_and_age_status(
+														first_name = record['from_first_name'],
+														last_name = record['from_last_name'],
+														age_status_status = record['from_age_status']
+													)
+		# if there was an error, add it
+		if error:
+			# append the error message
+			self.add_record_results(record,[' not created: from' + error])
+			# and set the flag
+			valid = False
+		# check whether the to person exists
+		error = Person.check_person_by_name_and_age_status(
+														first_name = record['to_first_name'],
+														last_name = record['to_last_name'],
+														age_status_status = record['to_age_status']
+													)
+		# if there was an error, add it
+		if error:
+			# append the error message
+			self.add_record_results(record,[' not created: to' + error])
+			# and set the flag
+			valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# get the records, starting with the person from
+		person_from = Person.objects.get(
+										first_name = record['from_first_name'],
+										last_name = record['from_last_name'],
+										age_status__status = record['from_age_status']
+										)
+		# and the person to
+		person_to = Person.objects.get(
+										first_name = record['to_first_name'],
+										last_name = record['to_last_name'],
+										age_status__status = record['to_age_status']
+										)
+		# and the relationship type
+		relationship_type = Relationship_Type.objects.get(relationship_type = record['relationship_type'])
+		# build the record using the edit relationship function
+		Relationship.edit_relationship(
+										person_from = person_from,
+										person_to = person_to,
+										relationship_type = relationship_type
+										)
+		# set a message
+		self.add_record_results(record,[' created.'])
+
+	def label(self,record):
+		# return the label
+		return str(record['from_first_name']) + ' ' + str(record['from_last_name']) \
+							+ ' is ' + str(record['relationship_type']) + ' of ' \
+							+ str(record['to_first_name']) + ' ' + str(record['to_last_name'])

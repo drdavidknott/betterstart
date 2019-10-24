@@ -6506,7 +6506,7 @@ class UploadRelationshipsDataViewTest(TestCase):
 		self.assertContains(response,'test_child_0 test_child_0 is child of test_duplicate_0 test_duplicate_0 not created: to duplicate with name and age status')
 		self.assertContains(response,'missing from person from last name is parent of test_child_0 test_child_0 not created: from does not exist')
 		self.assertContains(response,'test_parent_0 test_parent_0 is parent of missing to person to last name not created: to does not exist')
-		self.assertContains(response,'test_parent_0 test_parent_0 is missing relationship type of test_child_0 test_child_0 not created: relationship type missing relationship type does not exist')
+		self.assertContains(response,'test_parent_0 test_parent_0 is missing relationship type of test_child_0 test_child_0 not created: Relationship_Type missing relationship type does not exist')
 		# check that no records have been created
 		self.assertFalse(Relationship.objects.all().exists())
 

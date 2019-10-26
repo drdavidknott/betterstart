@@ -6336,8 +6336,8 @@ class UploadEventsDataViewTest(TestCase):
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
 		# check the message
-		self.assertContains(response,'Missing event type not created: event type missing_test_event_type does not exist')
-		self.assertContains(response,'Missing ward not created: ward Missing test ward does not exist')
+		self.assertContains(response,'Missing event type not created: Event_Type missing_test_event_type does not exist')
+		self.assertContains(response,'Missing ward not created: Ward Missing test ward does not exist')
 		self.assertContains(response,'Missing area not created: area Missing test area 2 does not exist')
 		# check that no records have been created
 		self.assertFalse(Event.objects.all().exists())
@@ -6358,9 +6358,9 @@ class UploadEventsDataViewTest(TestCase):
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
 		# check the message
-		self.assertContains(response,'Invalid date not created: date is not in DD/MM/YYYY format')
-		self.assertContains(response,'Invalid start time not created: start time is not in HH:MM format')
-		self.assertContains(response,'Invalid end time not created: end time is not in HH:MM format')
+		self.assertContains(response,'Invalid date not created: date 01/01/201xx is invalid date or time')
+		self.assertContains(response,'Invalid start time not created: start_time 10:xx is invalid date or time')
+		self.assertContains(response,'Invalid end time not created: end_time 11:xx is invalid date or time')
 		# check that no records have been created
 		self.assertFalse(Event.objects.all().exists())
 

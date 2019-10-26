@@ -135,6 +135,40 @@ class File_Datetime_Field(File_Field):
 			# set the converted value
 			self.value = this_datetime.strftime(self.format)
 
+class File_Delimited_List_Field(File_Field):
+	# this class defines a field within a file which contains a list of delimited values
+	# over-ride the built in __init__ method to add additional values
+	def __init__(self, *args, **kwargs):
+		# pull the delimiter out of the parameter
+		delimiter = kwargs.pop('delimiter')
+		# call the built in constructor
+		super(File_Delimited_List_Field, self).__init__(*args, **kwargs)
+		# and set the attributes
+		self.delimiter = delimiter
+
+	def validate_upload_value(self,*args,**kwargs):
+		# call the built in validator
+		super(File_Delimited_List_Field, self).validate_upload_value(*args, **kwargs)
+		# set the value
+		self.value = self.value.split(self.delimiter)
+		# set the validity flag
+		self.valid = (not self.errors)
+
+	def convert_download_value(self):
+		# converts a queryset to a delimited list using the field name
+		# create an empty string
+		delimited_list = ''
+		# go through the queryset
+		for item in self.value:
+			# check whether we need a delimiter
+			if len(delimited_list):
+				# add a delimiter
+				delimited_list += self.delimiter
+			# add the item to the list
+			delimited_list += getattr(item,self.name)
+		# set the value to the delimited list
+		self.value = delimited_list
+
 class File_Boolean_Field(File_Field):
 	# this class defines a field within a file of datetime format
 
@@ -262,6 +296,8 @@ class File_Handler():
 		new_record.save()
 		# set a message
 		self.add_record_results(record,[' created.'])
+		# return the created record
+		return new_record
 
 	def label(self,record):
 		# placeholder function to be replaced in sub-classes
@@ -730,3 +766,109 @@ class Relationships_File_Handler(File_Handler):
 		return str(record['from_first_name']) + ' ' + str(record['from_last_name']) \
 							+ ' is ' + str(record['relationship_type']) + ' of ' \
 							+ str(record['to_first_name']) + ' ' + str(record['to_last_name'])
+
+class Events_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Events_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Event
+		# set the file fields
+		self.name = File_Field(name='name',mandatory=True)
+		self.description = File_Field(name='description',mandatory=True)
+		self.event_type = File_Field(
+									name='event_type',
+									mandatory=True,
+									corresponding_model=Event_Type,
+									corresponding_field='name',
+									corresponding_must_exist=True
+									)
+		self.date = File_Datetime_Field(
+										name='date',
+										datetime_format='%d/%m/%Y',
+										mandatory=True
+										)
+		self.start_time = File_Datetime_Field(
+												name='start_time',
+												datetime_format='%H:%M',
+												mandatory=True
+												)
+		self.end_time = File_Datetime_Field(
+											name='end_time',
+											datetime_format='%H:%M',
+											mandatory=True)
+		self.location = File_Field(name='location')
+		self.ward = File_Field(
+								name='ward',
+								corresponding_model=Ward,
+								corresponding_field='ward_name',
+								corresponding_must_exist=True,
+								mandatory=True
+								)
+		self.areas = File_Delimited_List_Field(
+												name='areas',
+												delimiter=',',
+												include_in_create = False
+												)
+		# and a list of the fields
+		self.fields = [
+						'name',
+						'description',
+						'event_type',
+						'date',
+						'start_time',
+						'end_time',
+						'location',
+						'ward',
+						'areas',
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# now attempt to get a matching event
+		if self.name.valid and self.date.valid and Event.objects.filter(
+																		name = self.name.value,
+																		date = self.date.value,
+																		).exists():
+			# set the message to show that it exists
+			self.add_record_results(record,[' not created: event already exists.'])
+			# and set the flag
+			valid = False
+		# now go through the areas
+		for area_name in self.areas.value:
+			# try to get the area
+			try:
+				# attempt to get the record
+				area = Area.objects.get(area_name = area_name)
+			# deal with the exception
+			except (Area.DoesNotExist):
+				# set the error
+				self.add_record_results(record,[' not created: area ' + area_name + ' does not exist.'])
+				# and the flag
+				valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# call the built in method
+		event = super(Events_File_Handler, self).create_record(record)
+		# and then create the areas
+		for area_name in self.areas.value:
+			# get the area
+			area = Area.objects.get(area_name = area_name)
+			# create the area
+			event.areas.add(area)
+			# and add a message
+			self.add_record_results(record,[': area ' + area_name + ' created.'])
+		# add the area which the ward is in, if it hasn't been created already
+		if event.ward and event.ward.area.area_name not in self.areas.value:
+			# add the area
+			event.areas.add(event.ward.area)
+			# and add a message
+			self.add_record_results(record,[': area ' + event.ward.area.area_name + ' created.'])
+
+	def label(self,record):
+		# return the label
+		return record['name']

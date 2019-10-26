@@ -3171,12 +3171,6 @@ def downloaddata(request):
 						'Events' : Events_File_Handler,
 						'Registrations' : Registrations_File_Handler
 					}
-	# define the functions for each file type
-	download_functions = {
-							'Events' : events_download,
-							'Relationships' : relationships_download,
-							'Registrations' : registrations_download
-							}
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
@@ -3185,20 +3179,14 @@ def downloaddata(request):
 		if downloaddataform.is_valid():
 			# get the file type
 			file_type = downloaddataform.cleaned_data['file_type']
-			if file_type in download_functions.keys():
-				# get the function
-				download_function = download_functions[file_type]
-				# get the fields and the records from the download function
-				fields, records = download_function()
-			else:
-				# get the file handler
-				file_handler = file_handlers[file_type]()
-				# and the keys
-				fields = file_handler.fields
-				# handle the download
-				file_handler.handle_download()
-				# get the records
-				records = file_handler.download_records
+			# get the file handler
+			file_handler = file_handlers[file_type]()
+			# and the keys
+			fields = file_handler.fields
+			# handle the download
+			file_handler.handle_download()
+			# get the records
+			records = file_handler.download_records
 			# create the response
 			response = HttpResponse(content_type='text/csv')
 			# set the content details
@@ -3226,121 +3214,3 @@ def downloaddata(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(download_data_template.render(context=context, request=request))
-
-# DOWNLOAD FUNCTIONS
-# functions that return records for download as csv files
-
-def events_download():
-	# set the fields
-	fields = [
-				'name',
-				'description',
-				'event_type',
-				'date',
-				'start_time',
-				'end_time',
-				'location',
-				'ward',
-				'areas',
-				]
-	# and a blank list of records
-	records = []
-	# go through the records
-	for event in Event.objects.all():
-		# set the ward
-		if event.ward:
-			# set the ward
-			ward = event.ward.ward_name
-		# otherwise set a blank
-		else:
-			# set the blank
-			ward = ''
-		# set the blank list of areas
-		areas = ''
-		# go through the areas
-		for area in event.areas.all():
-			# check whether we need a comma
-			if len(areas):
-				# add a comma
-				areas += ','
-			# add the area name to the list
-			areas += area.area_name
-		# set the field list
-		field_list = [
-						event.name,
-						event.description,
-						event.event_type.name,
-						convert_optional_datetime(event.date),
-						convert_optional_datetime(event.start_time,format='%H:%M'),
-						convert_optional_datetime(event.end_time,format='%H:%M'),
-						event.location,
-						ward,
-						areas
-						]
-		# append the record
-		records.append(field_list)
-	# return the values
-	return fields, records
-
-def relationships_download():
-	# set the fields
-	fields = [
-				'from_first_name',
-				'from_last_name',
-				'from_age_status',
-				'to_first_name',
-				'to_last_name',
-				'to_age_status',
-				'relationship_type',
-				]
-	# and a blank list of records
-	records = []
-	# go through the records
-	for relationship in Relationship.objects.all():
-		# set the field list
-		field_list = [
-						relationship.relationship_from.first_name,
-						relationship.relationship_from.last_name,
-						relationship.relationship_from.age_status.status,
-						relationship.relationship_to.first_name,
-						relationship.relationship_to.last_name,
-						relationship.relationship_to.age_status.status,
-						relationship.relationship_type.relationship_type
-						]
-		# append the record
-		records.append(field_list)
-	# return the values
-	return fields, records
-
-def registrations_download():
-	# set the fields
-	fields = [
-				'first_name',
-				'last_name',
-				'age_status',
-				'event_name',
-				'event_date',
-				'registered',
-				'participated',
-				'role_type'
-				]
-	# and a blank list of records
-	records = []
-	# go through the records
-	for registration in Event_Registration.objects.all():
-		# set the field list
-		field_list = [
-						registration.person.first_name,
-						registration.person.last_name,
-						registration.person.age_status.status,
-						registration.event.name,
-						convert_optional_datetime(registration.event.date),
-						registration.registered,
-						registration.participated,
-						registration.role_type.role_type_name
-
-						]
-		# append the record
-		records.append(field_list)
-	# return the values
-	return fields, records

@@ -6876,3 +6876,253 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd')
 		self.assertContains(response,'test_child_0,test_child_0,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,')
+
+class DownloadEventsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=2,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+		# and address data
+		set_up_address_base_data()
+		# and an extra area
+		area_3 = Area.objects.create(area_name='Test area 3',use_for_events=True)
+		# get the second event
+		event = Event.objects.get(name='test_event_1')
+		# set fields
+		event.location = 'test location'
+		event.description = 'test description'
+		event.ward = Ward.objects.get(ward_name='Test ward')
+		# save the event
+		event.save()
+		# and add an area
+		event.areas.add(Area.objects.get(area_name='Test area 2'))
+		event.areas.add(area_3)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_download_events(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Events',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_event_0,Test event description,test_event_type,01/01/2019,10:00,11:00,Test location,,')
+		self.assertContains(response,'test_event_1,test description,test_event_type,01/01/2019,10:00,11:00,test location,Test ward,"Test area 2,Test area 3"')
+
+class DownloadRelationshipsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create a parent
+		set_up_test_people('test_parent_',number=1,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_download_events(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/relationships.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Relationships',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we have two records
+		self.assertEqual(Relationship.objects.all().count(),2)
+		# get the people
+		parent = Person.objects.get(first_name='test_parent_0')
+		child = Person.objects.get(first_name='test_child_0')
+		# get the reletaionship types
+		parent_relationship_type = Relationship_Type.objects.get(relationship_type='parent')
+		child_relationship_type = Relationship_Type.objects.get(relationship_type='child')
+		# get the from relationship
+		parent_relationship = Relationship.objects.get(relationship_from=parent,relationship_to=child)
+		# check the relationship type
+		self.assertEqual(parent_relationship.relationship_type,parent_relationship_type)
+		# get the to relationship
+		child_relationship = Relationship.objects.get(relationship_from=child,relationship_to=parent)
+		# check the relationship type
+		self.assertEqual(child_relationship.relationship_type,child_relationship_type)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Relationships',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_parent_0,test_parent_0,Adult,test_child_0,test_child_0,Child under four,parent')
+		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_parent_0,test_parent_0,Adult,child')
+
+class DownloadRegistrationsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_download_events(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test_event_0,01/01/2019,False,True,test_role_type')
+		self.assertContains(response,'test_adult_1,test_adult_1,Adult,test_event_0,01/01/2019,True,True,test_role_type')
+		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,False,test_role_type')
+

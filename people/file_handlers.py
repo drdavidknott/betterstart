@@ -731,7 +731,7 @@ class People_File_Handler(File_Handler):
 		# get the post_code
 		if person.street:
 			# set the post_code and street
-			post_code = person.street.post_code
+			post_code = person.street.post_code.post_code
 			street = person.street.name
 		# otherwise set a blank
 		else:

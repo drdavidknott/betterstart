@@ -6838,6 +6838,19 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 
 	def test_download_people(self):
+		# get the second test person
+		person = Person.objects.get(first_name='test_adult_1')
+		# set the values
+		person.home_phone = '123456'
+		person.mobile_phone = '789012'
+		person.pregnant = True
+		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
+		person.house_name_or_number = '123'
+		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		person.emergency_contact_details = 'test ecd'
+		# save the record
+		person.save()
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
 		# submit the page to download the file
@@ -6849,7 +6862,10 @@ class DownloadPeopleDataViewTest(TestCase):
 									)
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
-
 		# check that we got an already exists message
 		self.assertContains(response,'test_adult_0,test_adult_0,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,,,test notes,01/01/2011,02/02/2012,test ecd')
+		self.assertContains(response,'test_child_0,test_child_0,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,')

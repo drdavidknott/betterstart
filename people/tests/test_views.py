@@ -6444,6 +6444,48 @@ class UploadEventsDataViewTest(TestCase):
 		# check that we still only have one event
 		self.assertEqual(Event.objects.all().count(),1)
 
+	def test_upload_events_no_wards(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events_no_wards.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event no ward no area')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.ward,None)
+		# check that the area connections don't exist
+		self.assertFalse(event.areas.all().exists())
+		# get the record
+		event = Event.objects.get(name='test event no ward with area')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.ward,None)
+		# check that the area connections don't exist
+		self.assertTrue(event.areas.filter(area_name='Test area').exists())
+		# check that we only have two events
+		self.assertEqual(Event.objects.all().count(),2)
+
 class UploadRelationshipsDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

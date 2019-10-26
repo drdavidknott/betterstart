@@ -49,8 +49,12 @@ class File_Field():
 		if self.mandatory and self.value == '':
 			# set the error
 			self.errors.append(' not created: mandatory field ' + self.name + ' not provided')
+		# if we have a corresponding record, attempt to get it
+		if self.corresponding_model:
+			# set the value
+			self.corresponding_exists()
 		# check whether we have a corresponding record that should not exist
-		if self.corresponding_must_not_exist and self.corresponding_exists() and self.value != '':
+		if self.value and self.corresponding_must_not_exist and self.exists:
 			# set the error
 			self.errors.append(
 								' not created: ' + 
@@ -58,7 +62,7 @@ class File_Field():
 								str(self.value)	+
 								' already exists.')
 		# check whether we have a corresponding record that should exist
-		if self.corresponding_must_exist and not self.corresponding_exists() and self.value != '':
+		if self.value and self.corresponding_must_exist and not self.exists:
 			# set the error
 			self.errors.append(
 								' not created: ' + 
@@ -149,8 +153,14 @@ class File_Delimited_List_Field(File_Field):
 	def validate_upload_value(self,*args,**kwargs):
 		# call the built in validator
 		super(File_Delimited_List_Field, self).validate_upload_value(*args, **kwargs)
-		# set the value
-		self.value = self.value.split(self.delimiter)
+		# check whether we have a value
+		if self.value != '':
+			# set the value
+			self.value = self.value.split(self.delimiter)
+		# otherwise create an exmpty list
+		else:
+			# set the value
+			self.value = []
 		# set the validity flag
 		self.valid = (not self.errors)
 
@@ -803,8 +813,7 @@ class Events_File_Handler(File_Handler):
 								name='ward',
 								corresponding_model=Ward,
 								corresponding_field='ward_name',
-								corresponding_must_exist=True,
-								mandatory=True
+								corresponding_must_exist=True
 								)
 		self.areas = File_Delimited_List_Field(
 												name='areas',
@@ -872,3 +881,4 @@ class Events_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return record['name']
+

@@ -19,6 +19,7 @@ class File_Field():
 					corresponding_must_exist=False,
 					corresponding_must_not_exist=False,
 					include_in_create=True,
+					set_download_from_object=True,
 					):
 		# set the attributes
 		self.name = name
@@ -28,6 +29,7 @@ class File_Field():
 		self.corresponding_must_exist = corresponding_must_exist
 		self.corresponding_must_not_exist = corresponding_must_not_exist
 		self.include_in_create = include_in_create
+		self.set_download_from_object = set_download_from_object
 		self.corresponding_record = None
 		self.default = ''
 		self.errors = []
@@ -133,11 +135,17 @@ class File_Datetime_Field(File_Field):
 		# set the validity flag
 		self.valid = (not self.errors)
 
-	def convert_download_value(self):
+	def set_download_value(self,object):
+		# call the built in validator
+		super(File_Datetime_Field, self).set_download_value(object)
 		# check whether we have a value and that we haven't already converted
 		if self.value:
 			# set the converted value
-			self.value = this_datetime.strftime(self.format)
+			self.value = self.value.strftime(self.datetime_format)
+		# otherwise set a blank
+		else:
+			# set a blank
+			self.value = ''
 
 class File_Delimited_List_Field(File_Field):
 	# this class defines a field within a file which contains a list of delimited values
@@ -164,7 +172,7 @@ class File_Delimited_List_Field(File_Field):
 		# set the validity flag
 		self.valid = (not self.errors)
 
-	def convert_download_value(self):
+	def set_download_value(self,queryset):
 		# converts a queryset to a delimited list using the field name
 		# create an empty string
 		delimited_list = ''
@@ -236,6 +244,45 @@ class File_Handler():
 				if (fields_valid and complex_valid):
 					# create the record
 					self.create_record(record)
+
+	# provide records for download
+	def handle_download(self):
+		# define empty records
+		self.download_records = []
+		# get the objects
+		objects = self.file_class.objects.all()
+		# go through the objects
+		for this_object in objects:
+			# set the fields
+			self.set_download_fields(this_object)
+			# now append the record
+			self.download_records.append(self.get_download_record())
+		# placeholder for now
+		return
+
+	# set the download fields
+	def set_download_fields(self,this_object):
+		# go through the fields
+		for field_name in self.fields:
+			# get the field
+			field = getattr(self,field_name)
+			# set the download value if it is set from object
+			if field.set_download_from_object:
+				# set the value
+				field.set_download_value(this_object)
+
+	# build a download record
+	def get_download_record(self):
+		# set the empty list
+		field_list = []
+		# go through the fields
+		for field_name in self.fields:
+			# get the field
+			field = getattr(self,field_name)
+			# append the field
+			field_list.append(field.value)
+		# return the result
+		return field_list
 
 	def file_format_valid(self, file_keys):
 		# set the result to false
@@ -524,28 +571,32 @@ class People_File_Handler(File_Handler):
 										mandatory=True,
 										corresponding_model=Role_Type,
 										corresponding_field='role_type_name',
-										corresponding_must_exist=True
+										corresponding_must_exist=True,
+										set_download_from_object=False
 										)
 		self.ethnicity = File_Field(
 									name='ethnicity',
 									mandatory=True,
 									corresponding_model=Ethnicity,
 									corresponding_field='description',
-									corresponding_must_exist=True
+									corresponding_must_exist=True,
+									set_download_from_object=False
 									)
 		self.ABSS_type = File_Field(
 									name='ABSS_type',
 									mandatory=True,
 									corresponding_model=ABSS_Type,
 									corresponding_field='name',
-									corresponding_must_exist=True
+									corresponding_must_exist=True,
+									set_download_from_object=False
 									)
 		self.age_status = File_Field(
 									name='age_status',
 									mandatory=True,
 									corresponding_model=Age_Status,
 									corresponding_field='status',
-									corresponding_must_exist=True
+									corresponding_must_exist=True,
+									set_download_from_object=False,
 									)
 		self.house_name_or_number = File_Field(name='house_name_or_number')
 		self.street = File_Field(name='street')
@@ -554,7 +605,8 @@ class People_File_Handler(File_Handler):
 									corresponding_model=Post_Code,
 									corresponding_field='post_code',
 									corresponding_must_exist=True,
-									include_in_create=False
+									include_in_create=False,
+									set_download_from_object=False
 									)
 		self.notes = File_Field(name='notes')
 		self.ABSS_start_date = File_Datetime_Field(name='ABSS_start_date',datetime_format='%d/%m/%Y')
@@ -672,6 +724,28 @@ class People_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return record['first_name'] + ' ' + record['last_name']
+
+	def set_download_fields(self,person):
+		# call the built in field setter
+		super(People_File_Handler, self).set_download_fields(person)
+		# get the post_code
+		if person.street:
+			# set the post_code and street
+			post_code = person.street.post_code
+			street = person.street.name
+		# otherwise set a blank
+		else:
+			# set the blanks
+			post_code = ''
+			street = ''
+		# set the post code and street
+		self.post_code.value = post_code
+		self.street.value = street
+		# set the other special fields
+		self.age_status.value = person.age_status.status
+		self.default_role.value = person.default_role.role_type_name
+		self.ethnicity.value = person.ethnicity.description
+		self.ABSS_type.value = person.ABSS_type.name
 
 class Relationships_File_Handler(File_Handler):
 

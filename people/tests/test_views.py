@@ -6803,3 +6803,53 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)
 
+class DownloadPeopleDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_download_people(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'People',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,')

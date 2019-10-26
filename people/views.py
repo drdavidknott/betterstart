@@ -3164,9 +3164,15 @@ def uploaddata(request):
 def downloaddata(request):
 	# set results to empty
 	results = []
+	# define the records that need more complex file handlers
+	file_handlers = {
+						'People' : People_File_Handler,
+						'Relationships' : Relationships_File_Handler,
+						'Events' : Events_File_Handler,
+						'Registrations' : Registrations_File_Handler
+					}
 	# define the functions for each file type
 	download_functions = {
-							'People' : people_download,
 							'Events' : events_download,
 							'Relationships' : relationships_download,
 							'Registrations' : registrations_download
@@ -3179,10 +3185,20 @@ def downloaddata(request):
 		if downloaddataform.is_valid():
 			# get the file type
 			file_type = downloaddataform.cleaned_data['file_type']
-			# get the function
-			download_function = download_functions[file_type]
-			# get the fields and the records from the download function
-			fields, records = download_function()
+			if file_type in download_functions.keys():
+				# get the function
+				download_function = download_functions[file_type]
+				# get the fields and the records from the download function
+				fields, records = download_function()
+			else:
+				# get the file handler
+				file_handler = file_handlers[file_type]()
+				# and the keys
+				fields = file_handler.fields
+				# handle the download
+				file_handler.handle_download()
+				# get the records
+				records = file_handler.download_records
 			# create the response
 			response = HttpResponse(content_type='text/csv')
 			# set the content details
@@ -3210,186 +3226,6 @@ def downloaddata(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(download_data_template.render(context=context, request=request))
-
-# DATA LOAD FUNCTIONS
-# A set of functions which read csv files and use them to load data
-
-def file_fields_valid(file_keys,fields):
-	# set results to a blank list
-	results = []
-	# sort them
-	file_keys.sort()
-	fields.sort()
-	# now check that they match
-	if file_keys != fields:
-		# set the message to a failure message
-		results.append('File cannot be loaded as it does not contain the right fields.')
-		results.append('Expected ' + str(fields) + ' but got ' + str(file_keys) + '.')
-	# return the result
-	return results
-
-def check_mandatory_fields(record,label,fields):
-	# set the error list
-	errors = []
-	# go through the fields
-	for field in fields:
-		# check the field
-		if not record[field]:
-			# set the error
-			errors.append(label + ' not created: mandatory field ' + field + ' not provided.')
-	# return the errors
-	return errors
-
-def load_registrations(records):
-	# check the file format
-	results = file_fields_valid(
-									records.fieldnames.copy(),
-									[
-										'first_name',
-										'last_name',
-										'age_status',
-										'event_name',
-										'event_date',
-										'registered',
-										'participated',
-										'role_type'
-									]
-								)
-	# check whether we got any results: if we did, something went wrong
-	if not results:
-		# go through the csv file and process it
-		for registration in records:
-			# validate the record
-			errors = validate_registration_record(registration)
-			# check whether we got any errors
-			if not errors:
-				# get the records, starting with the person from
-				person = Person.objects.get(
-											first_name = registration['first_name'],
-											last_name = registration['last_name'],
-											age_status__status = registration['age_status']
-											)
-				# and the event
-				event = Event.objects.get(
-											name = registration['event_name'],
-											date = datetime.datetime.strptime(registration['event_date'],'%d/%m/%Y')
-											)
-				# and the role type
-				role_type = Role_Type.objects.get(role_type_name = registration['role_type'])
-				# build the registration using the function
-				registration = build_registration(
-													request = '',
-													event = event,
-													person_id = person.pk,
-													registered = (registration['registered'] == 'True'),
-													participated = (registration['participated'] == 'True'),
-													role_type_id = role_type.pk,
-													show_messages = False
-													)
-				# set a message
-				results.append(str(registration) + ' created.')
-			# otherwise append the errors
-			else:
-				# add the error list to the results list
-				results += errors
-	# return the results
-	return results
-
-def validate_registration_record(registration):
-	# check whether a registration record is valid
-	# set the error list
-	errors = []
-	# and some dummy values
-	role_type = False
-	age_status = False
-	# set a label
-	registration_label = str(registration['first_name']) + ' ' + str(registration['last_name']) \
-							+ ' (' + str(registration['age_status']) + ')' \
-							+ ' at ' + str(registration['event_name'])
-	# check for mandatory fields
-	errors += check_mandatory_fields(
-										record=registration,
-										label=registration_label,
-										fields=[
-												'first_name',
-												'last_name',
-												'age_status',
-												'event_name',
-												'event_date',
-												'role_type',
-												]
-									)
-	# only do the rest of the check if we have the right fields
-	if not errors:
-		# check whether the from person exists
-		error = check_person_by_name_and_age_status(
-														first_name = registration['first_name'],
-														last_name = registration['last_name'],
-														age_status_status = registration['age_status']
-													)
-		# if there was an error, add it
-		if error:
-			# append the error message
-			errors.append(registration_label + ' not created: person' + error)
-		# check whether the role type exists
-		try:
-			# get the role type
-			role_type = Role_Type.objects.get(role_type_name = registration['role_type'])
-		# deal with the exception
-		except (Role_Type.DoesNotExist):
-			# set the error
-			errors.append(
-							registration_label + ' not created: role type ' + 
-							registration['role_type'] + ' does not exist.'
-						)
-		# check whether the age status exists
-		try:
-			# get the age status
-			age_status = Age_Status.objects.get(status = registration['age_status'])
-		# deal with the exception
-		except (Age_Status.DoesNotExist):
-			# set the error
-			errors.append(
-							registration_label + ' not created: age status ' + 
-							registration['age_status'] + ' does not exist.'
-						)
-		# check whether the role type is valid for the age status
-		if role_type and age_status and role_type not in age_status.role_types.all():
-			# set the error
-			errors.append(
-							registration_label + ' not created: ' + str(role_type) + 
-							' is not valid for ' + str(age_status) + '.'
-						)
-		# get the event date
-		event_date = registration['event_date']
-		# check whether the date is valid
-		if not datetime_valid(event_date,'%d/%m/%Y'):
-			# set the error
-			errors.append(registration_label + ' not created: event date ' + str(event_date) + ' is not valid.')
-		# otherwise do the rest of the checks
-		else:
-			# set the date
-			event_date = convert_optional_ddmmyy(registration['event_date'])
-			# try to get the event record
-			try:
-				# get the event record
-				event = Event.objects.get(name = registration['event_name'], date = event_date)
-			# deal with missing event
-			except (Event.DoesNotExist):
-				# set the error
-				errors.append(registration_label + ' not created: event does not exist.')
-			# deal with more than one match
-			except (Event.MultipleObjectsReturned):
-				# set the error
-				errors.append(registration_label + ' not created: multiple matching events exist.')
-		# check that one of registered or participated is set
-		if (not registration['registered'] == 'True') and (not registration['participated'] == 'True'):
-			# set the error
-			errors.append(registration_label + ' not created: neither registered nor participated is True.')
-	# return the errors
-	return errors
-
-
 
 # DOWNLOAD FUNCTIONS
 # functions that return records for download as csv files

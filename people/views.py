@@ -26,7 +26,8 @@ from io import TextIOWrapper
 from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handler, \
 							Wards_File_Handler, Post_Codes_File_Handler, Streets_File_Handler, \
 							Role_Types_File_Handler, File_Handler, Relationship_Types_File_Handler, \
-							People_File_Handler, Relationships_File_Handler, Events_File_Handler
+							People_File_Handler, Relationships_File_Handler, Events_File_Handler, \
+							Registrations_File_Handler
 
 @login_required
 def index(request):
@@ -3106,14 +3107,9 @@ def uploaddata(request):
 						'Relationship Types' : Relationship_Types_File_Handler,
 						'People' : People_File_Handler,
 						'Relationships' : Relationships_File_Handler,
-						'Events' : Events_File_Handler
+						'Events' : Events_File_Handler,
+						'Registrations' : Registrations_File_Handler
 					}
-	# define the functions for each file type
-	load_functions = {
-						# 'People' : load_people,
-						# 'Events' : load_events,
-						'Registrations' : load_registrations
-						}
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation

@@ -248,7 +248,7 @@ class Person(models.Model):
 		return self.first_name + ' ' + self.middle_names + ' ' + self.last_name
 	# and a class method to get a person by names and age status
 	@classmethod
-	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status_status):
+	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):
 		# set a blank error
 		error = ''
 		# check whether the from person exists
@@ -257,7 +257,7 @@ class Person(models.Model):
 			person_from = cls.objects.get(
 											first_name = first_name,
 											last_name = last_name,
-											age_status__status = age_status_status
+											age_status = age_status
 											)
 		# deal with the record not existing
 		except (cls.DoesNotExist):

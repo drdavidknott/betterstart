@@ -679,7 +679,7 @@ class Relationships_File_Handler(File_Handler):
 		# call the built in constructor
 		super(Relationships_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
-		self.file_class = Event_Registration
+		self.file_class = Relationship
 		# set the file fields
 		self.from_first_name = File_Field(name='from_first_name',mandatory=True)
 		self.from_last_name = File_Field(name='from_last_name',mandatory=True)
@@ -720,30 +720,34 @@ class Relationships_File_Handler(File_Handler):
 	def complex_validation_valid(self,record):
 		# set the value
 		valid = True
-		# check whether the from person exists
-		error = Person.check_person_by_name_and_age_status(
-														first_name = record['from_first_name'],
-														last_name = record['from_last_name'],
-														age_status_status = record['from_age_status']
-													)
-		# if there was an error, add it
-		if error:
-			# append the error message
-			self.add_record_results(record,[' not created: from' + error])
-			# and set the flag
-			valid = False
-		# check whether the to person exists
-		error = Person.check_person_by_name_and_age_status(
-														first_name = record['to_first_name'],
-														last_name = record['to_last_name'],
-														age_status_status = record['to_age_status']
-													)
-		# if there was an error, add it
-		if error:
-			# append the error message
-			self.add_record_results(record,[' not created: to' + error])
-			# and set the flag
-			valid = False
+		# check whether we had a valid from age status
+		if self.from_age_status.exists:
+			# check whether the from person exists
+			error = Person.check_person_by_name_and_age_status(
+															first_name = self.from_first_name.value,
+															last_name = self.from_last_name.value,
+															age_status = self.from_age_status.value
+														)
+			# if there was an error, add it
+			if error:
+				# append the error message
+				self.add_record_results(record,[' not created: from' + error])
+				# and set the flag
+				valid = False
+		# check whether we had a valid to age status
+		if self.to_age_status:
+			# check whether the to person exists
+			error = Person.check_person_by_name_and_age_status(
+															first_name = self.to_first_name.value,
+															last_name = self.to_last_name.value,
+															age_status = self.to_age_status.value
+														)
+			# if there was an error, add it
+			if error:
+				# append the error message
+				self.add_record_results(record,[' not created: to' + error])
+				# and set the flag
+				valid = False
 		# return the result
 		return valid
 
@@ -882,3 +886,138 @@ class Events_File_Handler(File_Handler):
 		# return the label
 		return record['name']
 
+class Registrations_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Registrations_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Event_Registration
+		# set the file fields
+		self.first_name = File_Field(name='first_name',mandatory=True)
+		self.last_name = File_Field(name='last_name',mandatory=True)
+		self.age_status = File_Field(
+									name='age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True
+									)
+		self.event_name = File_Field(name='event_name',mandatory=True)
+		self.event_date = File_Datetime_Field(
+												name='event_date',
+												datetime_format='%d/%m/%Y',
+												mandatory=True
+												)
+		self.registered = File_Boolean_Field(name='registered',mandatory=True)
+		self.participated = File_Boolean_Field(name='participated',mandatory=True)
+		self.role_type = File_Field(
+										name='role_type',
+										mandatory=True,
+										corresponding_model=Role_Type,
+										corresponding_field='role_type_name',
+										corresponding_must_exist=True
+										)
+
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'age_status',
+						'event_name',
+						'event_date',
+						'registered',
+						'participated',
+						'role_type'
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether we have a valid age status
+		if self.age_status.exists:
+			# check whether the person exists
+			error = Person.check_person_by_name_and_age_status(
+															first_name = self.first_name.value,
+															last_name = self.last_name.value,
+															age_status = self.age_status.value
+														)
+			# if there was an error, add it
+			if error:
+				# append the error message
+				self.add_record_results(record,[' not created: person' + error])
+				# and set the flag
+				valid = False
+		# check whether the role type is valid for the age status
+		if (self.role_type.exists and self.age_status.exists 
+				and self.role_type.value not in self.age_status.value.role_types.all()):
+			# set the error
+			self.add_record_results(record,
+									[' not created: ' + str(self.role_type.value.role_type_name) + 
+										' is not valid for ' + str(self.age_status.value.status) + '.']
+									)
+			# and set the flag
+			valid = False
+		# check whether the event date is valid
+		if self.event_date.valid:
+			# try to get the event record
+			try:
+				# get the event record
+				event = Event.objects.get(name = self.event_name.value, date = self.event_date.value)
+			# deal with missing event
+			except (Event.DoesNotExist):
+				# set the error
+				self.add_record_results(record,[' not created: event does not exist.'])
+				# and set the flag
+				valid = False
+			# deal with more than one match
+			except (Event.MultipleObjectsReturned):
+				# set the error
+				self.add_record_results(record,[' not created: multiple matching events exist.'])
+				# and set the flag
+				valid = False
+		# check that one of registered or participated is set
+		if not self.registered.value and not self.participated.value:
+			# set the error
+			self.add_record_results(record,[' not created: neither registered nor participated is True.'])
+			# and set the flag
+			valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# get the records, starting with the person
+		person = Person.objects.get(
+									first_name = self.first_name.value,
+									last_name = self.last_name.value,
+									age_status = self.age_status.value
+									)
+		# and the event
+		event = Event.objects.get(
+									name = self.event_name.value,
+									date = self.event_date.value
+									)
+		# attempt to get the existing registration
+		try:
+			# get the record
+			registration = Event_Registration.objects.get(event=event,person=person)
+		# deal with the failure
+		except (Event_Registration.DoesNotExist):
+			# create a record
+			registration = Event_Registration(event=event,person=person,role_type=self.role_type.value)
+		# set the values
+		registration.registered = self.registered.value
+		registration.participated = self.participated.value
+		registration.role_type = self.role_type.value
+		# save the record
+		registration.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+		# return the created record
+		return registration
+
+	def label(self,record):
+		# return the label
+		return str(record['first_name']) + ' ' + str(record['last_name']) \
+							+ ' (' + str(record['age_status']) + ')' \
+							+ ' at ' + str(record['event_name'])

@@ -6664,9 +6664,9 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'invalid age status last name (invalid) at test_event_0 not created: age status invalid does not exist')
-		self.assertContains(response,'invalid event date last name (Adult) at test_event_0 not created: event date 01/xx/2019 is not valid')
-		self.assertContains(response,'invalid role type last name (Adult) at test_event_0 not created: role type invalid does not exist')
+		self.assertContains(response,'invalid age status last name (invalid) at test_event_0 not created: Age_Status invalid does not exist')
+		self.assertContains(response,'invalid event date last name (Adult) at test_event_0 not created: event_date 01/xx/2019 is invalid date or time')
+		self.assertContains(response,'invalid role type last name (Adult) at test_event_0 not created: Role_Type invalid does not exist')
 		self.assertContains(response,'invalid person last name (Adult) at test_event_0 not created: person does not exist')
 		self.assertContains(response,'test_duplicate_0 test_duplicate_0 (Adult) at test_event_0 not created: person duplicate with name and age status')
 		self.assertContains(response,'invalid event last name (Adult) at invalid not created: event does not exist')

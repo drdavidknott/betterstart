@@ -352,18 +352,6 @@ def try_to_get(cls,**kwargs):
 	# return the result
 	return result
 
-def get_person(person_id):
-	# try to get a person using the person id
-	try:
-		# do the database call
-		person = Person.objects.get(pk=person_id)
-	# handle the exception
-	except Person.DoesNotExist:
-		# set the person to false
-		person = False
-	# return the result
-	return person
-
 def get_relationships_to(person):
 	# this function gets all the Person objects via the relationship_to relationship from Perso
 	# it returns a list of people with realtionship type added
@@ -603,73 +591,6 @@ def get_streets_by_name_and_post_code(name='',post_code=''):
 	# return the results
 	return streets
 
-def get_street(street_id):
-	# try to get street
-	try:
-		street = Street.objects.get(pk=street_id)
-	# handle the exception
-	except Street.DoesNotExist:
-		# set a false value
-		street = False
-	# return the street
-	return street
-
-def get_ward(ward_id):
-	# try to get ward
-	try:
-		ward = Ward.objects.get(pk=ward_id)
-	# handle the exception
-	except Ward.DoesNotExist:
-		# set a false value
-		ward = False
-	# return the ward
-	return ward
-
-def get_ethnicity(ethnicity_id):
-	# try to get ethnicity
-	try:
-		ethnicity = Ethnicity.objects.get(pk=ethnicity_id)
-	# handle the exception
-	except Ethnicity.DoesNotExist:
-		# set a false value
-		ethnicity = False
-	# return the ethnicity
-	return ethnicity
-
-def get_relationship_type(relationship_type_id):
-	# try to get relationship type
-	try:
-		relationship_type = Relationship_Type.objects.get(pk=relationship_type_id)
-	# handle the exception
-	except Relationship_Type.DoesNotExist:
-		# set a false value
-		relationship_type = False
-	# return the relationship_type
-	return relationship_type
-
-def get_relationship_type_by_type(relationship_type):
-	# try to get relationship type using the name of the relationship type
-	try:
-		relationship_type = Relationship_Type.objects.get(relationship_type=relationship_type)
-	# handle the exception
-	except Relationship_Type.DoesNotExist:
-		# set a false value
-		relationship_type = false
-	# return the relationship type
-	return relationship_type
-
-def get_event(event_id):
-	# try to get an event using the event id
-	try:
-		# do the database call
-		event = Event.objects.get(pk=event_id)
-	# handle the exception
-	except Event.DoesNotExist:
-		# set the address to false
-		event = False
-	# return the result
-	return event
-
 def get_events():
 	# get a list of events
 	events = Event.objects.order_by('-date', '-start_time')
@@ -716,17 +637,6 @@ def add_counts_to_events(events):
 		event.participated_count = event.event_registration_set.filter(participated=True).count()
 	# return the results
 	return events
-
-def get_event_type(event_type_id):
-	# try to get event type
-	try:
-		event_type = Event_Type.objects.get(pk=event_type_id)
-	# handle the exception
-	except Event_Type.DoesNotExist:
-		# set a false value
-		event_type = False
-	# return the event type
-	return event_type
 
 def get_event_types():
 	# return a list of all the event type objects
@@ -900,28 +810,6 @@ def get_areas_with_event_counts():
 	# return the results
 	return areas
 
-def get_role_type(role_type_id):
-	# try to get role type
-	try:
-		role_type = Role_Type.objects.get(pk=role_type_id)
-	# handle the exception
-	except Role_Type.DoesNotExist:
-		# set a false value
-		role_type = False
-	# return the role type
-	return role_type
-
-def get_role_type_by_name(role_type_name):
-	# try to get role type
-	try:
-		role_type = Role_Type.objects.get(role_type_name=role_type_name)
-	# handle the exception
-	except Role_Type.DoesNotExist:
-		# set a false value
-		role_type = False
-	# return the role type
-	return role_type
-
 def get_ethnicities():
 	# return a list of all the ethnicity objects
 	return Ethnicity.objects.all()
@@ -965,28 +853,6 @@ def get_relationship_from_and_to(person_from, person_to):
 	relationship_to = get_relationship(person_to, person_from)
 	# return the results
 	return relationship_from, relationship_to
-
-def get_question(question_id):
-	# try to get a question
-	try:
-		question = Question.objects.get(pk=question_id)
-	# handle the exception
-	except Question.DoesNotExist:
-		# set a false value
-		question = False
-	# return the role type
-	return question
-
-def get_option(option_id):
-	# try to get a option
-	try:
-		option = Option.objects.get(pk=option_id)
-	# handle the exception
-	except Option.DoesNotExist:
-		# set a false value
-		option = False
-	# return the role type
-	return option
 
 def get_questions_and_answers(person):
 	# this function gets a list of questions, and adds the answers relevant to the person
@@ -1069,17 +935,6 @@ def get_ABSS_types_with_counts():
 	# return the results
 	return ABSS_types
 
-def get_ABSS_type(ABSS_type_id):
-	# try to get ABSS type
-	try:
-		ABSS_type = ABSS_Type.objects.get(pk=ABSS_type_id)
-	# handle the exception
-	except ABSS_Type.DoesNotExist:
-		# set a false value
-		ABSS_type = False
-	# return the ABSS type
-	return ABSS_type
-
 def get_age_statuses():
 	# return a list of all the ABSS type objects
 	return Age_Status.objects.all()
@@ -1093,17 +948,6 @@ def get_age_statuses_with_counts():
 		age_status.count = Person.objects.filter(age_status=age_status).count()
 	# return the results
 	return age_statuses
-
-def get_age_status(age_status_id):
-	# try to get ABSS type
-	try:
-		age_status = Age_Status.objects.get(pk=age_status_id)
-	# handle the exception
-	except Age_Status.DoesNotExist:
-		# set a false value
-		age_status = False
-	# return the ABSS type
-	return age_status
 
 def create_person(
 					first_name,
@@ -1123,11 +967,11 @@ def create_person(
 	# otherwise get the actual age status
 	else:
 		# get the age status
-		age_status = get_age_status(age_status)
+		age_status = try_to_get(Age_Status,pk=age_status)
 	# check whether we have a role type
 	if default_role:
 		# get the role
-		default_role = get_role_type(default_role)
+		default_role = try_to_get(Role_Type,pk=default_role)
 	# otherwise set unknown
 	else:
 		# get the role type dependent on the age status
@@ -1146,8 +990,8 @@ def create_person(
 					date_of_birth = date_of_birth,
 					gender = gender,
 					default_role = default_role,
-					ethnicity = get_ethnicity(ethnicity),
-					ABSS_type = get_ABSS_type(ABSS_type),
+					ethnicity = try_to_get(Ethnicity,pk=ethnicity),
+					ABSS_type = try_to_get(ABSS_Type,pk=ABSS_type),
 					age_status = age_status,
 						)
 	# save the record
@@ -1238,7 +1082,7 @@ def edit_relationship(request, person_from, person_to, relationship_type_id, sho
 	# check whether we either have a valid relationship type or a zero
 	if relationship_type_id:
 		# get the relationship type
-		relationship_type_from = get_relationship_type(relationship_type_id)
+		relationship_type_from = try_to_get(Relationship_Type,pk=relationship_type_id)
 		# if we didn't get one, set an error message and crash out
 		if not relationship_type_from:
 			# set the messages if messages are required
@@ -1298,11 +1142,11 @@ def edit_relationship(request, person_from, person_to, relationship_type_id, sho
 
 def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id, areas):
 	# get the event type
-	event_type = get_event_type(event_type_id)
+	event_type = try_to_get(Event_Type,pk=event_type_id)
 	# check whether we have a ward
 	if ward_id != '0':
 		# get the ward
-		ward = get_ward(ward_id)
+		ward = try_to_get(Ward,pk=ward_id)
 	# otherwise set null
 	else:
 		# set the ward to null
@@ -1348,7 +1192,7 @@ def build_registration(request, event, person_id, registered, participated, role
 		# and return
 		return False
 	# now attempt to get the role type
-	role_type = get_role_type(role_type_id)
+	role_type = try_to_get(Role_Type,pk=role_type_id)
 	# if that didn't work, set an error and return
 	if not role_type:
 		# check whether messages are needed
@@ -1424,7 +1268,7 @@ def remove_registration(request, event, person_id):
 
 def build_answer(request, person, question_id, option_id):
 	# attempt to get the question
-	question = get_question(question_id)
+	question = try_to_get(Question,pk=question_id)
 	# deal with exceptions if we didn't get a question
 	if not question:
 		# set the error
@@ -1434,7 +1278,7 @@ def build_answer(request, person, question_id, option_id):
 	# check that we have a valid option
 	if option_id != 0:
 		# get the option
-		option = get_option(option_id)
+		option = try_to_get(Option,pk=option_id)
 		# deal with exceptions if we didn't get an option
 		if not option:
 			# set the error
@@ -1478,7 +1322,7 @@ def build_answer(request, person, question_id, option_id):
 
 def build_answer_note(request, person, question_id, notes):
 	# attempt to get the question
-	question = get_question(question_id)
+	question = try_to_get(Question,pk=question_id)
 	# deal with exceptions if we didn't get a question
 	if not question:
 		# set the error
@@ -1545,7 +1389,7 @@ def update_person(
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
 	# attempt to get the ethnicity
-	ethnicity = get_ethnicity(ethnicity_id)
+	ethnicity = try_to_get(Ethnicity,pk=ethnicity_id)
 	# set the value for the person
 	if ethnicity:
 		# set the value
@@ -1555,7 +1399,7 @@ def update_person(
 		# set the message
 		messages.error(request, 'Ethnicity does not exist.')
 	# attempt to get the ABSS type
-	ABSS_type = get_ABSS_type(ABSS_type_id)
+	ABSS_type = try_to_get(ABSS_Type,pk=ABSS_type_id)
 	# set the value for the person
 	if ABSS_type:
 		# set the value
@@ -1565,7 +1409,7 @@ def update_person(
 		# set the message
 		messages.error(request, 'ABSS Type does not exist.')
 	# attempt to get the age status
-	age_status = get_age_status(age_status_id)
+	age_status = try_to_get(Age_Status,pk=age_status_id)
 	# set the value for the person
 	if age_status:
 		# set the value
@@ -1575,7 +1419,7 @@ def update_person(
 		# set the message
 		messages.error(request, 'Age Status does not exist.')
 	# attempt to get the role type
-	default_role = get_role_type(default_role_id)
+	default_role = try_to_get(Role_Type,pk=default_role_id)
 	# set the value for the person
 	if default_role:
 		# check whether the role has changed
@@ -1628,7 +1472,7 @@ def update_address(
 	# set the success flag
 	success = False
 	# attempt to get the street
-	street = get_street(street_id)
+	street = try_to_get(Street,pk=street_id)
 	# set the value for the person
 	if street:
 		# set the value
@@ -2103,7 +1947,7 @@ def age_exceptions(request, age_status_id=0):
 	# load the template
 	age_exceptions_template = loader.get_template('people/age_exceptions.html')
 	# get the age status
-	age_status = get_age_status(age_status_id)
+	age_status = try_to_get(Age_Status,pk=age_status_id)
 	# if the age status doesn't exist, crash to a banner
 	if not age_status:
 		return make_banner(request, 'Age status does not exist.')
@@ -2633,7 +2477,7 @@ def event(request, event_id=0):
 	# load the template
 	event_template = loader.get_template('people/event.html')
 	# get the event
-	event = get_event(event_id)
+	event = try_to_get(Event,pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
@@ -2788,7 +2632,7 @@ def events(request):
 @login_required
 def edit_event(request, event_id=0):
 	# try to get the event
-	event = get_event(event_id)
+	event = try_to_get(Event,pk=event_id)
 	# if there isn't an event, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
@@ -2808,7 +2652,7 @@ def edit_event(request, event_id=0):
 			event.start_time = editeventform.cleaned_data['start_time']
 			event.end_time = editeventform.cleaned_data['end_time']
 			# attempt to get the event type
-			event_type = get_event_type(editeventform.cleaned_data['event_type'])
+			event_type = try_to_get(Event_Type,pk=editeventform.cleaned_data['event_type'])
 			# set the value for the event
 			if event_type:
 				# set the value
@@ -2822,7 +2666,7 @@ def edit_event(request, event_id=0):
 			# check whether we have a ward id
 			if ward_id != '0':
 				# get the ward
-				ward = get_ward(ward_id)
+				ward = try_to_get(Ward,pk=ward_id)
 				# set the value for the event
 				if ward:
 					# set the value
@@ -2907,7 +2751,7 @@ def event_registration(request,event_id=0):
 	# load the template
 	event_registration_template = loader.get_template('people/event_registration.html')
 	# get the event
-	event = get_event(event_id)
+	event = try_to_get(Event,pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')

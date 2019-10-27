@@ -11,7 +11,7 @@
 	<div class="row">
 		<div class="col-md-12">
 			<h2>
-				Children Over Four
+				Parents Without Children
 			</h2>
 		</div>
 	</div>
@@ -28,7 +28,7 @@
 						<th>ROLE:</th>
 					</tr></thead>
 					<tbody>
-				 		{% for person in children %}
+				 		{% for person in parents %}
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'person' person.pk %}">

@@ -18,16 +18,18 @@ class File_Field():
 					corresponding_field=None,
 					corresponding_must_exist=False,
 					corresponding_must_not_exist=False,
+					use_corresponding_for_download=False,
 					include_in_create=True,
 					set_download_from_object=True,
+					corresponding_relationship_field=False
 					):
 		# set the attributes
 		self.name = name
 		self.mandatory = mandatory
 		self.corresponding_model = corresponding_model
-		self.corresponding_field = corresponding_field
 		self.corresponding_must_exist = corresponding_must_exist
 		self.corresponding_must_not_exist = corresponding_must_not_exist
+		self.use_corresponding_for_download = use_corresponding_for_download
 		self.include_in_create = include_in_create
 		self.set_download_from_object = set_download_from_object
 		self.corresponding_record = None
@@ -35,6 +37,22 @@ class File_Field():
 		self.errors = []
 		self.converter = False
 		self.valid = False
+		# and set the corresponding  field if we have one
+		if corresponding_field:
+			# set the attribute
+			self.corresponding_field = corresponding_field
+		# else, set it to the field name
+		else:
+			# use the name
+			self.corresponding_field = self.name
+		# and set the corresponding relationship field if we have one
+		if corresponding_relationship_field:
+			# set the attribute
+			self.corresponding_relationship_field = corresponding_relationship_field
+		# else, set it to the field name
+		else:
+			# use the name
+			self.corresponding_relationship_field = self.name
 
 	def set_upload_value(self, record):
 		# clear the errors
@@ -75,8 +93,28 @@ class File_Field():
 		self.valid = (not self.errors)
 
 	def set_download_value(self, object):
-		# set the value from the object
-		self.value = getattr(object,self.name)
+		# check whether we should set this from the object
+		if self.set_download_from_object:
+			# see whether we get the value from this object or the corresponding object
+			if self.use_corresponding_for_download:
+				# get the object
+				corresponding_object = getattr(object,self.corresponding_relationship_field)
+				# check whether we have an object
+				if corresponding_object:
+					# now get the field from the corresponding object
+					self.value = getattr(corresponding_object,self.corresponding_field)
+				# otherwise set a blank value
+				else:
+					# set the default
+					self.value = self.default
+			# otherwise get it from the passed object
+			else:
+				# set the value from the object
+				self.value = getattr(object,self.name)
+		# otherwise set the default
+		else:
+			# set the default
+			self.value = self.default
 
 	def corresponding_exists(self):
 		# check whether we have a value
@@ -138,7 +176,7 @@ class File_Datetime_Field(File_Field):
 	def set_download_value(self,object):
 		# call the built in validator
 		super(File_Datetime_Field, self).set_download_value(object)
-		# check whether we have a value and that we haven't already converted
+		# check whether we have a value
 		if self.value:
 			# set the converted value
 			self.value = self.value.strftime(self.datetime_format)
@@ -172,12 +210,13 @@ class File_Delimited_List_Field(File_Field):
 		# set the validity flag
 		self.valid = (not self.errors)
 
-	def set_download_value(self,queryset):
-		# converts a queryset to a delimited list using the field name
+	def set_download_value(self,object):
+		# call the built in validator
+		super(File_Delimited_List_Field, self).set_download_value(object)
 		# create an empty string
 		delimited_list = ''
 		# go through the queryset
-		for item in queryset:
+		for item in self.value.all():
 			# check whether we need a delimiter
 			if len(delimited_list):
 				# add a delimiter
@@ -267,9 +306,9 @@ class File_Handler():
 			# get the field
 			field = getattr(self,field_name)
 			# set the download value if it is set from object
-			if field.set_download_from_object:
-				# set the value
-				field.set_download_value(this_object)
+			# if field.set_download_from_object:
+			# set the value
+			field.set_download_value(this_object)
 
 	# build a download record
 	def get_download_record(self):
@@ -572,7 +611,7 @@ class People_File_Handler(File_Handler):
 										corresponding_model=Role_Type,
 										corresponding_field='role_type_name',
 										corresponding_must_exist=True,
-										set_download_from_object=False
+										use_corresponding_for_download=True
 										)
 		self.ethnicity = File_Field(
 									name='ethnicity',
@@ -580,7 +619,7 @@ class People_File_Handler(File_Handler):
 									corresponding_model=Ethnicity,
 									corresponding_field='description',
 									corresponding_must_exist=True,
-									set_download_from_object=False
+									use_corresponding_for_download=True
 									)
 		self.ABSS_type = File_Field(
 									name='ABSS_type',
@@ -588,7 +627,7 @@ class People_File_Handler(File_Handler):
 									corresponding_model=ABSS_Type,
 									corresponding_field='name',
 									corresponding_must_exist=True,
-									set_download_from_object=False
+									use_corresponding_for_download=True
 									)
 		self.age_status = File_Field(
 									name='age_status',
@@ -596,10 +635,14 @@ class People_File_Handler(File_Handler):
 									corresponding_model=Age_Status,
 									corresponding_field='status',
 									corresponding_must_exist=True,
-									set_download_from_object=False,
+									use_corresponding_for_download=True
 									)
 		self.house_name_or_number = File_Field(name='house_name_or_number')
-		self.street = File_Field(name='street')
+		self.street = File_Field(
+									name='street',
+									use_corresponding_for_download=True,
+									corresponding_field='name'
+									)
 		self.post_code = File_Field(
 									name='post_code',
 									corresponding_model=Post_Code,
@@ -730,22 +773,14 @@ class People_File_Handler(File_Handler):
 		super(People_File_Handler, self).set_download_fields(person)
 		# get the post_code
 		if person.street:
-			# set the post_code and street
+			# set the post_code
 			post_code = person.street.post_code.post_code
-			street = person.street.name
 		# otherwise set a blank
 		else:
 			# set the blanks
 			post_code = ''
-			street = ''
-		# set the post code and street
+		# set the post code
 		self.post_code.value = post_code
-		self.street.value = street
-		# set the other special fields
-		self.age_status.value = person.age_status.status
-		self.default_role.value = person.default_role.role_type_name
-		self.ethnicity.value = person.ethnicity.description
-		self.ABSS_type.value = person.ABSS_type.name
 
 class Relationships_File_Handler(File_Handler):
 
@@ -755,18 +790,42 @@ class Relationships_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Relationship
 		# set the file fields
-		self.from_first_name = File_Field(name='from_first_name',mandatory=True,set_download_from_object=False)
-		self.from_last_name = File_Field(name='from_last_name',mandatory=True,set_download_from_object=False)
+		self.from_first_name = File_Field(
+											name='from_first_name',
+											mandatory=True,
+											corresponding_field='first_name',
+											use_corresponding_for_download=True,
+											corresponding_relationship_field='relationship_from'
+											)
+		self.from_last_name = File_Field(
+											name='from_last_name',
+											mandatory=True,
+											corresponding_field='last_name',
+											use_corresponding_for_download=True,
+											corresponding_relationship_field='relationship_from'
+											)
 		self.from_age_status = File_Field(
-									name='from_age_status',
-									mandatory=True,
-									corresponding_model=Age_Status,
-									corresponding_field='status',
-									corresponding_must_exist=True,
-									set_download_from_object=False
-									)
-		self.to_first_name = File_Field(name='to_first_name',mandatory=True,set_download_from_object=False)
-		self.to_last_name = File_Field(name='to_last_name',mandatory=True,set_download_from_object=False)
+											name='from_age_status',
+											mandatory=True,
+											corresponding_model=Age_Status,
+											corresponding_field='status',
+											corresponding_must_exist=True,
+											set_download_from_object=False
+											)
+		self.to_first_name = File_Field(
+										name='to_first_name',
+										mandatory=True,
+										corresponding_field='first_name',
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='relationship_to'
+										)
+		self.to_last_name = File_Field(
+										name='to_last_name',
+										mandatory=True,
+										corresponding_field='first_name',
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='relationship_to'
+										)
 		self.to_age_status = File_Field(
 										name='to_age_status',
 										mandatory=True,
@@ -781,7 +840,7 @@ class Relationships_File_Handler(File_Handler):
 											corresponding_model=Relationship_Type,
 											corresponding_field='relationship_type',
 											corresponding_must_exist=True,
-											set_download_from_object=False
+											use_corresponding_for_download=True
 											)
 		# and a list of the fields
 		self.fields = [
@@ -856,13 +915,8 @@ class Relationships_File_Handler(File_Handler):
 		# call the built in field setter
 		super(Relationships_File_Handler, self).set_download_fields(relationship)
 		# set the special fields
-		self.from_first_name.value = relationship.relationship_from.first_name
-		self.from_last_name.value = relationship.relationship_from.last_name
 		self.from_age_status.value = relationship.relationship_from.age_status.status
-		self.to_first_name.value = relationship.relationship_to.first_name
-		self.to_last_name.value = relationship.relationship_to.last_name
 		self.to_age_status.value = relationship.relationship_to.age_status.status
-		self.relationship_type.value = relationship.relationship_type.relationship_type
 
 	def label(self,record):
 		# return the label
@@ -886,7 +940,7 @@ class Events_File_Handler(File_Handler):
 									corresponding_model=Event_Type,
 									corresponding_field='name',
 									corresponding_must_exist=True,
-									set_download_from_object=False
+									use_corresponding_for_download=True
 									)
 		self.date = File_Datetime_Field(
 										name='date',
@@ -901,21 +955,22 @@ class Events_File_Handler(File_Handler):
 		self.end_time = File_Datetime_Field(
 											name='end_time',
 											datetime_format='%H:%M',
-											mandatory=True)
+											mandatory=True
+											)
 		self.location = File_Field(name='location')
 		self.ward = File_Field(
 								name='ward',
 								corresponding_model=Ward,
 								corresponding_field='ward_name',
 								corresponding_must_exist=True,
-								set_download_from_object=False
+								use_corresponding_for_download=True
 								)
 		self.areas = File_Delimited_List_Field(
 												name='areas',
 												delimiter=',',
 												corresponding_field='area_name',
 												include_in_create = False,
-												set_download_from_object=False
+												corresponding_relationship_field='areas'
 												)
 		# and a list of the fields
 		self.fields = [
@@ -978,20 +1033,6 @@ class Events_File_Handler(File_Handler):
 	def set_download_fields(self,event):
 		# call the built in field setter
 		super(Events_File_Handler, self).set_download_fields(event)
-		# set the ward
-		if event.ward:
-			# set the ward
-			ward = event.ward.ward_name
-		# otherwise set a blank
-		else:
-			# set the blank
-			ward = ''
-		# set the ward
-		self.ward.value = ward
-		# set the areas
-		self.areas.set_download_value(event.areas.all())
-		# and other special fields
-		self.event_type.value = event.event_type.name
 
 	def label(self,record):
 		# return the label
@@ -1005,8 +1046,18 @@ class Registrations_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Event_Registration
 		# set the file fields
-		self.first_name = File_Field(name='first_name',mandatory=True,set_download_from_object=False)
-		self.last_name = File_Field(name='last_name',mandatory=True,set_download_from_object=False)
+		self.first_name = File_Field(
+										name='first_name',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
 		self.age_status = File_Field(
 									name='age_status',
 									mandatory=True,
@@ -1015,12 +1066,20 @@ class Registrations_File_Handler(File_Handler):
 									corresponding_must_exist=True,
 									set_download_from_object=False
 									)
-		self.event_name = File_Field(name='event_name',mandatory=True,set_download_from_object=False)
+		self.event_name = File_Field(
+									name='event_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='event',
+									corresponding_field='name'
+									)
 		self.event_date = File_Datetime_Field(
 												name='event_date',
 												datetime_format='%d/%m/%Y',
 												mandatory=True,
-												set_download_from_object=False
+												corresponding_field='date',
+												use_corresponding_for_download=True,
+												corresponding_relationship_field='event'
 												)
 		self.registered = File_Boolean_Field(name='registered',mandatory=True)
 		self.participated = File_Boolean_Field(name='participated',mandatory=True)
@@ -1030,7 +1089,7 @@ class Registrations_File_Handler(File_Handler):
 										corresponding_model=Role_Type,
 										corresponding_field='role_type_name',
 										corresponding_must_exist=True,
-										set_download_from_object=False
+										use_corresponding_for_download=True
 										)
 
 		# and a list of the fields
@@ -1133,14 +1192,8 @@ class Registrations_File_Handler(File_Handler):
 	def set_download_fields(self,registration):
 		# call the built in field setter
 		super(Registrations_File_Handler, self).set_download_fields(registration)
-		# and set the value
-		self.event_date.value = registration.event.date.strftime(self.event_date.datetime_format)
-		# set the other special fields
-		self.first_name.value = registration.person.first_name
-		self.last_name.value = registration.person.last_name
+		# set the special fields
 		self.age_status.value = registration.person.age_status.status
-		self.event_name.value = registration.event.name
-		self.role_type.value = registration.role_type.role_type_name
 
 	def label(self,record):
 		# return the label

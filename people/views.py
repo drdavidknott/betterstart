@@ -340,6 +340,18 @@ def index(request):
 # A set of functions which carry out simple and complex data access, filtering and updates.
 # These functions are kept as simple as possible.
 
+def try_to_get(cls,**kwargs):
+	# try to get a record using get, and return false if unsuccessful
+	try:
+		# attempt to get the record
+		result = cls.objects.get(**kwargs)
+	# now deal with the exception
+	except (cls.DoesNotExist):
+		# set the result to false
+		result = False
+	# return the result
+	return result
+
 def get_person(person_id):
 	# try to get a person using the person id
 	try:
@@ -1326,7 +1338,7 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 def build_registration(request, event, person_id, registered, participated, role_type_id, show_messages=True):
 	# attempt to create a new registration, checking first that the registration does not exit
 	# first get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if that didn't work, set an error and return
 	if not person:
 		# check whether messages are needed
@@ -1383,7 +1395,7 @@ def build_registration(request, event, person_id, registered, participated, role
 def remove_registration(request, event, person_id):
 	# attempt to remove a registration record, checking first that the registration exists
 	# first get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if that didn't work, set an error and return
 	if not person:
 		# set the message
@@ -2174,7 +2186,7 @@ def person(request, person_id=0):
 	# load the template
 	person_template = loader.get_template('people/person.html')
 	# get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2197,7 +2209,7 @@ def profile(request, person_id=0):
 	# set the old role to false: this indicates that the role hasn't changed yet
 	old_role = False
 	# try to get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if there isn't a person, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2293,7 +2305,7 @@ def add_relationship(request,person_id=0):
 	# load the template
 	person_template = loader.get_template('people/add_relationship.html')
 	# get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2351,7 +2363,7 @@ def add_relationship(request,person_id=0):
 				# check whether this is a relevant field
 				if field_name.startswith('relationship_type'):
 					# try to find a person using the id at the end of the field name
-					person_to = get_person(int(extract_id(field_name)))
+					person_to = try_to_get(Person,pk=int(extract_id(field_name)))
 					# if we got a person, edit the relationship
 					if person_to:
 						# edit the relationship
@@ -2416,7 +2428,7 @@ def address(request,person_id=0):
 	# load the template
 	person_template = loader.get_template('people/address.html')
 	# get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2507,7 +2519,7 @@ def address_to_relationships(request,person_id=0):
 	# load the template
 	person_template = loader.get_template('people/address_to_relationships.html')
 	# get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -3045,7 +3057,7 @@ def answer_questions(request,person_id=0):
 	# load the template
 	answer_questions_template = loader.get_template('people/answer_questions.html')
 	# get the person
-	person = get_person(person_id)
+	person = try_to_get(Person,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')

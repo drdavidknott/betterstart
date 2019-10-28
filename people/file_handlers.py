@@ -1200,3 +1200,39 @@ class Registrations_File_Handler(File_Handler):
 		return str(record['first_name']) + ' ' + str(record['last_name']) \
 							+ ' (' + str(record['age_status']) + ')' \
 							+ ' at ' + str(record['event_name'])
+
+class Questions_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Questions_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Question
+		# set the file fields
+		self.question_text = File_Field(
+										name='question_text',
+										mandatory=True,
+										corresponding_model=Question,
+										corresponding_must_not_exist=True
+										)
+		self.notes = File_Boolean_Field(name='notes',mandatory=True)
+		self.notes_label = File_Field(name='notes_label')
+
+		# and a list of the fields
+		self.fields = ['question_text','notes','notes_label']
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether we had a valid from age status
+		if self.notes.value and not self.notes_label.value:
+			# append the error message
+			self.add_record_results(record,[' not created: questions has notes but no notes label'])
+			# and set the flag
+			valid = False
+		# return the result
+		return valid
+
+	def label(self,record):
+		# return the label
+		return 'Question: ' + record['question_text']

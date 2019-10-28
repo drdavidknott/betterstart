@@ -59,7 +59,8 @@ class UploadDataForm(forms.Form):
 							('People','People'),
 							('Events','Events'),
 							('Relationships','Relationships'),
-							('Registrations','Registrations')
+							('Registrations','Registrations'),
+							('Questions','Questions')
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

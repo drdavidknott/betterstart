@@ -4840,7 +4840,8 @@ class UploadDataViewTest(TestCase):
 							'People',
 							'Events',
 							'Relationships',
-							'Registrations'
+							'Registrations',
+							'Questions'
 							]:
 			# open the file
 			invalid_file = open('people/tests/data/invalid.csv')
@@ -5985,6 +5986,55 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional event types have been created
 		self.assertEqual(Event_Type.objects.all().count(),2)
+
+	def test_upload_questions_with_errors(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/questions_with_errors.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' not created: mandatory field question_text not provided')
+		self.assertContains(response,'missing notes not created: mandatory field notes not provided')
+		self.assertContains(response,'notes with no label not created: questions has notes but no notes label')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+	def test_upload_questions(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes created')
+		self.assertContains(response,'test question without notes created')
+		# get the records
+		question_with_notes = Question.objects.get(question_text='test question with notes')
+		question_without_notes = Question.objects.get(question_text='test question without notes')
+		# check the records
+		self.assertEqual(question_with_notes.notes,True)
+		self.assertEqual(question_with_notes.notes_label,'test label')
+		self.assertEqual(question_without_notes.notes,False)
+		self.assertEqual(question_without_notes.notes_label,'')
 
 class UploadPeopleDataViewTest(TestCase):
 	@classmethod

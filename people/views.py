@@ -400,18 +400,6 @@ def get_trained_status(person,role_type):
 	# return the result
 	return trained_status
 
-def get_people():
-	# get a list of people
-	people = Person.objects.order_by('last_name', 'first_name')
-	# return the list of people
-	return people
-
-def get_people_by_name(first_name,last_name):
-	# try to get people with the matching name
-	people = Person.objects.filter(first_name=first_name,last_name=last_name)
-	# return the people
-	return people
-
 def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
 	# set a blank error
 	error = ''
@@ -566,18 +554,6 @@ def get_addresses_by_number_or_street(house_name_or_number,street):
 	# return the people
 	return addresses
 
-def get_post_code_by_code(code):
-	# try to get a post code using the code
-	try:
-		# do the database call
-		post_code = Post_Code.objects.get(post_code=code)
-	# handle the exception
-	except Post_Code.DoesNotExist:
-		# set the post code to false
-		post_code = False
-	# return the result
-	return post_code
-
 def get_streets_by_name_and_post_code(name='',post_code=''):
 	# get the streets
 	streets = Street.objects.all()
@@ -591,12 +567,6 @@ def get_streets_by_name_and_post_code(name='',post_code=''):
 		streets = streets.filter(post_code__post_code__icontains=post_code)
 	# return the results
 	return streets
-
-def get_events():
-	# get a list of events
-	events = Event.objects.order_by('-date', '-start_time')
-	# return the list of people
-	return events
 
 def search_events(name='',event_type=0,event_category=0,ward=0,date_from=None,date_to=None):
 	# check whether we have any search terms, otherwise return all events
@@ -638,10 +608,6 @@ def add_counts_to_events(events):
 		event.participated_count = event.event_registration_set.filter(participated=True).count()
 	# return the results
 	return events
-
-def get_event_types():
-	# return a list of all the event type objects
-	return Event_Type.objects.all()
 
 def get_event_types_with_counts(date_from=0, date_to=0):
 	# return a list of all the event type objects, supplemented with counts
@@ -811,10 +777,6 @@ def get_areas_with_event_counts():
 	# return the results
 	return areas
 
-def get_ethnicities():
-	# return a list of all the ethnicity objects
-	return Ethnicity.objects.all()
-
 def get_ethnicity_list():
 	# return a list containing all of the ethnicity descriptions
 	ethnicity_list = []
@@ -826,10 +788,6 @@ def get_ethnicity_list():
 		ethnicity_list.append(ethnicity.description)
 	# return the list
 	return ethnicity_list
-
-def get_relationship_types():
-	# return a list of all the relationship type objects
-	return Relationship_Type.objects.all()
 
 def get_relationship(person_from, person_to):
 	# try to get a relationship
@@ -922,27 +880,19 @@ def get_answer_note(person,question):
 	# return the value
 	return answer_note
 
-def get_ABSS_types():
-	# return a list of all the ABSS type objects
-	return ABSS_Type.objects.all()
-
 def get_ABSS_types_with_counts():
-	# return a list of all the ABSS type objects, supplemented with counts
-	ABSS_types = get_ABSS_types()
-	# now go through the ABSS types
+	# define the list
+	ABSS_types = ABSS_Type.objects.all()
+	# go through the ABSS types
 	for ABSS_type in ABSS_types:
 		# get the count
 		ABSS_type.count = Person.objects.filter(ABSS_type=ABSS_type).count()
 	# return the results
 	return ABSS_types
 
-def get_age_statuses():
-	# return a list of all the ABSS type objects
-	return Age_Status.objects.all()
-
 def get_age_statuses_with_counts():
-	# return a list of all the ABSS type objects, supplemented with counts
-	age_statuses = get_age_statuses()
+	# define the list
+	age_statuses = Age_Status.objects.all()
 	# now go through the ABSS types
 	for age_status in age_statuses:
 		# get the count
@@ -1997,7 +1947,7 @@ def addperson(request):
 				# go to the profile of the person
 				return redirect('/profile/' + str(person.pk))
 		# otherwise see whether the person matches an existing person by name
-		matching_people = get_people_by_name(first_name,last_name)
+		matching_people = Person.objects.filter(first_name=first_name,last_name=last_name)
 		# if there aren't any matching people, also create the person
 		if not matching_people:
 			# create the person
@@ -2156,10 +2106,6 @@ def add_relationship(request,person_id=0):
 		return make_banner(request, 'Person does not exist.')
 	# get existing relationships
 	relationships_to = get_relationships_to(person)
-	# get relationship types
-	relationship_types = get_relationship_types()
-	# get role types
-	role_types = get_role_types()
 	# set the search results
 	search_results = []
 	# set a blank search_error
@@ -2434,8 +2380,6 @@ def address_to_relationships(request,person_id=0):
 
 @login_required
 def addevent(request):
-	# get the event types
-	event_types = get_event_types()
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation

@@ -3,7 +3,7 @@ from .django_extensions import DataAccessMixin
 
 # Family model: represents a family.
 # Has a many to many relationship with Person
-class Family(models.Model):
+class Family(DataAccessMixin,models.Model):
 	description = models.CharField(max_length=50)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
@@ -14,7 +14,7 @@ class Family(models.Model):
 
 # Ethnicity model: represents the list of valid ethnicities.
 # Has a one to many relationship with Person
-class Ethnicity(models.Model):
+class Ethnicity(DataAccessMixin,models.Model):
 	description = models.CharField(max_length=50)
 	# define the function that will return the ethnicity name as the object reference
 	def __str__(self):
@@ -25,7 +25,7 @@ class Ethnicity(models.Model):
 
 # Role_Type model: represents different types of role that a person can play, including staff, volunteer, parent, child ec.
 # This is reference data.
-class Role_Type(models.Model):
+class Role_Type(DataAccessMixin,models.Model):
 	role_type_name = models.CharField(max_length=50)
 	use_for_events = models.BooleanField(default=False)
 	use_for_people = models.BooleanField(default=False)
@@ -39,7 +39,7 @@ class Role_Type(models.Model):
 
 # ABSS type model: represents different types of relationship that a person can have with ABSS
 # This is reference data.
-class ABSS_Type(models.Model):
+class ABSS_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
@@ -50,7 +50,7 @@ class ABSS_Type(models.Model):
 
 # Age status type model: represents the person's status dependent on age (adult or child)
 # This is reference data.
-class Age_Status(models.Model):
+class Age_Status(DataAccessMixin,models.Model):
 	status = models.CharField(max_length=50)
 	role_types = models.ManyToManyField(Role_Type)
 	default_role_type = models.ForeignKey(Role_Type,
@@ -71,7 +71,7 @@ class Age_Status(models.Model):
 		verbose_name_plural = 'Age statuses'
 
 # Capture Type model: represents the way in which the person's details were captured
-class Capture_Type(models.Model):
+class Capture_Type(DataAccessMixin,models.Model):
 	capture_type_name = models.CharField(max_length=50)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
@@ -82,7 +82,7 @@ class Capture_Type(models.Model):
 
 # Children Centre model: represents Children Centres
 # This is reference data.
-class Children_Centre(models.Model):
+class Children_Centre(DataAccessMixin,models.Model):
 	children_centre_name = models.CharField(max_length=50)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
@@ -92,7 +92,7 @@ class Children_Centre(models.Model):
 		verbose_name_plural = 'children centres'
 
 # Area model: represents valid areeas (which contain wards)
-class Area(models.Model):
+class Area(DataAccessMixin,models.Model):
 	area_name = models.CharField(max_length=50)
 	use_for_events = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
@@ -103,7 +103,7 @@ class Area(models.Model):
 		verbose_name_plural = 'areas'
 
 # Wards model: represents valid wards (which contain post codes)
-class Ward(models.Model):
+class Ward(DataAccessMixin,models.Model):
 	ward_name = models.CharField(max_length=50)
 	area = models.ForeignKey(Area, default=1, on_delete=models.SET_DEFAULT)
 	# define the function that will return the person name as the object reference
@@ -114,7 +114,7 @@ class Ward(models.Model):
 		verbose_name_plural = 'wards'
 
 # Post Code model: represents valid post codes
-class Post_Code(models.Model):
+class Post_Code(DataAccessMixin,models.Model):
 	post_code = models.CharField(max_length=10)
 	ward = models.ForeignKey(Ward, default=1, on_delete=models.SET_DEFAULT)
 	# define the function that will return the person name as the object reference
@@ -125,7 +125,7 @@ class Post_Code(models.Model):
 		verbose_name_plural = 'post codes'
 
 # Street model: represents valid streets aligned to post codes
-class Street(models.Model):
+class Street(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=100)
 	post_code = models.ForeignKey(Post_Code, default=1, on_delete=models.SET_DEFAULT)
 	# define the function that will return the person name as the object reference
@@ -137,7 +137,7 @@ class Street(models.Model):
 
 # Event Type model: represents categories of event types.
 # This is reference data
-class Event_Category(models.Model):
+class Event_Category(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=500)
 	# define the function that will return the person name as the object reference
@@ -150,7 +150,7 @@ class Event_Category(models.Model):
 # Event Type model: represents types of events.
 # Types of events are further grouped into categories.
 # This is reference data
-class Event_Type(models.Model):
+class Event_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=500)
 	event_category = models.ForeignKey(Event_Category, default=1, on_delete=models.SET_DEFAULT)
@@ -162,7 +162,7 @@ class Event_Type(models.Model):
 		verbose_name_plural = 'event types'
 
 # Event model: represents events which people register for and attend
-class Event(DataAccessMixin, models.Model):
+class Event(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=500)
 	event_type = models.ForeignKey(Event_Type, default=1, on_delete=models.SET_DEFAULT)
@@ -181,7 +181,7 @@ class Event(DataAccessMixin, models.Model):
 		verbose_name_plural = 'events'
 
 # Question model: represents questions
-class Question(models.Model):
+class Question(DataAccessMixin,models.Model):
 	question_text = models.CharField(max_length=150)
 	notes = models.BooleanField(default=False)
 	notes_label = models.CharField(max_length=30, default='Notes')
@@ -193,7 +193,7 @@ class Question(models.Model):
 		verbose_name_plural = 'questions'
 
 # Option model: represents the options which can be used to answer a question
-class Option(models.Model):
+class Option(DataAccessMixin,models.Model):
 	option_label = models.CharField(max_length=50)
 	question = models.ForeignKey(Question, on_delete=models.CASCADE)
 	# define the function that will return the option label as the object reference
@@ -205,7 +205,7 @@ class Option(models.Model):
 
 # Person model: represents a participant in the Betterstart scheme.
 # A person may be an adult or a child.
-class Person(models.Model):
+class Person(DataAccessMixin,models.Model):
 	first_name = models.CharField(max_length=50)
 	middle_names = models.CharField(max_length=50, default='', blank=True)
 	last_name = models.CharField(max_length=50)
@@ -273,7 +273,7 @@ class Person(models.Model):
 
 # Relationship_Type model: represents different types of relationship
 # This is reference data.
-class Relationship_Type(models.Model):
+class Relationship_Type(DataAccessMixin,models.Model):
 	relationship_type = models.CharField(max_length=50)
 	relationship_counterpart = models.CharField(max_length=50)
 	# define the function that will return the person name as the object reference
@@ -285,7 +285,7 @@ class Relationship_Type(models.Model):
 
 # Relationship model: represents a relationship between two people.
 # This is an intermediate model for a many to many relationship between two Person objects.
-class Relationship(models.Model):
+class Relationship(DataAccessMixin,models.Model):
 	relationship_from = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='rel_from')
 	relationship_to = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='rel_to')
 	relationship_type = models.ForeignKey(Relationship_Type, on_delete=models.CASCADE)
@@ -373,7 +373,7 @@ class Relationship(models.Model):
 
 # Trained Role model: records that a person is trained to play a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role
-class Trained_Role(models.Model):
+class Trained_Role(DataAccessMixin,models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
 	active = models.BooleanField(default=False)
@@ -393,7 +393,7 @@ class Trained_Role(models.Model):
 
 # Role history model: records that a person has played a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role
-class Role_History(models.Model):
+class Role_History(DataAccessMixin,models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
 	started = models.DateTimeField(auto_now_add=True)
@@ -406,7 +406,7 @@ class Role_History(models.Model):
 		verbose_name_plural = 'role histories'
 
 # CC Registration model: records that a person is registered at a Children Centre
-class CC_Registration(models.Model):
+class CC_Registration(DataAccessMixin,models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	children_centre = models.ForeignKey(Children_Centre, on_delete=models.CASCADE)
 	registration_date = models.DateField()
@@ -419,7 +419,7 @@ class CC_Registration(models.Model):
 		verbose_name_plural = 'children centre registrations'
 
 # Event Registration: records that a person registered for or participated in an event.
-class Event_Registration(models.Model):
+class Event_Registration(DataAccessMixin,models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	event = models.ForeignKey(Event, on_delete=models.CASCADE)
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
@@ -447,7 +447,7 @@ class Event_Registration(models.Model):
 		verbose_name_plural = 'event registrations'
 
 # Answer model: represents the answer to a question, using an option
-class Answer(models.Model):
+class Answer(DataAccessMixin,models.Model):
 	option = models.ForeignKey(Option, on_delete=models.CASCADE)
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -459,7 +459,7 @@ class Answer(models.Model):
 		verbose_name_plural = 'answers'
 
 # Answer note model: adds supplementary notes to a question
-class Answer_Note(models.Model):
+class Answer_Note(DataAccessMixin,models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	question = models.ForeignKey(Question, on_delete=models.CASCADE)
 	notes = models.TextField(max_length=500, default='', blank=True)

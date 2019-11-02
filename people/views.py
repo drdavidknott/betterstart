@@ -2477,7 +2477,7 @@ def event(request, event_id=0):
 	# load the template
 	event_template = loader.get_template('people/event.html')
 	# get the event
-	event = try_to_get(Event,pk=event_id)
+	event = Event.try_to_get(pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
@@ -2632,7 +2632,7 @@ def events(request):
 @login_required
 def edit_event(request, event_id=0):
 	# try to get the event
-	event = try_to_get(Event,pk=event_id)
+	event = Event.try_to_get(pk=event_id)
 	# if there isn't an event, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
@@ -2751,7 +2751,7 @@ def event_registration(request,event_id=0):
 	# load the template
 	event_registration_template = loader.get_template('people/event_registration.html')
 	# get the event
-	event = try_to_get(Event,pk=event_id)
+	event = Event.try_to_get(pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')

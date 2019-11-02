@@ -1,4 +1,5 @@
 from django.db import models
+from .django_extensions import DataAccessMixin
 
 # Family model: represents a family.
 # Has a many to many relationship with Person
@@ -161,7 +162,7 @@ class Event_Type(models.Model):
 		verbose_name_plural = 'event types'
 
 # Event model: represents events which people register for and attend
-class Event(models.Model):
+class Event(DataAccessMixin, models.Model):
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=500)
 	event_type = models.ForeignKey(Event_Type, default=1, on_delete=models.SET_DEFAULT)

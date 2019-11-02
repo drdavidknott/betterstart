@@ -1283,3 +1283,278 @@ class Options_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Option: ' + record['question'] + ' - ' + record['option_label']
+
+class Answers_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Answers_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Answer
+		# set the file fields
+		self.first_name = File_Field(
+										name='first_name',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
+		self.age_status = File_Field(
+									name='age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True,
+									set_download_from_object=False
+									)
+		self.question = File_Field(
+										name='question',
+										mandatory=True,
+										corresponding_model=Question,
+										corresponding_must_exist=True,
+										corresponding_field='question_text',
+										use_corresponding_for_download=True
+										)
+		self.option = File_Field(
+										name='option',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_field='option_label',
+										corresponding_relationship_field='option'
+										)
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'age_status',
+						'question',
+						'option'
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether the option already exists
+		if self.question.valid:
+			# check whether the option is valid
+			try:
+				# get the option
+				self.option.value = Option.objects.get(
+														question = self.question.value,
+														option_label = self.option.value
+														)
+			# deal with the exception
+			except (Option.DoesNotExist):
+				# append the error message
+				self.add_record_results(record,[' not created: option does not exist'])
+				# and set the flag
+				valid = False
+				# and the option flag
+				self.option.valid = False
+			# and with multiple records
+			except (Option.MultipleObjectsReturned):
+				# append the error message
+				self.add_record_results(record,[' not created: multiple matching options exist'])
+				# and set the flag
+				valid = False
+				# and the option flag
+				self.option.valid = False
+		# check whether we have a valid age status
+		if self.age_status.valid:
+			# check whether the person exists
+			error = Person.check_person_by_name_and_age_status(
+															first_name = self.first_name.value,
+															last_name = self.last_name.value,
+															age_status = self.age_status.value
+														)
+			# if there was an error, add it
+			if error:
+				# append the error message
+				self.add_record_results(record,[' not created: person' + error])
+				# and set the flag
+				valid = False
+			# otherwise, check whether we have a duplicate
+			elif self.question.valid and self.option.valid:
+				# start by getting the person
+				person = Person.objects.get(
+											first_name = self.first_name.value,
+											last_name = self.last_name.value,
+											age_status = self.age_status.value
+											)
+				# now check whether the answer already exists
+				if Answer.objects.filter(
+											person = person,
+											question = self.question.value,
+											option = self.option.value
+										).exists():
+					# set the error message
+					self.add_record_results(record,[' not created: answer already exists.'])
+					# and the flag
+					valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# get the records, starting with the person
+		person = Person.objects.get(
+									first_name = self.first_name.value,
+									last_name = self.last_name.value,
+									age_status = self.age_status.value
+									)
+		# create the object
+		answer = Answer(
+						person = person,
+						question = self.question.value,
+						option = self.option.value
+						)
+		# save the record
+		answer.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+		# return the created record
+		return answer
+
+	def set_download_fields(self,answer):
+		# call the built in field setter
+		super(Answers_File_Handler, self).set_download_fields(answer)
+		# set the special fields
+		self.age_status.value = answer.person.age_status.status
+
+	def label(self,record):
+		# return the label
+		return 'Answer: ' + str(record['first_name']) + ' ' + str(record['last_name']) \
+							+ ' (' + str(record['age_status']) + ')' \
+							+ ' - ' + record['question'] + ' - ' + record['option']
+
+class Answer_Notes_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Answer_Notes_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Answer_Note
+		# set the file fields
+		self.first_name = File_Field(
+										name='first_name',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
+		self.age_status = File_Field(
+									name='age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True,
+									set_download_from_object=False
+									)
+		self.question = File_Field(
+										name='question',
+										mandatory=True,
+										corresponding_model=Question,
+										corresponding_must_exist=True,
+										corresponding_field='question_text',
+										use_corresponding_for_download=True
+										)
+		self.notes = File_Field(
+										name='notes',
+										mandatory=True
+										)
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'age_status',
+						'question',
+						'notes'
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether we have a valid age status
+		if self.age_status.valid:
+			# check whether the person exists
+			error = Person.check_person_by_name_and_age_status(
+															first_name = self.first_name.value,
+															last_name = self.last_name.value,
+															age_status = self.age_status.value
+														)
+			# if there was an error, add it
+			if error:
+				# append the error message
+				self.add_record_results(record,[' not created: person' + error])
+				# and set the flag
+				valid = False
+			# otherwise, do the other checks
+			elif self.question.valid:
+				# start by getting the person
+				person = Person.objects.get(
+											first_name = self.first_name.value,
+											last_name = self.last_name.value,
+											age_status = self.age_status.value
+											)
+				# chec whether we have at least one answer
+				if not Answer.objects.filter(
+												person = person,
+												question = self.question.value
+												).exists():
+					# set the error message
+					self.add_record_results(record,['not created: person has not answered this question.'])
+					# and the flag
+					valid = False
+				# now check whether notes already exist
+				if Answer_Note.objects.filter(
+												person = person,
+												question = self.question.value
+												).exists():
+					# set the error message
+					self.add_record_results(record,[' not created: answer note already exists.'])
+					# and the flag
+					valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# get the records, starting with the person
+		person = Person.objects.get(
+									first_name = self.first_name.value,
+									last_name = self.last_name.value,
+									age_status = self.age_status.value
+									)
+		# create the object
+		answer_note = Answer_Note(
+									person = person,
+									question = self.question.value,
+									notes = self.notes.value
+									)
+		# save the record
+		answer_note.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+		# return the created record
+		return answer_note
+
+	def set_download_fields(self,answer):
+		# call the built in field setter
+		super(Answer_Notes_File_Handler, self).set_download_fields(answer)
+		# set the special fields
+		self.age_status.value = answer.person.age_status.status
+
+	def label(self,record):
+		# return the label
+		return 'Answer Note: ' + str(record['first_name']) + ' ' + str(record['last_name']) \
+							+ ' (' + str(record['age_status']) + ')' \
+							+ ' - ' + record['question'] + ' - ' + record['notes']
+

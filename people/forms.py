@@ -62,6 +62,8 @@ class UploadDataForm(forms.Form):
 							('Registrations','Registrations'),
 							('Questions','Questions'),
 							('Options','Options'),
+							('Answers','Answers'),
+							('Answer Notes','Answer Notes'),
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(
@@ -81,6 +83,8 @@ class DownloadDataForm(forms.Form):
 							('Registrations','Registrations'),
 							('Questions','Questions'),
 							('Options','Options'),
+							('Answers','Answers'),
+							('Answer Notes','Answer Notes'),
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

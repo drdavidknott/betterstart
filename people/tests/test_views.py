@@ -7413,3 +7413,511 @@ class DownloadRegistrationsDataViewTest(TestCase):
 		self.assertContains(response,'test_adult_1,test_adult_1,Adult,test_event_0,01/01/2019,True,True,test_role_type')
 		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,False,test_role_type')
 
+class UploadDownloadAnswersViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')		
+
+	def test_upload_answers_with_errors(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers_with_errors.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'missing first name (Adult) - test question with notes - test label not created: mandatory field first_name not provided')
+		self.assertContains(response,'missing last name  (Adult) - test question with notes - test label not created: mandatory field last_name not provided')
+		self.assertContains(response,'missing age status last name () - test question with notes - test label not created: mandatory field age_status not provided')
+		self.assertContains(response,'missing question last name (Adult) -  - test label not created: mandatory field question not provided')
+		self.assertContains(response,'missing option last name (Adult) - test question with notes -  not created: mandatory field option not provided')
+		self.assertContains(response,'person does not exist last name (Adult) - test question with notes - test label not created: person does not exist')
+		self.assertContains(response,'age status does not exist last name (invalid age status) - test question with notes - test label not created: Age_Status invalid age status does not exist')
+		self.assertContains(response,'question does not exist last name (Adult) - invalid question - test label not created: Question invalid question does not exist')
+		self.assertContains(response,'option does not exist last name (Adult) - test question with notes - invalid label not created: option does not exist')
+
+	def test_upload_answers(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+
+	def test_upload_answers_duplicate(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# and go again
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error
+		self.assertContains(response,'test_adult_0 test_adult_0 (Adult) - test question with notes - test label not created: answer already exists')
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+
+	def test_download_answers(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+		# download the answer data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test label')
+
+class UploadDownloadAnswerNotesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')		
+
+	def test_upload_answer_notes_with_errors(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answer_notes_with_errors.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'missing first name (Adult) - test question with notes - test notes not created: mandatory field first_name not provided')
+		self.assertContains(response,'missing last name  (Adult) - test question with notes - test notes not created: mandatory field last_name not provided')
+		self.assertContains(response,'missing age status last name () - test question with notes - test notes not created: mandatory field age_status not provided')
+		self.assertContains(response,'missing question last name (Adult) -  - test notes not created: mandatory field question not provided')
+		self.assertContains(response,'missing notes last name (Adult) - test question with notes -  not created: mandatory field notes not provided')
+		self.assertContains(response,'person does not exist last name (Adult) - test question with notes - test notes not created: person does not exist')
+		self.assertContains(response,'age status does not exist last name (invalid age status) - test question with notes - test notes not created: Age_Status invalid age status does not exist')
+		self.assertContains(response,'question does not exist last name (Adult) - invalid question - test notes not created: Question invalid question does not exist')
+		self.assertContains(response,'test_adult_0 test_adult_0 (Adult) - test question with notes - test notes not created: person has not answered this question')
+
+	def test_upload_answer_notes(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answer_notes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		# get the answer
+		answer_note = Answer_Note.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer_note.notes,'test notes')
+		# and that we only have one record
+		self.assertEqual(Answer_Note.objects.all().count(),1)
+
+	def test_upload_answer_notes_duplicate(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answer_notes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		# get the answer
+		answer_note = Answer_Note.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer_note.notes,'test notes')
+		# and that we only have one record
+		self.assertEqual(Answer_Note.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# and go again
+		# open the file
+		valid_file = open('people/tests/data/answer_notes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error
+		self.assertContains(response,'test_adult_0 test_adult_0 (Adult) - test question with notes - test notes not created: answer note already exists')
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+
+	def test_download_answer_notes(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answer_notes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# download the answer note data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test notes')
+
+

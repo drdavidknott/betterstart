@@ -27,7 +27,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Wards_File_Handler, Post_Codes_File_Handler, Streets_File_Handler, \
 							Role_Types_File_Handler, File_Handler, Relationship_Types_File_Handler, \
 							People_File_Handler, Relationships_File_Handler, Events_File_Handler, \
-							Registrations_File_Handler, Questions_File_Handler
+							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler
 
 @login_required
 def index(request):
@@ -2965,7 +2965,8 @@ def uploaddata(request):
 						'Relationships' : Relationships_File_Handler,
 						'Events' : Events_File_Handler,
 						'Registrations' : Registrations_File_Handler,
-						'Questions' : Questions_File_Handler
+						'Questions' : Questions_File_Handler,
+						'Options' : Options_File_Handler,
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -3027,7 +3028,8 @@ def downloaddata(request):
 						'Relationships' : Relationships_File_Handler,
 						'Events' : Events_File_Handler,
 						'Registrations' : Registrations_File_Handler,
-						'Questions' : Questions_File_Handler
+						'Questions' : Questions_File_Handler,
+						'Options' : Options_File_Handler
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':

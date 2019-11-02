@@ -6007,7 +6007,7 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'missing notes not created: mandatory field notes not provided')
 		self.assertContains(response,'notes with no label not created: questions has notes but no notes label')
 		# check that no records have been created
-		self.assertFalse(Person.objects.all().exists())
+		self.assertFalse(Question.objects.all().exists())
 
 	def test_upload_questions(self):
 		# log the user in as a superuser
@@ -6077,6 +6077,201 @@ class UploadDataViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'test question with notes,True,test label')
 		self.assertContains(response,'test question without notes,False,')
+
+	def test_upload_options_with_errors(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/options_with_errors.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'- missing question not created: mandatory field question not provided')
+		self.assertContains(response,'missing label -  not created: mandatory field option_label not provided')
+		self.assertContains(response,'question does not exist - test label not created: Question question does not exist does not exist')
+		# check that no records have been created
+		self.assertFalse(Option.objects.all().exists())
+
+	def test_upload_options(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes created')
+		self.assertContains(response,'test question without notes created')
+		# get the records
+		question_with_notes = Question.objects.get(question_text='test question with notes')
+		question_without_notes = Question.objects.get(question_text='test question without notes')
+		# check the records
+		self.assertEqual(question_with_notes.notes,True)
+		self.assertEqual(question_with_notes.notes_label,'test label')
+		self.assertEqual(question_without_notes.notes,False)
+		self.assertEqual(question_without_notes.notes_label,'')
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes - test label created')
+		# test that the record exists
+		self.assertTrue(Option.objects.filter(question__question_text='test question with notes',option_label='test label').exists())
+		# check that there is only one record
+		self.assertEqual(Option.objects.all().count(),1)
+
+	def test_upload_options_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes created')
+		self.assertContains(response,'test question without notes created')
+		# get the records
+		question_with_notes = Question.objects.get(question_text='test question with notes')
+		question_without_notes = Question.objects.get(question_text='test question without notes')
+		# check the records
+		self.assertEqual(question_with_notes.notes,True)
+		self.assertEqual(question_with_notes.notes_label,'test label')
+		self.assertEqual(question_without_notes.notes,False)
+		self.assertEqual(question_without_notes.notes_label,'')
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes - test label created')
+		# test that the record exists
+		self.assertTrue(Option.objects.filter(question__question_text='test question with notes',option_label='test label').exists())
+		# check that there is only one record
+		self.assertEqual(Option.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# now try it again
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes - test label not created: option already exists')
+		# check that there is only one record
+		self.assertEqual(Option.objects.all().count(),1)
+
+	def test_download_options(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes created')
+		self.assertContains(response,'test question without notes created')
+		# get the records
+		question_with_notes = Question.objects.get(question_text='test question with notes')
+		question_without_notes = Question.objects.get(question_text='test question without notes')
+		# check the records
+		self.assertEqual(question_with_notes.notes,True)
+		self.assertEqual(question_with_notes.notes_label,'test label')
+		self.assertEqual(question_without_notes.notes,False)
+		self.assertEqual(question_without_notes.notes_label,'')
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes - test label created')
+		# test that the record exists
+		self.assertTrue(Option.objects.filter(question__question_text='test question with notes',option_label='test label').exists())
+		# check that there is only one record
+		self.assertEqual(Option.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# download the option data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Options',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes,test label')
 
 class UploadPeopleDataViewTest(TestCase):
 	@classmethod

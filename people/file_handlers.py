@@ -1242,3 +1242,44 @@ class Questions_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return 'Question: ' + record['question_text']
+
+class Options_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Options_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Option
+		# set the file fields
+		self.question = File_Field(
+										name='question',
+										mandatory=True,
+										corresponding_model=Question,
+										corresponding_must_exist=True,
+										corresponding_field='question_text',
+										use_corresponding_for_download=True
+										)
+		self.option_label = File_Field(name='option_label',mandatory=True)
+		# and a list of the fields
+		self.fields = ['question','option_label']
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether the option exists
+		if self.question.valid and self.option_label.valid:
+			# try to get the option
+			if Option.objects.filter(
+										question = self.question.value,
+										option_label = self.option_label.value
+										).exists():
+				# set the error
+				self.add_record_results(record,[' not created: option already exists.'])
+				# and the flag
+				valid = False
+		# return the result
+		return valid
+
+	def label(self,record):
+		# return the label
+		return 'Option: ' + record['question'] + ' - ' + record['option_label']

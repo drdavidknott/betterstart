@@ -228,12 +228,18 @@ class File_Delimited_List_Field(File_Field):
 
 class File_Boolean_Field(File_Field):
 	# this class defines a field within a file of datetime format
+	# over-ride the built in __init__ method to add additional values
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(File_Boolean_Field, self).__init__(*args, **kwargs)
+		# and set the attributes
+		self.true_values = ['True','true','TRUE','yes','Yes','YES']
 
 	def validate_upload_value(self,*args,**kwargs):
 		# call the built in validator
 		super(File_Boolean_Field, self).validate_upload_value(*args, **kwargs)
 		# set the value
-		self.value = (self.value == 'True')
+		self.value = (self.value in self.true_values)
 
 class File_Handler():
 	# this class handles upload and download functions for a file, as well as validation

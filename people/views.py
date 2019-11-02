@@ -3026,7 +3026,8 @@ def downloaddata(request):
 						'People' : People_File_Handler,
 						'Relationships' : Relationships_File_Handler,
 						'Events' : Events_File_Handler,
-						'Registrations' : Registrations_File_Handler
+						'Registrations' : Registrations_File_Handler,
+						'Questions' : Questions_File_Handler
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -3071,3 +3072,7 @@ def downloaddata(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(download_data_template.render(context=context, request=request))
+
+
+
+

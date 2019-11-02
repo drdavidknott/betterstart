@@ -6036,6 +6036,48 @@ class UploadDataViewTest(TestCase):
 		self.assertEqual(question_without_notes.notes,False)
 		self.assertEqual(question_without_notes.notes_label,'')
 
+	def test_download_questions(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes created')
+		self.assertContains(response,'test question without notes created')
+		# get the records
+		question_with_notes = Question.objects.get(question_text='test question with notes')
+		question_without_notes = Question.objects.get(question_text='test question without notes')
+		# check the records
+		self.assertEqual(question_with_notes.notes,True)
+		self.assertEqual(question_with_notes.notes_label,'test label')
+		self.assertEqual(question_without_notes.notes,False)
+		self.assertEqual(question_without_notes.notes_label,'')
+		# close the file
+		valid_file.close()
+		# download the question data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test question with notes,True,test label')
+		self.assertContains(response,'test question without notes,False,')
+
 class UploadPeopleDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

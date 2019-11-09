@@ -1229,7 +1229,7 @@ def build_answer(request, person, question_id, option_id):
 	# check that we have a valid option
 	if option_id != 0:
 		# get the option
-		option = try_to_get(Option,pk=option_id)
+		option = Option.try_to_get(pk=option_id)
 		# deal with exceptions if we didn't get an option
 		if not option:
 			# set the error
@@ -1273,7 +1273,7 @@ def build_answer(request, person, question_id, option_id):
 
 def build_answer_note(request, person, question_id, notes):
 	# attempt to get the question
-	question = try_to_get(Question,pk=question_id)
+	question = Question.try_to_get(pk=question_id)
 	# deal with exceptions if we didn't get a question
 	if not question:
 		# set the error
@@ -1340,7 +1340,7 @@ def update_person(
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
 	# attempt to get the ethnicity
-	ethnicity = try_to_get(Ethnicity,pk=ethnicity_id)
+	ethnicity = Ethnicity.try_to_get(pk=ethnicity_id)
 	# set the value for the person
 	if ethnicity:
 		# set the value
@@ -1350,7 +1350,7 @@ def update_person(
 		# set the message
 		messages.error(request, 'Ethnicity does not exist.')
 	# attempt to get the ABSS type
-	ABSS_type = try_to_get(ABSS_Type,pk=ABSS_type_id)
+	ABSS_type = ABSS_Type.try_to_get(pk=ABSS_type_id)
 	# set the value for the person
 	if ABSS_type:
 		# set the value
@@ -1370,7 +1370,7 @@ def update_person(
 		# set the message
 		messages.error(request, 'Age Status does not exist.')
 	# attempt to get the role type
-	default_role = try_to_get(Role_Type,pk=default_role_id)
+	default_role = Role_Type.try_to_get(pk=default_role_id)
 	# set the value for the person
 	if default_role:
 		# check whether the role has changed
@@ -1423,7 +1423,7 @@ def update_address(
 	# set the success flag
 	success = False
 	# attempt to get the street
-	street = try_to_get(Street,pk=street_id)
+	street = Street.try_to_get(pk=street_id)
 	# set the value for the person
 	if street:
 		# set the value
@@ -2154,7 +2154,7 @@ def add_relationship(request,person_id=0):
 				# check whether this is a relevant field
 				if field_name.startswith('relationship_type'):
 					# try to find a person using the id at the end of the field name
-					person_to = try_to_get(Person,pk=int(extract_id(field_name)))
+					person_to = Person.try_to_get(pk=int(extract_id(field_name)))
 					# if we got a person, edit the relationship
 					if person_to:
 						# edit the relationship
@@ -2597,7 +2597,7 @@ def edit_event(request, event_id=0):
 			event.start_time = editeventform.cleaned_data['start_time']
 			event.end_time = editeventform.cleaned_data['end_time']
 			# attempt to get the event type
-			event_type = try_to_get(Event_Type,pk=editeventform.cleaned_data['event_type'])
+			event_type = Event_Type.try_to_get(pk=editeventform.cleaned_data['event_type'])
 			# set the value for the event
 			if event_type:
 				# set the value
@@ -2611,7 +2611,7 @@ def edit_event(request, event_id=0):
 			# check whether we have a ward id
 			if ward_id != '0':
 				# get the ward
-				ward = try_to_get(Ward,pk=ward_id)
+				ward = Ward.try_to_get(pk=ward_id)
 				# set the value for the event
 				if ward:
 					# set the value

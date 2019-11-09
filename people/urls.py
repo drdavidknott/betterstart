@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^role_type/(?P<id>[0-9]+)$', views.people_query, name='role_type'),
     url(r'^ABSS_type/(?P<id>[0-9]+)$', views.people_query, name='ABSS_type'),
     url(r'^age_status/(?P<id>[0-9]+)$', views.people_query, name='age_status'),
+    url(r'^ward/(?P<id>[0-9]+)$', views.people_query, name='ward'),
     url(r'^trained_role/(?P<id>[\w]+)$', views.people_query, name='trained_role'),
     url(r'^event/(?P<event_id>[0-9]+)$', views.event, name='event'),
     url(r'^event_type/(?P<event_group>[0-9]+)$', views.event_group, name='event_type'),

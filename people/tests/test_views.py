@@ -1797,6 +1797,36 @@ class PeopleQueryTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
 
+	def test_ward_search(self):
+		# create some extra people
+		set_up_test_people('test_ward',role_type='test_role_type',number=30)
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC',number=1)
+		# and a bunch of streets
+		set_up_test_streets('ABC street ','ABC0',number=1)
+		# get the street
+		street = Street.objects.get(name='ABC street 0')
+		# set up the addresses for the people
+		for person in Person.objects.filter(first_name__startswith='test_ward'):
+			# set the street
+			person.street = street
+			# save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.get(reverse('ward',args=[str(Ward.objects.get(ward_name='Test ward').pk)]))
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
 class EventsViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

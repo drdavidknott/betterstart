@@ -306,6 +306,8 @@ def index(request):
 															column_names = ['counts'],
 															rows = get_wards_with_people_counts(),
 															row_name = 'ward_name',
+															row_url = 'ward',
+															row_parameter_name='pk',
 															row_values = ['count'],
 															totals = True,
 															label_width = 8,

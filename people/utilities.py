@@ -38,6 +38,13 @@ def make_banner(request, banner_text):
 	# return the output
 	return banner
 
+# function to extract an id number from the end of an underscore delimited string
+def extract_id(field_name):
+	# build a list from the string
+	name_elements = field_name.split('_')
+	# now return the final element
+	return name_elements[-1]
+
 class Dashboard_Panel_Row():
 	# this class contains the data and structure for a row
 	def __init__(self, label, values, url=False, parameter=0):

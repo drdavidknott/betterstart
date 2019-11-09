@@ -14,7 +14,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm
-from .utilities import get_page_list, make_banner
+from .utilities import get_page_list, make_banner, extract_id
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -341,18 +341,6 @@ def index(request):
 # A set of functions which carry out simple and complex data access, filtering and updates.
 # These functions are kept as simple as possible.
 
-def try_to_get(cls,**kwargs):
-	# try to get a record using get, and return false if unsuccessful
-	try:
-		# attempt to get the record
-		result = cls.objects.get(**kwargs)
-	# now deal with the exception
-	except (cls.DoesNotExist):
-		# set the result to false
-		result = False
-	# return the result
-	return result
-
 def get_relationships_to(person):
 	# this function gets all the Person objects via the relationship_to relationship from Perso
 	# it returns a list of people with realtionship type added
@@ -421,56 +409,6 @@ def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
 		error = ' duplicate with name and age status.'
 	# return the errors
 	return error
-
-def people_search(
-					first_name='',
-					last_name='',
-					role_type='0',
-					ABSS_type='0',
-					age_status='0',
-					trained_role='none'):
-	# get all people
-	people = Person.objects.all()
-	# check whether we have a first name
-	if first_name:
-		# filter by the name
-		people = people.filter(first_name__icontains=first_name)
-	# check whether we have a last name
-	if last_name:
-		# filter by the name
-		people = people.filter(last_name__icontains=last_name)
-	# if we have a role type, filter by the role type
-	if role_type != '0':
-		# do the filter
-		people = people.filter(default_role_id=int(role_type))
-	# if we have an ABSS type, filter by the ABSS type
-	if ABSS_type != '0':
-		# do the filter
-		people = people.filter(ABSS_type_id=int(ABSS_type))
-	# if we have an age status, filter by the age status
-	if age_status != '0':
-		# do the filter
-		people = people.filter(age_status_id=int(age_status))
-	# if we have an age status, filter by the age status
-	if age_status != '0':
-		# do the filter
-		people = people.filter(age_status_id=int(age_status))
-	# if we have a trained role, filter by the trained role
-	if trained_role != 'none':
-		# get the role type
-		role_type = Role_Type.objects.get(pk=int(extract_id(trained_role)))
-		# do the filter
-		people = people.filter(trained_roles=role_type)
-		# and check whether we want active only
-		if 'active' in trained_role:
-			# got through the people
-			for person in people:
-				# attempt to get the active record
-				if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
-					# exclude the person
-					people = people.exclude(pk=person.pk)
-	# return the list of people
-	return people
 
 def get_parents_without_children():
 	# create an empty list
@@ -567,37 +505,6 @@ def get_streets_by_name_and_post_code(name='',post_code=''):
 		streets = streets.filter(post_code__post_code__icontains=post_code)
 	# return the results
 	return streets
-
-def search_events(name='',event_type=0,event_category=0,ward=0,date_from=None,date_to=None):
-	# check whether we have any search terms, otherwise return all events
-	# start by getting all the events
-	events = Event.objects.all()
-	# now filter by name if we have a name
-	if name:
-		# filter by name
-		events = events.filter(name__icontains=name)
-	# if we have a from date, filter by that date
-	if date_from != None:
-		# filter by date
-		events = events.filter(date__gte=date_from)
-	# if we have a to date, filter by that date
-	if date_to != None:
-		# filter by date
-		events = events.filter(date__lte=date_to)
-	# if we have a type, filter by that
-	if event_type != 0:
-		# filter by type
-		events = events.filter(event_type_id=event_type)
-	# if we have a category, filter by that
-	if event_category != 0:
-		# filter by type
-		events = events.filter(event_type__event_category_id=event_category)
-	# if we have a ward, filter by that
-	if ward != 0:
-		# filter by type
-		events = events.filter(ward_id=ward)
-	# return the list of events
-	return events
 
 def add_counts_to_events(events):
 	# take a list of events, and add the count of participated and volunteered numbers to them
@@ -697,21 +604,6 @@ def get_event_categories_with_counts(date_from=0, date_to=0):
 def get_event_registrations(event):
 	# return a list of registrations for an event
 	return event.event_registration_set.all()
-
-def get_registration(person, event):
-	# try to get a registration
-	try:
-		# do the database query
-		event_registration = Event_Registration.objects.get(
-																person=person,
-																event=event
-															)
-	# handle the exception
-	except Event_Registration.DoesNotExist:
-		# set a false value
-		event_registration = False
-	# return the value
-	return event_registration
 
 def get_role_types(events_or_people='all'):
 	# get a list of the role type objects
@@ -826,10 +718,10 @@ def get_questions_and_answers(person):
 		# and default answer test
 		question.answer_text = 'No answer'
 		# now try to get an answer
-		answer = get_answer(
-							person=person,
-							question=question
-							)
+		answer = Answer.try_to_get(
+									person=person,
+									question=question
+									)
 		# check whether we got an answer
 		if answer:
 			# set the answer
@@ -839,46 +731,16 @@ def get_questions_and_answers(person):
 		# set a default note
 		question.note = ''
 		# now try to get an answer note
-		answer_note = get_answer_note(
-										person=person,
-										question=question
-										)
+		answer_note = Answer_Note.try_to_get(
+											person=person,
+											question=question
+											)
 		# check whether we got an answer note
 		if answer_note:
 			# set the answer
 			question.note = answer_note.notes
 	# return the results
 	return questions
-
-def get_answer(person,question):
-	# try to get an answer
-	try:
-		# do the database query
-		answer = Answer.objects.get(
-									person=person,
-									question=question
-									)
-	# handle the exception
-	except Answer.DoesNotExist:
-		# set a false value
-		answer = False
-	# return the value
-	return answer
-
-def get_answer_note(person,question):
-	# try to get an answer note
-	try:
-		# do the database query
-		answer_note = Answer_Note.objects.get(
-												person=person,
-												question=question
-												)
-	# handle the exception
-	except Answer_Note.DoesNotExist:
-		# set a false value
-		answer_note = False
-	# return the value
-	return answer_note
 
 def get_ABSS_types_with_counts():
 	# define the list
@@ -1153,7 +1015,7 @@ def build_registration(request, event, person_id, registered, participated, role
 		# and return
 		return False
 	# now attempt to get the registration
-	registration = get_registration(person,event)
+	registration = Event_Registration.try_to_get(person=person,event=event)
 	# check whether we got a registration or not
 	if not registration:
 		# create the registration
@@ -1198,10 +1060,10 @@ def remove_registration(request, event, person_id):
 		# and return
 		return False
 	# now attempt to get the registration
-	registration = get_registration(
-									person=person,
-									event=event
-									)
+	registration = Event_Registration.try_to_get(
+													person=person,
+													event=event
+													)
 	# check whether we got the registration or not
 	if registration:
 		# preserve the name
@@ -1237,7 +1099,7 @@ def build_answer(request, person, question_id, option_id):
 			# and crash out
 			return False
 	# see whether we have an answer
-	answer = get_answer(person,question)
+	answer = Answer.try_to_get(person=person,question=question)
 	# if we got an answer, check what we have been asked to do to it
 	if answer:
 		# see whether we have an option id
@@ -1281,7 +1143,7 @@ def build_answer_note(request, person, question_id, notes):
 		# and crash out
 		return False
 	# see whether we have an answer note
-	answer_note = get_answer_note(person,question)
+	answer_note = Answer_Note.try_to_get(person=person,question=question)
 	# if we got an answer note, check what we have been asked to do to it
 	if answer_note:
 		# see whether we have any text
@@ -1500,13 +1362,6 @@ def build_trained_role(person,role_type_id,trained_status):
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
-# function to extract an id number from the end of an underscore delimited string
-def extract_id(field_name):
-	# build a list from the string
-	name_elements = field_name.split('_')
-	# now return the final element
-	return name_elements[-1]
-
 def remove_existing_relationships(person_from, people):
 	# this function takes a person and a list of people, and returns a list of only those people who do
 	# not have an existing relationship
@@ -1552,7 +1407,7 @@ def remove_existing_registrations(event, people):
 	# now got through the list
 	for person in people:
 		# attempt to get the residence
-		if not get_registration(person,event):
+		if not Event_Registration.try_to_get(person=person,event=event):
 			# add the address to the list
 			people_without_existing_registrations.append(person)
 	# return the list
@@ -1769,14 +1624,14 @@ def people(request):
 			age_status = personsearchform.cleaned_data['age_status']
 			trained_role = personsearchform.cleaned_data['trained_role']
 			# conduct a search
-			people = people_search(
-													first_name=first_name,
-													last_name=last_name,
-													role_type=role_type,
-													ABSS_type=ABSS_type,
-													age_status=age_status,
-													trained_role=trained_role
-													)
+			people = Person.search(
+									first_name__icontains=first_name,
+									last_name__icontains=last_name,
+									default_role_id=role_type,
+									ABSS_type_id=ABSS_type,
+									age_status_id=age_status,
+									trained_role=trained_role
+									)
 			# figure out how many people we got
 			number_of_people = len(people)
 			# get the page number
@@ -2124,7 +1979,10 @@ def add_relationship(request,person_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = people_search(first_name,last_name)
+				people = Person.search(
+										first_name__icontains=first_name,
+										last_name__icontains=last_name
+										)
 				# remove the people who already have a relationship
 				search_results = remove_existing_relationships(person, people)
 				# if there are search results, create a form to create relationships from the search results
@@ -2526,12 +2384,12 @@ def events(request):
 				event_category = eventsearchform.cleaned_data['event_category']
 				ward = eventsearchform.cleaned_data['ward']
 				# conduct a search
-				events = search_events(
+				events = Event.search(
 										name=name,
-										date_from=date_from,
-										date_to=date_to,
-										event_type=int(event_type),
-										event_category=int(event_category),
+										date__gte=date_from,
+										date__lte=date_to,
+										event_type_id=int(event_type),
+										event_type__event_category_id=int(event_category),
 										ward=int(ward)
 										)
 				# set the number of results
@@ -2730,7 +2588,10 @@ def event_registration(request,event_id=0):
 			# if neither name is blank, do the search
 			if first_name or last_name:
 				# conduct a search
-				people = people_search(first_name,last_name)
+				people = Person.search(
+										first_name__icontains=first_name,
+										last_name__icontains=last_name
+										)
 				# remove the people who already have a registration
 				search_results = remove_existing_registrations(event, people)
 				# if there are search results, create a form to create relationships from the search results

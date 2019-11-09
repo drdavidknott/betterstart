@@ -1,5 +1,6 @@
 from django.db import models
 from .django_extensions import DataAccessMixin
+from .utilities import extract_id
 
 # Family model: represents a family.
 # Has a many to many relationship with Person
@@ -270,6 +271,33 @@ class Person(DataAccessMixin,models.Model):
 			error = ' duplicate with name and age status.'
 		# return the errors
 		return error
+	# supplement the mixin search function
+	@classmethod
+	def search(cls,*args,**kwargs):
+		# set a blank trained role
+		trained_role = 'none'
+		# check whether we have a trained role in the search request
+		if 'trained_role' in kwargs.keys():
+			# pull the trained role out of the kwargs
+			trained_role = kwargs.pop('trained_role')
+		# call the mixin method
+		results = super().search(**kwargs)
+		# if we have a trained role, filter by the trained role
+		if trained_role != 'none':
+			# get the role type
+			role_type = Role_Type.objects.get(pk=int(extract_id(trained_role)))
+			# do the filter
+			results = results.filter(trained_roles=role_type)
+			# and check whether we want active only
+			if 'active' in trained_role:
+				# got through the people
+				for person in results:
+					# attempt to get the active record
+					if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
+						# exclude the person
+						results = results.exclude(pk=person.pk)
+		# return the results
+		return results
 
 # Relationship_Type model: represents different types of relationship
 # This is reference data.

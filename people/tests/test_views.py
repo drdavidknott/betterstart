@@ -255,6 +255,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -281,6 +282,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '2'
 											}
 									)
@@ -309,6 +311,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -335,6 +338,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -361,6 +365,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -387,6 +392,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -413,6 +419,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -437,6 +444,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -465,6 +473,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -493,6 +502,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -519,6 +529,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -545,6 +556,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -573,6 +585,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -601,6 +614,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -629,6 +643,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '2'
 											}
 									)
@@ -655,6 +670,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '2'
 											}
 									)
@@ -683,6 +699,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -712,6 +729,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -741,6 +759,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -771,6 +790,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -799,6 +819,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -827,6 +848,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -856,6 +878,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -885,6 +908,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -915,6 +939,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -946,6 +971,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -974,6 +1000,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(age_status.pk),
 											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1012,6 +1039,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1051,6 +1079,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1090,6 +1119,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1129,6 +1159,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1169,6 +1200,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1210,6 +1242,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1242,6 +1275,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1280,6 +1314,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1323,6 +1358,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1362,6 +1398,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1401,6 +1438,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1440,6 +1478,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1480,6 +1519,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1521,6 +1561,7 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
 											'page' : '1'
 											}
 									)
@@ -1553,6 +1594,93 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_on_ward(self):
+		# create some extra people
+		set_up_test_people('test_ward',role_type='test role 1',number=30)
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC',number=1)
+		# and a bunch of streets
+		set_up_test_streets('ABC street ','ABC0',number=1)
+		# get the street
+		street = Street.objects.get(name='ABC street 0')
+		# set up the addresses for the people
+		for person in Person.objects.filter(first_name__startswith='test_ward'):
+			# set the street
+			person.street = street
+			# save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_on_ward_no_results(self):
+		# create some extra people
+		set_up_test_people('test_ward',role_type='test role 1',number=30)
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC',number=1)
+		# and a bunch of streets
+		set_up_test_streets('ABC street ','ABC0',number=1)
+		# get the street
+		street = Street.objects.get(name='ABC street 0')
+		# set up the addresses for the people
+		for person in Person.objects.filter(first_name__startswith='test_ward'):
+			# set the street
+			person.street = street
+			# save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : str(Ward.objects.get(ward_name='Test ward 2').pk),
 											'page' : '1'
 											}
 									)
@@ -6463,8 +6591,36 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the third person
+		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no street')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
 		# check that we have two people
-		self.assertEqual(Person.objects.all().count(),2)
+		self.assertEqual(Person.objects.all().count(),3)
 
 	def test_upload_people_already_exists(self):
 		# log the user in as a superuser
@@ -6536,8 +6692,36 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the third person
+		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no street')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
 		# check that we have two people
-		self.assertEqual(Person.objects.all().count(),2)
+		self.assertEqual(Person.objects.all().count(),3)
 		# close the file
 		valid_file.close()
 		# reopen the file
@@ -6555,7 +6739,7 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'already exists')
 		# check that no additional people have been created
-		self.assertEqual(Person.objects.all().count(),2)
+		self.assertEqual(Person.objects.all().count(),3)
 
 	def test_upload_people_same_name_different_age_status(self):
 		# log the user in as a superuser

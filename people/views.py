@@ -1623,6 +1623,7 @@ def people(request):
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			age_status = personsearchform.cleaned_data['age_status']
 			trained_role = personsearchform.cleaned_data['trained_role']
+			ward = personsearchform.cleaned_data['ward']
 			# conduct a search
 			people = Person.search(
 									first_name__icontains=first_name,
@@ -1630,7 +1631,8 @@ def people(request):
 									default_role_id=role_type,
 									ABSS_type_id=ABSS_type,
 									age_status_id=age_status,
-									trained_role=trained_role
+									trained_role=trained_role,
+									street__post_code__ward_id=ward
 									)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -1674,7 +1676,8 @@ def people_query(request, id):
 					'role_type' : '0',
 					'ABSS_type' : '0',
 					'age_status' : '0',
-					'trained_role' : 'none'
+					'trained_role' : 'none',
+					'ward' : '0'
 					}
 	# set the value based on the url
 	form_values[resolve(request.path_info).url_name] = id
@@ -1688,6 +1691,7 @@ def people_query(request, id):
 	copy_POST['ABSS_type'] = form_values['ABSS_type']
 	copy_POST['age_status'] = form_values['age_status']
 	copy_POST['trained_role'] = form_values['trained_role']
+	copy_POST['ward'] = form_values['ward']
 	copy_POST['page'] = '1'
 	# now copy it back
 	request.POST = copy_POST

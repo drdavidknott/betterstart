@@ -362,6 +362,9 @@ class PersonSearchForm(forms.Form):
 	trained_role = forms.ChoiceField(
 									label="Trained role",
 									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
+	ward = forms.ChoiceField(
+									label="Ward",
+									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -377,6 +380,11 @@ class PersonSearchForm(forms.Form):
 		self.fields['age_status'].choices = build_choices(
 															choice_class=Age_Status,
 															choice_field='status',
+															default=True,
+															default_label='Any')
+		self.fields['ward'].choices = build_choices(
+															choice_class=Ward,
+															choice_field='ward_name',
 															default=True,
 															default_label='Any')
 		# build the choices for the trained roles, starting with a default entry

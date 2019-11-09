@@ -21,7 +21,8 @@ class File_Field():
 					use_corresponding_for_download=False,
 					include_in_create=True,
 					set_download_from_object=True,
-					corresponding_relationship_field=False
+					corresponding_relationship_field=False,
+					default=''
 					):
 		# set the attributes
 		self.name = name
@@ -33,7 +34,7 @@ class File_Field():
 		self.include_in_create = include_in_create
 		self.set_download_from_object = set_download_from_object
 		self.corresponding_record = None
-		self.default = ''
+		self.default = default
 		self.errors = []
 		self.converter = False
 		self.valid = False
@@ -63,6 +64,10 @@ class File_Field():
 		if self.name in record.keys():
 		# set the value
 			self.value = record[self.name]
+			# if the value is blank, set the default
+			if self.value == '':
+				# set the default
+				self.value = self.default
 
 	def validate_upload_value(self):
 		# check whether we have a value for a mandatory field
@@ -647,7 +652,8 @@ class People_File_Handler(File_Handler):
 		self.street = File_Field(
 									name='street',
 									use_corresponding_for_download=True,
-									corresponding_field='name'
+									corresponding_field='name',
+									default=None
 									)
 		self.post_code = File_Field(
 									name='post_code',

@@ -711,7 +711,8 @@ class People_File_Handler(File_Handler):
 		# get today's date
 		today = datetime.date.today()
 		# check whether the age is correct
-		if (self.age_status.valid
+		if (self.date_of_birth.value
+			and self.age_status.valid
 			and self.date_of_birth.valid
 			and self.date_of_birth.value.date() < today.replace(year=today.year-self.age_status.value.maximum_age)):
 			# set the error

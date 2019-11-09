@@ -6407,7 +6407,7 @@ class UploadPeopleDataViewTest(TestCase):
 									)
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
-		# get the person
+		# get the first person
 		test_person = Person.objects.get(first_name='Test',last_name='Person')
 		# check the fields
 		self.assertEqual(test_person.first_name,'Test')
@@ -6435,8 +6435,36 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
-		# check that we only have one person
-		self.assertEqual(Person.objects.all().count(),1)
+		# and the second person
+		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no dob')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# check that we have two people
+		self.assertEqual(Person.objects.all().count(),2)
 
 	def test_upload_people_already_exists(self):
 		# log the user in as a superuser
@@ -6480,8 +6508,36 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
-		# check that we only have one person
-		self.assertEqual(Person.objects.all().count(),1)
+		# and the second person
+		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no dob')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# check that we have two people
+		self.assertEqual(Person.objects.all().count(),2)
 		# close the file
 		valid_file.close()
 		# reopen the file
@@ -6498,8 +6554,8 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'already exists')
-		# check that no additional event categories have been created
-		self.assertEqual(Person.objects.all().count(),1)
+		# check that no additional people have been created
+		self.assertEqual(Person.objects.all().count(),2)
 
 	def test_upload_people_same_name_different_age_status(self):
 		# log the user in as a superuser

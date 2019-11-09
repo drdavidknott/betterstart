@@ -918,11 +918,11 @@ def create_person(
 	# otherwise get the actual age status
 	else:
 		# get the age status
-		age_status = try_to_get(Age_Status,pk=age_status)
+		age_status = Age_Status.try_to_get(pk=age_status)
 	# check whether we have a role type
 	if default_role:
 		# get the role
-		default_role = try_to_get(Role_Type,pk=default_role)
+		default_role = Role_Type.try_to_get(pk=default_role)
 	# otherwise set unknown
 	else:
 		# get the role type dependent on the age status
@@ -941,8 +941,8 @@ def create_person(
 					date_of_birth = date_of_birth,
 					gender = gender,
 					default_role = default_role,
-					ethnicity = try_to_get(Ethnicity,pk=ethnicity),
-					ABSS_type = try_to_get(ABSS_Type,pk=ABSS_type),
+					ethnicity = Ethnicity.try_to_get(pk=ethnicity),
+					ABSS_type = ABSS_Type.try_to_get(pk=ABSS_type),
 					age_status = age_status,
 						)
 	# save the record
@@ -1033,7 +1033,7 @@ def edit_relationship(request, person_from, person_to, relationship_type_id, sho
 	# check whether we either have a valid relationship type or a zero
 	if relationship_type_id:
 		# get the relationship type
-		relationship_type_from = try_to_get(Relationship_Type,pk=relationship_type_id)
+		relationship_type_from = Relationship_Type.try_to_get(pk=relationship_type_id)
 		# if we didn't get one, set an error message and crash out
 		if not relationship_type_from:
 			# set the messages if messages are required
@@ -1093,11 +1093,11 @@ def edit_relationship(request, person_from, person_to, relationship_type_id, sho
 
 def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id, areas):
 	# get the event type
-	event_type = try_to_get(Event_Type,pk=event_type_id)
+	event_type = Event_Type.try_to_get(pk=event_type_id)
 	# check whether we have a ward
 	if ward_id != '0':
 		# get the ward
-		ward = try_to_get(Ward,pk=ward_id)
+		ward = Ward.try_to_get(pk=ward_id)
 	# otherwise set null
 	else:
 		# set the ward to null
@@ -1133,7 +1133,7 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 def build_registration(request, event, person_id, registered, participated, role_type_id, show_messages=True):
 	# attempt to create a new registration, checking first that the registration does not exit
 	# first get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if that didn't work, set an error and return
 	if not person:
 		# check whether messages are needed
@@ -1143,7 +1143,7 @@ def build_registration(request, event, person_id, registered, participated, role
 		# and return
 		return False
 	# now attempt to get the role type
-	role_type = try_to_get(Role_Type,pk=role_type_id)
+	role_type = Role_Type.try_to_get(pk=role_type_id)
 	# if that didn't work, set an error and return
 	if not role_type:
 		# check whether messages are needed
@@ -1190,7 +1190,7 @@ def build_registration(request, event, person_id, registered, participated, role
 def remove_registration(request, event, person_id):
 	# attempt to remove a registration record, checking first that the registration exists
 	# first get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if that didn't work, set an error and return
 	if not person:
 		# set the message
@@ -1219,7 +1219,7 @@ def remove_registration(request, event, person_id):
 
 def build_answer(request, person, question_id, option_id):
 	# attempt to get the question
-	question = try_to_get(Question,pk=question_id)
+	question = Question.try_to_get(pk=question_id)
 	# deal with exceptions if we didn't get a question
 	if not question:
 		# set the error
@@ -1360,7 +1360,7 @@ def update_person(
 		# set the message
 		messages.error(request, 'ABSS Type does not exist.')
 	# attempt to get the age status
-	age_status = try_to_get(Age_Status,pk=age_status_id)
+	age_status = Age_Status.try_to_get(pk=age_status_id)
 	# set the value for the person
 	if age_status:
 		# set the value
@@ -1898,7 +1898,7 @@ def age_exceptions(request, age_status_id=0):
 	# load the template
 	age_exceptions_template = loader.get_template('people/age_exceptions.html')
 	# get the age status
-	age_status = try_to_get(Age_Status,pk=age_status_id)
+	age_status = Age_Status.try_to_get(pk=age_status_id)
 	# if the age status doesn't exist, crash to a banner
 	if not age_status:
 		return make_banner(request, 'Age status does not exist.')
@@ -1981,7 +1981,7 @@ def person(request, person_id=0):
 	# load the template
 	person_template = loader.get_template('people/person.html')
 	# get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2004,7 +2004,7 @@ def profile(request, person_id=0):
 	# set the old role to false: this indicates that the role hasn't changed yet
 	old_role = False
 	# try to get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if there isn't a person, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2100,7 +2100,7 @@ def add_relationship(request,person_id=0):
 	# load the template
 	person_template = loader.get_template('people/add_relationship.html')
 	# get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2219,7 +2219,7 @@ def address(request,person_id=0):
 	# load the template
 	person_template = loader.get_template('people/address.html')
 	# get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2310,7 +2310,7 @@ def address_to_relationships(request,person_id=0):
 	# load the template
 	person_template = loader.get_template('people/address_to_relationships.html')
 	# get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2846,7 +2846,7 @@ def answer_questions(request,person_id=0):
 	# load the template
 	answer_questions_template = loader.get_template('people/answer_questions.html')
 	# get the person
-	person = try_to_get(Person,pk=person_id)
+	person = Person.try_to_get(pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')

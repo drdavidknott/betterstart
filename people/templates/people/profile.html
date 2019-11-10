@@ -20,6 +20,88 @@
 		</div>
 	</div>
 
+	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">Edit Profile</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'profile' person.pk %}" method="post">
+						{% csrf_token %}
+						<div class="form-row">
+							<div class="form-group col-md-6 mb-0">
+								{{ profileform.first_name|as_crispy_field }}
+							</div>
+							<div class="form-group col-md-6 mb-0">
+								{{ profileform.last_name|as_crispy_field }}
+							</div>
+						</div>
+						<div class="form-row">
+							<div class="form-group col-md-4 mb-0">
+								{{ profileform.email_address|as_crispy_field }}
+							</div>
+							<div class="form-group col-md-4 mb-0">
+								{{ profileform.home_phone|as_crispy_field }}
+							</div>
+							<div class="form-group col-md-4 mb-0">
+								{{ profileform.mobile_phone|as_crispy_field }}
+							</div>
+						</div>
+						<div class="form-row">
+							<div class="form-group col-md-12 mb-0">
+								{{ profileform.emergency_contact_details|as_crispy_field }}
+							</div>
+						</div>
+						<div class="form-row">
+							<div class="form-group col-md-12 mb-0">
+								{{ profileform.date_of_birth|as_crispy_field }}
+							</div>
+						</div>
+						<div class="form-row">
+							<div class="form-group col-md-4 mb-0">
+								{{ profileform.ABSS_type|as_crispy_field }}
+							</div>
+							<div class="form-group col-md-4 mb-0">
+								{{ profileform.ABSS_start_date|as_crispy_field }}
+							</div>
+							<div class="form-group col-md-4 mb-0">
+								{{ profileform.ABSS_end_date|as_crispy_field }}
+							</div>
+						</div>
+
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+ 	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">Edit Profile</h4>
+	 			</div>
+		 		<div class="panel-body">
+					<form action ="{% url 'profile' person.pk %}" method="post">
+						{% csrf_token %}
+						{{ profileform|crispy }}
+						<div class = "row">
+	 						<div class = "col-xs-2">
+	 							<input type="submit" value="Submit">
+	 						</div>
+	 					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
  	<div class="row">
  		<div class="col-md-12">
 	 		<div class="panel panel-default">

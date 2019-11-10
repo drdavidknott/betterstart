@@ -6,6 +6,8 @@ from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity
 							Event_Category, Ward, Area
 from django.contrib.auth import authenticate
 import datetime
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Row, Column, Hidden
 
 def role_type_choices(role_types):
 	# set the choice field for role types
@@ -160,7 +162,7 @@ class ProfileForm(forms.Form):
 									label="Emergency contact details",
 									required=False,
 									max_length=1500,
-									widget=forms.Textarea(attrs={'class' : 'form-control',})
+									widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
 									)
 	date_of_birth = forms.DateField(
 									label="Date of birth",
@@ -212,8 +214,7 @@ class ProfileForm(forms.Form):
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	pregnant = forms.BooleanField(
 									label = "Pregnant (or partner is pregnant)",
-									required = False,
-									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+									required = False)
 	due_date = forms.DateField(
 									label="Pregnancy due date",
 									required=False,
@@ -228,7 +229,7 @@ class ProfileForm(forms.Form):
 								label="Notes",
 								required=False,
 								max_length=1500,
-								widget=forms.Textarea(attrs={'class' : 'form-control',})
+								widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
 								)
 	
 	def __init__(self, *args, **kwargs):
@@ -287,7 +288,7 @@ class ProfileForm(forms.Form):
 		# check whether the only error is due to a change in age status: if so, set the default
 		if 'role_type' in self._errors.keys():
 			# set a relevant error message
-			self._errors['role_type'] = 'Select a valid role for this age status.'
+			self._errors['role_type'] = ['Select a valid role for this age status.']
 			# set the value to the default
 			self.cleaned_data['role_type'] = str(age_status.default_role_type.pk)
 			# check whether this is the only error and if only defaults are allowed
@@ -309,7 +310,7 @@ class ProfileForm(forms.Form):
 			# check the corresponding field
 			if self.cleaned_data['trained_role_' + str(role_type.pk)] not in ['trained','active']:
 				# set an error
-				self._errors['role_type'] = 'Must be trained to perform this role.'
+				self._errors['role_type'] = ['Must be trained to perform this role.']
 				# and the validity flag
 				valid = False
 		# now check whether we have a child under four whose date of birth is more than four years ago
@@ -319,20 +320,20 @@ class ProfileForm(forms.Form):
 		if self.cleaned_data['date_of_birth'] != None and \
 			self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
 			#set the error message
-			self._errors['date_of_birth'] = "Must be less than " + str(age_status.maximum_age) + " years old."
+			self._errors['date_of_birth'] = ["Must be less than " + str(age_status.maximum_age) + " years old."]
 			# set the validity flag
 			valid = False
 		# and check that we don't have an ABSS end date without a start date
 		if self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] == None:
 			# set the error message
-			self._errors['ABSS_end_date'] = 'ABSS end date can only be entered if ABSS start date is entered.'
+			self._errors['ABSS_end_date'] = ['ABSS end date can only be entered if ABSS start date is entered.']
 			# set the flag
 			valid = False
 		# and check that we don't have an ABSS end date before the start date
 		if (self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] != None 
 				and self.cleaned_data['ABSS_end_date'] <= self.cleaned_data['ABSS_start_date'] ):
 			# set the error message
-			self._errors['ABSS_end_date'] = 'ABSS end date must be after ABSS start date.'
+			self._errors['ABSS_end_date'] = ['ABSS end date must be after ABSS start date.']
 			# set the flag
 			valid = False
 		# return the result
@@ -352,23 +353,50 @@ class PersonSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	role_type = forms.ChoiceField(
 									label="Role",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	ABSS_type = forms.ChoiceField(
 									label="ABSS",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	age_status = forms.ChoiceField(
 									label="Age status",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	trained_role = forms.ChoiceField(
 									label="Trained role",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	ward = forms.ChoiceField(
 									label="Ward",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width'}))
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	action = forms.CharField(
+									initial='action',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
+	page = forms.CharField(
+									initial='1',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('first_name',css_class='form-group col-md-6 mb-0'),
+										Column('last_name',css_class='form-group col-md-6 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('role_type',css_class='form-group col-md-3 mb-0'),
+										Column('age_status',css_class='form-group col-md-3 mb-0'),
+										Column('trained_role',css_class='form-group col-md-2 mb-0'),
+										Column('ward',css_class='form-group col-md-2 mb-0'),
+										Column('ABSS_type',css_class='form-group col-md-2 mb-0'),
+										css_class='form-row'
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(Submit('submit', 'Search'))
+									)
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
 											role_type_choices(Role_Type.objects.filter(use_for_people=True))

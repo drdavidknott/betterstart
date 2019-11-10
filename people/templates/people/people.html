@@ -1,5 +1,7 @@
 {% extends "people/base.html" %}
 
+{% load crispy_forms_tags %}
+
 <!-- Home page -->
  
 {% block title %}Better Start{% endblock %}
@@ -16,31 +18,14 @@
 		</div>
 	</div>
 
-	 <div class="row">
+	<div class="row">
  		<div class="col-md-12">
 	 		<div class="panel panel-default">
 	 			<div class="panel-heading">
 	 				<h4 class="panel-title">FIND PERSON:</h4>
 	 			</div>
 		 		<div class="panel-body">
-					<form action ="{% url 'listpeople' %}" method="post">
-						{% csrf_token %}
-						<input type="hidden" name="action" value="search">
-						<input type="hidden" name="page" value="1">
-						<div class = "row form-group">
-							{% for field in personsearchform %}
-								<div class = "col-md-2">
-									<div>{{ field.label_tag }}</div>
-									<div>{{ field }}</div>
-								</div>
-							{% endfor %}
-						</div>
-						<div class = "row">
-	 						<div class = "col-xs-2">
-	 							<input type="submit" value="Submit">
-	 						</div>
-	 					</div>
-					</form>
+					{% crispy personsearchform %}
 				</div>
 			</div>
 		</div>

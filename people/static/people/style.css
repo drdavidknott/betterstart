@@ -1,10 +1,12 @@
 
 .betterstart-background-local-test {
 	background-color: #FCCED1;
+	color: #60060C;
 }
 
 .betterstart-background-cloud-test {
 	background-color: #CEE7FC;
+	color: #000099;
 }
 
 .betterstart-background-local-release {

@@ -35,7 +35,7 @@ ALLOWED_HOSTS = [
     'oysta.org',
     'www.oysta.org',
     'betterstart.oysta.org',
-    'betterstart-uat.appspot.com'
+    'betterstart-uat.appspot.com',
 ]
 
 # Application definition
@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'people.apps.PeopleConfig'
+    'people.apps.PeopleConfig',
+    'crispy_forms'
 ]
 
 MIDDLEWARE = [
@@ -80,6 +81,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'betterstart.wsgi.application'
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases

@@ -4999,7 +4999,10 @@ class UploadDataViewTest(TestCase):
 							'Events',
 							'Relationships',
 							'Registrations',
-							'Questions'
+							'Questions',
+							'Options',
+							'Answers',
+							'Answer Notes'
 							]:
 			# open the file
 			invalid_file = open('people/tests/data/invalid.csv')
@@ -5633,11 +5636,16 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_street_1 = Street.objects.get(name = 'test street 1')
+		test_street_1 = Street.objects.get(name = 'test street 1',post_code__post_code='test pc 1')
 		test_street_2 = Street.objects.get(name = 'test street 2')
+		test_street_3 = Street.objects.get(name = 'test street 1',post_code__post_code='test pc 2')
+
 		# check the post codes for the streets
 		self.assertEqual(test_street_1.post_code,test_postcode_1)
 		self.assertEqual(test_street_2.post_code,test_postcode_2)
+		self.assertEqual(test_street_3.post_code,test_postcode_2)
+		# check that we have the right number of records
+		self.assertEqual(Street.objects.all().count(),3)
 
 	def test_upload_streets_valid_postcodes_already_exists(self):
 		# log the user in as a superuser
@@ -5711,11 +5719,13 @@ class UploadDataViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# get the results
-		test_street_1 = Street.objects.get(name = 'test street 1')
+		test_street_1 = Street.objects.get(name = 'test street 1',post_code__post_code='test pc 1')
 		test_street_2 = Street.objects.get(name = 'test street 2')
+		test_street_3 = Street.objects.get(name = 'test street 1',post_code__post_code='test pc 2')
 		# check the post codes for the streets
 		self.assertEqual(test_street_1.post_code,test_postcode_1)
 		self.assertEqual(test_street_2.post_code,test_postcode_2)
+		self.assertEqual(test_street_3.post_code,test_postcode_2)
 		# close the file
 		streets_file.close()
 		# reopen the file
@@ -5733,7 +5743,7 @@ class UploadDataViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'already exists')
 		# check that no additional event types have been created
-		self.assertEqual(Street.objects.all().count(),2)
+		self.assertEqual(Street.objects.all().count(),3)
 
 	def test_upload_role_types(self):
 		# log the user in as a superuser

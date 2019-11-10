@@ -531,10 +531,7 @@ class Streets_File_Handler(File_Handler):
 		# set the file fields
 		self.name = File_Field(
 								name='name',
-								mandatory=True,
-								corresponding_model=Street,
-								corresponding_field='name',
-								corresponding_must_not_exist=True
+								mandatory=True
 								)
 		self.post_code = File_Field(
 								name='post_code',
@@ -545,6 +542,25 @@ class Streets_File_Handler(File_Handler):
 								)
 		# and a list of the fields
 		self.fields = ['name','post_code']
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether the option exists
+		if self.post_code.valid:
+			# try to get the street
+			street = Street.try_to_get(
+										name = self.name.value,
+										post_code = self.post_code.value
+										)
+			# see if we got a street
+			if street:
+				# set the error
+				self.add_record_results(record,[' not created: street already exists.'])
+				# and the flag
+				valid = False
+		# return the result
+		return valid
 
 	def label(self,record):
 		# return the label

@@ -15,6 +15,27 @@ class DataAccessMixin ():
 		# return the result
 		return result
 	@classmethod
+	def try_to_get_just_one(cls,**kwargs):
+		# try to get a record using get, and return false and a message if there is no record or multiple records
+		# start by setting the result
+		result = False
+		# try to get the record
+		try:
+			# attempt to get the record
+			result = cls.objects.get(**kwargs)
+			# set the message
+			message = 'matching ' + cls.__name__ + ' record exists'
+		# now deal with non-existsnce
+		except (cls.DoesNotExist):
+			# set the message
+			message = 'matching ' + cls.__name__ + ' record does not exist'
+		# now deal with multiple records
+		except (cls.MultipleObjectsReturned):
+			# set the message
+			message = 'multiple matching ' + cls.__name__ + ' records exist'
+		# return the result
+		return result, message
+	@classmethod
 	def search(cls,**kwargs):
 		# conduct a search using optional parameters
 		# declare the search dict

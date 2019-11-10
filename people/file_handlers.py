@@ -294,6 +294,7 @@ class File_Handler():
 				if (fields_valid and complex_valid):
 					# create the record
 					self.create_record(record)
+		# print(self.results)
 
 	# provide records for download
 	def handle_download(self):
@@ -748,18 +749,20 @@ class People_File_Handler(File_Handler):
 			# else check the details if the post code exists
 			elif self.post_code.exists:
 				# check the street and post code combination
-				try:
-					# get the street record
-					self.street.value = Street.objects.get(
-															name = self.street.value,
-															post_code = self.post_code.value
-															)
+				street = Street.try_to_get(
+											name = self.street.value,
+											post_code = self.post_code.value
+											)
 				# deal with the exception
-				except (Street.DoesNotExist):
+				if not street:
 					# set the error
 					self.add_record_results(record,[' not created: Street ' + self.street.value + ' does not exist.'])
 					# and the flag
 					valid = False
+				# otherwise set the value
+				else:
+					# set the value
+					self.street.value = street
 		# check whether we have an ABSS end date without a start date
 		if self.ABSS_end_date.value and not self.ABSS_start_date.value:
 			# set the message
@@ -872,29 +875,29 @@ class Relationships_File_Handler(File_Handler):
 		# check whether we had a valid from age status
 		if self.from_age_status.exists:
 			# check whether the from person exists
-			error = Person.check_person_by_name_and_age_status(
-															first_name = self.from_first_name.value,
-															last_name = self.from_last_name.value,
-															age_status = self.from_age_status.value
+			person, message = Person.try_to_get_just_one(
+														first_name = self.from_first_name.value,
+														last_name = self.from_last_name.value,
+														age_status = self.from_age_status.value
 														)
 			# if there was an error, add it
-			if error:
+			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: from' + error])
+				self.add_record_results(record,[' not created: from ' + message])
 				# and set the flag
 				valid = False
 		# check whether we had a valid to age status
 		if self.to_age_status:
 			# check whether the to person exists
-			error = Person.check_person_by_name_and_age_status(
-															first_name = self.to_first_name.value,
-															last_name = self.to_last_name.value,
-															age_status = self.to_age_status.value
+			person, message = Person.try_to_get_just_one(
+														first_name = self.to_first_name.value,
+														last_name = self.to_last_name.value,
+														age_status = self.to_age_status.value
 														)
 			# if there was an error, add it
-			if error:
+			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: to' + error])
+				self.add_record_results(record,[' not created: to ' + message])
 				# and set the flag
 				valid = False
 		# return the result
@@ -1012,12 +1015,8 @@ class Events_File_Handler(File_Handler):
 			valid = False
 		# now go through the areas
 		for area_name in self.areas.value:
-			# try to get the area
-			try:
-				# attempt to get the record
-				area = Area.objects.get(area_name = area_name)
 			# deal with the exception
-			except (Area.DoesNotExist):
+			if not Area.try_to_get(area_name = area_name):
 				# set the error
 				self.add_record_results(record,[' not created: area ' + area_name + ' does not exist.'])
 				# and the flag
@@ -1123,15 +1122,15 @@ class Registrations_File_Handler(File_Handler):
 		# check whether we have a valid age status
 		if self.age_status.exists:
 			# check whether the person exists
-			error = Person.check_person_by_name_and_age_status(
-															first_name = self.first_name.value,
-															last_name = self.last_name.value,
-															age_status = self.age_status.value
+			person,message = Person.try_to_get_just_one(
+														first_name = self.first_name.value,
+														last_name = self.last_name.value,
+														age_status = self.age_status.value
 														)
 			# if there was an error, add it
-			if error:
+			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: person' + error])
+				self.add_record_results(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 		# check whether the role type is valid for the age status
@@ -1144,22 +1143,17 @@ class Registrations_File_Handler(File_Handler):
 									)
 			# and set the flag
 			valid = False
-		# check whether the event date is valid
+		# check whether a matching event exists
 		if self.event_date.valid:
 			# try to get the event record
-			try:
-				# get the event record
-				event = Event.objects.get(name = self.event_name.value, date = self.event_date.value)
-			# deal with missing event
-			except (Event.DoesNotExist):
-				# set the error
-				self.add_record_results(record,[' not created: event does not exist.'])
-				# and set the flag
-				valid = False
-			# deal with more than one match
-			except (Event.MultipleObjectsReturned):
-				# set the error
-				self.add_record_results(record,[' not created: multiple matching events exist.'])
+			event,message = Event.try_to_get_just_one(
+														name = self.event_name.value,
+														date = self.event_date.value
+														)
+			# see what we got
+			if not event:
+				# append the error message
+				self.add_record_results(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 		# check that one of registered or participated is set
@@ -1184,11 +1178,9 @@ class Registrations_File_Handler(File_Handler):
 									date = self.event_date.value
 									)
 		# attempt to get the existing registration
-		try:
-			# get the record
-			registration = Event_Registration.objects.get(event=event,person=person)
+		registration = Event_Registration.try_to_get(event=event,person=person)
 		# deal with the failure
-		except (Event_Registration.DoesNotExist):
+		if not registration:
 			# create a record
 			registration = Event_Registration(event=event,person=person,role_type=self.role_type.value)
 		# set the values
@@ -1349,40 +1341,30 @@ class Answers_File_Handler(File_Handler):
 		# check whether the option already exists
 		if self.question.valid:
 			# check whether the option is valid
-			try:
-				# get the option
-				self.option.value = Option.objects.get(
+			self.option.value,message = Option.try_to_get_just_one(
 														question = self.question.value,
 														option_label = self.option.value
 														)
-			# deal with the exception
-			except (Option.DoesNotExist):
-				# append the error message
-				self.add_record_results(record,[' not created: option does not exist'])
-				# and set the flag
-				valid = False
-				# and the option flag
-				self.option.valid = False
-			# and with multiple records
-			except (Option.MultipleObjectsReturned):
-				# append the error message
-				self.add_record_results(record,[' not created: multiple matching options exist'])
+			# see what we got
+			if not self.option.value:
+				# set the message
+				self.add_record_results(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 				# and the option flag
 				self.option.valid = False
 		# check whether we have a valid age status
-		if self.age_status.valid:
+		if self.age_status.exists:
 			# check whether the person exists
-			error = Person.check_person_by_name_and_age_status(
-															first_name = self.first_name.value,
-															last_name = self.last_name.value,
-															age_status = self.age_status.value
+			person,message = Person.try_to_get_just_one(
+														first_name = self.first_name.value,
+														last_name = self.last_name.value,
+														age_status = self.age_status.value
 														)
 			# if there was an error, add it
-			if error:
+			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: person' + error])
+				self.add_record_results(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 			# otherwise, check whether we have a duplicate
@@ -1493,15 +1475,15 @@ class Answer_Notes_File_Handler(File_Handler):
 		# check whether we have a valid age status
 		if self.age_status.valid:
 			# check whether the person exists
-			error = Person.check_person_by_name_and_age_status(
-															first_name = self.first_name.value,
-															last_name = self.last_name.value,
-															age_status = self.age_status.value
+			person,message = Person.try_to_get_just_one(
+														first_name = self.first_name.value,
+														last_name = self.last_name.value,
+														age_status = self.age_status.value
 														)
 			# if there was an error, add it
-			if error:
+			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: person' + error])
+				self.add_record_results(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 			# otherwise, do the other checks

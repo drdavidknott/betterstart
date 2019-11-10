@@ -7101,10 +7101,10 @@ class UploadRelationshipsDataViewTest(TestCase):
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_duplicate_0 test_duplicate_0 is parent of test_child_0 test_child_0 not created: from duplicate with name and age status')
-		self.assertContains(response,'test_child_0 test_child_0 is child of test_duplicate_0 test_duplicate_0 not created: to duplicate with name and age status')
-		self.assertContains(response,'missing from person from last name is parent of test_child_0 test_child_0 not created: from does not exist')
-		self.assertContains(response,'test_parent_0 test_parent_0 is parent of missing to person to last name not created: to does not exist')
+		self.assertContains(response,'test_duplicate_0 test_duplicate_0 is parent of test_child_0 test_child_0 not created: from multiple matching Person records exist')
+		self.assertContains(response,'test_child_0 test_child_0 is child of test_duplicate_0 test_duplicate_0 not created: to multiple matching Person records exist')
+		self.assertContains(response,'missing from person from last name is parent of test_child_0 test_child_0 not created: from matching Person record does not exist')
+		self.assertContains(response,'test_parent_0 test_parent_0 is parent of missing to person to last name not created: to matching Person record does not exist')
 		self.assertContains(response,'test_parent_0 test_parent_0 is missing relationship type of test_child_0 test_child_0 not created: Relationship_Type missing relationship type does not exist')
 		# check that no records have been created
 		self.assertFalse(Relationship.objects.all().exists())
@@ -7224,10 +7224,10 @@ class UploadRegistrationsDataViewTest(TestCase):
 		self.assertContains(response,'invalid age status last name (invalid) at test_event_0 not created: Age_Status invalid does not exist')
 		self.assertContains(response,'invalid event date last name (Adult) at test_event_0 not created: event_date 01/xx/2019 is invalid date or time')
 		self.assertContains(response,'invalid role type last name (Adult) at test_event_0 not created: Role_Type invalid does not exist')
-		self.assertContains(response,'invalid person last name (Adult) at test_event_0 not created: person does not exist')
-		self.assertContains(response,'test_duplicate_0 test_duplicate_0 (Adult) at test_event_0 not created: person duplicate with name and age status')
-		self.assertContains(response,'invalid event last name (Adult) at invalid not created: event does not exist')
-		self.assertContains(response,'duplicate event last name (Adult) at test_duplicate_0 not created: multiple matching events exist')
+		self.assertContains(response,'invalid person last name (Adult) at test_event_0 not created: matching Person record does not exist')
+		self.assertContains(response,'test_duplicate_0 test_duplicate_0 (Adult) at test_event_0 not created: multiple matching Person records exist')
+		self.assertContains(response,'invalid event last name (Adult) at invalid not created: matching Event record does not exist')
+		self.assertContains(response,'duplicate event last name (Adult) at test_duplicate_0 not created: multiple matching Event records exist')
 		self.assertContains(response,'test_child_0 test_child_0 (Child under four) at test_event_0 not created: adult_test_role is not valid for Child under four')
 		self.assertContains(response,'invalid registered participated last name (Adult) at test_event_0 not created: neither registered nor participated is True')
 		# check that no records have been created
@@ -7738,10 +7738,10 @@ class UploadDownloadAnswersViewTest(TestCase):
 		self.assertContains(response,'missing age status last name () - test question with notes - test label not created: mandatory field age_status not provided')
 		self.assertContains(response,'missing question last name (Adult) -  - test label not created: mandatory field question not provided')
 		self.assertContains(response,'missing option last name (Adult) - test question with notes -  not created: mandatory field option not provided')
-		self.assertContains(response,'person does not exist last name (Adult) - test question with notes - test label not created: person does not exist')
+		self.assertContains(response,'person does not exist last name (Adult) - test question with notes - test label not created: matching Person record does not exist')
 		self.assertContains(response,'age status does not exist last name (invalid age status) - test question with notes - test label not created: Age_Status invalid age status does not exist')
 		self.assertContains(response,'question does not exist last name (Adult) - invalid question - test label not created: Question invalid question does not exist')
-		self.assertContains(response,'option does not exist last name (Adult) - test question with notes - invalid label not created: option does not exist')
+		self.assertContains(response,'option does not exist last name (Adult) - test question with notes - invalid label not created: matching Option record does not exist')
 
 	def test_upload_answers(self):
 		# log the user in as a superuser
@@ -7982,7 +7982,7 @@ class UploadDownloadAnswerNotesViewTest(TestCase):
 		self.assertContains(response,'missing age status last name () - test question with notes - test notes not created: mandatory field age_status not provided')
 		self.assertContains(response,'missing question last name (Adult) -  - test notes not created: mandatory field question not provided')
 		self.assertContains(response,'missing notes last name (Adult) - test question with notes -  not created: mandatory field notes not provided')
-		self.assertContains(response,'person does not exist last name (Adult) - test question with notes - test notes not created: person does not exist')
+		self.assertContains(response,'person does not exist last name (Adult) - test question with notes - test notes not created: matching Person record does not exist')
 		self.assertContains(response,'age status does not exist last name (invalid age status) - test question with notes - test notes not created: Age_Status invalid age status does not exist')
 		self.assertContains(response,'question does not exist last name (Adult) - invalid question - test notes not created: Question invalid question does not exist')
 		self.assertContains(response,'test_adult_0 test_adult_0 (Adult) - test question with notes - test notes not created: person has not answered this question')

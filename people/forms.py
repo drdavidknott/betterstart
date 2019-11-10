@@ -381,21 +381,20 @@ class PersonSearchForm(forms.Form):
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('first_name',css_class='form-group col-md-6 mb-0'),
-										Column('last_name',css_class='form-group col-md-6 mb-0'),
-										css_class='form-row'	
+										Column('first_name',css_class='form-group col-md-6 mbt-0'),
+										Column('last_name',css_class='form-group col-md-6 mbt-0'),	
 										),
 									Row(
-										Column('role_type',css_class='form-group col-md-3 mb-0'),
-										Column('age_status',css_class='form-group col-md-3 mb-0'),
-										Column('trained_role',css_class='form-group col-md-2 mb-0'),
-										Column('ward',css_class='form-group col-md-2 mb-0'),
-										Column('ABSS_type',css_class='form-group col-md-2 mb-0'),
-										css_class='form-row'
+										Column('role_type',css_class='form-group col-md-3 mbt-0'),
+										Column('age_status',css_class='form-group col-md-3 mbt-0'),
+										Column('trained_role',css_class='form-group col-md-2 mbt-0'),
+										Column('ward',css_class='form-group col-md-2 mbt-0'),
+										Column('ABSS_type',css_class='form-group col-md-2 mbt-0'),
 										),
 									Hidden('action','search'),
 									Hidden('page','1'),
-									Row(Submit('submit', 'Search'))
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
 									)
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
@@ -646,6 +645,8 @@ class EventForm(forms.Form):
 													default_label='None')
 		# and the initial choice for the ward
 		self.fields['ward'].initial = 0
+		# create an empty list of columns for the areas
+		area_columns = []
 		# now go through the areas and build fields
 		for area in Area.objects.filter(use_for_events=True).order_by('area_name'):
 			# set the field name for the area
@@ -653,10 +654,43 @@ class EventForm(forms.Form):
 			# create the field
 			self.fields[field_name] = forms.BooleanField(
 														label = area.area_name,
-														required = False,
-														widget=forms.CheckboxInput(attrs={'class' : 'form-control'})
+														required = False
 														)
-			# set the field name for participation
+			# and append the column
+			area_columns.append(Column(field_name,css_class='form-group col-md-4 mb-0'))
+		# create the crispy form layout
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('name',css_class='form-group col-md-6 mb-0'),
+										Column('event_type',css_class='form-group col-md-6 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('description',css_class='form-group col-md-12 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('date',css_class='form-group col-md-4 mb-0'),
+										Column('start_time',css_class='form-group col-md-4 mb-0'),
+										Column('end_time',css_class='form-group col-md-4 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('location',css_class='form-group col-md-6 mb-0'),
+										Column('ward',css_class='form-group col-md-6 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										*area_columns,
+										css_class='form-row'
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(Column(Submit('submit', 'Submit'),css_class='col-md-6 mb-0'))
+									)
 
 class AddRegistrationForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

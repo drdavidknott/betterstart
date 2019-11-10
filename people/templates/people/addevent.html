@@ -1,5 +1,7 @@
 {% extends "people/base.html" %}
 
+{% load crispy_forms_tags %}
+
 <!-- Home page -->
  
 {% block title %}Better Start{% endblock %}
@@ -23,25 +25,7 @@
 	 				<h4 class="panel-title">Enter Event Details</h4>
 	 			</div>
 		 		<div class="panel-body">
-					<form action ="{% url 'addevent' %}" method="post">
-						{% csrf_token %}
-						{% for field in addeventform %}
-							{% if field.is_hidden %}
-								{{ field }}
-							{% else %}
-								<div class = "row form-group">
-									<div class = "col-md-2">{{ field.label_tag }}</b></div>
-									<div class = "col-md-7">{{ field }}</div>
-									<div class = "col-md-3 text-danger">{{ field.errors }}</div>
-								</div>
-							{% endif %}
-						{% endfor %}
-						<div class = "row">
-	 						<div class = "col-xs-2">
-	 							<input type="submit" value="Submit">
-	 						</div>
-	 					</div>
-					</form>
+					{% crispy addeventform %}
 				</div>
 			</div>
 		</div>

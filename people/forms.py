@@ -276,8 +276,7 @@ class ProfileForm(forms.Form):
 														widget=forms.Select(attrs={'class' : 'form-control'}),
 														choices=self.trained_role_choices,
 														required=False
-														)
-
+														)	
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function
@@ -848,6 +847,23 @@ class EventSearchForm(forms.Form):
 													choice_field='ward_name',
 													default=True,
 													default_label='Any')
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('name',css_class='form-group col-md-2 mbt-0'),
+										Column('event_category',css_class='form-group col-md-2 mbt-0'),	
+										Column('event_type',css_class='form-group col-md-2 mbt-0'),
+										Column('ward',css_class='form-group col-md-2 mbt-0'),
+										Column('date_from',css_class='form-group col-md-2 mbt-0'),
+										Column('date_to',css_class='form-group col-md-2 mbt-0'),
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									)
 
 class AnswerQuestionsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

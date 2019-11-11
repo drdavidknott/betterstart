@@ -532,6 +532,24 @@ class AddressSearchForm(forms.Form):
 									max_length=10,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to define the form layout
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(AddressSearchForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('house_name_or_number',css_class='form-group col-md-4 mbt-0'),
+										Column('street',css_class='form-group col-md-4 mbt-0'),
+										Column('post_code',css_class='form-group col-md-4 mbt-0'),	
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									)	
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function

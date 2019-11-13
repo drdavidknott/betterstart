@@ -1606,6 +1606,7 @@ def people(request):
 	ABSS_type = 0
 	age_status = 0
 	trained_role = 'none'
+	ward = 0
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1663,6 +1664,7 @@ def people(request):
 				'ABSS_type' : ABSS_type,
 				'age_status' : age_status,
 				'trained_role' : trained_role,
+				'ward' : ward,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})

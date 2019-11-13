@@ -8,6 +8,17 @@
 
  {% block content %}
 
+ <script type="text/javascript">
+	$(document).ready(function() {
+		{% if events %}
+			$(".search-box").hide();
+		{% endif %}
+		$(".search-trigger").click(function() {
+			$(".search-box").toggle()
+		});
+	});
+</script>
+
 	<div class="container">
 
 	<div class="row">
@@ -22,9 +33,9 @@
  		<div class="col-md-12">
 	 		<div class="panel panel-default">
 	 			<div class="panel-heading">
-	 				<h4 class="panel-title">FIND EVENT:</h4>
+	 				<h4 class="panel-title search-trigger">FIND EVENT:</h4>
 	 			</div>
-		 		<div class="panel-body">
+		 		<div class="panel-body search-box">
 					{% crispy eventsearchform %}
 				</div>
 			</div>

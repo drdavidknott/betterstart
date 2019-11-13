@@ -2393,7 +2393,7 @@ def events(request):
 				ward = eventsearchform.cleaned_data['ward']
 				# conduct a search
 				events = Event.search(
-										name=name,
+										name__icontains=name,
 										date__gte=date_from,
 										date__lte=date_to,
 										event_type_id=int(event_type),

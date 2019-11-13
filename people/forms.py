@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Hidden
+from django.urls import reverse
 
 def role_type_choices(role_types):
 	# set the choice field for role types
@@ -377,6 +378,8 @@ class PersonSearchForm(forms.Form):
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# define the crispy form helper
 		self.helper = FormHelper()
+		# and the action
+		self.helper.form_action = reverse('listpeople')
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
@@ -867,6 +870,8 @@ class EventSearchForm(forms.Form):
 													default_label='Any')
 		# define the crispy form helper
 		self.helper = FormHelper()
+		# and the action
+		self.helper.form_action = reverse('events')
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(

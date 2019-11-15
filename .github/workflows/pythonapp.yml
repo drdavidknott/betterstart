@@ -1,4 +1,4 @@
-name: Python application
+name: Betterstart
 
 on: [push]
 

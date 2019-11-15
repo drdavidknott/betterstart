@@ -801,7 +801,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3])
+		self.assertEqual(response.context['page_list'],[1,2])
 
 	def test_ABSS_search_with_no_results(self):
 		# create a new ABSS type

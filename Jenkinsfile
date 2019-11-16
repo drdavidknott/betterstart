@@ -1,13 +1,8 @@
 pipeline {
-    agent { docker { image 'google/cloud-sdk:latest' } }
+    agent { docker { image 'python' } }
     stages {
         stage('build') {
             steps {
-            	sh 'apt-get --assume-yes install mysql-server'
-        		sh 'apt-get --assume-yes install python3-venv'
-     			sh 'apt-get --assume-yes install python3-dev'
-        		sh 'python3 -m venv testenv'
-        		sh '. testenv/bin/activate'
             	sh 'python -m pip install --upgrade pip'
                 sh 'pip install -r requirements.txt'
             }

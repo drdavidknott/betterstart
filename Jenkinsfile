@@ -7,12 +7,6 @@ pipeline {
                 sh 'pip install -r requirements.txt'
             }
         }
-        stage('install Google tools') {
-            steps {
-            	sh 'curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-271.0.0-linux-x86_64.tar.gz'
-                sh 'tar zxvf google-cloud-sdk-271.0.0-linux-x86_64.tar.gz google-cloud-sdk'
-            }
-        }
         stage('local test') {
         	environment {
             		BETTERSTART_DB = 'local'
@@ -20,6 +14,12 @@ pipeline {
             steps {
             	sh 'python manage.py migrate'
                 sh 'python manage.py test'
+            }
+        }
+        stage('install Google tools') {
+            steps {
+            	sh 'curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-271.0.0-linux-x86_64.tar.gz'
+                sh 'tar zxvf google-cloud-sdk-271.0.0-linux-x86_64.tar.gz google-cloud-sdk'
             }
         }
     }

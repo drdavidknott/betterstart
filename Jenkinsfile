@@ -1,10 +1,16 @@
 pipeline {
     agent { docker { image 'python' } }
     stages {
-        stage('build') {
+        stage('install app and requirements') {
             steps {
             	sh 'python -m pip install --upgrade pip'
                 sh 'pip install -r requirements.txt'
+            }
+        }
+        stage('install Google tools') {
+            steps {
+            	sh 'curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-271.0.0-linux-x86_64.tar.gz'
+                sh 'tar zxvf google-cloud-sdk-271.0.0-linux-x86_64.tar.gz google-cloud-sdk'
             }
         }
         stage('local test') {
@@ -18,3 +24,5 @@ pipeline {
         }
     }
 }
+
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-271.0.0-linux-x86_64.tar.gz

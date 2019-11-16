@@ -18,7 +18,7 @@ pipeline {
         }
         stage('install Google tools') {
         	environment {
-            		GCP_SDK_KEY_FILE = credentials('betterstart-236907-41afff0f3fc0.json')
+            		GCP_SDK_KEY_FILE = credentials('7a40a36c-bdca-4b98-a48d-6c99e04c63cd')
             		BETTERSTART_DB = 'local'
             }
             steps {

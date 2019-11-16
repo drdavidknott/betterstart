@@ -367,10 +367,15 @@ class Relationship(DataAccessMixin,models.Model):
 		success = False
 		# see whether we have an existing relationship
 		try:
-			# attempt to get the record
+			# attempt to get the from record
 			relationship_from = cls.objects.get(
 												relationship_from=person_from,
 												relationship_to=person_to
+												)
+			# attempt to get the to record
+			relationship_to = cls.objects.get(
+												relationship_from=person_to,
+												relationship_to=person_from
 												)
 			# check whether the relationship has changed
 			if (relationship_from.relationship_type != relationship_type):

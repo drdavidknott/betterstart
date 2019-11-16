@@ -486,14 +486,6 @@ def get_age_status_exceptions():
 	# return the results
 	return age_statuses
 
-def get_addresses_by_number_or_street(house_name_or_number,street):
-	# try to get addresses with the matching properties
-	addresses = Address.objects.filter(
-										house_name_or_number__contains=house_name_or_number,
-										street__contains=street)
-	# return the people
-	return addresses
-
 def get_streets_by_name_and_post_code(name='',post_code=''):
 	# get the streets
 	streets = Street.objects.all()
@@ -517,33 +509,6 @@ def add_counts_to_events(events):
 		event.participated_count = event.event_registration_set.filter(participated=True).count()
 	# return the results
 	return events
-
-def get_event_types_with_counts(date_from=0, date_to=0):
-	# return a list of all the event type objects, supplemented with counts
-	event_types = get_event_types()
-	# now go through the role types
-	for event_type in event_types:
-		# get the registrations
-		event_registrations = Event_Registration.objects.filter(event__event_type=event_type, registered=True)
-		# get the participations
-		event_participations = Event_Registration.objects.filter(event__event_type=event_type, participated=True)
-		# if we have a from date, filter further
-		if date_from:
-			# filter the registrations
-			event_registrations = event_registrations.filter(event__date__gte=date_from)
-			# and the participations
-			event_participations = event_participations.filter(event__date__gte=date_from)
-		# if we have a before date, filter further
-		if date_to:
-			# filter the registrations
-			event_registrations = event_registrations.filter(event__date__lte=date_to)
-			# and the participations
-			event_participations = event_participations.filter(event__date__lte=date_to)
-		# set the counts
-		event_type.registered_count = event_registrations.count()
-		event_type.participated_count = event_participations.count()
-	# return the results
-	return event_types
 
 def get_trained_role_types_with_people_counts():
 	# create the list
@@ -819,30 +784,6 @@ def create_person(
 	role_history.save()
 	# and return the person
 	return person
-
-def create_address(house_name_or_number,street,town,post_code):
-	# create an address
-	address = Address(
-					house_name_or_number = house_name_or_number,
-					street = street,
-					town = town,
-					post_code = post_code
-						)
-	# save the record
-	address.save()
-	# and return the address
-	return address
-
-def create_residence(person, address):
-	# create a residence
-	residence = Residence(
-					person = person,
-					address = address
-							)
-	# save the residence
-	residence.save()
-	# return the residence
-	return residence
 
 def create_event(name, description, date, start_time, end_time, event_type, location, ward):
 	# create an event
@@ -1387,20 +1328,6 @@ def remove_existing_relationships(person_from, people):
 	# return the list
 	return people_without_existing_relationships
 
-def remove_existing_addresses(person, addresses):
-	# this function takes a person and a list of addresses, and returns a list of only those addresses where
-	# the person does not have an existing residence
-	# create an empty list
-	addresses_without_existing_residences = []
-	# now got through the list
-	for address in addresses:
-		# attempt to get the residence
-		if not get_residence(person,address):
-			# add the address to the list
-			addresses_without_existing_residences.append(address)
-	# return the list
-	return addresses_without_existing_residences
-
 def remove_existing_registrations(event, people):
 	# this function takes an and a list of people, and returns a list of only those events where
 	# the person does not have an existing registration for that event
@@ -1465,7 +1392,8 @@ def get_dashboard_dates(date=0):
 	# now check whether the date is in the future
 	if date_dict['first_day_of_this_year'] > today:
 		# go back to last year
-		date_dict['first_day_of_this_year'] = first_day_of_this_year.replace(year=first_day_of_this_year.year-1)
+		date_dict['first_day_of_this_year'] = \
+			date_dict['first_day_of_this_year'].replace(year=date_dict['first_day_of_this_year'].year-1)
 	# return the dictionary
 	return date_dict
 
@@ -2804,14 +2732,6 @@ def uploaddata(request):
 				file_handler.handle_uploaded_file(file)
 				# get the results
 				results = file_handler.results
-			# otherwise deal with an old fashioned load functions
-			elif file_type not in file_handlers.keys():
-				# read it as a csv file
-				records = csv.DictReader(file)
-				# get the load function
-				load_function = load_functions[file_type]
-				# call the load functions
-				results = load_function(records)
 			else:
 				# create a file handler
 				file_handler = file_handlers[file_type]()

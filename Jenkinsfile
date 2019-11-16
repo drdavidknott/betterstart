@@ -4,15 +4,12 @@ pipeline {
         stage('build') {
             steps {
             	sh 'apt-get update'
-            	sh 'apt-get --yes install mysql-server'
-        		sh 'apt-get --yes install libmysqlclient-dev'
-        		sh 'apt-get --yes install python3-venv'
-     			sh 'apt-get --yes install python3-dev'
+            	sh 'apt-get --assume=yes install mysql-server'
+        		sh 'apt-get --assume=yes install libmysqlclient-dev'
+        		sh 'apt-get --assume=yes install python3-venv'
+     			sh 'apt-get --assume=yes install python3-dev'
         		sh 'python3 -m venv testenv'
-        		sh 'ls'
-        		sh 'cd testenv'
-        		sh 'ls'
-        		sh 'source testenv/bin/activate'
+        		sh '. testenv/bin/activate'
             	sh 'python -m pip install --upgrade pip'
                 sh 'pip install -r requirements.txt'
             }

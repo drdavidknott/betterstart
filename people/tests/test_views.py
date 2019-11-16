@@ -8013,7 +8013,7 @@ class UploadDownloadAnswerNotesViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'missing first name (Adult) - test question with notes - test notes not created: mandatory field first_name not providedx')
+		self.assertContains(response,'missing first name (Adult) - test question with notes - test notes not created: mandatory field first_name not provided')
 		self.assertContains(response,'missing last name  (Adult) - test question with notes - test notes not created: mandatory field last_name not provided')
 		self.assertContains(response,'missing age status last name () - test question with notes - test notes not created: mandatory field age_status not provided')
 		self.assertContains(response,'missing question last name (Adult) -  - test notes not created: mandatory field question not provided')

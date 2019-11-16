@@ -21,7 +21,6 @@ pipeline {
             		GCP_SDK_KEY_FILE = credentials('betterstart-236907-41afff0f3fc0.json')
             		BETTERSTART_DB = 'local'
             }
-            }
             steps {
             	sh 'curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-271.0.0-linux-x86_64.tar.gz'
                 sh 'tar zxvf google-cloud-sdk-271.0.0-linux-x86_64.tar.gz google-cloud-sdk'

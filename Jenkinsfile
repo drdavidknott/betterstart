@@ -4,8 +4,8 @@ pipeline {
         stage('build') {
             steps {
             	sh 'apt-get update'
+            	sh 'apt-get --assume-yes install libmysqlclient-dev'
             	sh 'apt-get --assume-yes install mysql-server'
-        		sh 'apt-get --assume-yes install libmysqlclient-dev'
         		sh 'apt-get --assume-yes install python3-venv'
      			sh 'apt-get --assume-yes install python3-dev'
         		sh 'python3 -m venv testenv'

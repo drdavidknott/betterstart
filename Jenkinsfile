@@ -24,7 +24,7 @@ pipeline {
                 sh 'chmod +x cloud_sql_proxy'
             }
         }
-        stage('install Google tools') {
+        stage('system test') {
         	environment {
             		GCP_SDK_KEY_FILE = credentials('GCP-keyfile')
             		BETTERSTART_DB = 'local'

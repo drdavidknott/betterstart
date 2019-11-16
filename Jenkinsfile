@@ -8,10 +8,10 @@ pipeline {
             }
         }
         stage('local test') {
-            steps {
-            	environment {
+        	environment {
             		BETTERSTART_DB = 'local'
-            	}
+            }
+            steps {
             	sh 'python manage.py migrate'
                 sh 'python manage.py test'
             }

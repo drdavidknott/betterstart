@@ -26,13 +26,20 @@ pipeline {
         }
         stage('system test') {
         	environment {
-            		GCP_SDK_KEY_FILE = credentials('GCP-keyfile')
-            		BETTERSTART_DB = 'local'
+            		BETTERSTART_GCP_KEYFILE = credentials('systest_BETTERSTART_GCP_KEYFILE')
+            		BETTERSTART_DB_HOST = credentials('systest_BETTERSTART_DB_HOST')
+            		BETTERSTART_DB_USER = credentials('systest_BETTERSTART_DB_USER')
+            		BETTERSTART_DB_NAME = credentials('systest_BETTERSTART_DB_NAME')
+            		BETTERSTART_DB_PW = credentials('systes_BETTERSTART_DB_PW')
+            		BETTERSTART_DB = 'cloud'
+            		BETTERSTART_PORT = '3306'
             }
             steps {
-            	sh 'google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$GCP_SDK_KEY_FILE'
+            	sh 'google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE'
                 sh 'google-cloud-sdk/bin/gcloud config set project betterstart-236907'
                 sh 'google-cloud-sdk/bin/gcloud sql databases list --instance=betterstart'
+                sh './cloud_sql_proxy -instances $BETTERSTART_DB_HOST=tcp:3306'
+                sh 'python manage.py test'
             }
         }
     }

@@ -30,6 +30,7 @@ pipeline {
             		BETTERSTART_DB_HOST = credentials('systest_BETTERSTART_DB_HOST')
             		BETTERSTART_DB_USER = credentials('systest_BETTERSTART_DB_USER')
             		BETTERSTART_DB_NAME = credentials('systest_BETTERSTART_DB_NAME')
+            		BETTERSTART_DB_INSTANCE = credentials('systest_BETTERSTART_DB_INSTANCE')
             		BETTERSTART_DB_PW = credentials('systest_BETTERSTART_PW')
             		BETTERSTART_DB = 'cloud'
             		BETTERSTART_PORT = '3306'
@@ -39,7 +40,7 @@ pipeline {
             	sh 'google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE'
                 sh 'google-cloud-sdk/bin/gcloud config set project betterstart-236907'
                 sh 'google-cloud-sdk/bin/gcloud sql databases list --instance=betterstart'
-                sh './cloud_sql_proxy -instances $BETTERSTART_DB_HOST=tcp:3306'
+                sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3306'
                 sh 'python manage.py test'
             }
         }

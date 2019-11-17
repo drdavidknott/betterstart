@@ -13,7 +13,6 @@ output_file = open(output_file,'w+')
 for input_line in input_file:
 	# check whether we have a tag
 	if '${' in input_line:
-		print(input_line)
 		# split the string
 		before_tag = input_line.split('${')[0]
 		tag_with_trailer = input_line.split('${')[1]

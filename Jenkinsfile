@@ -28,7 +28,7 @@ pipeline {
         	environment {
             		BETTERSTART_GCP_KEYFILE = credentials('systest_BETTERSTART_GCP_KEYFILE')
             		BETTERSTART_DB_HOST = credentials('systest_BETTERSTART_DB_HOST')
-            		BETTERSTART_DB_USER = credentials('systest_BETTERSTART_DB_USER')
+            		BETTERSTART_DB_USER = credentials('BETTERSTART_PROXY_USER')
             		BETTERSTART_DB_NAME = credentials('systest_BETTERSTART_DB_NAME')
             		BETTERSTART_DB_INSTANCE = credentials('systest_BETTERSTART_DB_INSTANCE')
             		BETTERSTART_DB_PW = credentials('systest_BETTERSTART_PW')

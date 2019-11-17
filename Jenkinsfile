@@ -30,7 +30,7 @@ pipeline {
             		BETTERSTART_DB_HOST = credentials('systest_BETTERSTART_DB_HOST')
             		BETTERSTART_DB_USER = credentials('systest_BETTERSTART_DB_USER')
             		BETTERSTART_DB_NAME = credentials('systest_BETTERSTART_DB_NAME')
-            		BETTERSTART_DB_PW = credentials('systest_BETTERSTART_DB_PW')
+            		BETTERSTART_DB_PW = credentials('systest_BETTERSTART_PW')
             		BETTERSTART_DB = 'cloud'
             		BETTERSTART_PORT = '3306'
             }

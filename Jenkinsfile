@@ -31,7 +31,7 @@ pipeline {
             		BETTERSTART_DB_USER = credentials('systest_BETTERSTART_DB_USER')
             		BETTERSTART_DB_NAME = credentials('systest_BETTERSTART_DB_NAME')
             		BETTERSTART_DB_INSTANCE = credentials('systest_BETTERSTART_DB_INSTANCE')
-            		BETTERSTART_DB_PW = credentials('systest_BETTERSTART_PW')
+            		BETTERSTART_PW = credentials('systest_BETTERSTART_PW')
             		BETTERSTART_DB = 'cloud'
             		BETTERSTART_PORT = '3306'
             		GOOGLE_APPLICATION_CREDENTIALS = credentials('systest_BETTERSTART_GCP_KEYFILE')

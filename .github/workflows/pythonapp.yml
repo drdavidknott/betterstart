@@ -42,3 +42,8 @@ jobs:
         tar zxvf google-cloud-sdk-271.0.0-linux-x86_64.tar.gz google-cloud-sdk
         curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
         chmod +x cloud_sql_proxy
+    - name: System test
+      run: |
+        google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE
+      env:
+        BETTERSTART_GCP_KEYFILE: ${{ secrets.systest_BETTERSTART_GCP_KEYFILE }}

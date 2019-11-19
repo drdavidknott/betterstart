@@ -49,8 +49,9 @@ jobs:
         google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=keyfile
         google-cloud-sdk/bin/gcloud config set project $BETTERSTART_PROJECT
         google-cloud-sdk/bin/gcloud sql databases list --instance=betterstart
-        ./cloud_sql_proxy -instances  $BETTERSTART_DB_INSTANCE=tcp:3306 -credential_file=keyfile &
+        ./cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3306 &
       env:
         BETTERSTART_GCP_KEYFILE: ${{ secrets.systest_BETTERSTART_GCP_KEYFILE }}
         BETTERSTART_PROJECT: ${{ secrets.systest_BETTERSTART_PROJECT }}
         BETTERSTART_DB_INSTANCE: ${{ secrets.systest_BETTERSTART_DB_INSTANCE }}
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.systest_BETTERSTART_GCP_KEYFILE }}

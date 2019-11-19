@@ -51,7 +51,7 @@ jobs:
         google-cloud-sdk/bin/gcloud sql databases list --instance=betterstart
         ./cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:$BETTERSTART_DB_PORT -credential_file=keyfile &
         # run system test
-        python manage.py test
+        # python manage.py test
       env:
         BETTERSTART_GCP_KEYFILE: ${{ secrets.systest_BETTERSTART_GCP_KEYFILE }}
         BETTERSTART_PROJECT: ${{ secrets.systest_BETTERSTART_PROJECT }}

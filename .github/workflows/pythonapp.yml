@@ -47,5 +47,6 @@ jobs:
         # authorise GCP SDK
         echo $BETTERSTART_GCP_KEYFILE > keyfile
         google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=keyfile
+        google-cloud-sdk/bin/gcloud sql databases list --instance=betterstart
       env:
         BETTERSTART_GCP_KEYFILE: ${{ secrets.systest_BETTERSTART_GCP_KEYFILE }}

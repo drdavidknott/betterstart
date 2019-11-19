@@ -44,6 +44,7 @@ jobs:
         chmod +x cloud_sql_proxy
     - name: System test
       run: |
+        # authorise GCP SDK
         google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE
       env:
         BETTERSTART_GCP_KEYFILE: ${{ secrets.systest_BETTERSTART_GCP_KEYFILE }}

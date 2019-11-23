@@ -13,7 +13,7 @@ pipeline {
             }
             steps {
                 // run the flake 8 code checker
-                sh 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
+                // sh 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
                 // run the test locally
                 sh 'python manage.py test --noinput --verbosity=2'
             }

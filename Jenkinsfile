@@ -47,7 +47,7 @@ pipeline {
                 // launch the Google Cloud SQL proxy
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3306 &'
                 // run test against the system test database on GCP
-                sh 'python manage.py test --noinput --verbosity=2'
+                // sh 'python manage.py test --noinput --verbosity=2'
             }
         }
         stage('deploy to system test') {
@@ -61,6 +61,7 @@ pipeline {
                     BETTERSTART_DB = 'cloud'
                     BETTERSTART_PORT = '3306'
                     GOOGLE_APPLICATION_CREDENTIALS = credentials('systest_BETTERSTART_GCP_KEYFILE')
+                    BETTERSTART_PROJECT = credentials('systest_BETTERSTART_PROJECT')
             }
             steps {
                 // run database migrations against the system test database

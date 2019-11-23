@@ -6,12 +6,15 @@ from .utilities import extract_id
 class Site(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	navbar_background = models.CharField(max_length=50, blank=True)
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.name
 
 # Family model: represents a family.
 # Has a many to many relationship with Person
 class Family(DataAccessMixin,models.Model):
 	description = models.CharField(max_length=50)
-	# define the function that will return the person name as the object reference
+	# define the function that will return the family description as the object reference
 	def __str__(self):
 		return self.description
 	# set the name to be used in the admin console

@@ -68,7 +68,7 @@ pipeline {
                 // build the yaml file from environment variables
                 sh 'python build_yaml.py'
                 // deploy the application
-                sh 'google-cloud-sdk/bin/gcloud --project=$BETTERSTART_PROJECT --quiet'
+                sh 'google-cloud-sdk/bin/gcloud app deploy --project=$BETTERSTART_PROJECT --quiet'
             }
         }
     }

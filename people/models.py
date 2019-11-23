@@ -2,6 +2,11 @@ from django.db import models
 from .django_extensions import DataAccessMixin
 from .utilities import extract_id
 
+# Site model: provides configuration for the site
+class Site(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	navbar_background = models.CharField(max_length=50, blank=True)
+
 # Family model: represents a family.
 # Has a many to many relationship with Person
 class Family(DataAccessMixin,models.Model):

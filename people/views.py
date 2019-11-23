@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note
+					ABSS_Type, Age_Status, Street, Answer_Note, Site
 import os
 import csv
 import copy
@@ -1356,13 +1356,23 @@ def check_checkbox(field_dict, field_name):
 
 def build_context(context_dict):
 	# take a context dictionary and add additional items
+	# set the defaults
+	site_name = 'test site'
+	navbar_background = ''
+	# attempt to get the site
+	site = Site.objects.all().first()
+	# if we have a site, set the details
+	if site:
+		# set the details
+		site_name = site.name
+		navbar_background = site.navbar_background
+	# now set the dictionary
+	context_dict['site_name'] = site_name
+	context_dict['navbar_background'] = navbar_background
 	# check whether we have a default date
 	if not context_dict.get('default_date', False):
 		# set the default date to the default
 		context_dict['default_date'] = '01/01/2010'
-	# set the site details from the environment variables
-	context_dict['site_name'] = os.getenv('BETTERSTART_NAME', None)
-	context_dict['nav_background'] = os.getenv('BETTERSTART_NAV','betterstart-background-local-test')
 	# return the dictionary
 	return context_dict
 

@@ -68,6 +68,8 @@ pipeline {
                 sh 'python manage.py migrate'
                 // build the yaml file from environment variables
                 sh 'python build_yaml.py'
+                // collect static files
+                sh 'python manage.py collectstatic --noinput'
                 // deploy the application
                 sh 'google-cloud-sdk/bin/gcloud app deploy --project=$BETTERSTART_PROJECT --quiet'
             }

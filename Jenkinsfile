@@ -13,7 +13,7 @@ pipeline {
             }
             steps {
             	sh 'python manage.py migrate'
-                // sh 'python manage.py test'
+                sh 'python manage.py test --noinput'
             }
         }
         stage('install Google tools') {
@@ -41,7 +41,7 @@ pipeline {
                 sh 'google-cloud-sdk/bin/gcloud config set project betterstart-236907'
                 sh 'google-cloud-sdk/bin/gcloud sql databases list --instance=betterstart'
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3306 &'
-                sh 'python manage.py test'
+                sh 'python manage.py test --noinput'
             }
         }
     }

@@ -12,8 +12,6 @@ pipeline {
             		BETTERSTART_DB = 'local'
             }
             steps {
-                // run the flake 8 code checker
-                // sh 'flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics'
                 // run the test locally
                 sh 'python manage.py test --noinput --verbosity=2'
             }
@@ -49,7 +47,7 @@ pipeline {
                 // launch the Google Cloud SQL proxy
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3306 &'
                 // run test against the system test database on GCP
-                // sh 'python manage.py test --noinput --verbosity=2'
+                sh 'python manage.py test --noinput --verbosity=2'
             }
         }
         stage('deploy to system test') {

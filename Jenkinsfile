@@ -7,7 +7,6 @@ pipeline {
                 sh 'pip install -r requirements.txt'
             }
         }
-        /*
         stage('local test') {
         	environment {
             		BETTERSTART_DB = 'local'
@@ -17,7 +16,6 @@ pipeline {
                 sh 'python manage.py test --noinput --verbosity=2'
             }
         }
-        */
         stage('install Google tools') {
             steps {
                 // get and install the Google Cloud SDK
@@ -28,7 +26,6 @@ pipeline {
                 sh 'chmod +x cloud_sql_proxy'
             }
         }
-        /*
         stage('system test') {
         	environment {
             		BETTERSTART_GCP_KEYFILE = credentials('systest_BETTERSTART_GCP_KEYFILE')
@@ -76,7 +73,6 @@ pipeline {
                 sh 'google-cloud-sdk/bin/gcloud app deploy --project=$BETTERSTART_PROJECT --quiet'
             }
         }
-        */
         stage('uat test') {
             environment {
                     BETTERSTART_GCP_KEYFILE = credentials('uat_BETTERSTART_GCP_KEYFILE')
@@ -88,12 +84,11 @@ pipeline {
                     BETTERSTART_DB = 'cloud'
                     BETTERSTART_DB_PORT = '3307'
                     GOOGLE_APPLICATION_CREDENTIALS = credentials('uat_BETTERSTART_GCP_KEYFILE')
-                    BETTERSTART_PROJECT = 'betterstart-uat'
+                    BETTERSTART_PROJECT = credentials('uat_BETTERSTART_PROJECT')
             }
             steps {
                 // authenticate, configure and test the Google Cloud SDK
                 sh 'google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE'
-                sh 'google-cloud-sdk/bin/gcloud projects list'
                 sh 'google-cloud-sdk/bin/gcloud config set project $BETTERSTART_PROJECT'
                 // launch the Google Cloud SQL proxy
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3307 &'

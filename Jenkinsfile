@@ -26,6 +26,7 @@ pipeline {
                 sh 'chmod +x cloud_sql_proxy'
             }
         }
+        /*
         stage('system test') {
         	environment {
             		BETTERSTART_GCP_KEYFILE = credentials('systest_BETTERSTART_GCP_KEYFILE')
@@ -73,6 +74,7 @@ pipeline {
                 sh 'google-cloud-sdk/bin/gcloud app deploy --project=$BETTERSTART_PROJECT --quiet'
             }
         }
+        */
         stage('uat test') {
             environment {
                     BETTERSTART_GCP_KEYFILE = credentials('uat_BETTERSTART_GCP_KEYFILE')

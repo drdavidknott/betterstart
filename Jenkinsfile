@@ -93,6 +93,7 @@ pipeline {
             steps {
                 // authenticate, configure and test the Google Cloud SDK
                 sh 'google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE'
+                sh 'google-cloud-sdk/bin/gcloud projects list'
                 sh 'google-cloud-sdk/bin/gcloud config set project $BETTERSTART_PROJECT'
                 // launch the Google Cloud SQL proxy
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3307 &'

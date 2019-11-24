@@ -1,7 +1,7 @@
 pipeline {
     agent { docker { image 'python' } }
     stages {
-        stage('install app and requirements') {
+        stage('install requirements') {
             steps {
             	sh 'python -m pip install --upgrade pip'
                 sh 'pip install -r requirements.txt'
@@ -46,7 +46,7 @@ pipeline {
                 // launch the Google Cloud SQL proxy
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3306 &'
                 // run test against the system test database on GCP
-                // sh 'python manage.py test --noinput --verbosity=2'
+                sh 'python manage.py test --noinput --verbosity=2'
             }
         }
         stage('deploy to system test') {

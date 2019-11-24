@@ -13,7 +13,7 @@ pipeline {
             }
             steps {
                 // run the test locally
-                sh 'python manage.py test --noinput --verbosity=2'
+                // sh 'python manage.py test --noinput --verbosity=2'
             }
         }
         stage('install Google tools') {

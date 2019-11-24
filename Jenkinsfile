@@ -7,15 +7,17 @@ pipeline {
                 sh 'pip install -r requirements.txt'
             }
         }
+        /*
         stage('local test') {
         	environment {
             		BETTERSTART_DB = 'local'
             }
             steps {
                 // run the test locally
-                // sh 'python manage.py test --noinput --verbosity=2'
+                sh 'python manage.py test --noinput --verbosity=2'
             }
         }
+        */
         stage('install Google tools') {
             steps {
                 // get and install the Google Cloud SDK

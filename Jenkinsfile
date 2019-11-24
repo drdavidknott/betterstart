@@ -88,7 +88,7 @@ pipeline {
                     BETTERSTART_DB = 'cloud'
                     BETTERSTART_PORT = '3307'
                     GOOGLE_APPLICATION_CREDENTIALS = credentials('uat_BETTERSTART_GCP_KEYFILE')
-                    BETTERSTART_PROJECT = credentials('uat_BETTERSTART_PROJECT')
+                    BETTERSTART_PROJECT = 'betterstart-uat'
             }
             steps {
                 // authenticate, configure and test the Google Cloud SDK

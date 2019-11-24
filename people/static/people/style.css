@@ -1,26 +1,4 @@
 
-.betterstart-background-local-test {
-	background-color: #FCCED1;
-	color: #60060C;
-}
-
-.betterstart-background-cloud-test {
-	background-color: #CEE7FC;
-	color: #000099;
-}
-
-.betterstart-background-local-release {
-	background-color: #ED2D0F;
-}
-
-.betterstart-background-uat {
-	background-color: #99FF99;
-}
-
-.betterstart-background-production {
-	background-color: #D70365;
-}
-
 .select-fixed-width {
 	width: 150px;
 }

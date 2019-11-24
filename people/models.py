@@ -6,6 +6,7 @@ from .utilities import extract_id
 class Site(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	navbar_background = models.CharField(max_length=50, blank=True)
+	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name

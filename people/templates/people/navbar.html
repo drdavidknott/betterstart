@@ -17,6 +17,11 @@ $(document).ready(function() {
 	background-color: #{{ navbar_background }};
 	color: #60060C;
 }
+{% if navbar_text %}
+.nav.navbar-nav.navbar-right li a {
+    color: #{{ navbar_text }};
+}
+{% endif %}
 </style>
 
 <!-- Navbar -->

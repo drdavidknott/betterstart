@@ -91,7 +91,7 @@ pipeline {
                 // authenticate, configure and test the Google Cloud SDK
                 sh 'google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=$BETTERSTART_GCP_KEYFILE'
                 sh 'google-cloud-sdk/bin/gcloud config set project $BETTERSTART_PROJECT'
-                sh 'google-cloud-sdk/bin/gcloud sql databases list --instance=$BETTERSTART_DB_INSTANCE'
+                sh 'google-cloud-sdk/bin/gcloud sql databases list --instance=$BETTERSTART_DB_NAME'
                 // launch the Google Cloud SQL proxy
                 sh './cloud_sql_proxy -instances $BETTERSTART_DB_INSTANCE=tcp:3307 &'
                 // run test against the system test database on GCP
@@ -104,7 +104,7 @@ pipeline {
                     BETTERSTART_DB_HOST = credentials('uat_BETTERSTART_DB_HOST')
                     BETTERSTART_DB_USER = credentials('uat_BETTERSTART_DB_USER')
                     BETTERSTART_DB_NAME = credentials('uat_BETTERSTART_DB_NAME')
-                    BETTERSTART_DB_INSTANCE = credentials('uat_BETTERSTART_DB_INSTANCE')
+                    BETTERSTART_DB_INSTANCE = credentials('uat_BETTERSTART_DB_NAME')
                     BETTERSTART_PW = credentials('uat_BETTERSTART_PW')
                     BETTERSTART_DB = 'cloud'
                     BETTERSTART_PORT = '3307'

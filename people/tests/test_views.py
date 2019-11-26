@@ -266,7 +266,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21])
 
 	def test_search_with_no_criteria_second_page(self):
 		# log the user in

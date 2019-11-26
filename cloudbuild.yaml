@@ -1,4 +1,4 @@
 steps:
 - name: 'docker.io/library/python:3'
   entrypoint: 'bash'
-  args: ['source','install_and_test.sh']
+  args: ['.','install_and_test.sh']

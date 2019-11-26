@@ -1,16 +1,18 @@
 steps:
+#- name: 'docker.io/library/python:latest'
+#  entrypoint: 'bash'
+#  args:
+#   - -c
+#   - |
+#    pip install -r requirements.txt
+#    python manage.py test --verbosity=2 --noinput
+# env: ['BETTERSTART_DB=local']
 - name: 'docker.io/library/python:latest'
   entrypoint: 'bash'
   args:
    - -c
    - |
-     pip install -r requirements.txt
-     python manage.py test --verbosity=2 --noinput
-  env: ['BETTERSTART_DB=local']
-- name: gcr.io/cloudsql-docker/gce-proxy
-  entrypoint: 'bash'
-  args:
-   - -c
-   - |
-     ./cloud_sql_proxy -instances betterstart-236907:europe-west1:betterstart=tcp:3306 &
-     python manage.py test
+      curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+      chmod +x cloud_sql_proxy
+      ./cloud_sql_proxy -instances betterstart-236907:europe-west1:betterstart=tcp:3306 &
+      python manage.py test

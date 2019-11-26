@@ -5,10 +5,5 @@ steps:
    - -c
    - |
      pip install -r requirements.txt
-     python manage.py test
+     python manage.py test --verbosity=2 --noinput
   env: ['BETTERSTART_DB=local']
-- name: 'docker.io/library/python:3'
-  args: ['python','build_yaml.py']
-  env: ['BETTERSTART_PW=test']
-- name: 'docker.io/library/python:3'
-  args: ['cat','app.yaml']

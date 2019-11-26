@@ -3,3 +3,9 @@ steps:
   entrypoint: 'bash'
   args: ['install_and_test.sh']
   env: ['BETTERSTART_DB=local']
+- name: 'docker.io/library/python:3'
+  entrypoint: 'bash'
+  args: ['python build_yaml.py']
+- name: 'docker.io/library/python:3'
+  entrypoint: 'bash'
+  args: ['cat','app.yaml']

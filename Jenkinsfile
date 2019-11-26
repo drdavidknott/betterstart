@@ -38,6 +38,7 @@ pipeline {
             		BETTERSTART_DB_PORT = '3306'
             		GOOGLE_APPLICATION_CREDENTIALS = credentials('systest_BETTERSTART_GCP_KEYFILE')
                     BETTERSTART_PROJECT = credentials('systest_BETTERSTART_PROJECT')
+                    BETTERSTART_DEBUG='True'
             }
             steps {
                 // authenticate, configure and test the Google Cloud SDK
@@ -61,6 +62,7 @@ pipeline {
                     BETTERSTART_DB_PORT = '3306'
                     GOOGLE_APPLICATION_CREDENTIALS = credentials('systest_BETTERSTART_GCP_KEYFILE')
                     BETTERSTART_PROJECT = credentials('systest_BETTERSTART_PROJECT')
+                    BETTERSTART_DEBUG='True'
             }
             steps {
                 // run database migrations against the system test database
@@ -85,6 +87,7 @@ pipeline {
                     BETTERSTART_DB_PORT = '3307'
                     GOOGLE_APPLICATION_CREDENTIALS = credentials('uat_BETTERSTART_GCP_KEYFILE')
                     BETTERSTART_PROJECT = credentials('uat_BETTERSTART_PROJECT')
+                    BETTERSTART_DEBUG='True'
             }
             steps {
                 // authenticate, configure and test the Google Cloud SDK
@@ -108,6 +111,7 @@ pipeline {
                     BETTERSTART_DB_PORT = '3307'
                     GOOGLE_APPLICATION_CREDENTIALS = credentials('uat_BETTERSTART_GCP_KEYFILE')
                     BETTERSTART_PROJECT = credentials('uat_BETTERSTART_PROJECT')
+                    BETTERSTART_DEBUG='True'
             }
             steps {
                 // run database migrations against the system test database

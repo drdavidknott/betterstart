@@ -1,5 +1,5 @@
 steps:
-- name: 'docker.io/library/ubuntu'
+- name: 'docker.io/library/python:latest'
   entrypoint: 'bash'
   args:
    - -c

@@ -7,3 +7,4 @@ steps:
   args: ['python','build_yaml.py']
 - name: 'docker.io/library/python:3'
   args: ['cat','app.yaml']
+  env: ['BETTERSTART_PW=test']

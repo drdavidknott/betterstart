@@ -5,6 +5,6 @@ steps:
   env: ['BETTERSTART_DB=local']
 - name: 'docker.io/library/python:3'
   args: ['python','build_yaml.py']
+  env: ['BETTERSTART_PW=test']
 - name: 'docker.io/library/python:3'
   args: ['cat','app.yaml']
-  env: ['BETTERSTART_PW=test']

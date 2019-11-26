@@ -1,16 +1,14 @@
 steps:
-- name: 'docker.io/library/python:3'
-  entrypoint: 'ash'
+- name: 'docker.io/library/ubuntu'
+  entrypoint: 'bash'
   args:
    - -c
    - |
-     python build_yaml.py
-     cat app.yaml
+     pip install -r requirements.txt
+     python manage.py test
   env: ['BETTERSTART_DB=local']
 - name: 'docker.io/library/python:3'
   args: ['python','build_yaml.py']
   env: ['BETTERSTART_PW=test']
 - name: 'docker.io/library/python:3'
   args: ['cat','app.yaml']
-- name: 'docker.io/library/ubuntu'
-  entrypoint: 'bash'

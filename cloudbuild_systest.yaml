@@ -17,5 +17,5 @@ steps:
       chmod +x cloud_sql_proxy
       ./cloud_sql_proxy -instances betterstart-236907:europe-west1:betterstart=tcp:3306 &
       python manage.py test --verbosity=2 --noinput
-      echo $TEST
-  env: ['BETTERSTART_DB=local','TEST=$_TEST_VAR']
+      echo $$TEST
+  env: ['BETTERSTART_DB=local','TEST=${_TEST_VAR}']

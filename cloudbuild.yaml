@@ -16,5 +16,5 @@ steps:
       curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
       chmod +x cloud_sql_proxy
       ./cloud_sql_proxy -instances betterstart-236907:europe-west1:betterstart=tcp:3306 &
-      python manage.py test
+      python manage.py test --verbosity=2 --noinput
   env: ['BETTERSTART_DB=local']

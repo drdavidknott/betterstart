@@ -1,12 +1,4 @@
 steps:
-#- name: 'docker.io/library/python:latest'
-#  entrypoint: 'bash'
-#  args:
-#   - -c
-#   - |
-#    pip install -r requirements.txt
-#    python manage.py test --verbosity=2 --noinput
-# env: ['BETTERSTART_DB=local']
 - name: gcr.io/cloud-builders/docker
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/test_runner', '.']
 - name: 'gcr.io/$PROJECT_ID/test_runner'
@@ -14,7 +6,10 @@ steps:
   args:
    - -c
    - |
-      ls
-      . cloud_sql_proxy -instances betterstart-236907:europe-west1:betterstart=tcp:3306 &
+      curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+      chmod +x cloud_sql_proxy
+      ./cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py test --verbosity=2 --noinput
-  env: ['BETTERSTART_DB=local','TEST=${_TEST_VAR}']
+  env:
+    - BETTERSTART_DB=local
+    - BETTERSTART_DB_INSTANCE=${_BETTERSTART_DB_INSTANCE}

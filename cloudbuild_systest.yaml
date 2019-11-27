@@ -9,7 +9,7 @@ steps:
 # env: ['BETTERSTART_DB=local']
 - name: gcr.io/cloud-builders/docker
   args: ['build', '-t', 'test_runner', '.']
-  images: ['gcr.io/$PROJECT_ID/myimage']
+images: ['gcr.io/$PROJECT_ID/test_runner']
 - name: 'docker.io/library/python:latest'
   entrypoint: 'bash'
   args:

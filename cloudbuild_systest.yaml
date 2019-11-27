@@ -9,7 +9,7 @@ steps:
 # env: ['BETTERSTART_DB=local']
 - name: gcr.io/cloud-builders/docker
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/test_runner', '.']
-- name: 'docker.io/$PROJECT_ID/test_runner'
+- name: 'gcr.io/$PROJECT_ID/test_runner'
   entrypoint: 'bash'
   args:
    - -c

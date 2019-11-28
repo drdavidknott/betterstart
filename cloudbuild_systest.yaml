@@ -7,5 +7,5 @@ steps:
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py test --verbosity=2 --noinput
   env:
-    - BETTERSTART_DB=cloud
+    - BETTERSTART_DB=local
     - BETTERSTART_DB_INSTANCE=${_BETTERSTART_DB_INSTANCE}

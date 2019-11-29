@@ -2,7 +2,8 @@ steps:
 # run test locally
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
-  args: ['python','manage.py','--verbosity=2','--noinput']
+  args: ['-c','python','manage.py','--verbosity=2','--noinput']
+# decrypt environment variables
 - name: gcr.io/cloud-builders/gcloud
   args:
   - kms
@@ -12,6 +13,7 @@ steps:
   - --location=global
   - --keyring=betterstart-keyring
   - --key=betterstart-key
+# run test against Cloud SQL database
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
   args:
@@ -21,6 +23,7 @@ steps:
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py test --verbosity=2 --noinput
   timeout: 3600s
+# run database migrations
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
   args:
@@ -29,6 +32,11 @@ steps:
       . setenv
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py migrate
+# build yaml file for deployment
+- name: gcr.io/$PROJECT_ID/test_runner
+  entrypoint: 'bash'
+  args: ['-c','python','build_yaml.py']
+# deploy application to App Engine
 - name: gcr.io/cloud-builders/gcloud
   args: ['app', 'deploy']
 timeout: 3600s

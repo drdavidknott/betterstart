@@ -2,6 +2,7 @@ steps:
 # run test locally
 - name: gcr.io/$PROJECT_ID/test_runner
   args: ['python','manage.py','test','--verbosity=2','--noinput']
+  env: ['BETTERSTART_DB=local']
 # decrypt environment variables
 - name: gcr.io/cloud-builders/gcloud
   args:

@@ -9,3 +9,6 @@ app.yaml
 cloud_sql_proxy
 *_ignore*
 setenv
+setenv_systest
+setenv_uat
+setenv_prod

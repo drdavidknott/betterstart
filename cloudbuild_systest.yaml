@@ -8,14 +8,11 @@ steps:
   - --location=global
   - --keyring=betterstart-keyring
   - --key=betterstart-key
-- name: 'gcr.io/$PROJECT_ID/test_runner'
+- name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
   args:
    - -c
    - |
-      cat setenv
+      . setenv
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py test --verbosity=2 --noinput
-  env:
-    - BETTERSTART_DB=local
-    - BETTERSTART_DB_INSTANCE=${_BETTERSTART_DB_INSTANCE}

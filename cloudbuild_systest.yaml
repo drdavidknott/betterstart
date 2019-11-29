@@ -2,7 +2,7 @@ steps:
 # run test locally
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
-  args: ['-c','manage.py --verbosity=2 --noinput']
+  args: ['-c','python manage.py --verbosity=2 --noinput']
 # decrypt environment variables
 - name: gcr.io/cloud-builders/gcloud
   args:

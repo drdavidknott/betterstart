@@ -1,8 +1,8 @@
 steps:
 # run test locally
 - name: gcr.io/$PROJECT_ID/test_runner
-  entrypoint: 'python'
-  args: ['manage.py','--verbosity=2','--noinput']
+  entrypoint: 'bash'
+  args: ['-c','manage.py --verbosity=2 --noinput']
 # decrypt environment variables
 - name: gcr.io/cloud-builders/gcloud
   args:
@@ -34,8 +34,8 @@ steps:
       python manage.py migrate
 # build yaml file for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
-  entrypoint: 'python'
-  args: ['build_yaml.py']
+  entrypoint: 'bash'
+  args: ['-c','python build_yaml.py']
 # deploy application to App Engine
 - name: gcr.io/cloud-builders/gcloud
   args: ['app', 'deploy']

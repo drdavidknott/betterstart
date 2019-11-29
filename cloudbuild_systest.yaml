@@ -13,29 +13,17 @@ steps:
   - --location=global
   - --keyring=betterstart-keyring
   - --key=betterstart-key
-# run test against Cloud SQL database
+# prep for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
   args:
    - -c
    - |
       . setenv
+      python manage.py collectstatic --noinput
+      python build_yaml.py
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
-      python manage.py test --verbosity=2 --noinput
-  timeout: 3600s
-# run database migrations
-- name: gcr.io/$PROJECT_ID/test_runner
-  entrypoint: 'bash'
-  args:
-   - -c
-   - |
-      . setenv
-      /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
-      python manage.py migrate
-# build yaml file for deployment
-- name: gcr.io/$PROJECT_ID/test_runner
-  entrypoint: 'bash'
-  args: ['-c','python build_yaml.py']
+      python manage.py migrate --noinput
 # deploy application to App Engine
 - name: gcr.io/cloud-builders/gcloud
   args: ['app', 'deploy']

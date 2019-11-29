@@ -1,9 +1,19 @@
 steps:
+- name: gcr.io/cloud-builders/gcloud
+  args:
+  - kms
+  - decrypt
+  - --ciphertext-file=${_BETTERSTART_ENV_SCRIPT}
+  - --plaintext-file=setenv
+  - --location=global
+  - --keyring=betterstart-keyring
+  - --key=betterstart-key
 - name: 'gcr.io/$PROJECT_ID/test_runner'
   entrypoint: 'bash'
   args:
    - -c
    - |
+      cat setenv
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py test --verbosity=2 --noinput
   env:

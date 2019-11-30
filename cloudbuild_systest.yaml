@@ -13,6 +13,17 @@ steps:
   - --location=global
   - --keyring=betterstart-keyring
   - --key=betterstart-key
+# test against Cloud SQL
+- name: gcr.io/$PROJECT_ID/test_runner
+  entrypoint: 'bash'
+  args:
+   - -c
+   - |
+      . setenv
+      /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
+      python manage.py test --verbosity=2 --noinput
+  env:
+    - 'CLOUDSDK_COMPUTE_ZONE=europe-west1-d'
 # prep for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'

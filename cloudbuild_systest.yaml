@@ -27,4 +27,3 @@ steps:
 # deploy application to App Engine
 - name: gcr.io/cloud-builders/gcloud
   args: ['app', 'deploy']
-timeout: 3600s

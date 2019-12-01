@@ -3,12 +3,16 @@ steps:
 - name: gcr.io/$PROJECT_ID/test_runner
   args: ['python','manage.py','test','--verbosity=2','--noinput']
   env: ['BETTERSTART_DB=local']
+# get settings file
+steps:
+- name: gcr.io/cloud-builders/gsutil
+  args: ['cp', '${_BETTERSTART_ENV_SCRIPT}', 'setenv']
 # decrypt environment variables
 - name: gcr.io/cloud-builders/gcloud
   args:
   - kms
   - decrypt
-  - --ciphertext-file=${_BETTERSTART_ENV_SCRIPT}
+  - --ciphertext-file=setenv
   - --plaintext-file=setenv
   - --location=global
   - --keyring=betterstart-keyring

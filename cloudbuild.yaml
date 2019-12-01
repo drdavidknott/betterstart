@@ -29,4 +29,4 @@ steps:
       python manage.py migrate --noinput
 # deploy application to App Engine
 - name: gcr.io/cloud-builders/gcloud
-  args: ['app', 'deploy']
+  args: ['app', 'deploy','--version=staging']

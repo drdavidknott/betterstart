@@ -1,4 +1,7 @@
 steps:
+# run code scanner
+- name: gcr.io/$PROJECT_ID/test_runner
+  args: ['flake8','.','--count','--select=E9,F63,F7,F82','--show-source','--statistics']
 # run test locally
 - name: gcr.io/$PROJECT_ID/test_runner
   args: ['python','manage.py','test','--verbosity=2','--noinput']

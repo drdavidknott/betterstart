@@ -4,7 +4,6 @@ steps:
   args: ['python','manage.py','test','--verbosity=2','--noinput']
   env: ['BETTERSTART_DB=local']
 # get settings file
-steps:
 - name: gcr.io/cloud-builders/gsutil
   args: ['cp', '${_BETTERSTART_ENV_SCRIPT}', 'setenv']
 # decrypt environment variables

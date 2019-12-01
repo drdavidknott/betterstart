@@ -24,7 +24,7 @@ steps:
    - |
       . setenv
       python manage.py collectstatic --noinput
-      python /deployment/build_yaml.py
+      python deployment/build_yaml.py
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
       python manage.py migrate --noinput
 # deploy application to App Engine

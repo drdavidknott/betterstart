@@ -14,8 +14,8 @@ steps:
   - --ciphertext-file=setenv
   - --plaintext-file=setenv
   - --location=global
-  - --keyring=betterstart-keyring
-  - --key=betterstart-key
+  - --keyring=${_BETTERSTART_KEYRING}
+  - --key=${_BETTERSTART_KEY}
 # prep for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'

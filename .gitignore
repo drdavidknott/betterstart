@@ -13,3 +13,4 @@ setenv_systest
 setenv_uat
 setenv_prod
 commit
+*.enc

@@ -248,8 +248,6 @@ class Person(DataAccessMixin,models.Model):
 	street = models.ForeignKey(Street, null=True, blank=True, on_delete=models.SET_NULL)
 	datetime_created = models.DateTimeField(auto_now_add=True)
 	datetime_updated = models.DateTimeField(auto_now=True)
-	date_joined = models.DateField(null=True, blank=True)
-	date_left = models.DateField(null=True, blank=True)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.first_name + ' ' + self.last_name

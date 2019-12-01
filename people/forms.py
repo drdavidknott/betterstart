@@ -232,7 +232,6 @@ class ProfileForm(forms.Form):
 								max_length=1500,
 								widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
 								)
-	
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
 		# call the built in constructor

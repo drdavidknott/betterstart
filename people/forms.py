@@ -129,6 +129,7 @@ class ProfileForm(forms.Form):
 							('trained' , 'Trained'),
 							('active' , 'Trained and active'),
 							)
+	# and the choices for 
 	# Define the fields that we need in the form to capture the basics of the person's profile
 	first_name = forms.CharField(
 									label="First name",
@@ -365,6 +366,9 @@ class PersonSearchForm(forms.Form):
 	ward = forms.ChoiceField(
 									label="Ward",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	include_all = forms.BooleanField(
+									label = "Include all",
+									required = False)
 	action = forms.CharField(
 									initial='action',
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
@@ -386,11 +390,12 @@ class PersonSearchForm(forms.Form):
 										Column('last_name',css_class='form-group col-md-6 mbt-0'),	
 										),
 									Row(
-										Column('role_type',css_class='form-group col-md-3 mbt-0'),
-										Column('age_status',css_class='form-group col-md-3 mbt-0'),
+										Column('role_type',css_class='form-group col-md-2 mbt-0'),
+										Column('age_status',css_class='form-group col-md-2 mbt-0'),
 										Column('trained_role',css_class='form-group col-md-2 mbt-0'),
 										Column('ward',css_class='form-group col-md-2 mbt-0'),
 										Column('ABSS_type',css_class='form-group col-md-2 mbt-0'),
+										Column('include_all',css_class='form-group col-md-2 mbt-0'),
 										),
 									Hidden('action','search'),
 									Hidden('page','1'),

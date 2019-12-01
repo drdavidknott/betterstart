@@ -285,10 +285,16 @@ class Person(DataAccessMixin,models.Model):
 	def search(cls,*args,**kwargs):
 		# set a blank trained role
 		trained_role = 'none'
+		# and a blank in_project
+		include_all = False
 		# check whether we have a trained role in the search request
 		if 'trained_role' in kwargs.keys():
 			# pull the trained role out of the kwargs
 			trained_role = kwargs.pop('trained_role')
+		# check whether we have a trained role in the search request
+		if 'include_all' in kwargs.keys():
+			# pull the include all out of the kwargs
+			include_all = kwargs.pop('include_all')
 		# call the mixin method
 		results = super().search(**kwargs)
 		# if we have a trained role, filter by the trained role
@@ -305,6 +311,10 @@ class Person(DataAccessMixin,models.Model):
 					if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
 						# exclude the person
 						results = results.exclude(pk=person.pk)
+		# if we have an include all, filter by the trained role
+		if not include_all:
+			# do the filter
+			results = results.exclude(ABSS_end_date__isnull=False)
 		# return the results
 		return results
 

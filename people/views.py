@@ -421,7 +421,7 @@ def get_parents_without_children():
 	# get the date four years ago
 	today_four_years_ago = today.replace(year=today.year-4)
 	# attempt to get parents with no children
-	parents = Person.objects.filter(default_role__role_type_name__contains='Parent')
+	parents = Person.search(default_role__role_type_name__contains='Parent')
 	# exclude those with pregnancy dates in the future
 	parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
 	# order the list
@@ -455,17 +455,17 @@ def get_parents_without_children():
 
 def get_parents_with_overdue_children():
 	# return a list of parents with a pregnancy flag and a due date before today
-	return Person.objects.filter(
-									pregnant=True,
-									due_date__lt=datetime.date.today()
-									)
+	return Person.search(
+							pregnant=True,
+							due_date__lt=datetime.date.today()
+							)
 
 def get_children_over_four():
 	# get today's date
 	today = datetime.date.today()
 	# return the results
-	return Person.objects.filter(date_of_birth__lt=today.replace(year=today.year-4),
-									age_status__status='Child under four')
+	return Person.search(date_of_birth__lt=today.replace(year=today.year-4),
+							age_status__status='Child under four')
 
 def get_age_status_exceptions():
 	# return a list of all the age statuses, supplemented with counts of people outside the age range
@@ -518,7 +518,7 @@ def get_trained_role_types_with_people_counts():
 	# now go through the role types
 	for role_type in role_types:
 		# set the count for trained
-		role_type.count = role_type.trained_people.count()
+		role_type.count = role_type.trained_people.exclude(ABSS_end_date__isnull=False).count()
 		# and the key for trained
 		role_type.trained_role_key = 'trained_' + str(role_type.pk)
 		# and the name for trained
@@ -528,7 +528,9 @@ def get_trained_role_types_with_people_counts():
 		# create a new object
 		active_role_type = copy.deepcopy(role_type)
 		# now set the count for active
-		active_role_type.count = active_role_type.trained_role_set.filter(active=True).count()
+		active_role_type.count = active_role_type.trained_role_set.filter(
+										active=True,
+										person__ABSS_end_date__isnull=False).count()
 		# and the key for the url
 		active_role_type.trained_role_key = 'active_' + str(active_role_type.pk)
 		# and the name for active
@@ -592,7 +594,7 @@ def get_role_types_with_people_counts():
 	# now go through the role types
 	for role_type in role_types:
 		# get the count
-		role_type.count = Person.objects.filter(default_role=role_type).count()
+		role_type.count = Person.search(default_role=role_type).count()
 	# return the results
 	return role_types
 
@@ -602,7 +604,7 @@ def get_wards_with_people_counts():
 	# now go through the wards
 	for ward in wards:
 		# get the count
-		ward.count = Person.objects.filter(street__post_code__ward=ward).count()
+		ward.count = Person.search(street__post_code__ward=ward).count()
 	# return the results
 	return wards
 
@@ -612,7 +614,7 @@ def get_areas_with_people_counts():
 	# now go through the areas
 	for area in areas:
 		# get the count
-		area.count = Person.objects.filter(street__post_code__ward__area=area).count()
+		area.count = Person.search(street__post_code__ward__area=area).count()
 	# return the results
 	return areas
 
@@ -715,7 +717,7 @@ def get_ABSS_types_with_counts():
 	# go through the ABSS types
 	for ABSS_type in ABSS_types:
 		# get the count
-		ABSS_type.count = Person.objects.filter(ABSS_type=ABSS_type).count()
+		ABSS_type.count = Person.search(ABSS_type=ABSS_type).count()
 	# return the results
 	return ABSS_types
 
@@ -725,7 +727,7 @@ def get_age_statuses_with_counts():
 	# now go through the ABSS types
 	for age_status in age_statuses:
 		# get the count
-		age_status.count = Person.objects.filter(age_status=age_status).count()
+		age_status.count = Person.search(age_status=age_status).count()
 	# return the results
 	return age_statuses
 
@@ -1548,6 +1550,7 @@ def people(request):
 	age_status = 0
 	trained_role = 'none'
 	ward = 0
+	include_all = False
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1568,6 +1571,7 @@ def people(request):
 			age_status = personsearchform.cleaned_data['age_status']
 			trained_role = personsearchform.cleaned_data['trained_role']
 			ward = personsearchform.cleaned_data['ward']
+			include_all = personsearchform.cleaned_data['include_all']
 			# conduct a search
 			people = Person.search(
 									first_name__icontains=first_name,
@@ -1576,7 +1580,8 @@ def people(request):
 									ABSS_type_id=ABSS_type,
 									age_status_id=age_status,
 									trained_role=trained_role,
-									street__post_code__ward_id=ward
+									street__post_code__ward_id=ward,
+									include_all=include_all
 									)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -1606,6 +1611,7 @@ def people(request):
 				'age_status' : age_status,
 				'trained_role' : trained_role,
 				'ward' : ward,
+				'include_all' : include_all,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})
@@ -1710,7 +1716,8 @@ def age_exceptions(request, age_status_id=0):
 	today = datetime.date.today()
 	# get the exceptions
 	age_exceptions = age_status.person_set.filter(
-							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age))
+							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
+							ABSS_end_date__isnull=False)
 	# set the context from the person based on person id
 	context = build_context({
 				'age_status' : age_status,

@@ -340,6 +340,12 @@ class ProfileForm(forms.Form):
 		return valid
 
 class PersonSearchForm(forms.Form):
+	# Define the choices for gender
+	include_people_choices = (
+								('in_project','In project'),
+								('all' , 'All'),
+								('left_project' , 'Left project'),
+								)
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(
 									label="First name",
@@ -366,9 +372,12 @@ class PersonSearchForm(forms.Form):
 	ward = forms.ChoiceField(
 									label="Ward",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
-	include_all = forms.BooleanField(
-									label = "Include all",
-									required = False)
+	include_people = forms.ChoiceField(
+									label="Include people",
+									choices=include_people_choices,
+									initial='in_project',
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	action = forms.CharField(
 									initial='action',
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
@@ -395,7 +404,7 @@ class PersonSearchForm(forms.Form):
 										Column('trained_role',css_class='form-group col-md-2 mbt-0'),
 										Column('ward',css_class='form-group col-md-2 mbt-0'),
 										Column('ABSS_type',css_class='form-group col-md-2 mbt-0'),
-										Column('include_all',css_class='form-group col-md-2 mbt-0'),
+										Column('include_people',css_class='form-group col-md-2 mbt-0'),
 										),
 									Hidden('action','search'),
 									Hidden('page','1'),

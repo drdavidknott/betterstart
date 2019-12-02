@@ -295,7 +295,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
 
-	def test_search_with_no_criteria_do_include_all(self):
+	def test_search_include_all(self):
 		# set the ABSS dates for the different names
 		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
 		# go through them and set the date
@@ -318,7 +318,7 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
-											'include_all' : 'checked',
+											'include_people' : 'all',
 											'page' : '1'
 											}
 									)
@@ -331,7 +331,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
 
-	def test_search_with_no_criteria_do_include_all_second_page(self):
+	def test_search_include_all_second_page(self):
 		# set the ABSS dates for the different names
 		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
 		# go through them and set the date
@@ -354,7 +354,7 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
-											'include_all' : 'checked',
+											'include_people' : 'all',
 											'page' : '1'
 											}
 									)
@@ -367,7 +367,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
 
-	def test_search_with_no_criteria_dont_include_all(self):
+	def test_search_dont_include_all(self):
 		# set the ABSS dates for the different names
 		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
 		# go through them and set the date
@@ -390,6 +390,7 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
+											'include_people' : 'in_project',
 											'page' : '1'
 											}
 									)
@@ -402,7 +403,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 
-	def test_search_with_no_criteria_dont_include_all_second_page(self):
+	def test_search_dont_include_all_second_page(self):
 		# set the ABSS dates for the different names
 		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
 		# go through them and set the date
@@ -425,6 +426,7 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
+											'include_people' : 'in_project',
 											'page' : '2'
 											}
 									)
@@ -436,6 +438,78 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+
+	def test_search_include_left(self):
+		# set the ABSS dates for the different names
+		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_to_exclude:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : 'left_project',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4])
+
+	def test_search_include_left_second_page(self):
+		# set the ABSS dates for the different names
+		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_to_exclude:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'first_name' : '',
+											'last_name' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : 'left_project',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2,3,4])
 
 	def test_search_for_parent_role_type(self):
 		# log the user in

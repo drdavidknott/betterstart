@@ -1550,7 +1550,7 @@ def people(request):
 	age_status = 0
 	trained_role = 'none'
 	ward = 0
-	include_all = False
+	include_people = 'in_project'
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1571,7 +1571,7 @@ def people(request):
 			age_status = personsearchform.cleaned_data['age_status']
 			trained_role = personsearchform.cleaned_data['trained_role']
 			ward = personsearchform.cleaned_data['ward']
-			include_all = personsearchform.cleaned_data['include_all']
+			include_people = personsearchform.cleaned_data['include_people']
 			# conduct a search
 			people = Person.search(
 									first_name__icontains=first_name,
@@ -1581,7 +1581,7 @@ def people(request):
 									age_status_id=age_status,
 									trained_role=trained_role,
 									street__post_code__ward_id=ward,
-									include_all=include_all
+									include_people=include_people
 									)
 			# figure out how many people we got
 			number_of_people = len(people)
@@ -1611,7 +1611,7 @@ def people(request):
 				'age_status' : age_status,
 				'trained_role' : trained_role,
 				'ward' : ward,
-				'include_all' : include_all,
+				'include_people' : include_people,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people
 				})

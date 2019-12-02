@@ -286,15 +286,15 @@ class Person(DataAccessMixin,models.Model):
 		# set a blank trained role
 		trained_role = 'none'
 		# and a blank in_project
-		include_all = False
+		include_people = 'in_project'
 		# check whether we have a trained role in the search request
 		if 'trained_role' in kwargs.keys():
 			# pull the trained role out of the kwargs
 			trained_role = kwargs.pop('trained_role')
 		# check whether we have a trained role in the search request
-		if 'include_all' in kwargs.keys():
+		if 'include_people' in kwargs.keys():
 			# pull the include all out of the kwargs
-			include_all = kwargs.pop('include_all')
+			include_people = kwargs.pop('include_people')
 		# call the mixin method
 		results = super().search(**kwargs)
 		# if we have a trained role, filter by the trained role
@@ -311,10 +311,14 @@ class Person(DataAccessMixin,models.Model):
 					if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
 						# exclude the person
 						results = results.exclude(pk=person.pk)
-		# if we have an include all, filter by the trained role
-		if not include_all:
+		# if we should only include people in the project exclude those who have left
+		if include_people == 'in_project' or include_people == '':
 			# do the filter
 			results = results.exclude(ABSS_end_date__isnull=False)
+		# otherwise check whether we only want people in the project
+		elif include_people == 'left_project':
+			# do the filter
+			results = results.exclude(ABSS_end_date__isnull=True)
 		# return the results
 		return results
 

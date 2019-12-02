@@ -289,7 +289,7 @@ class PeopleViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of people
-		self.assertEqual(response.context['number_of_people'],492)
+		self.assertEqual(response.context['number_of_people'],491)
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages

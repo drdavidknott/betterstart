@@ -340,7 +340,7 @@ class ProfileForm(forms.Form):
 		return valid
 
 class PersonSearchForm(forms.Form):
-	# Define the choices for gender
+	# Define the choices for who should be included in the search
 	include_people_choices = (
 								('in_project','In project'),
 								('all' , 'All'),

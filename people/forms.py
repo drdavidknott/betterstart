@@ -722,7 +722,7 @@ class EventForm(forms.Form):
 										),
 									Hidden('action','search'),
 									Hidden('page','1'),
-									Row(Column(Submit('submit', 'Submit'),css_class='col-md-6 mb-0'))
+									Row(Column(Submit('submit', 'Submit'),css_class='col-md-12 mb-0'))
 									)
 
 class AddRegistrationForm(forms.Form):

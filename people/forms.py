@@ -451,6 +451,38 @@ class PersonNameSearchForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(PersonNameSearchForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('first_name',css_class='form-group col-md-6 mbt-0'),
+										Column('last_name',css_class='form-group col-md-6 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0')),
+									Hidden('action','search'),
+									)
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(PersonNameSearchForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# now perform the additional checks
+		# start by checking whether we have either a post code or a street
+		if not self.cleaned_data['first_name'] and not self.cleaned_data['last_name']:
+			#set the error message
+			self.add_error(None,'Either first name or last name must be entered.')
+			# set the validity flag
+			valid = False
+		# return the result
+		return valid
 
 class AddRelationshipForm(forms.Form):
 	# Define the fields that we need in the form to capture the basics of the person's profile

@@ -1592,8 +1592,7 @@ def people(request):
 			# set the previous page
 			previous_page = page - 1
 			# sort and truncate the list of people
-			# people = people.order_by('last_name','first_name')[previous_page*results_per_page:page*results_per_page]
-			people = people.order_by('last_name','first_name')
+			people = people.order_by('last_name','first_name')[previous_page*results_per_page:page*results_per_page]
 	# otherwise set a bank form
 	else:
 		# create the blank form

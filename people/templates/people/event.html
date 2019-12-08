@@ -77,6 +77,7 @@
 	 							<tr>
 	 								<th>NAME</th>
 	 								<th>REGISTERED</th>
+	 								<th>APOLOGIES</th>
 	 								<th>PARTICIPATED</th>
 	 								<th>ROLE</th>
 	 							</tr>
@@ -91,6 +92,11 @@
 	 									</td>
 	 									<td>
 	 										{% if registration.registered %}
+	 											<span class="glyphicon glyphicon-ok"></span>
+	 										{% endif %}
+	 									</td>
+	 									<td>
+	 										{% if registration.apologies %}
 	 											<span class="glyphicon glyphicon-ok"></span>
 	 										{% endif %}
 	 									</td>

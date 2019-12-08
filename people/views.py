@@ -804,12 +804,13 @@ def create_event(name, description, date, start_time, end_time, event_type, loca
 	# and return the event
 	return event
 
-def create_registration(event, person, registered, participated, role_type):
+def create_registration(event, person, registered, apologies, participated, role_type):
 	# create a registration
 	registration = Event_Registration(
 								event = event,
 								person = person,
 								registered = registered,
+								apologies = apologies,
 								participated = participated,
 								role_type = role_type
 						)
@@ -818,9 +819,10 @@ def create_registration(event, person, registered, participated, role_type):
 	# and return the registration
 	return registration
 
-def update_registration(registration, registered, participated, role_type):
+def update_registration(registration, registered, apologies, participated, role_type):
 	# update the registration
 	registration.registered = registered
+	registration.apologies = apologies
 	registration.participated = participated
 	registration.role_type = role_type
 	# save the record
@@ -937,7 +939,7 @@ def build_event(request, name, description, date, start_time, end_time, event_ty
 	# return the event
 	return event
 
-def build_registration(request, event, person_id, registered, participated, role_type_id, show_messages=True):
+def build_registration(request, event, person_id, registered, apologies, participated, role_type_id, show_messages=True):
 	# attempt to create a new registration, checking first that the registration does not exit
 	# first get the person
 	person = Person.try_to_get(pk=person_id)
@@ -968,6 +970,7 @@ def build_registration(request, event, person_id, registered, participated, role
 											event = event,
 											person = person,
 											registered = registered,
+											apologies = apologies,
 											participated = participated,
 											role_type = role_type
 											)
@@ -980,12 +983,14 @@ def build_registration(request, event, person_id, registered, participated, role
 		# check whether there is any change
 		if registration.registered != registered \
 		or registration.participated != participated \
+		or registration.apologies != apologies \
 		or registration.role_type != role_type:
 			# edit the registration
 			registration = update_registration(
 												registration = registration,
 												registered = registered,
 												participated = participated,
+												apologies = apologies,
 												role_type = role_type)
 			# check whether messages are needed
 			if show_messages:
@@ -2555,6 +2560,7 @@ def event_registration(request,event_id=0):
 					# add the three field names
 					result.role_type_field_name = 'role_type_' + str(result.pk)
 					result.registered_field_name = 'registered_' + str(result.pk)
+					result.apologies_field_name = 'apologies_' + str(result.pk)
 					result.participated_field_name = 'participated_' + str(result.pk)
 					# add the key of the search result to the string of keys
 					search_keys += search_key_delimiter + str(result.pk)
@@ -2572,16 +2578,18 @@ def event_registration(request,event_id=0):
 			for search_key in search_keys:
 				# get the indicators of whether the person registered or participated, as well as the role type
 				registered = check_checkbox(request.POST, 'registered_' + search_key)
+				apologies = check_checkbox(request.POST, 'apologies_' + search_key)
 				participated = check_checkbox(request.POST, 'participated_' + search_key)
 				role_type_id = request.POST.get('role_type_' + search_key, False)
 				# if the person participated or registered, we need to build a registration
-				if registered or participated:
+				if registered or participated or apologies:
 					# build the registration
 					registration = build_registration(
 														request = request,
 														event = event,
 														person_id = int(search_key),
 														registered = registered,
+														apologies = apologies,
 														participated = participated,
 														role_type_id = int(role_type_id)
 														)
@@ -2594,16 +2602,18 @@ def event_registration(request,event_id=0):
 				# get the indicators and role type
 					# get the indicators of whether the person registered or participated, as well as the role type
 					registered = check_checkbox(request.POST, 'registered_' + registration_key)
+					apologies = check_checkbox(request.POST, 'apologies_' + registration_key)
 					participated = check_checkbox(request.POST, 'participated_' + registration_key)
 					role_type_id = request.POST.get('role_type_' + registration_key, False)
 					# if the person participated or registered, we need to build a registration
-					if registered or participated:
+					if registered or participated or apologies:
 						# build the registration
 						registration = build_registration(
 															request = request,
 															event = event,
 															person_id = int(registration_key),
 															registered = registered,
+															apologies = apologies,
 															participated = participated,
 															role_type_id = int(role_type_id)
 															)
@@ -2632,6 +2642,7 @@ def event_registration(request,event_id=0):
 			# add the three field names
 			registration.role_type_field_name = 'role_type_' + str(registration.person.pk)
 			registration.registered_field_name = 'registered_' + str(registration.person.pk)
+			registration.apologies_field_name = 'apologies_' + str(registration.person.pk)
 			registration.participated_field_name = 'participated_' + str(registration.person.pk)
 			# add the key of the registered person to the string of keys
 			registration_keys += registration_key_delimiter + str(registration.person.pk)

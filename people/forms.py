@@ -779,6 +779,13 @@ class AddRegistrationForm(forms.Form):
 														label = "Registered",
 														required = False,
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+			# set the field name for apologies
+			field_name = 'apologies_' + str(person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Apologies",
+														required = False,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 			# set the field name for participation
 			field_name = 'participated_' + str(person.pk)
 			# create the field
@@ -841,6 +848,14 @@ class EditRegistrationForm(forms.Form):
 														initial = registration.registered,
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'})
 														)
+			# set the field name for apologies
+			field_name = 'apologies_' + str(registration.person.pk)
+			# create the field
+			self.fields[field_name] = forms.BooleanField(
+														label = "Apologies",
+														required = False,
+														initial = registration.apologies,
+														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 			# set the field name for participation
 			field_name = 'participated_' + str(registration.person.pk)
 			# create the field

@@ -76,6 +76,8 @@
 															{{ field }}
 														{% elif field.name == result.registered_field_name %}
 															Registered: {{ field }}
+														{% elif field.name == result.apologies_field_name %}
+															Apologies: {{ field }}
 														{% elif field.name == result.participated_field_name %}
 															Participated: {{ field }}
 														{% endif %}

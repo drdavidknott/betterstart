@@ -45,6 +45,19 @@ def extract_id(field_name):
 	# now return the final element
 	return name_elements[-1]
 
+# function to take a string, a value, a descriptor and delimiter, and build a description
+def add_description(value,text,delimiter=', ',desc=''):
+	# check the value
+	if value:
+		# check whether there is already a value in the description
+		if desc:
+			# add the delimiter
+			desc += delimiter
+		# and add the text
+		desc += text
+	# return the desc
+	return desc
+
 class Dashboard_Panel_Row():
 	# this class contains the data and structure for a row
 	def __init__(self, label, values, url=False, parameter=0):

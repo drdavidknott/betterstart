@@ -97,22 +97,23 @@ class EventRegistrationTest(TestCase):
 																	event = test_event,
 																	role_type = test_role_type,
 																	registered = True,
-																	participated = True)
+																	participated = True,
+																	apologies = True)
 
 	def setUp(self):
 		pass
 
-	def test_str_for_event_registration_registered_and_participated(self):
+	def test_str_for_event_registration_registered_and_participated_and_apologies(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
 		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
 		# check the str method
 		self.assertEqual(
-			'First Last: test_role at Test event on 01/01/2019 (registered and participated)',
+			'First Last: test_role at Test event on 01/01/2019 (registered, participated, apologies sent)',
 			str(event_registration)
 						)
 
-	def test_str_for_event_registration_registered_did_not_participate(self):
+	def test_str_for_event_registration_registered_did_not_participate_and_apologies(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
 		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
@@ -122,11 +123,11 @@ class EventRegistrationTest(TestCase):
 		event_registration.save()
 		# check the str method
 		self.assertEqual(
-			'First Last: test_role at Test event on 01/01/2019 (registered and did not participate)',
+			'First Last: test_role at Test event on 01/01/2019 (registered, apologies sent)',
 			str(event_registration)
 						)
 
-	def test_str_for_event_registration_did_not_register_did_not_participate(self):
+	def test_str_for_event_registration_did_not_register_did_not_participate_and_apologies(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
 		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
@@ -137,11 +138,11 @@ class EventRegistrationTest(TestCase):
 		event_registration.save()
 		# check the str method
 		self.assertEqual(
-			'First Last: test_role at Test event on 01/01/2019 (not registered and did not participate)',
+			'First Last: test_role at Test event on 01/01/2019 (apologies sent)',
 			str(event_registration)
 						)
 
-	def test_str_for_event_registration_did_not_register_but_participated(self):
+	def test_str_for_event_registration_did_not_register_but_participated_and_apologies(self):
 		# test that the str method for event registration returns the right string and details
 		# get the person
 		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
@@ -151,7 +152,21 @@ class EventRegistrationTest(TestCase):
 		event_registration.save()
 		# check the str method
 		self.assertEqual(
-			'First Last: test_role at Test event on 01/01/2019 (not registered and participated)',
+			'First Last: test_role at Test event on 01/01/2019 (participated, apologies sent)',
+			str(event_registration)
+						)
+
+	def test_str_for_event_registration_registered_and_participated_no_apologies(self):
+		# test that the str method for event registration returns the right string and details
+		# get the person
+		event_registration = Event_Registration.objects.get(person=Person.objects.get(first_name='First'))
+		# update the object
+		event_registration.apologies = False
+		# save the object
+		event_registration.save()
+		# check the str method
+		self.assertEqual(
+			'First Last: test_role at Test event on 01/01/2019 (registered, participated)',
 			str(event_registration)
 						)
 

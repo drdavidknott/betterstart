@@ -1,6 +1,6 @@
 from django.db import models
 from .django_extensions import DataAccessMixin
-from .utilities import extract_id
+from .utilities import extract_id, add_description
 
 # Site model: provides configuration for the site
 class Site(DataAccessMixin,models.Model):
@@ -486,7 +486,7 @@ class Event_Registration(DataAccessMixin,models.Model):
 	def __str__(self):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \
 			+ ' at ' + self.event.name + ' on ' + self.event.date.strftime('%d/%m/%Y') + \
-			' (' + self.registered_status() + ' and ' + self.participated_status() + ')'
+			' (' + self.description() + ')'
 	# define a function for returning active status as a string
 	def registered_status(self):
 		if self.registered:
@@ -499,6 +499,19 @@ class Event_Registration(DataAccessMixin,models.Model):
 			return 'participated'
 		else:
 			return 'did not participate'
+	# define a function to return a description
+	def description(self):
+		# set a blank result
+		desc = ''
+		# add registered
+		desc = add_description(desc=desc,value=self.registered,text='registered')
+		# and participated
+		desc = add_description(desc=desc,value=self.participated,text='participated')
+		# and apologies
+		desc = add_description(desc=desc,value=self.apologies,text='apologies sent')
+		# now return the result
+		return desc
+
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'event registrations'

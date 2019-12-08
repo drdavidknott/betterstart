@@ -7815,7 +7815,7 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# check the values
 		self.assertEqual(registration_child_0.role_type,role_type)
 		self.assertEqual(registration_child_0.registered,True)
-		self.assertEqual(registration_adult_0.apologies,False)
+		self.assertEqual(registration_child_0.apologies,True)
 		self.assertEqual(registration_child_0.participated,False)
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)

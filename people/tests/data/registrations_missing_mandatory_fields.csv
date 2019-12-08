@@ -1,7 +1,7 @@
-first_name,last_name,age_status,event_name,event_date,registered,participated,role_type
-,missing first name,Adult,test_event_0,01/01/2019,True,True,test_role_type
-missing last name,,Adult,test_event_0,01/01/2019,True,True,test_role_type
-missing age status,last name,,test_event_0,01/01/2019,True,True,test_role_type
-missing event name,last name,Adult,,01/01/2019,True,True,test_role_type
-missing event date,last name,Adult,test_event_0,,True,True,test_role_type
-missing role type,last name,Adult,test_event_0,01/01/2019,True,True,
+first_name,last_name,age_status,event_name,event_date,registered,apologies,participated,role_type
+,missing first name,Adult,test_event_0,01/01/2019,True,True,True,test_role_type
+missing last name,,Adult,test_event_0,01/01/2019,True,True,True,test_role_type
+missing age status,last name,,test_event_0,01/01/2019,True,True,True,test_role_type
+missing event name,last name,Adult,,01/01/2019,True,True,True,test_role_type
+missing event date,last name,Adult,test_event_0,,True,True,True,test_role_type
+missing role type,last name,Adult,test_event_0,01/01/2019,True,True,True,

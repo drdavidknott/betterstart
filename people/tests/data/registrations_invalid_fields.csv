@@ -1,10 +1,10 @@
-first_name,last_name,age_status,event_name,event_date,registered,participated,role_type
-invalid age status,last name,invalid,test_event_0,01/01/2019,True,True,test_role_type
-invalid event date,last name,Adult,test_event_0,01/xx/2019,True,True,test_role_type
-invalid role type,last name,Adult,test_event_0,01/01/2019,True,True,invalid
-invalid person,last name,Adult,test_event_0,01/01/2019,True,True,test_role_type
-invalid event,last name,Adult,invalid,01/01/2019,True,True,test_role_type
-test_duplicate_0,test_duplicate_0,Adult,test_event_0,01/01/2019,True,True,test_role_type
-duplicate event,last name,Adult,test_duplicate_0,01/01/2019,True,True,test_role_type
-test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,True,adult_test_role
-invalid registered participated,last name,Adult,test_event_0,01/01/2019,False,False,test_role_type
+first_name,last_name,age_status,event_name,event_date,registered,apologies,participated,role_type
+invalid age status,last name,invalid,test_event_0,01/01/2019,True,True,True,test_role_type
+invalid event date,last name,Adult,test_event_0,01/xx/2019,True,True,True,test_role_type
+invalid role type,last name,Adult,test_event_0,01/01/2019,True,True,True,invalid
+invalid person,last name,Adult,test_event_0,01/01/2019,True,True,True,test_role_type
+invalid event,last name,Adult,invalid,01/01/2019,True,True,True,test_role_type
+test_duplicate_0,test_duplicate_0,Adult,test_event_0,01/01/2019,True,True,True,test_role_type
+duplicate event,last name,Adult,test_duplicate_0,01/01/2019,True,True,True,test_role_type
+test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,True,True,adult_test_role
+invalid registered participated apologies,last name,Adult,test_event_0,01/01/2019,False,False,False,test_role_type

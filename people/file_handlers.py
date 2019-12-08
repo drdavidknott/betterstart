@@ -1111,6 +1111,7 @@ class Registrations_File_Handler(File_Handler):
 												)
 		self.registered = File_Boolean_Field(name='registered',mandatory=True)
 		self.participated = File_Boolean_Field(name='participated',mandatory=True)
+		self.apologies = File_Boolean_Field(name='apologies',mandatory=True)
 		self.role_type = File_Field(
 										name='role_type',
 										mandatory=True,
@@ -1128,6 +1129,7 @@ class Registrations_File_Handler(File_Handler):
 						'event_name',
 						'event_date',
 						'registered',
+						'apologies',
 						'participated',
 						'role_type'
 						]
@@ -1173,9 +1175,9 @@ class Registrations_File_Handler(File_Handler):
 				# and set the flag
 				valid = False
 		# check that one of registered or participated is set
-		if not self.registered.value and not self.participated.value:
+		if not self.registered.value and not self.participated.value and not self.apologies.value:
 			# set the error
-			self.add_record_results(record,[' not created: neither registered nor participated is True.'])
+			self.add_record_results(record,[' not created: none of registered, apologies or participated is True.'])
 			# and set the flag
 			valid = False
 		# return the result
@@ -1201,6 +1203,7 @@ class Registrations_File_Handler(File_Handler):
 			registration = Event_Registration(event=event,person=person,role_type=self.role_type.value)
 		# set the values
 		registration.registered = self.registered.value
+		registration.apologies = self.apologies.value
 		registration.participated = self.participated.value
 		registration.role_type = self.role_type.value
 		# save the record

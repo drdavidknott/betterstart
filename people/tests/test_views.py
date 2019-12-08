@@ -7680,7 +7680,7 @@ class UploadRegistrationsDataViewTest(TestCase):
 		self.assertContains(response,'invalid event last name (Adult) at invalid not created: matching Event record does not exist')
 		self.assertContains(response,'duplicate event last name (Adult) at test_duplicate_0 not created: multiple matching Event records exist')
 		self.assertContains(response,'test_child_0 test_child_0 (Child under four) at test_event_0 not created: adult_test_role is not valid for Child under four')
-		self.assertContains(response,'invalid registered participated last name (Adult) at test_event_0 not created: neither registered nor participated is True')
+		self.assertContains(response,'invalid registered participated apologies last name (Adult) at test_event_0 not created: none of registered, apologies or participated is True')
 		# check that no records have been created
 		self.assertFalse(Event_Registration.objects.all().exists())
 
@@ -7711,18 +7711,21 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# check the values
 		self.assertEqual(registration_adult_0.role_type,role_type)
 		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.apologies,True)
 		self.assertEqual(registration_adult_0.participated,True)
 		# get the records
 		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
 		# check the values
 		self.assertEqual(registration_adult_1.role_type,role_type)
 		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.apologies,False)
 		self.assertEqual(registration_adult_1.participated,True)
 		# get the records
 		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
 		# check the values
 		self.assertEqual(registration_child_0.role_type,role_type)
 		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_adult_0.apologies,True)
 		self.assertEqual(registration_child_0.participated,False)
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)
@@ -7754,18 +7757,21 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# check the values
 		self.assertEqual(registration_adult_0.role_type,role_type)
 		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.apologies,True)
 		self.assertEqual(registration_adult_0.participated,True)
 		# get the records
 		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
 		# check the values
 		self.assertEqual(registration_adult_1.role_type,role_type)
 		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.apologies,False)
 		self.assertEqual(registration_adult_1.participated,True)
 		# get the records
 		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
 		# check the values
 		self.assertEqual(registration_child_0.role_type,role_type)
 		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.apologies,True)
 		self.assertEqual(registration_child_0.participated,False)
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)
@@ -7793,21 +7799,24 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# get the records
 		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
 		# check the values
-		self.assertEqual(registration_adult_0.role_type,second_role_type)
-		self.assertEqual(registration_adult_0.registered,True)
-		self.assertEqual(registration_adult_0.participated,False)
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.apologies,True)
+		self.assertEqual(registration_adult_0.participated,True)
 		# get the records
-		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
-		# check the values
-		self.assertEqual(registration_child_0.role_type,second_role_type)
-		self.assertEqual(registration_child_0.registered,False)
-		self.assertEqual(registration_child_0.participated,True)
-		# check that the unmodified record hasn't changed
 		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
 		# check the values
 		self.assertEqual(registration_adult_1.role_type,role_type)
 		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_0.apologies,True)
 		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_adult_0.apologies,False)
+		self.assertEqual(registration_child_0.participated,False)
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)
 
@@ -8078,7 +8087,7 @@ class DownloadRegistrationsDataViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 200)
 
-	def test_download_events(self):
+	def test_download_registrations(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
 		# open the file
@@ -8130,9 +8139,9 @@ class DownloadRegistrationsDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test_event_0,01/01/2019,False,True,test_role_type')
-		self.assertContains(response,'test_adult_1,test_adult_1,Adult,test_event_0,01/01/2019,True,True,test_role_type')
-		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,False,test_role_type')
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test_event_0,01/01/2019,False,True,True,test_role_type')
+		self.assertContains(response,'test_adult_1,test_adult_1,Adult,test_event_0,01/01/2019,True,False,True,test_role_type')
+		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,True,False,test_role_type')
 
 class UploadDownloadAnswersViewTest(TestCase):
 	@classmethod

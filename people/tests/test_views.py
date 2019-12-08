@@ -179,7 +179,6 @@ def set_up_test_options(name_root,question,number=1):
 											 question = question
 											)
 
-
 class PeopleViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -6998,6 +6997,32 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'Invalid due date not created: due_date 01/01/19xx is invalid date or time')
 		self.assertContains(response,'Invalid ABSS start date not created: ABSS_start_date 01/xx/2001 is invalid date or time')
 		self.assertContains(response,'Invalid ABSS end date not created: ABSS_end_date 01/xx/2005 is invalid date or time')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+	def test_upload_people_data_invalid_lengths(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_invalid_lengths.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'123456789012345678901234567890123456789012345678901234567890 Person not created: first_name 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 50')
+		self.assertContains(response,'Test 123456789012345678901234567890123456789012345678901234567890 not created: last_name 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 50')
+		self.assertContains(response,'Test Person not created: email_address 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 50')
+		self.assertContains(response,'Test Person not created: home_phone 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 50')
+		self.assertContains(response,'Test Person not created: mobile_phone 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 50')
+		self.assertContains(response,'Test Person not created: gender 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 25')
+		self.assertContains(response,'Test Person not created: house_name_or_number 123456789012345678901234567890123456789012345678901234567890 is longer than maximum length of 50')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 

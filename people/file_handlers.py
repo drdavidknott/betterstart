@@ -22,7 +22,8 @@ class File_Field():
 					include_in_create=True,
 					set_download_from_object=True,
 					corresponding_relationship_field=False,
-					default=''
+					default='',
+					max_length=False
 					):
 		# set the attributes
 		self.name = name
@@ -35,6 +36,7 @@ class File_Field():
 		self.set_download_from_object = set_download_from_object
 		self.corresponding_record = None
 		self.default = default
+		self.max_length=max_length
 		self.errors = []
 		self.converter = False
 		self.valid = False
@@ -74,6 +76,13 @@ class File_Field():
 		if self.mandatory and self.value == '':
 			# set the error
 			self.errors.append(' not created: mandatory field ' + self.name + ' not provided')
+		# check whether the field is greater than max_length
+		if self.max_length and self.value and len(self.value) > self.max_length:
+			# set the error
+			self.errors.append(
+								' not created: ' + 
+								str(self.name) + ' ' + str(self.value) +
+								' is longer than maximum length of ' + str(self.max_length))
 		# if we have a corresponding record, attempt to get it
 		if self.corresponding_model:
 			# set the value
@@ -424,8 +433,10 @@ class Event_Categories_File_Handler(File_Handler):
 								mandatory=True,
 								corresponding_model=Event_Category,
 								corresponding_field='name',
-								corresponding_must_not_exist=True)	
-		self.description = File_Field(name='description',mandatory=True)
+								corresponding_must_not_exist=True,
+								max_length=50
+								)	
+		self.description = File_Field(name='description',mandatory=True,max_length=500)
 		# and a list of the fields
 		self.fields = ['name','description']
 
@@ -446,9 +457,10 @@ class Event_Types_File_Handler(File_Handler):
 								mandatory=True,
 								corresponding_model=Event_Type,
 								corresponding_field='name',
-								corresponding_must_not_exist=True
+								corresponding_must_not_exist=True,
+								max_length=50
 								)
-		self.description = File_Field(name='description',mandatory=True)
+		self.description = File_Field(name='description',mandatory=True,max_length=500)
 		self.event_category = File_Field(
 											name='event_category',
 											mandatory=True,
@@ -476,7 +488,8 @@ class Wards_File_Handler(File_Handler):
 									mandatory=True,
 									corresponding_model=Ward,
 									corresponding_field='ward_name',
-									corresponding_must_not_exist=True
+									corresponding_must_not_exist=True,
+									max_length=50
 									)
 		self.area = File_Field(
 								name='area',
@@ -505,7 +518,8 @@ class Post_Codes_File_Handler(File_Handler):
 								mandatory=True,
 								corresponding_model=Post_Code,
 								corresponding_field='post_code',
-								corresponding_must_not_exist=True
+								corresponding_must_not_exist=True,
+								max_length=10
 								)
 		self.ward = File_Field(
 								name='ward',
@@ -531,7 +545,8 @@ class Streets_File_Handler(File_Handler):
 		# set the file fields
 		self.name = File_Field(
 								name='name',
-								mandatory=True
+								mandatory=True,
+								max_length=100
 								)
 		self.post_code = File_Field(
 								name='post_code',
@@ -579,7 +594,8 @@ class Role_Types_File_Handler(File_Handler):
 								mandatory=True,
 								corresponding_model=Role_Type,
 								corresponding_field='role_type_name',
-								corresponding_must_not_exist=True
+								corresponding_must_not_exist=True,
+								max_length=50
 								)
 		self.use_for_events = File_Boolean_Field(name='use_for_events',mandatory=True)
 		self.use_for_people = File_Boolean_Field(name='use_for_people',mandatory=True)
@@ -605,9 +621,14 @@ class Relationship_Types_File_Handler(File_Handler):
 											mandatory=True,
 											corresponding_model=Relationship_Type,
 											corresponding_field='relationship_type',
-											corresponding_must_not_exist=True
+											corresponding_must_not_exist=True,
+											max_length=50
 											)
-		self.relationship_counterpart = File_Field(name='relationship_counterpart',mandatory=True)
+		self.relationship_counterpart = File_Field(
+													name='relationship_counterpart',
+													mandatory=True,
+													max_length=50
+													)
 
 		# and a list of the fields
 		self.fields = ['relationship_type','relationship_counterpart']
@@ -624,13 +645,13 @@ class People_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Person
 		# set the file fields
-		self.first_name = File_Field(name='first_name',mandatory=True)
-		self.last_name = File_Field(name='last_name',mandatory=True)
-		self.email_address = File_Field(name='email_address')
-		self.home_phone = File_Field(name='home_phone')
-		self.mobile_phone = File_Field(name='mobile_phone')
+		self.first_name = File_Field(name='first_name',mandatory=True,max_length=50)
+		self.last_name = File_Field(name='last_name',mandatory=True,max_length=50)
+		self.email_address = File_Field(name='email_address',max_length=50)
+		self.home_phone = File_Field(name='home_phone',max_length=50)
+		self.mobile_phone = File_Field(name='mobile_phone',max_length=50)
 		self.date_of_birth = File_Datetime_Field(name='date_of_birth',datetime_format='%d/%m/%Y')
-		self.gender = File_Field(name='gender')
+		self.gender = File_Field(name='gender',max_length=25)
 		self.pregnant = File_Boolean_Field(name='pregnant')
 		self.due_date = File_Datetime_Field(name='due_date',datetime_format='%d/%m/%Y')
 		self.default_role = File_Field(
@@ -665,7 +686,7 @@ class People_File_Handler(File_Handler):
 									corresponding_must_exist=True,
 									use_corresponding_for_download=True
 									)
-		self.house_name_or_number = File_Field(name='house_name_or_number')
+		self.house_name_or_number = File_Field(name='house_name_or_number',max_length=50)
 		self.street = File_Field(
 									name='street',
 									use_corresponding_for_download=True,
@@ -964,8 +985,8 @@ class Events_File_Handler(File_Handler):
 		# set the class
 		self.file_class = Event
 		# set the file fields
-		self.name = File_Field(name='name',mandatory=True)
-		self.description = File_Field(name='description',mandatory=True)
+		self.name = File_Field(name='name',mandatory=True,max_length=50)
+		self.description = File_Field(name='description',mandatory=True,max_length=500)
 		self.event_type = File_Field(
 									name='event_type',
 									mandatory=True,
@@ -989,7 +1010,7 @@ class Events_File_Handler(File_Handler):
 											datetime_format='%H:%M',
 											mandatory=True
 											)
-		self.location = File_Field(name='location')
+		self.location = File_Field(name='location',max_length=100)
 		self.ward = File_Field(
 								name='ward',
 								corresponding_model=Ward,
@@ -1237,10 +1258,11 @@ class Questions_File_Handler(File_Handler):
 										name='question_text',
 										mandatory=True,
 										corresponding_model=Question,
-										corresponding_must_not_exist=True
+										corresponding_must_not_exist=True,
+										max_length=150
 										)
 		self.notes = File_Boolean_Field(name='notes',mandatory=True)
-		self.notes_label = File_Field(name='notes_label')
+		self.notes_label = File_Field(name='notes_label',max_length=30)
 
 		# and a list of the fields
 		self.fields = ['question_text','notes','notes_label']
@@ -1277,7 +1299,7 @@ class Options_File_Handler(File_Handler):
 										corresponding_field='question_text',
 										use_corresponding_for_download=True
 										)
-		self.option_label = File_Field(name='option_label',mandatory=True)
+		self.option_label = File_Field(name='option_label',mandatory=True,max_length=50)
 		# and a list of the fields
 		self.fields = ['question','option_label']
 
@@ -1477,7 +1499,8 @@ class Answer_Notes_File_Handler(File_Handler):
 										)
 		self.notes = File_Field(
 										name='notes',
-										mandatory=True
+										mandatory=True,
+										max_length=500
 										)
 		# and a list of the fields
 		self.fields = [

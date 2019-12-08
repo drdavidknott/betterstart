@@ -481,6 +481,7 @@ class Event_Registration(DataAccessMixin,models.Model):
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
 	registered = models.BooleanField()
 	participated = models.BooleanField()
+	apologies = models.BooleanField(default=False)
 	# define the function that will return a string showing the relationship as the object reference
 	def __str__(self):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \

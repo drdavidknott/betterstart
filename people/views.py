@@ -2538,7 +2538,7 @@ def event_registration(request,event_id=0):
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
-			if personsearchform.is_valid()
+			if personsearchform.is_valid():
 				# get the names
 				first_name = personsearchform.cleaned_data['first_name']
 				last_name = personsearchform.cleaned_data['last_name']

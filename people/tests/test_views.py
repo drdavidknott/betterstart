@@ -3733,7 +3733,7 @@ class EventRegistrationViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of events
-		self.assertEqual(response.context['search_error'],'First name or last name must be entered.')
+		self.assertEqual(response.context['search_error'],'Either first name or last name must be entered')
 
 	def test_event_registration_search_no_results(self):
 		# create an event

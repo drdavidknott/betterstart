@@ -647,6 +647,8 @@ class People_File_Handler(File_Handler):
 		# set the file fields
 		self.first_name = File_Field(name='first_name',mandatory=True,max_length=50)
 		self.last_name = File_Field(name='last_name',mandatory=True,max_length=50)
+		self.nicknames = File_Field(name='nicknames',max_length=50)
+		self.prior_names = File_Field(name='prior_names',max_length=50)
 		self.email_address = File_Field(name='email_address',max_length=50)
 		self.home_phone = File_Field(name='home_phone',max_length=50)
 		self.mobile_phone = File_Field(name='mobile_phone',max_length=50)
@@ -709,6 +711,8 @@ class People_File_Handler(File_Handler):
 		self.fields = [
 						'first_name',
 						'last_name',
+						'nicknames',
+						'prior_names',
 						'email_address',
 						'home_phone',
 						'mobile_phone',

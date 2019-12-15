@@ -1552,8 +1552,7 @@ def people(request):
 	# and zero search results
 	number_of_people = 0
 	# and blank search terms
-	first_name = ''
-	last_name = ''
+	names = ''
 	role_type = 0
 	ABSS_type = 0
 	age_status = 0
@@ -1573,8 +1572,7 @@ def people(request):
 			# validate the form
 			personsearchform.is_valid()
 			# get the names
-			first_name = personsearchform.cleaned_data['first_name']
-			last_name = personsearchform.cleaned_data['last_name']
+			names = personsearchform.cleaned_data['names']
 			role_type = personsearchform.cleaned_data['role_type']
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			age_status = personsearchform.cleaned_data['age_status']
@@ -1583,8 +1581,7 @@ def people(request):
 			include_people = personsearchform.cleaned_data['include_people']
 			# conduct a search
 			people = Person.search(
-									first_name__icontains=first_name,
-									last_name__icontains=last_name,
+									names=names,
 									default_role_id=role_type,
 									ABSS_type_id=ABSS_type,
 									age_status_id=age_status,
@@ -1613,8 +1610,7 @@ def people(request):
 				'personsearchform' : personsearchform,
 				'people' : people,
 				'page_list' : page_list,
-				'first_name' : first_name,
-				'last_name' : last_name,
+				'names' : names,
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,
 				'age_status' : age_status,
@@ -1646,8 +1642,7 @@ def people_query(request, id):
 	# set search terms for a people search
 	copy_POST['action'] = 'search'
 	copy_POST['role_type'] = form_values['role_type']
-	copy_POST['first_name'] = ''
-	copy_POST['last_name'] = ''
+	copy_POST['names'] = ''
 	copy_POST['ABSS_type'] = form_values['ABSS_type']
 	copy_POST['age_status'] = form_values['age_status']
 	copy_POST['trained_role'] = form_values['trained_role']

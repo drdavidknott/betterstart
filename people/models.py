@@ -289,6 +289,8 @@ class Person(DataAccessMixin,models.Model):
 		trained_role = 'none'
 		# and a blank in_project
 		include_people = 'in_project'
+		# and blank names
+		names = False
 		# check whether we have a trained role in the search request
 		if 'trained_role' in kwargs.keys():
 			# pull the trained role out of the kwargs
@@ -297,6 +299,10 @@ class Person(DataAccessMixin,models.Model):
 		if 'include_people' in kwargs.keys():
 			# pull the include all out of the kwargs
 			include_people = kwargs.pop('include_people')
+		# check whether we have names in the search request
+		if 'names' in kwargs.keys():
+			# pull the include all out of the kwargs
+			names = kwargs.pop('names')
 		# call the mixin method
 		results = super().search(**kwargs)
 		# if we have a trained role, filter by the trained role
@@ -321,6 +327,17 @@ class Person(DataAccessMixin,models.Model):
 		elif include_people == 'left_project':
 			# do the filter
 			results = results.exclude(ABSS_end_date__isnull=True)
+		# check to see whether we have names
+		if names:
+			# start by splitting on spaces
+			name_list = names.split(' ')
+			# go through the names
+			for name in name_list:
+				# attempt to find the name in the various name fields
+				results = results.filter(first_name__icontains=name) \
+							| results.filter(last_name__icontains=name) \
+							| results.filter(nicknames__icontains=name) \
+							| results.filter(prior_names__icontains=name)
 		# return the results
 		return results
 

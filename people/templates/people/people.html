@@ -49,6 +49,8 @@
 				<table class="table table-striped panel panel-default" id="people">
 					<thead><tr>
 						<th>NAME:</th>
+						<th>NICKNAMES:</th>
+						<th>PRIOR NAMES:</th>
 						<th>DATE OF BIRTH:</th>
 						<th>GENDER:</th>
 						<th>ROLE:</th>
@@ -61,6 +63,12 @@
 			 						<a href="{% url 'person' person.pk %}">
 										{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}
 									</a>
+								</td>
+								<td>
+									{{ person.nicknames }}
+								</td>
+								<td>
+									{{ person.prior_names }}
 								</td>
 								<td>
 									{{ person.date_of_birth }}
@@ -99,8 +107,7 @@
 				<form action ="{% url 'listpeople' %}" method="post">
 					{% csrf_token %}
 					<input type="hidden" name="action" value="search">
-					<input type="hidden" name="first_name" value="{{ first_name }}">
-					<input type="hidden" name="last_name" value="{{ last_name }}">
+					<input type="hidden" name="names" value="{{ names }}">
 					<input type="hidden" name="role_type" value="{{ role_type }}">
 					<input type="hidden" name="ABSS_type" value="{{ ABSS_type }}">
 					<input type="hidden" name="age_status" value="{{ age_status }}">

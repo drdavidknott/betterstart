@@ -248,8 +248,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -275,8 +274,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -310,8 +308,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -346,8 +343,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -382,8 +378,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -418,8 +413,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -454,8 +448,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -490,8 +483,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -520,8 +512,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(parent_role_type.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -547,8 +538,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Test_Role_1',
-											'last_name' : '',
+											'names' : 'Test_Role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -574,8 +564,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'test_role_1',
-											'last_name' : '',
+											'names' : 'test_role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -594,6 +583,14 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(response.context['page_list'],[1,2])
 
 	def test_search_by_last_name_with_matching_case(self):
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the date
+			person.last_name = 'name_search'
+			# and save the record
+			person.save()
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
@@ -601,8 +598,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : 'Test_Role_1',
+											'names' : 'name_search',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -620,7 +616,15 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
 
-	def test_search_by_last_name_with_non_matching_case(self):
+	def test_search_by_last_name_with_matching_case(self):
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the date
+			person.last_name = 'name_search'
+			# and save the record
+			person.save()
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
@@ -628,8 +632,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : 'test_role_1',
+											'names' : 'NAME_SEARCH',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -642,6 +645,189 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_by_nicknames(self):
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the date
+			person.nicknames = 'name_search'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'name_search',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_by_prior_names(self):
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the date
+			person.prior_names = 'name_search'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'name_search',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_by_multiple_terms_first_name_last_name(self):
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the names
+			person.first_name = 'first'
+			person.last_name = 'last'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'first last',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_by_multiple_terms_nicknames_prior_names(self):
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the names
+			person.nicknames = 'nick'
+			person.prior_names = 'prior'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'nick prior',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],[1,2])
+
+	def test_search_by_multiple_terms_exclude_partial_match(self):
+		# set different names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the names
+			person.nicknames = 'nick'
+			person.prior_names = 'prior'
+			# and save the record
+			person.save()
+		# set different names
+		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_2')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the names
+			person.nicknames = 'nick'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'nick prior',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
 
@@ -653,8 +839,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Short',
-											'last_name' : '',
+											'names' : 'Short',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -672,7 +857,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
 
-	def test_search_by_first_name_and_role_type(self):
+	def test_search_by_names_and_role_type(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the test role type record
@@ -682,8 +867,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Different',
-											'last_name' : '',
+											'names' : 'Different',
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -701,7 +885,15 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
 
-	def test_search_by_first_name_last_name_and_role_type(self):
+	def test_search_by_multiple_names_and_role_type(self):
+		# set different names
+		people_to_include = Person.objects.filter(first_name__startswith='Different')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the names
+			person.last_name = 'difflast'
+			# and save the record
+			person.save()
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# get the test role type record
@@ -711,8 +903,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Different',
-											'last_name' : 'Different',
+											'names' : 'Different difflast',
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -730,7 +921,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],[1,2])
 
-	def test_first_name_search_with_no_results(self):
+	def test_name_search_with_no_results(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
@@ -738,35 +929,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'No results',
-											'last_name' : '',
-											'role_type' : '0',
-											'ABSS_type' : '0',
-											'age_status' : '0',
-											'trained_role' : 'none',
-											'ward' : '0',
-											'page' : '1'
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# check that we got the right number of people
-		self.assertEqual(response.context['number_of_people'],0)
-		# check how many we got for this page
-		self.assertEqual(len(response.context['people']),0)
-		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],False)
-
-	def test_last_name_search_with_no_results(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# attempt to get the events page
-		response = self.client.post(
-									reverse('listpeople'),
-									data = { 
-											'action' : 'search',
-											'first_name' : '',
-											'last_name' : 'No results',
+											'names' : 'No_results',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -794,8 +957,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(test_role_type_4.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -823,8 +985,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Test_Role_1_',
-											'last_name' : '',
+											'names' : 'Test_Role_1_',
 											'role_type' : str(test_role_type_3.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -852,8 +1013,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(test_role_type_5.pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -879,8 +1039,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Pagination',
-											'last_name' : '',
+											'names' : 'Pagination',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -908,8 +1067,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
@@ -938,8 +1096,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
@@ -968,8 +1125,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
@@ -999,8 +1155,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
@@ -1028,8 +1183,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
 											'age_status' : '0',
@@ -1057,8 +1211,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1087,8 +1240,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1117,8 +1269,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1148,8 +1299,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1180,8 +1330,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1209,8 +1358,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(age_status.pk),
@@ -1248,8 +1396,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
@@ -1288,8 +1435,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1328,8 +1474,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1368,8 +1513,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = {
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1409,8 +1553,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1451,8 +1594,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
@@ -1484,8 +1626,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1523,8 +1664,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
@@ -1567,8 +1707,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
@@ -1607,8 +1746,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
@@ -1647,8 +1785,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1687,8 +1824,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1728,8 +1864,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1770,8 +1905,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'find',
-											'last_name' : '',
+											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
@@ -1803,8 +1937,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1846,8 +1979,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -1889,8 +2021,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'first_name' : '',
-											'last_name' : '',
+											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',

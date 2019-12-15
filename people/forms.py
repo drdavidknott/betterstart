@@ -359,13 +359,8 @@ class PersonSearchForm(forms.Form):
 								('left_project' , 'Left project'),
 								)
 	# Define the fields that we need in the form.
-	first_name = forms.CharField(
-									label="First name",
-									max_length=50,
-									required=False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	last_name = forms.CharField(
-									label="Surname",
+	names = forms.CharField(
+									label="Names",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
@@ -407,8 +402,7 @@ class PersonSearchForm(forms.Form):
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('first_name',css_class='form-group col-md-6 mbt-0'),
-										Column('last_name',css_class='form-group col-md-6 mbt-0'),	
+										Column('names',css_class='form-group col-md-12 mbt-0'),
 										),
 									Row(
 										Column('role_type',css_class='form-group col-md-2 mbt-0'),

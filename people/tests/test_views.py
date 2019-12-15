@@ -2698,6 +2698,8 @@ class ProfileViewTest(TestCase):
 											'first_name' : 'updated_first_name',
 											'middle_names' : 'updated_middle_names',
 											'last_name' : 'updated_last_name',
+											'nicknames' : 'updated nicknames',
+											'prior_names' : 'updated prior_names',
 											'email_address' : 'updated_email_address@test.com',
 											'home_phone' : '123456',
 											'mobile_phone' : '678901',
@@ -2723,6 +2725,8 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'updated_first_name')
 		self.assertEqual(test_person.middle_names,'updated_middle_names')
 		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.nicknames,'updated nicknames')
+		self.assertEqual(test_person.prior_names,'updated prior_names')
 		self.assertEqual(test_person.default_role.role_type_name,'age_test_role')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -2784,6 +2788,78 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'updated_first_name')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
+		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'678901')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'updated notes')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Child under four')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+
+	def test_update_profile_blank_nicknames_prior_names(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the record
+		test_person = Person.objects.get(first_name='Person_0')
+		# set the nicknames and prior names
+		test_person.nicknames = 'test nicknames'
+		test_person.prior_names = 'test prior names'
+		# now save
+		test_person.save()
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : '',
+											'last_name' : 'updated_last_name',
+											'nicknames' : '',
+											'prior_names' : '',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(first_name='updated_first_name')
+		# check the record contents
+		self.assertEqual(test_person.first_name,'updated_first_name')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.nicknames,'')
+		self.assertEqual(test_person.prior_names,'')
 		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
 		self.assertEqual(test_person.home_phone,'123456')

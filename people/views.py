@@ -1133,6 +1133,8 @@ def update_person(
 					first_name,
 					middle_names,
 					last_name,
+					nicknames,
+					prior_names,
 					email_address,
 					home_phone,
 					mobile_phone,
@@ -1199,6 +1201,8 @@ def update_person(
 	person.first_name = first_name
 	person.middle_names = middle_names
 	person.last_name = last_name
+	person.nicknames = nicknames
+	person.prior_names = prior_names
 	person.email_address = email_address
 	person.home_phone = home_phone
 	person.mobile_phone = mobile_phone
@@ -1837,6 +1841,8 @@ def profile(request, person_id=0):
 								first_name = profileform.cleaned_data['first_name'],
 								middle_names = profileform.cleaned_data['middle_names'],
 								last_name = profileform.cleaned_data['last_name'],
+								nicknames = profileform.cleaned_data['nicknames'],
+								prior_names = profileform.cleaned_data['prior_names'],
 								email_address = profileform.cleaned_data['email_address'],
 								home_phone = profileform.cleaned_data['home_phone'],
 								mobile_phone = profileform.cleaned_data['mobile_phone'],
@@ -1873,6 +1879,8 @@ def profile(request, person_id=0):
 						'first_name' : person.first_name,
 						'middle_names' : person.middle_names,
 						'last_name' : person.last_name,
+						'nicknames' : person.nicknames,
+						'prior_names' : person.prior_names,
 						'email_address' : person.email_address,
 						'home_phone' : person.home_phone,
 						'mobile_phone' : person.mobile_phone,

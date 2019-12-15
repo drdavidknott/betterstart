@@ -32,6 +32,18 @@
 		 			<div class="col-xs-3">Last name:</div>
 		 			<div class="col-xs-9">{{ person.last_name }}</div>
 		 		</div>
+		 		{% if person.nicknames %}
+		 			<div class="row">
+			 			<div class="col-xs-3">Nicknames:</div>
+			 			<div class="col-xs-9">{{ person.nicknames }}&nbsp</div>
+			 		</div>
+		 		{% endif %}
+		 		{% if person.prior_names %}
+		 			<div class="row">
+			 			<div class="col-xs-3">Prior names:</div>
+			 			<div class="col-xs-9">{{ person.prior_names }}&nbsp</div>
+			 		</div>
+		 		{% endif %}
 		 		{% if person.age_status.can_have_contact_details %}
 		 			<div class="row">
 			 			<div class="col-xs-3">Email:</div>

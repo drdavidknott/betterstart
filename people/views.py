@@ -2536,39 +2536,35 @@ def event_registration(request,event_id=0):
 	registration_key_delimiter = ''
 	# check whether this is a post
 	if request.method == 'POST':
-		# create a search form
-		personsearchform = PersonNameSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
+			# create a search form
+			personsearchform = PersonNameSearchForm(request.POST)
 			# validate the form
 			if personsearchform.is_valid():
 				# get the names
-				first_name = personsearchform.cleaned_data['first_name']
-				last_name = personsearchform.cleaned_data['last_name']
-				# if neither name is blank, do the search
-				if first_name or last_name:
-					# conduct a search
-					people = Person.search(
-											first_name__icontains=first_name,
-											last_name__icontains=last_name
-											)
-					# remove the people who already have a registration
-					search_results = remove_existing_registrations(event, people)
-					# if there are search results, create a form to create relationships from the search results
-					if search_results:
-						# create the form
-						addregistrationform = AddRegistrationForm(people=search_results)
-					# add field names to each result, so that we know when to display them
-					for result in search_results:
-						# add the three field names
-						result.role_type_field_name = 'role_type_' + str(result.pk)
-						result.registered_field_name = 'registered_' + str(result.pk)
-						result.apologies_field_name = 'apologies_' + str(result.pk)
-						result.participated_field_name = 'participated_' + str(result.pk)
-						# add the key of the search result to the string of keys
-						search_keys += search_key_delimiter + str(result.pk)
-						# and set the delimiter
-						search_key_delimiter = ','
+				names = personsearchform.cleaned_data['names']
+				# conduct a search
+				people = Person.search(
+										names = names
+										)
+				# remove the people who already have a registration
+				search_results = remove_existing_registrations(event, people)
+				# if there are search results, create a form to create relationships from the search results
+				if search_results:
+					# create the form
+					addregistrationform = AddRegistrationForm(people=search_results)
+				# add field names to each result, so that we know when to display them
+				for result in search_results:
+					# add the three field names
+					result.role_type_field_name = 'role_type_' + str(result.pk)
+					result.registered_field_name = 'registered_' + str(result.pk)
+					result.apologies_field_name = 'apologies_' + str(result.pk)
+					result.participated_field_name = 'participated_' + str(result.pk)
+					# add the key of the search result to the string of keys
+					search_keys += search_key_delimiter + str(result.pk)
+					# and set the delimiter
+					search_key_delimiter = ','
 		# check whether we have been asked to add registrations
 		elif request.POST['action'] == 'addregistration':
 			# get the list of search keys from the hidden field
@@ -2592,6 +2588,8 @@ def event_registration(request,event_id=0):
 														participated = participated,
 														role_type_id = int(role_type_id)
 														)
+			# create a blank search form
+			personsearchform = PersonNameSearchForm()
 		# check whether we have been asked to edit registations
 		elif request.POST['action'] == 'editregistration' :
 			# get the list of registration keys from the hidden field
@@ -2624,6 +2622,8 @@ def event_registration(request,event_id=0):
 											event = event,
 											person_id = int(registration_key)
 										)
+			# create a blank search form
+			personsearchform = PersonNameSearchForm()
 	# otherwise we didn't get a post
 	else:
 		# create a blank form

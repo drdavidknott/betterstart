@@ -252,7 +252,18 @@ class Person(DataAccessMixin,models.Model):
 	datetime_updated = models.DateTimeField(auto_now=True)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
-		return self.first_name + ' ' + self.last_name
+		# set the name
+		name = self.first_name + ' ' + self.last_name
+		# set the nicknames
+		if self.nicknames:
+			# add the nicknames
+			name += ', also known as ' + self.nicknames
+		# and the prior names
+		if self.prior_names:
+			# add the nicknames
+			name += ', previously known as ' + self.prior_names
+		# return the name
+		return name
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'people'

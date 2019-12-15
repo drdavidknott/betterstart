@@ -3921,27 +3921,6 @@ class EventRegistrationViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
-	def test_event_registration_search_blank_search_error(self):
-		# create an event
-		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
-		# create some people
-		set_up_test_people('Found_name_','test_role_type',50)
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# do a search
-		response = self.client.post(
-									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
-									data = {
-												'action' : 'search',
-												'first_name' : '',
-												'last_name' : '',
-											}
-									)
-		# check the response
-		self.assertEqual(response.status_code, 200)
-		# check that we got the right number of events
-		self.assertContains(response,'Either first name or last name must be entered')
-
 	def test_event_registration_search_no_results(self):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
@@ -3954,8 +3933,7 @@ class EventRegistrationViewTest(TestCase):
 									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
 									data = {
 												'action' : 'search',
-												'first_name' : 'noresult',
-												'last_name' : 'noresult',
+												'names' : 'noresult'
 											}
 									)
 		# check the response
@@ -3963,7 +3941,7 @@ class EventRegistrationViewTest(TestCase):
 		# check that we got the right number of events
 		self.assertEqual(response.context['search_number'],0)
 
-	def test_event_registration_search_first_name(self):
+	def test_event_registration_search_names(self):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
 		# create some people
@@ -3976,8 +3954,7 @@ class EventRegistrationViewTest(TestCase):
 									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
 									data = {
 												'action' : 'search',
-												'first_name' : 'Found_name_',
-												'last_name' : '',
+												'names' : 'Found_name_'
 											}
 									)
 		# check the response
@@ -3991,6 +3968,14 @@ class EventRegistrationViewTest(TestCase):
 		# create some people
 		set_up_test_people('Found_name_',number=17)
 		set_up_test_people('Lost_name_',number=19)
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Found_name_')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the date
+			person.last_name = 'name_search'
+			# and save the record
+			person.save()
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# do a search
@@ -3998,8 +3983,36 @@ class EventRegistrationViewTest(TestCase):
 									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
 									data = {
 												'action' : 'search',
-												'first_name' : '',
-												'last_name' : 'Found_name_',
+												'names' : 'name_search',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],17)
+
+	def test_event_registration_search_names_multiple_terms(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some people
+		set_up_test_people('Found_name_',number=17)
+		set_up_test_people('Lost_name_',number=19)
+		# set different last names
+		people_to_include = Person.objects.filter(first_name__startswith='Found_name_')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the date
+			person.last_name = 'name_search'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'Found_name name_search',
 											}
 									)
 		# check the response

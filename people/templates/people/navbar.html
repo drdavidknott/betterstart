@@ -52,13 +52,24 @@ $(document).ready(function() {
 						<span class="glyphicon glyphicon-user"></span>
 						<span class="glyphicon glyphicon-plus"></span>
 					</a></li>
-					<li><a href="{% url 'events' %}">EVENTS</a></li>
-					<li><a href="{% url 'addevent' %}">ADD EVENT</a></li>
+					<li><a href="{% url 'events' %}">
+						<span class="glyphicon glyphicon-calendar"></span>
+					</a></li>
+					<li><a href="{% url 'addevent' %}">
+						<span class="glyphicon glyphicon-calendar"></span>
+						<span class="glyphicon glyphicon-plus"></span>
+					</a></li>
 					{% if request.user.is_superuser %}
-						<li><a href="{% url 'uploaddata' %}">UPLOAD DATA</a></li>
-						<li><a href="{% url 'downloaddata' %}">DOWNLOAD DATA</a></li>
+						<li><a href="{% url 'uploaddata' %}">
+							<span class="glyphicon glyphicon-upload"></span>
+						</a></li>
+						<li><a href="{% url 'downloaddata' %}">
+							<span class="glyphicon glyphicon-download"></span>
+						</a></li>
 					{% endif %}
-					<li><a href="{% url 'logout' %}">LOGOUT</a></li>
+					<li><a href="{% url 'logout' %}">
+						<span class="glyphicon glyphicon-log-out"></span>
+					</a></li>
 			    </ul>
 			</div>
 		</div>

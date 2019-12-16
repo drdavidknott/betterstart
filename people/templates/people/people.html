@@ -49,8 +49,6 @@
 				<table class="table table-striped panel panel-default" id="people">
 					<thead><tr>
 						<th>NAME:</th>
-						<th>NICKNAMES:</th>
-						<th>PRIOR NAMES:</th>
 						<th>DATE OF BIRTH:</th>
 						<th>GENDER:</th>
 						<th>ROLE:</th>
@@ -61,14 +59,8 @@
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'person' person.pk %}">
-										{{ person.first_name }} {{ person.middle_names }} {{ person.last_name }}
+										{{ person }}
 									</a>
-								</td>
-								<td>
-									{{ person.nicknames }}
-								</td>
-								<td>
-									{{ person.prior_names }}
 								</td>
 								<td>
 									{{ person.date_of_birth }}

@@ -467,6 +467,33 @@ class PersonNameSearchForm(forms.Form):
 									Hidden('action','search'),
 									)
 
+class PersonRelationshipSearchForm(forms.Form):
+	# Define the fields that we need in the form.
+	first_name = forms.CharField(
+									label="First Name",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	last_name = forms.CharField(
+									label="Last Name",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(PersonRelationshipSearchForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('first_name',css_class='form-group col-md-6 mbt-0'),	
+										Column('last_name',css_class='form-group col-md-6 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0')),
+									Hidden('action','search'),
+									)
+
 class AddRelationshipForm(forms.Form):
 	# Define the fields that we need in the form to capture the basics of the person's profile
 	first_name = forms.CharField(

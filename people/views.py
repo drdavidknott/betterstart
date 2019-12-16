@@ -13,7 +13,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
-					DownloadDataForm
+					DownloadDataForm, PersonRelationshipSearchForm
 from .utilities import get_page_list, make_banner, extract_id
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
@@ -1932,7 +1932,7 @@ def add_relationship(request,person_id=0):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonNameSearchForm(request.POST)
+		personsearchform = PersonRelationshipSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
@@ -2003,7 +2003,7 @@ def add_relationship(request,person_id=0):
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
-		personsearchform = PersonNameSearchForm()
+		personsearchform = PersonRelationshipSearchForm()
 	# update the existing relationships: there may be new ones
 	relationships_to = get_relationships_to(person)
 	# if there are existing relationships, create an edit form

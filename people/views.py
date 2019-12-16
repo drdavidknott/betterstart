@@ -270,7 +270,7 @@ def index(request):
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'EVENTS IN WARD',
-															title_icon = 'glyphicon-globe',
+															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
 															rows = get_wards_with_event_counts(),
 															row_name = 'ward_name',
@@ -287,7 +287,7 @@ def index(request):
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'EVENTS IN AREA',
-															title_icon = 'glyphicon-globe',
+															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
 															rows = get_areas_with_event_counts(),
 															row_name = 'area_name',
@@ -302,7 +302,7 @@ def index(request):
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'PEOPLE IN WARD',
-															title_icon = 'glyphicon-globe',
+															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
 															rows = get_wards_with_people_counts(),
 															row_name = 'ward_name',
@@ -319,7 +319,7 @@ def index(request):
 	geo_dashboard_column.panels.append(
 											Dashboard_Panel(
 															title = 'PEOPLE IN AREA',
-															title_icon = 'glyphicon-globe',
+															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
 															rows = get_areas_with_people_counts(),
 															row_name = 'area_name',

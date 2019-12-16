@@ -44,7 +44,9 @@ $(document).ready(function() {
 		<div class="collapse navbar-collapse" id="Navbar">
 			<div>
 			    <ul class="nav navbar-nav navbar-right">
-					<li><a href="{% url 'index' %}">HOME</a></li>
+					<li><a href="{% url 'index' %}">
+						<span class="glyphicon glyphicon-home"></span>
+					</a></li>
 					<li><a href="{% url 'listpeople' %}">
 						<span class="glyphicon glyphicon-user"></span>
 					</a></li>
@@ -61,10 +63,10 @@ $(document).ready(function() {
 					</a></li>
 					{% if request.user.is_superuser %}
 						<li><a href="{% url 'uploaddata' %}">
-							<span class="glyphicon glyphicon-upload"></span>
+							<span class="glyphicon glyphicon-cloud-upload"></span>
 						</a></li>
 						<li><a href="{% url 'downloaddata' %}">
-							<span class="glyphicon glyphicon-download"></span>
+							<span class="glyphicon glyphicon-cloud-download"></span>
 						</a></li>
 					{% endif %}
 					<li><a href="{% url 'logout' %}">

@@ -45,8 +45,13 @@ $(document).ready(function() {
 			<div>
 			    <ul class="nav navbar-nav navbar-right">
 					<li><a href="{% url 'index' %}">HOME</a></li>
-					<li><a href="{% url 'listpeople' %}">PEOPLE</a></li>
-					<li><a href="{% url 'addperson' %}">ADD PERSON</a></li>
+					<li><a href="{% url 'listpeople' %}">
+						<span class="glyphicon glyphicon-user"></span>
+					</a></li>
+					<li><a href="{% url 'addperson' %}">
+						<span class="glyphicon glyphicon-user"></span>
+						<span class="glyphicon glyphicon-plus"></span>
+					</a></li>
 					<li><a href="{% url 'events' %}">EVENTS</a></li>
 					<li><a href="{% url 'addevent' %}">ADD EVENT</a></li>
 					{% if request.user.is_superuser %}

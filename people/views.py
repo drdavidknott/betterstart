@@ -32,7 +32,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 
 @login_required
 def index(request):
-	# get the template
+	# get the templates
 	index_template = loader.get_template('people/index.html')
 	# get the exceptions
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()

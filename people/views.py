@@ -2245,7 +2245,7 @@ def event(request, event_id=0):
 	if not event:
 		return make_banner(request, 'Event does not exist.')
 	# get the registrations for the event
-	registrations = get_event_registrations(event)
+	registrations = event.event_registration_set.all().order_by('person__last_name','person__first_name')
 	# set the context
 	context = build_context({
 				'event' : event,

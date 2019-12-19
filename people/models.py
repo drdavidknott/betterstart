@@ -349,6 +349,8 @@ class Person(DataAccessMixin,models.Model):
 							| results.filter(last_name__icontains=name) \
 							| results.filter(nicknames__icontains=name) \
 							| results.filter(prior_names__icontains=name)
+		# order the results by name
+		results = results.order_by(last_name)
 		# return the results
 		return results
 

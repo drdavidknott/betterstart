@@ -122,6 +122,7 @@ class ProfileForm(forms.Form):
 					('Not specified','Not specified'),
 					('Male' , 'Male'),
 					('Female' , 'Female'),
+					('Prefer Not To Say', 'Prefer Not To Say')
 					)
 	# and the choices for trained roles
 	trained_role_choices = (

@@ -367,18 +367,23 @@ class PersonSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	role_type = forms.ChoiceField(
 									label="Role",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	ABSS_type = forms.ChoiceField(
 									label="ABSS",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	age_status = forms.ChoiceField(
 									label="Age status",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	trained_role = forms.ChoiceField(
 									label="Trained role",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	ward = forms.ChoiceField(
 									label="Ward",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	include_people = forms.ChoiceField(
 									label="Include people",

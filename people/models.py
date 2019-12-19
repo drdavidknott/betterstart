@@ -350,7 +350,7 @@ class Person(DataAccessMixin,models.Model):
 							| results.filter(nicknames__icontains=name) \
 							| results.filter(prior_names__icontains=name)
 		# order the results by name
-		results = results.order_by(last_name)
+		results = results.order_by('last_name','first_name')
 		# return the results
 		return results
 

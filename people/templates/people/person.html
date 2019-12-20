@@ -7,249 +7,278 @@
  {% block content %}
 
 <div class="container">
+
+	<div clas="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-user"></span>
+ 				{{ person }}
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
+
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'profile' person.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class='col-xs-11'>
+			<div class="row">
+	 			<strong>Age status: </strong>{{ person.age_description }}
+	 		</div>
+	 		<div class="row">
+	 			<strong>Project status: </strong>{{ person.project_description }}
+	 		</div>
+	 		{% if person.pregnant %}
+				<div class="row">
+	 				<strong>Pregnancy status: </strong>{{ person.pregnancy_description }}&nbsp
+	 			</div>
+			{% endif %}
+			<div class="row">
+				<strong>Ethnicity: </strong>{{ person.ethnicity }}&nbsp
+	 		</div>
+	 		<div class="row">
+				<strong>Gender: </strong>{{ person.gender }}&nbsp
+	 		</div>
+	 		<div class="row">
+				<strong>Role: </strong>{{ person.default_role.role_type_name }}&nbsp
+	 		</div>
+	 		{% for trained_role in person.trained_role_set.all %}
+		 		<div class="row">
+		 			<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
+				</div>
+			{% endfor %}
+		</div>
+	</div>
 	
-	{% include "people/person_header.html" %}
+	{% if person.age_status.can_have_contact_details %}
+
+		<div class="row">
+			<div class="col-xs-12">
+					<hr>
+		 	</div>
+		 </div>
+
+	 	<div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<a href="{% url 'profile' person.pk %}">
+	 				<span class="glyphicon glyphicon-pencil"></span>
+	 			</a>
+	 		</div>
+	 		<div class='col-xs-11'>
+				<div class="row">
+	 				<span class="glyphicon glyphicon-envelope"></span>
+	 				<strong>Email address: </strong>{{ person.email_address }}&nbsp
+	 			</div>
+				<div class="row">
+	 				<span class="glyphicon glyphicon-phone-alt"></span>
+	 				<strong>Home phone: </strong>{{ person.home_phone }}&nbsp
+	 			</div>
+				<div class="row">
+	 				<span class="glyphicon glyphicon-phone"></span>
+	 				<strong>Mobile phone: </strong>{{ person.mobile_phone }}&nbsp
+	 			</div>
+		 	</div>
+		 </div>
+
+	{% endif %}
+
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
 
  	<div class="row">
- 		<div class="panel panel-default">
- 			<div class="panel-heading">
- 				<h4 class="panel-title">
- 					<a href="{% url 'profile' person.pk %}">PROFILE</a>
- 				</h4>
- 			</div>
-	 		<div class="panel-body">
-	 			<div class="row">
-		 			<div class="col-xs-3">First name:</div>
-		 			<div class="col-xs-9">{{ person.first_name }}</div>
-		 		</div>
-		 		{% if person.middle_names %}
-		 			<div class="row">
-			 			<div class="col-xs-3">Middle names:</div>
-			 			<div class="col-xs-9">{{ person.middle_names }}&nbsp</div>
-			 		</div>
-		 		{% endif %}
-	 			<div class="row">
-		 			<div class="col-xs-3">Last name:</div>
-		 			<div class="col-xs-9">{{ person.last_name }}</div>
-		 		</div>
-		 		{% if person.nicknames %}
-		 			<div class="row">
-			 			<div class="col-xs-3">Nicknames:</div>
-			 			<div class="col-xs-9">{{ person.nicknames }}&nbsp</div>
-			 		</div>
-		 		{% endif %}
-		 		{% if person.prior_names %}
-		 			<div class="row">
-			 			<div class="col-xs-3">Prior names:</div>
-			 			<div class="col-xs-9">{{ person.prior_names }}&nbsp</div>
-			 		</div>
-		 		{% endif %}
-		 		{% if person.age_status.can_have_contact_details %}
-		 			<div class="row">
-			 			<div class="col-xs-3">Email:</div>
-			 			<div class="col-xs-9">{{ person.email_address}}&nbsp</div>
-			 		</div>
-		 			<div class="row">
-			 			<div class="col-xs-3">Home phone:</div>
-			 			<div class="col-xs-9">{{ person.home_phone}}&nbsp</div>
-			 		</div>
-		 			<div class="row">
-			 			<div class="col-xs-3">Mobile phone:</div>
-			 			<div class="col-xs-9">{{ person.mobile_phone}}&nbsp</div>
-			 		</div>
-		 		{% endif %}
-		 		<div class="row">
-		 			<div class="col-xs-3">Date of birth:</div>
-		 			<div class="col-xs-9">{{ person.date_of_birth }}</div>
-		 		</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">Age status:</div>
-		 			<div class="col-xs-9">{{ person.age_status.status }}</div>
-		 		</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">ABSS TYPE:</div>
-		 			<div class="col-xs-9">{{ person.ABSS_type.name }}</div>
-		 		</div>
-		 		{% if person.ABSS_start_date %}
-			 		<div class="row">
-			 			<div class="col-xs-3">ABSS start date:</div>
-			 			<div class="col-xs-9">{{ person.ABSS_start_date }}</div>
-			 		</div>
-			 		<div class="row">
-			 			<div class="col-xs-3">ABSS end date:</div>
-			 			<div class="col-xs-9">{{ person.ABSS_end_date }}</div>
-			 		</div>
-			 	{% endif %}
-		 		{% if not person.age_status.default_role_type_only %}
-			 		<div class="row">
-			 			<div class="col-xs-3">Role:</div>
-			 			<div class="col-xs-9">{{ person.default_role.role_type_name }}</div>
-			 		</div>
-		 		{% endif %}
-		 		{% for trained_role in person.trained_role_set.all %}
-		 		<div class="row">
-		 			<div class="col-xs-3">{{ trained_role.role_type.role_type_name }}:</div>
-		 			<div class="col-xs-9">
-		 				{% if trained_role.active %}
-		 					Trained and active
-		 				{% else %}
-		 					Trained
-		 				{% endif %}
-		 			</div>
-				</div>
-				{% endfor %}
-		 		<div class="row">
-		 			<div class="col-xs-3">Ethnicity:</div>
-		 			<div class="col-xs-9">{{ person.ethnicity }}</div>
-				</div>
-				{% if person.age_status.can_be_pregnant %}
-			 		<div class="row">
-			 			<div class="col-xs-3">Pregnant (or partner is pregnant):</div>
-			 			<div class="col-xs-9">{{ person.pregnant|yesno:'Yes,No' }}</div>
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'address' person.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if person.house_name_or_number %}
+					<div><strong>Address: </strong>{{ person.house_name_or_number }} {{ person.street.name }}</div>
+					<div><strong>Post Code: </strong>{{ person.street.post_code.post_code }}</div>
+					<div><strong>Ward: </strong>{{ person.street.post_code.ward.ward_name }}</div>
+					<div><strong>Area: </strong>{{ person.street.post_code.ward.area.area_name }}</div>
+					<div>
+						<a href="{% url 'address_to_relationships' person.pk %}">Apply address to relationships</a>
 					</div>
-			 		<div class="row">
-			 			<div class="col-xs-3">Due date:</div>
-			 			<div class="col-xs-9">{{ person.due_date }}</div>
-					</div>
+				{% else %}
+					<div><strong>No address</strong></div>
 				{% endif %}
 			</div>
 		</div>
+	 </div>
 
-		{% if person.notes %}
-	 		<div class="panel panel-default">
-				<div class="panel-heading">
-		 			<h4 class="panel-title">
-		 				<a href="{% url 'profile' person.pk %}">NOTES</a>
-		 			</h4>
+	{% if person.notes %}
+
+		<div class="row">
+			<div class="col-xs-12">
+					<hr>
+		 	</div>
+		 </div>
+
+	 	<div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<a href="{% url 'profile' person.pk %}">
+	 				<span class="glyphicon glyphicon-pencil"></span>
+	 			</a>
+	 		</div>
+	 		<div class='col-xs-11'>
+				<div class="row">
+					<span class="glyphicon glyphicon-list"></span>
+	 				<strong>Notes: </strong>
+	 				<div>{{ person.notes|linebreaks }}</div>
 	 			</div>
-		 		<div class="panel-body">
-			 		<div class="row">
-			 			<div class="col-xs-12">{{ person.notes|linebreaks }}</div>
-					</div>
-				</div>
-			</div>
-		{% endif %}
+		 	</div>
+		 </div>
+		 
+	{% endif %}
 
-		{% if person.emergency_contact_details %}
-	 		<div class="panel panel-default">
-				<div class="panel-heading">
-		 			<h4 class="panel-title">
-		 				<a href="{% url 'profile' person.pk %}">EMERGENCY CONTACT DETAILS</a>
-		 			</h4>
+	{% if person.emergency_contact_details %}
+
+		<div class="row">
+			<div class="col-xs-12">
+					<hr>
+		 	</div>
+		 </div>
+
+	 	<div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<a href="{% url 'profile' person.pk %}">
+	 				<span class="glyphicon glyphicon-pencil"></span>
+	 			</a>
+	 		</div>
+	 		<div class='col-xs-11'>
+				<div class="row">
+					<span class="glyphicon glyphicon-alert"></span>
+	 				<strong>Emergency contact details: </strong>
+	 				<div>{{ person.emergency_contact_details|linebreaks }}</div>
 	 			</div>
-		 		<div class="panel-body">
-			 		<div class="row">
-			 			<div class="col-xs-12">{{ person.emergency_contact_details|linebreaks }}</div>
-					</div>
-				</div>
-			</div>
-		{% endif %}
+		 	</div>
+		 </div>
+		 
+	{% endif %}
 
- 		<div class="panel panel-default">
-			<div class="panel-heading">
-	 				<h4 class="panel-title">
-	 					<a href="{% url 'add_relationship' person.pk %}">RELATIONSHIPS</a>
-	 				</h4>
- 			</div>
-	 		<div class="panel-body">
-	 			<div class="row">
-		 			{% for relationship_to in relationships_to %}
-		 				<div class="col-xs-12">
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'add_relationship' person.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if relationships_to %}
+					{% for relationship_to in relationships_to %}
+		 				<div>
 							{{ relationship_to.relationship_type|capfirst }} of
 							<a href="{% url 'person' relationship_to.pk %}"> 
 								{{ relationship_to }}
 							</a>
 						</div>
 					{% endfor %}
-				</div>
+				{% else %}
+					<div><strong>No relationships</strong></div>
+				{% endif %}
 			</div>
 		</div>
+	 </div>
 
- 		<div class="panel panel-default">
-			<div class="panel-heading">
-	 				<h4 class="panel-title">
-	 					<a href="{% url 'address' person.pk %}">ADDRESS</a>
-	 				</h4>
- 			</div>
-	 		<div class="panel-body">
-	 			<div class='row'>
-					{% if person.house_name_or_number %}
-				 			<div class="col-xs-12">
-				 				Address: {{ person.house_name_or_number }} {{ person.street.name }}
-				 			</div>
-				 			<div class="col-xs-12">Post Code: {{ person.street.post_code.post_code }}</div>
-				 			<div class="col-xs-12">Ward: {{ person.street.post_code.ward.ward_name }}</div>
-				 			<div class="col-xs-12">Area: {{ person.street.post_code.ward.area.area_name }}</div>
-						{% if relationships_to %}
-							<div class="col-xs-12">
-								<a href="{% url 'address_to_relationships' person.pk %}">
-									Apply address to relationships
-								</a>
-							</div>
-						{% endif %}
-					{% endif %}
-				</div>
-			</div>
-		</div>
+	 <div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
 
- 		<div class="panel panel-default">
-			<div class="panel-heading">
-	 				<h4 class="panel-title">EVENT REGISTRATIONS</h4>
- 			</div>
-	 		<div class="panel-body">
-	 			<div class="row">
-			 		{% for registration in registrations %}
-		 				<div class="col-md-12">
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'events' %}">
+ 				<span class="glyphicon glyphicon-calendar"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if registrations %}
+		 			{% for registration in registrations %}
+		 				<div>
 		 					<a href="{% url 'event' registration.event.pk %}">{{ registration.event }}</a>:
 							{{ registration.description }} as 
 							{{ registration.role_type.role_type_name }}.
 						</div>
 					{% endfor %}
-				</div>
+				{% else %}
+					<div><strong>No event registrations</strong></div>
+				{% endif %}
 			</div>
 		</div>
+	 </div>
 
- 		<div class="panel panel-default">
-			<div class="panel-heading">
-	 				<h4 class="panel-title">
-	 					<a href="{% url 'answer_questions' person.pk %}">QUESTIONS</a>
-	 				</h4>
- 			</div>
-	 		<div class="panel-body">
-	 			<div class="row">
-			 		{% for question in questions %}
+	 <div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'answer_questions' person.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if answer_flag %}
+		 			{% for question in questions %}
 			 			{% if question.answer or question.note %}
-			 				<div class="col-md-12">
-								{{ question }}&nbsp{{ question.answer_text }}
+			 				<div>
+								<strong>Question: </strong>{{ question }}&nbsp{{ question.answer_text }}
 							</div>
 						{% endif %}
 			 			{% if question.note %}
-			 				<div class="col-md-12">
-								({{ question.notes_label }}: {{ question.note }})
+			 				<div>
+								<strong>{{ question.notes_label }}: </strong>{{ question.note }})
 							</div>
 						{% endif %}
 					{% endfor %}
-				</div>
+				{% else %}
+					<div><strong>No questions answered</strong></div>
+				{% endif %}
 			</div>
 		</div>
+	 </div>
 
- 		<div class="panel panel-default">
-			<div class="panel-heading">
-	 				<h4 class="panel-title">UPDATE HISTORY</h4>
- 			</div>
-	 		<div class="panel-body">
-		 		<div class="row">
-		 			<div class="col-xs-3">Date and time created:</div>
-		 			<div class="col-xs-9">{{ person.datetime_created }}</div>
-				</div>
-		 		<div class="row">
-		 			<div class="col-xs-3">Date and time last updated:</div>
-		 			<div class="col-xs-9">{{ person.datetime_updated }}</div>
-				</div>
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			&nbsp
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		<div><strong>Created: </strong>{{ person.datetime_created }}</div>
+		 		<div><strong>Updated: </strong>{{ person.datetime_updated }}</div>
 			</div>
 		</div>
-
-	</div>
+	 </div>
 
 </div>
 

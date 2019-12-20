@@ -80,7 +80,7 @@ class PersonModelTest(TestCase):
 		# get the person
 		person = Person.objects.get(first_name='First')
 		# check the str method
-		self.assertEqual('First Middle Names Last', person.full_name())
+		self.assertEqual('First Last', person.full_name())
 
 class EventRegistrationTest(TestCase):
 	@classmethod

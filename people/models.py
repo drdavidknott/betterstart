@@ -269,7 +269,41 @@ class Person(DataAccessMixin,models.Model):
 		verbose_name_plural = 'people'
 	# and a function to return the full name
 	def full_name(self):
-		return self.first_name + ' ' + self.middle_names + ' ' + self.last_name
+		return self.first_name + ' ' + self.last_name
+	# and a function to return an age description
+	def age_description(self):
+		# create a description
+		desc = self.age_status.status
+		# check whether we have a date of birth
+		if self.date_of_birth:
+			# add the date of brith
+			desc += ', born on ' + self.date_of_birth.strftime('%b %d %Y')
+		# return the value
+		return desc
+	# and a function to return a description of membership in the project
+	def project_description(self):
+		# create a description
+		desc = self.ABSS_type.name
+		# and add the joining date
+		if self.ABSS_start_date:
+			# add to the description
+			desc += ', joined project on ' + self.ABSS_start_date.strftime('%b %d %Y')
+		# and the add the leaving date
+		if self.ABSS_end_date:
+			# add to the description
+			desc += ', left project on ' + self.ABSS_end_date.strftime('%b %d %Y')
+		# return the value
+		return desc
+	# and a function to return a pregnancy description
+	def pregnancy_description(self):
+		# create a description
+		desc = 'Not pregnant'
+		# check whether person is pregnant
+		if self.pregnant:
+			# set the description
+			desc += 'Pregnant (or partner is pregnant), due on ' + self.due_date.strftime('%b %d %Y')
+		# return the value
+		return desc
 	# and a class method to get a person by names and age status
 	@classmethod
 	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):
@@ -475,6 +509,16 @@ class Trained_Role(DataAccessMixin,models.Model):
 			return 'active'
 		else:
 			return 'inactive'
+	# and a function to return a status description
+	def status_description(self):
+		# create a description
+		desc = 'Trained'
+		# check whether the role is active
+		if self.active:
+			# add to the description
+			desc += ' and active'
+		# return the value
+		return desc
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'trained roles'

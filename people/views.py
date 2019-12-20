@@ -676,6 +676,8 @@ def get_relationship_from_and_to(person_from, person_to):
 
 def get_questions_and_answers(person):
 	# this function gets a list of questions, and adds the answers relevant to the person
+	# set the flag to false to show whether we have answers for this person
+	answer_flag = False
 	# get the list of questions
 	questions = Question.objects.all().order_by('question_text')
 	# get the options for each question
@@ -697,6 +699,8 @@ def get_questions_and_answers(person):
 			question.answer = answer.option.pk
 			# and the text
 			question.answer_text = answer.option.option_label
+			# and the flag
+			answer_flag = True
 		# set a default note
 		question.note = ''
 		# now try to get an answer note
@@ -708,8 +712,10 @@ def get_questions_and_answers(person):
 		if answer_note:
 			# set the answer
 			question.note = answer_note.notes
+			# and the flag
+			answer_flag = True
 	# return the results
-	return questions
+	return questions, answer_flag
 
 def get_ABSS_types_with_counts():
 	# define the list
@@ -1802,13 +1808,15 @@ def person(request, person_id=0):
 		return make_banner(request, 'Person does not exist.')
 	# get the relationships for the person
 	relationships_to = get_relationships_to(person)
-	# get the 
+	# get the questions and the answer flag
+	questions, answer_flag = get_questions_and_answers(person)
 	# set the context from the person based on person id
 	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
 				'registrations' : Event_Registration.objects.filter(person=person),
-				'questions' : get_questions_and_answers(person),
+				'questions' : questions,
+				'answer_flag' : answer_flag,
 				'role_history' : person.role_history_set.all()
 				})
 	# return the response
@@ -2674,7 +2682,7 @@ def answer_questions(request,person_id=0):
 	if not person:
 		return make_banner(request, 'Person does not exist.')
 	# get the questions, with the answers included as an attribute
-	questions = get_questions_and_answers(person)
+	questions, answer_flag = get_questions_and_answers(person)
 	# build the form
 	if request.method == 'POST':
 		# build the form

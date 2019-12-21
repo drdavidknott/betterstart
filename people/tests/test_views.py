@@ -3556,8 +3556,7 @@ class AddRelationshipViewTest(TestCase):
 									reverse('add_relationship',args=[Person.objects.get(first_name='Test_exists_0').pk]),
 									data = { 
 											'action' : 'search',
-											'first_name' : 'Test_exists_0',
-											'last_name' : 'Test_exists_0',
+											'names' : 'Test_exists_0',
 											}
 									)
 		# check the response

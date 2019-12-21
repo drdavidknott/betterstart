@@ -57,7 +57,7 @@
 							 				<tr>
 							 					<td>
 							 						<a href="{% url 'person' result.pk %}">
-														{{ result.first_name }} {{ result.middle_names }} {{ result.last_name }}
+														{{ result }}
 													</a>
 												</td>
 												<td>
@@ -153,7 +153,7 @@
 								{{ person.first_name }} {{ person.last_name }} is the 
 								{{ relationship_to.relationship_type }} of
 								<a href="{% url 'person' relationship_to.pk %}"> 
-									{{ relationship_to.first_name }} {{ relationship_to.last_name }}
+									{{ relationship_to }}
 								</a>
 							</div>
 						{% endfor %}
@@ -184,9 +184,7 @@
 							 				<tr>
 							 					<td>
 							 						<a href="{% url 'person' relationship_to.pk %}">
-														{{ relationship_to.first_name }} 
-														{{ relationship_to.middle_names }} 
-														{{ relationship_to.last_name }}
+														{{ relationship_to }}
 													</a>
 												</td>
 												<td>

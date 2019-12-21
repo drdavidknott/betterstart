@@ -1940,38 +1940,41 @@ def add_relationship(request,person_id=0):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonRelationshipSearchForm(request.POST)
+		personsearchform = PersonNameSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
 			# validate the form
 			if personsearchform.is_valid():
 				# get the names
-				first_name = personsearchform.cleaned_data['first_name']
-				last_name = personsearchform.cleaned_data['last_name']
-				# if neither name is blank, do the search
-				if first_name or last_name:
-					# conduct a search
-					people = Person.search(
-											first_name__icontains=first_name,
-											last_name__icontains=last_name
-											)
-					# remove the people who already have a relationship
-					search_results = remove_existing_relationships(person, people)
-					# if there are search results, create a form to create relationships from the search results
-					if search_results:
-						# create the form
-						addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
-																people=search_results
-																)
-						# go through the search results and add a field name to the object
-						for result in search_results:
-							# add the field
-							result.field_name = 'relationship_type_' + str(result.pk)
-					# create a form to add the relationship
-					addrelationshipform = AddRelationshipForm(
-																first_name = personsearchform.cleaned_data['first_name'],
-																last_name = personsearchform.cleaned_data['last_name'],
-																)
+				names = personsearchform.cleaned_data['names']
+				# conduct a search
+				people = Person.search(names=names)
+				# remove the people who already have a relationship
+				search_results = remove_existing_relationships(person, people)
+				# if there are search results, create a form to create relationships from the search results
+				if search_results:
+					# create the form
+					addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
+															people=search_results
+															)
+					# go through the search results and add a field name to the object
+					for result in search_results:
+						# add the field
+						result.field_name = 'relationship_type_' + str(result.pk)
+				# check whether we have a space in the name
+				if ' ' in names:
+					# split the name
+					first_name, last_name = names.split(' ',1)
+				# otherwise set the names
+				else:
+					# set the names
+					first_name = names
+					last_name = ''
+				# create a form to add the relationship
+				addrelationshipform = AddRelationshipForm(
+															first_name = first_name,
+															last_name = last_name
+															)
 		# check whether we have been asked to edit relationships
 		# note that we get this action for editing existing relationships and creating new relationships
 		elif request.POST['action'] == 'editrelationships':
@@ -2011,7 +2014,7 @@ def add_relationship(request,person_id=0):
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
-		personsearchform = PersonRelationshipSearchForm()
+		personsearchform = PersonNameSearchForm()
 	# update the existing relationships: there may be new ones
 	relationships_to = get_relationships_to(person)
 	# if there are existing relationships, create an edit form

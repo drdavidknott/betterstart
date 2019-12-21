@@ -3,7 +3,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Event_Registration, ABSS_Type, Age_Status
 import datetime
 
-def set_up_test_person():
+def set_up_test_people():
 	# create the role type that our test person will belong to
 	test_role_type = Role_Type.objects.create(role_type_name='test_role')
 	# and the ethnicity
@@ -23,6 +23,8 @@ def set_up_test_person():
 										first_name = 'First',
 										middle_names = 'Middle Names',
 										last_name = 'Last',
+										nicknames = 'Nick',
+										prior_names = 'Prior',
 										email_address = 'test@test.com',
 										date_of_birth = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
 										gender = 'Gender',
@@ -35,8 +37,25 @@ def set_up_test_person():
 										age_status = test_age_status,
 										ethnicity = test_ethnicity
 										)
-	# return the person
-	return test_person
+	# create the person
+	test_person = Person.objects.create(
+										first_name = 'Another',
+										middle_names = 'Middle Names',
+										last_name = 'Person',
+										nicknames = 'Nnames',
+										prior_names = 'Pnames',
+										email_address = 'test@test.com',
+										date_of_birth = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
+										gender = 'Gender',
+										notes = 'test notes',
+										default_role = test_role_type,
+										pregnant = False,
+										due_date = None,
+										capture_type = test_capture_type,
+										ABSS_type = test_ABSS_type,
+										age_status = test_age_status,
+										ethnicity = test_ethnicity
+										)
    
 def set_up_test_event():
 	# create an event category
@@ -63,17 +82,17 @@ class PersonModelTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# call the function to set up standard test data
-		set_up_test_person()
+		set_up_test_people()
 
 	def setUp(self):
 		pass
 
 	def test_str_for_person(self):
-		# test that the str method for person returns first name and last name separated by a space
+		# test that the str method for person returns all names, including nicknames and prior names
 		# get the person
 		person = Person.objects.get(first_name='First')
 		# check the str method
-		self.assertEqual('First Last', str(person))
+		self.assertEqual('First Last, also known as Nick, previously known as Prior', str(person))
 
 	def test_full_name_for_person(self):
 		# test that the full name method for person returns first name, middle name and last names separated by spaces
@@ -82,11 +101,83 @@ class PersonModelTest(TestCase):
 		# check the str method
 		self.assertEqual('First Last', person.full_name())
 
+	def test_names_search_first(self):
+		# test that the search on each type of name works
+		# start with first name
+		results = Person.search(names='First')
+		# check that we only got one result
+		self.assertEqual(results.count(),1)
+		# check that we got a result
+		self.assertEqual(results.first().first_name,'First')
+
+	def test_names_search_last(self):
+		# test that the search on each type of name works
+		# start with first name
+		results = Person.search(names='Last')
+		# check that we only got one result
+		self.assertEqual(results.count(),1)
+		# check that we got a result
+		self.assertEqual(results.first().first_name,'First')
+
+	def test_names_search_nick(self):
+		# test that the search on each type of name works
+		# start with first name
+		results = Person.search(names='Nick')
+		# check that we only got one result
+		self.assertEqual(results.count(),1)
+		# check that we got a result
+		self.assertEqual(results.first().first_name,'First')
+
+	def test_names_search_prior(self):
+		# test that the search on each type of name works
+		# start with first name
+		results = Person.search(names='Prior')
+		# check that we only got one result
+		self.assertEqual(results.count(),1)
+		# check that we got a result
+		self.assertEqual(results.first().first_name,'First')
+
+	def test_try_to_get_success(self):
+		# get the person
+		person = Person.objects.get(first_name='First')
+		# test whether the try to get function works
+		self.assertEqual(Person.try_to_get(first_name='First'),person)
+
+	def test_try_to_get_failure(self):
+		# test whether the try to get function works
+		self.assertEqual(Person.try_to_get(first_name='Nonexistent'),False)
+
+	def test_try_to_get_just_one_success(self):
+		# get the person
+		person = Person.objects.get(first_name='First')
+		# test whether the try to get function works
+		result, message = Person.try_to_get_just_one(first_name='First')
+		# check that we got the right results
+		self.assertEqual(result,person)
+		self.assertEqual(message,'matching Person record exists')
+
+	def test_try_to_get_just_one_failure_none(self):
+		# test whether the try to get function works
+		result, message = Person.try_to_get_just_one(first_name='Nonexistent')
+		# check that we got the right results
+		self.assertFalse(result)
+		self.assertEqual(message,'matching Person record does not exist')
+
+	def test_try_to_get_just_one_failure_multiple(self):
+		# test whether the try to get function works
+		result, message = Person.try_to_get_just_one(prior_names__icontains='P')
+		# check that we got the right results
+		self.assertFalse(result)
+		self.assertEqual(message,'multiple matching Person records exist')
+
+
 class EventRegistrationTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# set up the standard test person
-		test_person = set_up_test_person()
+		set_up_test_people()
+		# get the person 
+		test_person = Person.objects.get(first_name='First')
 		# and the event
 		test_event = set_up_test_event()
 		# and get the role type

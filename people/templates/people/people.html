@@ -22,24 +22,32 @@
 <div class="container">
 
 	<div class="row">
-		<div class="col-md-12">
-			<h2>
-				People{% if number_of_people %} ({{ number_of_people }} found){% endif %}
-			</h2>
+ 		<div class="col-md-12">
+	 		<div class="search-trigger">
+	 			<h3>
+		 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
+		 			Search for People:{% if number_of_people %} ({{ number_of_people }} found){% endif %}
+	 			<h3>
+	 		</div>
 		</div>
 	</div>
 
 	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
  		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title search-trigger">FIND PERSON:</h4>
-	 			</div>
-		 		<div class="panel-body search-box">
-					{% crispy personsearchform %}
-				</div>
-			</div>
+		 	<div>{% crispy personsearchform %}</div>
 		</div>
+	</div>
+
+	<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
 	</div>
 
 	{% if people %}
@@ -47,13 +55,13 @@
 		<div class="row">
 			<div class="col-md-12">
 				<table class="table table-striped panel panel-default" id="people">
+					<!--
 					<thead><tr>
-						<th>NAME:</th>
-						<th>DATE OF BIRTH:</th>
-						<th>GENDER:</th>
-						<th>ROLE:</th>
-						<th>RELATIONSHIPS:</th>
+						<th>Name:</th>
+						<th>Role:</th>
+						<th>Relationships:</th>
 					</tr></thead>
+					-->
 					<tbody>
 				 		{% for person in people %}
 			 				<tr>
@@ -61,12 +69,6 @@
 			 						<a href="{% url 'person' person.pk %}">
 										{{ person }}
 									</a>
-								</td>
-								<td>
-									{{ person.date_of_birth }}
-								</td>
-								<td>
-									{{ person.gender }}
 								</td>
 								<td>
 									{{ person.default_role.role_type_name }}

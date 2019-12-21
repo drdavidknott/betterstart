@@ -1937,12 +1937,14 @@ def add_relationship(request,person_id=0):
 	search_results = []
 	# set a blank search_error
 	search_error = ''
+	# create a blank search form
+	personsearchform = PersonNameSearchForm()
 	# check whether this is a post
 	if request.method == 'POST':
-		# create a search form
-		personsearchform = PersonNameSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
+			# create a search form from the POST
+			personsearchform = PersonNameSearchForm(request.POST)
 			# validate the form
 			if personsearchform.is_valid():
 				# get the names
@@ -2011,10 +2013,6 @@ def add_relationship(request,person_id=0):
 				edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
 				# redirect to the profile form for the new person
 				return redirect('/profile/' + str(person_to.pk))
-	# otherwise we didn't get a post
-	else:
-		# create a blank form
-		personsearchform = PersonNameSearchForm()
 	# update the existing relationships: there may be new ones
 	relationships_to = get_relationships_to(person)
 	# if there are existing relationships, create an edit form

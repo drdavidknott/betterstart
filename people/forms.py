@@ -519,7 +519,7 @@ class AddRelationshipForm(forms.Form):
 									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	relationship_type = forms.ChoiceField(
-									label="Relationship",
+									label="is this person's",
 									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
@@ -536,6 +536,23 @@ class AddRelationshipForm(forms.Form):
 		self.fields['age_status'].initial = Age_Status.objects.get(status='Child under four').pk
 		self.fields['first_name'].initial = first_name
 		self.fields['last_name'].initial = last_name
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('first_name',css_class='form-group col-md-3 mbt-0'),	
+										Column('last_name',css_class='form-group col-md-3 mbt-0'),
+										Column('age_status',css_class='form-group col-md-3 mbt-0'),
+										Column('relationship_type',css_class='form-group col-md-3 mbt-0'),		
+										),
+									Row(
+										Column(
+												Submit('submit', 'Create and Add Relationship'),
+												css_class='col-md-12 mb-0')
+												),
+									Hidden('action','addrelationshiptonewperson'),
+									)
 
 class AddRelationshipToExistingPersonForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically

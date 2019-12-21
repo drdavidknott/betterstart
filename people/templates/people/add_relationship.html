@@ -83,7 +83,7 @@
 									<td>
 										{% for field in addrelationshiptoexistingpersonform %}
 											{% if field.name == result.field_name %}
-												is {{ person.full_name }}'s {{ field }}
+												{{ person.full_name }} is the {{ field }} of {{ result.full_name }}
 											{% endif %}
 										{% endfor %}
 									</td>
@@ -152,7 +152,6 @@
 			</div>
 		</div>
 
-		
  		<form action ="{% url 'add_relationship' person.pk %}" method="post">
 			{% csrf_token %}
 			<input type="hidden" name="action" value="editrelationships">
@@ -173,7 +172,10 @@
 									<td>
 										{% for field in editexistingrelationshipsform %}
 											{% if field.name == relationship_to.select_name %}
-												is {{ person.full_name }}'s {{ field }}
+											 	{{ person.full_name }} is the {{ field }} of 
+											 	<a href="{% url 'person' relationship_to.pk %}">
+											 		{{ relationship_to.full_name }}
+											 	</a>
 											{% endif %}
 											{% if field.name == relationship_to.hidden_name %}
 												{{ field }}

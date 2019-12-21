@@ -526,6 +526,7 @@ class AddRelationshipForm(forms.Form):
 		# pull the fields out of the parameters
 		first_name = kwargs.pop('first_name')
 		last_name = kwargs.pop('last_name')
+		person = kwargs.pop('person')
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choices
@@ -536,6 +537,8 @@ class AddRelationshipForm(forms.Form):
 		self.fields['age_status'].initial = Age_Status.objects.get(status='Child under four').pk
 		self.fields['first_name'].initial = first_name
 		self.fields['last_name'].initial = last_name
+		# and the label for the relationship field
+		self.fields['relationship_type'].label = person.full_name() + " is this person's"
 		# define the crispy form helper
 		self.helper = FormHelper()
 		# and define the layout

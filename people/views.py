@@ -1974,6 +1974,7 @@ def add_relationship(request,person_id=0):
 					last_name = ''
 				# create a form to add the relationship
 				addrelationshipform = AddRelationshipForm(
+															person = person,
 															first_name = first_name,
 															last_name = last_name
 															)
@@ -1995,6 +1996,7 @@ def add_relationship(request,person_id=0):
 			# create the form
 			addrelationshipform = AddRelationshipForm(
 														request.POST,
+														person = person,
 														first_name = request.POST['first_name'],
 														last_name = request.POST['last_name']
 														)

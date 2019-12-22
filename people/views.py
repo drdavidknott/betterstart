@@ -507,6 +507,8 @@ def add_counts_to_events(events):
 		event.registered_count = event.event_registration_set.filter(registered=True).count()
 		# and the participations
 		event.participated_count = event.event_registration_set.filter(participated=True).count()
+		# and the apologies
+		event.apologies_count = event.event_registration_set.filter(apologies=True).count()
 	# return the results
 	return events
 
@@ -1783,6 +1785,12 @@ def addperson(request):
 								)
 			# go to the profile of the person
 			return redirect('/profile/' + str(person.pk))
+		# otherwise set a message
+		else:
+			# set a warning message
+			messages.warning(request,'WARNING: At least one person with this name already exists.')
+			messages.warning(request,'Please press CONFIRM to create a new person with the same name.')
+			messages.warning(request,'Or click on the person below to view their details.')
 	# otherwise create a fresh form
 	else:
 		# create the fresh form

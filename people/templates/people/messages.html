@@ -1,5 +1,6 @@
-<div class='container'>
 
+
+	<!--
 	{% if messages %}
 		<div class="alert {{ message.tags }} alert-dismissible" role="alert">
 	    	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -10,5 +11,31 @@
 		   	{% endfor %}
 		</div>
 	{% endif %}
+	-->
 
-</div>
+	{% if messages %}
+		<!-- script to deal with modal submission button-->
+		<script type="text/javascript">
+		    $(window).on('load',function(){
+		        $('#messageModal').modal('show');
+		    });
+		</script>
+
+		<!-- Modal -->
+		<div id="messageModal" class="modal fade" role="dialog">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal">&times;</button>
+		        <h4 class="modal-title">Messages</h4>
+		      </div>
+		      <div class="modal-body">
+		        {% for message in messages %}
+				   		<div>{{ message }}</div>
+				{% endfor %}
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
+	{% endif %}

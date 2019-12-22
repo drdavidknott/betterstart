@@ -22,78 +22,57 @@
 	<div class="container">
 
 	<div class="row">
-		<div class="col-md-12">
-			<h2>
-				Events{% if number_of_events %} ({{ number_of_events }} found){% endif %}
-			</h2>
+ 		<div class="col-md-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-calendar"></span><span class="glyphicon glyphicon-search"></span>
+	 			Search for Events{% if number_of_events %} ({{ number_of_events }} found){% endif %}
+ 			<h3>
 		</div>
 	</div>
 
 	<div class="row">
- 		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title search-trigger">FIND EVENT:</h4>
-	 			</div>
-		 		<div class="panel-body search-box">
-					{% crispy eventsearchform %}
-				</div>
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+	 		<div class="panel-body">
+				{% crispy eventsearchform %}
 			</div>
 		</div>
 	</div>
 
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
 	{% if events %}
-		<div class="row">
-			<div class="col-md-12">
-				<table class="table table-striped panel panel-default">
-					<thead><tr>
-						<th>NAME:</th>
-						<th>CATEGORY:</th>
-						<th>TYPE:</th>
-						<th>LOCATION:</th>
-						<th>WARD:</th>
-						<th>DATE:</th>
-						<th>REGISTERED:</th>
-						<th>PARTICIPATED:</th>
-					</tr></thead>
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped">
 					<tbody>
 				 		{% for event in events %}
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'event' event.pk %}">
-										{{ event.name }}
+										{{ event }}
 									</a>
-								</td>
-								<td>
-									<a href="{% url 'event_category' event.event_type.event_category.pk %}">
-										{{ event.event_type.event_category.name }}
-									</a>
-								</td>
-								<td>
-									<a href="{% url 'event_type' event.event_type.pk %}">
-										{{ event.event_type.name }}
-									</a>
-								</td>
-								<td>
-									{{ event.location }}
-								</td>
-								<td>
-									{% if event.ward %}
-										<a href="{% url 'event_ward' event.ward.pk %}">
-											{{ event.ward.ward_name }}
-										</a>
-									{% else %}
-										&nbsp;
+									{% if event.location %}
+										at {{ event.location }}
 									{% endif %}
 								</td>
 								<td>
-									{{ event.date }}
+									Registered: {{ event.registered_count }}
 								</td>
 								<td>
-									{{ event.registered_count }}
+									Apologies: {{ event.apologies_count }}
 								</td>
 								<td>
-									{{ event.participated_count }}
+									Participated: {{ event.participated_count }}
 								</td>
 							</tr>
 						{% endfor %}

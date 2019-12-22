@@ -184,7 +184,7 @@ class Event(DataAccessMixin,models.Model):
 	areas = models.ManyToManyField(Area)
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
-		return self.name + ' on '  + self.date.strftime('%d/%m/%Y') + \
+		return self.name + ' on '  + self.date.strftime('%b %d %Y') + \
 				' (' + self.event_type.name + ')'
 	# set the name to be used in the admin console
 	class Meta:
@@ -561,7 +561,7 @@ class Event_Registration(DataAccessMixin,models.Model):
 	# define the function that will return a string showing the relationship as the object reference
 	def __str__(self):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \
-			+ ' at ' + self.event.name + ' on ' + self.event.date.strftime('%d/%m/%Y') + \
+			+ ' at ' + self.event.name + ' on ' + self.event.date.strftime('%b %d %Y') + \
 			' (' + self.description() + ')'
 	# define a function for returning active status as a string
 	def registered_status(self):

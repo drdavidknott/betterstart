@@ -54,25 +54,32 @@
 		<div class="form-row">
 			<div class="col-xs-12">
 				<table class="table table-striped">
+					<thead>
+						<th></th>
+						<td align='center'>Registered</td>
+						<td align='center'>Apologies</td>
+						<td align='center'>Participated</td>
+					</thead>
 					<tbody>
 				 		{% for event in events %}
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'event' event.pk %}">
-										{{ event }}
+										{{ event.name }}
 									</a>
+									on {{ event.date|date:"M d Y" }}
 									{% if event.location %}
 										at {{ event.location }}
 									{% endif %}
 								</td>
-								<td>
-									Registered: {{ event.registered_count }}
+								<td align='center'>
+									{{ event.registered_count }}
 								</td>
-								<td>
-									Apologies: {{ event.apologies_count }}
+								<td align='center'>
+									{{ event.apologies_count }}
 								</td>
-								<td>
-									Participated: {{ event.participated_count }}
+								<td align='center'>
+									{{ event.participated_count }}
 								</td>
 							</tr>
 						{% endfor %}

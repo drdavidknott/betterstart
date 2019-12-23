@@ -10,20 +10,33 @@
 
 <div class="container">
 
-	{% include "people/event_header.html" %}
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-calendar"></span>
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 				<a href="{% url 'event' event.pk %}">{{ event.name }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
 
 	<div class="row">
- 		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">Edit Event</h4>
-	 			</div>
-		 		<div class="panel-body">
-					{% crispy editeventform %}
-				</div>
-			</div>
+ 		<div class="col-xs-12">
+			{% crispy editeventform %}
 		</div>
 	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
 
 </div>
 

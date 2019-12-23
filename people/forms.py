@@ -74,8 +74,7 @@ class UploadDataForm(forms.Form):
 									widget=forms.Select(attrs={'class' : 'form-control'}),
 									choices=file_type_choices)
 	file = forms.FileField(
-									label="Data File",
-									widget=forms.ClearableFileInput(attrs={'class' : 'form-control'}))
+									label="Data File")
 
 class DownloadDataForm(forms.Form):
 	# Define the choices for file type
@@ -552,8 +551,9 @@ class AddRelationshipForm(forms.Form):
 									Row(
 										Column(
 												Submit('submit', 'Create and Add Relationship'),
-												css_class='col-md-12 mb-0')
-												),
+												css_class='col-md-12 mb-0'
+												)
+										),
 									Hidden('action','addrelationshiptonewperson'),
 									)
 

@@ -189,6 +189,20 @@ class Event(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'events'
+	# define a function to return the areas as a comma separated string
+	def get_areas(self):
+		# set the string to blank
+		areas = ''
+		# go through the areas
+		for area in self.areas.all():
+			# if the string already has a value, add a comma
+			if areas:
+				# add a comma
+				areas += ', '
+			# and add the name
+			areas += area.area_name
+		# return the result
+		return areas
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):

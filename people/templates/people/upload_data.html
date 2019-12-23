@@ -1,5 +1,7 @@
 {% extends "people/base.html" %}
 
+{% load crispy_forms_tags %}
+
 <!-- Home page -->
  
  {% block title %}Better Start{% endblock %}
@@ -8,44 +10,67 @@
 
 <div class="container">
 
- 	<div class="row">
+	<div class="row">
  		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">Upload Data</h4>
-	 			</div>
-		 		<div class="panel-body">
-					<form action ="{% url 'uploaddata' %}" method="post" enctype="multipart/form-data">
-						{% csrf_token %}
-						{% for field in uploaddataform %}
-							{% if field.is_hidden %}
-								{{ field }}
-							{% else %}
-								<div class = "row form-group">
-									<div class = "col-md-2">{{ field.label_tag }}</b></div>
-									<div class = "col-md-7">{{ field }}</div>
-									<div class = "col-md-3 text-danger">{{ field.errors }}</div>
-								</div>
-							{% endif %}
-						{% endfor %}
-						<div class = "row">
-	 						<div class = "col-xs-2">
-	 							<input type="submit" value="Submit">
-	 						</div>
-	 					</div>
-					</form>
-				</div>
+ 			<h3>
+	 			<span class="glyphicon glyphicon-cloud-upload"></span>
+	 			Upload Data
+ 			<h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<form action ="{% url 'uploaddata' %}" method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+	 	<div class="form-row">
+	 		<div class="col-xs-12">
+				{% for field in uploaddataform %}
+					{% if field.is_hidden %}
+						{{ field }}
+					{% else %}
+						<div class = "row form-group">
+							<div class = "col-md-2">{{ field.label_tag }}</b></div>
+							<div class = "col-md-7">{{ field }}</div>
+							<div class = "col-md-3 text-danger">{{ field.errors }}</div>
+						</div>
+					{% endif %}
+				{% endfor %}
 			</div>
 		</div>
+		<div class = "form-row">
+			<div class = "col-xs-2">
+				<input type="submit" class="btn btn-primary" value="Submit">
+			</div>
+		</div>
+	</form>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 	{% if results %}
 		<div class="row">
-			<div class="col-md-12">
-				<table class="table table-striped panel panel-default">
-					<thead><tr>
-						<th>DATA LOAD RESULTS:</th>
-					</tr></thead>
+	 		<div class="col-xs-12">
+		 		<div>
+		 			<h4>
+			 			<span class="glyphicon glyphicon-cloud-upload"></span>
+			 			<span class="glyphicon glyphicon-list"></span>
+			 			Upload Results
+		 			<h4>
+		 		</div>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped">
 					<tbody>
 						{% for result in results %}
 							<tr>

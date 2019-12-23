@@ -10,77 +10,116 @@
 
 <div class="container">
 
-	{% include "people/person_header.html" %}
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-user"></span>
+ 				<a href="{% url 'person' person.pk %}">{{ person }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
 
 	{% if person.house_name_or_number %}
-	 	<div class="row">
+
+		<div class="row">
 	 		<div class="col-md-12">
-		 		<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">CURRENT ADDRESS:</h4>
-		 			</div>
-			 		<div class="panel-body">
-			 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
-			 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
-			 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
-			 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
-						<form action ="{% url 'address' person.pk %}" method="post">
-							{% csrf_token %}
-							<input type="hidden" name="action" value="remove">
-							<div>
-	 							<input type="submit" class="btn btn-primary" value="Remove">
-	 						</div>
-						</form>
-					</div>
-				</div>
+		 		<div>
+		 			<h4>
+			 			<span class="glyphicon glyphicon-map-marker"></span>
+			 			Current Address:
+		 			<h4>
+		 		</div>
 			</div>
 		</div>
+
+	 	<div class="form-row">
+	 		<div class="col-xs-12">
+	 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
+	 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
+	 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
+	 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
+	 		</div>
+	 	</div>
+
+	 	<div class="form-row">
+	 		<div class="col-xs-2">
+				<form action ="{% url 'address' person.pk %}" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="remove">
+					<div>&nbsp</div>
+					<div>
+						<input type="submit" class="btn btn-primary" value="Remove">
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
 	{% endif %}
 
 	<div class="row">
  		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">FIND ADDRESS:</h4>
-	 			</div>
-	 			<div class="panel-body">
-					{% crispy addresssearchform %}
-				</div>
-			</div>
+	 		<div>
+	 			<h4>
+		 			<span class="glyphicon glyphicon-map-marker"></span>
+		 			<span class="glyphicon glyphicon-search"></span>
+		 			Find Address: {% if search_number %}({{ search_number }} found){% endif %}
+	 			<h4>
+	 		</div>
 		</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+			{% crispy addresssearchform %}
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 	{% if search_results %}
 
-		<div class="row">
-			<div class="col-md-12">
-		 		<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">RESULTS: ({{ search_number }} found)</h4>
-		 			</div>
-		 			<div class="panel-body">
-		 				{% for result in search_results %}
+		<div class = "form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
+					<tbody>
+						{% for result in search_results %}
 							<form action ="{% url 'address' person.pk %}" method="post">
 								{% csrf_token %}
 								<input type="hidden" name="action" value="update">
 								<input type="hidden" name="street_id" value="{{ result.pk }}">
 								<input type="hidden" name="house_name_or_number" value="{{ house_name_or_number }}">
-								<div class = "row form-group">
-									<div class="col-xs-4">
+								<tr>
+									<td>
 										{{ house_name_or_number }}
 										{{ result.name }}
 										{{ result.post_code }}
-									</div>
-									<div class="col-xs-1" align="left">
-			 							<input type="submit" value="Submit">
-			 						</div>
-			 					</div>
+									</td>
+									<td align="left">
+										<input type="submit" class="btn btn-primary btn-sm" value="Select">
+									</td>
+								</tr>
 							</form>
 						{% endfor %}
-		 			</div>
-		 		</div>
-		 	</div>
-		 </div>
+					</tbody>
+				</table>
+			</div>
+		</div>
 
 	{% endif %}
 

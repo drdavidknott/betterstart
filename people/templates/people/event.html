@@ -65,7 +65,7 @@
 	 				<strong>Ward: </strong>{{ event.ward.ward_name }}
 	 			</div>
 			{% endif %}
-			{% if event.areas %}
+			{% if event.get_areas %}
 		 		<div class="row">
 			 		<strong>Areas: </strong>{{ event.get_areas }}
 			 	</div>

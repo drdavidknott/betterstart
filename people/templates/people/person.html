@@ -216,7 +216,8 @@
 		 		{% if registrations %}
 		 			{% for registration in registrations %}
 		 				<div>
-		 					<a href="{% url 'event' registration.event.pk %}">{{ registration.event }}</a>:
+		 					<a href="{% url 'event' registration.event.pk %}">{{ registration.event.name }}</a>
+		 					on {{ registration.event.date }}:
 							{{ registration.description }} as 
 							{{ registration.role_type.role_type_name }}.
 						</div>

@@ -1822,7 +1822,7 @@ def person(request, person_id=0):
 	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
-				'registrations' : Event_Registration.objects.filter(person=person),
+				'registrations' : Event_Registration.objects.filter(person=person).order_by('-event__date'),
 				'questions' : questions,
 				'answer_flag' : answer_flag,
 				'role_history' : person.role_history_set.all()

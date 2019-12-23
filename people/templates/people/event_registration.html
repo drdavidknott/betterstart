@@ -10,89 +10,127 @@
 
 <div class="container">
 
-	{% include "people/event_header.html" %}
- 	
- 	<div class="row">
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-calendar"></span>
+ 				<a href="{% url 'event' event.pk %}">{{ event.name }} on {{ event.date }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
+
+	<div class="row">
  		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">FIND PERSON:</h4>
-	 			</div>
-		 		<div class="panel-body">
-					{% crispy personsearchform %}
-				</div>
-			</div>
+	 		<div>
+	 			<h4>
+		 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
+		 			Search for People:{% if search_results %} ({{ search_results|length }} found){% endif %}
+	 			<h4>
+	 		</div>
 		</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+		 	<div>{% crispy personsearchform %}</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 	{% if search_results %}
 
 		<div class="row">
-			<div class="col-md-12">
-		 		<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">ADD A REGISTRATION:</h4>
-		 			</div>
-		 			<div class="panel-body">
-		 				<form action ="{% url 'event_registration' event.pk %}" method="post">
-							{% csrf_token %}
-							<input type="hidden" name="action" value="addregistration">
-							<input type="hidden" name="search_keys" value="{{ search_keys }}">
-							<table class="table table-striped">
-								<thead>
-									<tr>
-										<th>NAME:</th>
-										<th>REGISTERED:</th>
-										<th>APOLOGIES:</th>
-										<th>PARTICIPATED:</th>
-										<th>ROLE:</th>
-									</tr>
-								</thead>
-								<tbody>
-							 		{% for result in search_results %}
-						 				<tr>
-						 					<td>
-						 						<a href="{% url 'person' result.pk %}">
-													{{ result }}
-												</a>
-											</td>
-											<td>
-												{% for field in addregistrationform %}
-													{% if field.name == result.registered_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-											<td>
-												{% for field in addregistrationform %}
-													{% if field.name == result.apologies_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-											<td>
-												{% for field in addregistrationform %}
-													{% if field.name == result.participated_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-											<td>
-												{% for field in addregistrationform %}
-													{% if field.name == result.role_type_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-										</tr>
-									{% endfor %}
-								</tbody>
-							</table>
-		 					<input type="submit" value="Submit">
-	 					</form>
-					</div>
+			<div class="col-xs-12">
+	 			<h4>
+	 				<span class="glyphicon glyphicon-calendar"></span>
+	 				<span class="glyphicon glyphicon-resize-horizontal"></span>
+	 				<span class="glyphicon glyphicon-user"></span>
+	 				<span class="glyphicon glyphicon-plus"></span>
+	 				Add Registrations:
+	 			</h4>
+		 	</div>
+		 </div>
+
+		<form action ="{% url 'event_registration' event.pk %}" method="post">
+			{% csrf_token %}
+			<input type="hidden" name="action" value="addregistration">
+			<input type="hidden" name="search_keys" value="{{ search_keys }}">
+			<div class="form-row">
+				<div class="col-xs-12">	 				
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th></th>
+								<th>Registered:</th>
+								<th>Apologies:</th>
+								<th>Participated:</th>
+								<th>Role:</th>
+							</tr>
+						</thead>
+						<tbody>
+					 		{% for result in search_results %}
+				 				<tr>
+				 					<td>
+				 						<a href="{% url 'person' result.pk %}">
+											{{ result }}
+										</a>
+									</td>
+									<td>
+										{% for field in addregistrationform %}
+											{% if field.name == result.registered_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+									<td>
+										{% for field in addregistrationform %}
+											{% if field.name == result.apologies_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+									<td>
+										{% for field in addregistrationform %}
+											{% if field.name == result.participated_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+									<td>
+										{% for field in addregistrationform %}
+											{% if field.name == result.role_type_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
 				</div>
 			</div>
+			<div class="form-row">
+				<div class="col-xs-2">	
+			 		<input type="submit" class="btn btn-primary" value="Submit">
+			 	</div>
+			</div>
+		</form>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
 		</div>
 
 	{% endif %}
@@ -100,75 +138,86 @@
 	{% if editregistrationform %}
 
 		<div class="row">
-			<div class="col-md-12">
-		 		<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">EDIT EXISTING REGISTRATIONS:</h4>
-		 			</div>
-		 			<div class="panel-body">
-		 				<form action ="{% url 'event_registration' event.pk %}" method="post">
-							{% csrf_token %}
-							<input type="hidden" name="action" value="editregistration">
-							<input type="hidden" name="registration_keys" value="{{ registration_keys }}">
-							<table class="table table-striped">
-								<thead>
-									<tr>
-										<th>NAME:</th>
-										<th>REGISTERED:</th>
-										<th>APOLOGIES:</th>
-										<th>PARTICIPATED:</th>
-										<th>ROLE:</th>
-									</tr>
-								</thead>
-								<tbody>
-							 		{% for registration in registrations %}
-						 				<tr>
-						 					<td>
-						 						<a href="{% url 'person' registration.person.pk %}">
-													{{ registration.person }}
-												</a>
-											</td>
-											<td>
-												{% for field in editregistrationform %}
-													{% if field.name == registration.registered_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-											<td>
-												{% for field in editregistrationform %}
-													{% if field.name == registration.apologies_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-											<td>
-												{% for field in editregistrationform %}
-													{% if field.name == registration.participated_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-											<td>
-												{% for field in editregistrationform %}
-													{% if field.name == registration.role_type_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-										</tr>
-									{% endfor %}
-								</tbody>
-							</table>
-							<div class = "row">
-		 						<div class = "col-xs-2">
-		 							<input type="submit" value="Submit">
-		 						</div>
-		 					</div>
-	 					</form>
-					</div>
+			<div class="col-xs-12">
+	 			<h4>
+	 				<span class="glyphicon glyphicon-calendar"></span>
+	 				<span class="glyphicon glyphicon-resize-horizontal"></span>
+	 				<span class="glyphicon glyphicon-user"></span>
+	 				<span class="glyphicon glyphicon-pencil"></span>
+	 				Edit Registrations:
+	 			</h4>
+		 	</div>
+		 </div>
+
+		<form action ="{% url 'event_registration' event.pk %}" method="post">
+			{% csrf_token %}
+			<input type="hidden" name="action" value="editregistration">
+			<input type="hidden" name="registration_keys" value="{{ registration_keys }}">
+			<div class="form-row">
+				<div class="col-xs-12">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th></th>
+								<th>Registered:</th>
+								<th>Apologies:</th>
+								<th>Participated:</th>
+								<th>Role:</th>
+							</tr>
+						</thead>
+						<tbody>
+					 		{% for registration in registrations %}
+				 				<tr>
+				 					<td>
+				 						<a href="{% url 'person' registration.person.pk %}">
+											{{ registration.person }}
+										</a>
+									</td>
+									<td>
+										{% for field in editregistrationform %}
+											{% if field.name == registration.registered_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+									<td>
+										{% for field in editregistrationform %}
+											{% if field.name == registration.apologies_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+									<td>
+										{% for field in editregistrationform %}
+											{% if field.name == registration.participated_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+									<td>
+										{% for field in editregistrationform %}
+											{% if field.name == registration.role_type_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
 				</div>
 			</div>
+			<div class = "form-row">
+				<div class = "col-xs-2">
+					<input type="submit" class="btn btn-primary" value="Submit">
+				</div>
+			</div>
+		</form>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
 		</div>
 
 	{% endif %}

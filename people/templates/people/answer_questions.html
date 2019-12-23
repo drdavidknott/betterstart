@@ -8,40 +8,57 @@
 
 <div class="container">
 
-	{% include "people/person_header.html" %}
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-user"></span>
+ 				<a href="{% url 'person' person.pk %}">{{ person }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
 
- 	<div class="row">
- 		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">Answer Questions</h4>
-	 			</div>
-		 		<div class="panel-body">
-					<form action ="{% url 'answer_questions' person.pk %}" method="post">
-						{% csrf_token %}
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<form action ="{% url 'answer_questions' person.pk %}" method="post">
+		{% csrf_token %}
+	 	<div class="form-row">
+	 		<div class="col-xs-12">
+	 			<table class="table table-striped" id="people">
+					<tbody>
 						{% for field in answerquestionsform %}
 							{% if 'question' in field.name %}
-								<div class = "row form-group">
-									<div class='col-md-5'>{{ field.label }}</div>
-									<div class='col-md-2'>{{ field }}</div>
+								<tr>
+									<td>{{ field.label }}</td>
+									<td>{{ field }}</td>
 							{% elif 'notes' in field.name %}
-									<div class='col-md-1'>{{ field.label }}:</div>
-									<div class='col-md-4'>{{ field }}</div>
-								</div>
+									<td>{{ field.label }}:</td>
+									<td>{{ field }}</td>
+								</tr>
 							{% else %}
-									<div class='col-md-5'>{{ field }}</div>
-								</div>
+									<td>{{ field }}</td>
+									<td></td>
+								</tr>
 							{% endif %}
 						{% endfor %}
-						<div class = "row">
-	 						<div class = "col-xs-2">
-	 							<input type="submit" value="Submit">
-	 						</div>
-	 					</div>
-					</form>
-				</div>
+					</tbody>
+				</table>
 			</div>
 		</div>
+		<div class = "form-row">
+			<div class = "col-xs-2">
+				<input type="submit" class="btn btn-primary" value="Submit">
+			</div>
+		</div>
+	</form>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 </div>

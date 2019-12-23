@@ -2801,8 +2801,6 @@ def uploaddata(request):
 @login_required
 @user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
 def downloaddata(request):
-	# set results to empty
-	results = []
 	# define the records that need more complex file handlers
 	file_handlers = {
 						'People' : People_File_Handler,
@@ -2853,7 +2851,6 @@ def downloaddata(request):
 	# set the context
 	context = build_context({
 				'downloaddataform' : downloaddataform,
-				'results' : results
 				})
 	# return the HttpResponse
 	return HttpResponse(download_data_template.render(context=context, request=request))

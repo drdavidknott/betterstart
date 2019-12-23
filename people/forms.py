@@ -93,6 +93,21 @@ class DownloadDataForm(forms.Form):
 									label="File Type",
 									widget=forms.Select(attrs={'class' : 'form-control'}),
 									choices=file_type_choices)
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(DownloadDataForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('file_type',css_class='form-group col-md-12 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Download'),css_class='col-md-12 mb-0')
+										)
+									)
 
 class AddPersonForm(forms.Form):
 	# Define the fields that we need in the form.

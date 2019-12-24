@@ -8,44 +8,72 @@
 
 <div class="container">
 
-	{% include "people/person_header.html" %}
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-user"></span>
+ 				<a href="{% url 'person' person.pk %}">{{ person }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
 
  	<div class="row">
- 		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">CURRENT ADDRESS:</h4>
-	 			</div>
-		 		<div class="panel-body">
-		 			<div>Address: {{ person.house_name_or_number }} {{ person.street.name }}</div>
-		 			<div>Post Code: {{ person.street.post_code.post_code }}</div>
-		 			<div>Ward: {{ person.street.post_code.ward.ward_name }}</div>
-		 			<div>Area: {{ person.street.post_code.ward.area.area_name }}</div>
-				</div>
-			</div>
+ 		<div class="col-xs-12">
+	 		<h4>
+	 			<span class="glyphicon glyphicon-map-marker"></span>
+	 			Current Address:
+	 		</h4>
+	 	</div>
+	 </div>
+
+	 <div class="form-row">
+	 	<div class="col-xs-12">
+ 			<div><strong>Address: </strong>{{ person.house_name_or_number }} {{ person.street.name }}</div>
+ 			<div><strong>Post Code: </strong>{{ person.street.post_code.post_code }}</div>
+ 			<div><strong>Ward: </strong>{{ person.street.post_code.ward.ward_name }}</div>
+ 			<div><strong>Area: </strong>{{ person.street.post_code.ward.area.area_name }}</div>
 		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 	{% if people_at_same_address %}
 
-	 	<div class="row">
-	 		<div class="col-md-12">
-		 		<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">PEOPLE LIVING AT CURRENT ADDRESS:</h4>
-		 			</div>
-			 		<div class="panel-body">
-						{% for this_person in people_at_same_address %}
-							<div>
-								<a href="{% url 'person' this_person.pk %}">
-									{{ this_person }}
-								</a>
-								({{ this_person.relationship_counterpart }})
-							</div>
-						{% endfor %}
+		<div class="row">
+	 		<div class="col-xs-12">
+		 		<h4>
+		 			<span class="glyphicon glyphicon-map-marker"></span>
+		 			<span class="glyphicon glyphicon-user"></span>
+		 			Related People at Current Address:
+		 		</h4>
+		 	</div>
+		 </div>
+
+	 	<div class="form-row">
+	 		<div class="col-xs-12">
+				{% for this_person in people_at_same_address %}
+					<div>
+						<a href="{% url 'person' this_person.pk %}">{{ this_person }}</a>,
+						{{ this_person.relationship_counterpart }} of {{ person.full_name }}
 					</div>
-				</div>
+				{% endfor %}
 			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
 		</div>
 
 	{% endif %}
@@ -53,63 +81,73 @@
 	{% if people_not_at_same_address %}
 
 		<div class="row">
-			<div class="col-md-12">
-		 		<div class="panel panel-default">
-		 			<div class="panel-heading">
-		 				<h4 class="panel-title">PEOPLE NOT LIVING AT CURRENT ADDRESS:</h4>
-		 			</div>
-		 			<div class="panel-body">
-		 				<form action ="{% url 'address_to_relationships' person.pk %}" method="post">
-							{% csrf_token %}
-							<input type="hidden" name="action" value="apply_address">
-							<input type="hidden" name="application_keys" value="{{ application_keys }}">
-							<table class="table table-striped">
-								<thead>
-									<tr>
-										<th>NAME:</th>
-										<th>CURRENT ADDRESS:</th>
-										<th>MOVE TO {{ person.house_name_or_number }} {{ person.street }}:</th>
-									</tr>
-								</thead>
-								<tbody>
-							 		{% for this_person in people_not_at_same_address %}
-						 				<tr>
-						 					<td>
-						 						<a href="{% url 'person' this_person.pk %}">
-													{{ this_person }}
-												</a>
-												({{ this_person.relationship_counterpart}})
-											</td>
-						 					<td>
-						 						{% if this_person.house_name_or_number %}
-													{{ this_person.house_name_or_number }}
-													{{ this_person.street }}
-												{% endif %}
-											</td>
-											<td>
-												{% for field in addresstorelationshipsform %}
-													{% if field.name == this_person.apply_field_name %}
-														{{ field }}
-													{% endif %}
-												{% endfor %}
-											</td>
-										</tr>
-									{% endfor %}
-								</tbody>
-							</table>
-		 					<input type="submit" value="Submit">
-	 					</form>
-					</div>
+	 		<div class="col-xs-12">
+		 		<h4>
+		 			<span class="glyphicon glyphicon-map-marker"></span>
+		 			<span class="glyphicon glyphicon-arrow-left"></span>
+		 			<span class="glyphicon glyphicon-user"></span>
+		 			Move Related People to Current Address:
+		 		</h4>
+		 	</div>
+		 </div>
+
+		<form action ="{% url 'address_to_relationships' person.pk %}" method="post">
+			{% csrf_token %}
+			<input type="hidden" name="action" value="apply_address">
+			<input type="hidden" name="application_keys" value="{{ application_keys }}">
+			<div class="form-row">
+				<div class="col-xs-12">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th></th>
+								<th></th>
+								<th>Move to {{ person.house_name_or_number }} {{ person.street }}:</th>
+							</tr>
+						</thead>
+						<tbody>
+					 		{% for this_person in people_not_at_same_address %}
+				 				<tr>
+				 					<td>
+				 						<a href="{% url 'person' this_person.pk %}">{{ this_person }}</a>, 
+										{{ this_person.relationship_counterpart}} of {{ person.full_name }}
+									</td>
+				 					<td>
+				 						{% if this_person.house_name_or_number %}
+				 							Currently at 
+											{{ this_person.house_name_or_number }}
+											{{ this_person.street }}
+										{% endif %}
+									</td>
+									<td>
+										{% for field in addresstorelationshipsform %}
+											{% if field.name == this_person.apply_field_name %}
+												{{ field }}
+											{% endif %}
+										{% endfor %}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
 				</div>
 			</div>
+			<div class="form-row">
+				<div class="col-xs-2">
+		 			<input type="submit" class="btn btn-primary" value="Submit">
+				</div>
+			</div>
+		</form>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
 		</div>
 
 	{% endif %}
 
 </div>
-
-
-
 
 {% endblock %}
 

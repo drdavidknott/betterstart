@@ -44,6 +44,24 @@ class LoginForm(forms.Form):
 										label="Password",
 										max_length=30,
 										widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(LoginForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('email_address',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column('password',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Login'),css_class='col-xs-12 mb-0')
+										)
+									)
 
 class UploadDataForm(forms.Form):
 	# Define the choices for file type

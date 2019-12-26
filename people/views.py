@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Site
+					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity
 import os
 import csv
 import copy

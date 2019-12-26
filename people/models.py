@@ -630,3 +630,29 @@ class Answer_Note(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'answer notes'
 
+# Activity Type model: represents types of activity
+class Activity_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	# define the function that will return the name as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'activity role_types'
+
+# Activity model: represents an activity
+class Activity(DataAccessMixin,models.Model):
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	activity_type = models.ForeignKey(Activity_Type, on_delete=models.CASCADE)
+	date = models.DateField()
+	hours = models.IntegerField()
+	# define the function that will return the name as the object reference
+	def __str__(self):
+		return self.person.full_name() + \
+				', ' + self.activity_type.name + \
+				' for ' + str(self.hours) + \
+				' on ' + self.date.strftime('%b %d %Y')
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'activities'
+

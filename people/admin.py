@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Option, Answer, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Site
+					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity
 
 admin.site.register(Person)
 admin.site.register(Relationship_Type)
@@ -32,3 +32,5 @@ admin.site.register(Age_Status)
 admin.site.register(Street)
 admin.site.register(Answer_Note)
 admin.site.register(Site)
+admin.site.register(Activity_Type)
+admin.site.register(Activity)

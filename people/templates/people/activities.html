@@ -1,0 +1,82 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-user"></span>
+ 				<a href="{% url 'person' person.pk %}">{{ person }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+	 		<div>
+	 			<h4>
+		 			<span class="glyphicon glyphicon-time"></span>
+		 			<span class="glyphicon glyphicon-plus"></span>
+		 			Add or Edit Activity:
+	 			<h4>
+	 		</div>
+		</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+		 	<div>{% crispy activityform %}</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	{% if activities %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped">
+					<tbody>
+				 		{% for activity in activities %}
+			 				<tr>
+			 					<td>
+			 						{{ activity }}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+
+{% endblock %}
+

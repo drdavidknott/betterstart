@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward, Area
+							Event_Category, Ward, Area, Activity_Type
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -1022,7 +1022,7 @@ class ActivityForm(forms.Form):
 	# Define the fields that we need in the form.
 	activity_type = forms.ChoiceField(
 										label="Activity",
-										widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
+										widget=forms.Select(attrs={'class' : 'form-control',}))
 	date = forms.DateField(
 							label="Date",
 							widget=forms.DateInput(

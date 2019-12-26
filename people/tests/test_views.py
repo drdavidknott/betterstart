@@ -49,6 +49,9 @@ def set_up_people_base_data():
 	test_age_status_2.role_types.add(test_role)
 	test_age_status_2.role_types.add(second_test_role)
 	test_age_status_2.role_types.add(unknown_test_role)
+	# set up test activity types
+	test_activity_type_1 = Activity_Type.objects.create(name='Test activity type 1')
+	test_activity_type_2 = Activity_Type.objects.create(name='Test activity type 2')
 
 def set_up_test_people(
 						name_root,
@@ -8969,4 +8972,279 @@ class UploadDownloadAnswerNotesViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test notes')
 
+class ActivitiesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('activities_test',number=1)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/activities/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/activities/1')
+
+	def test_invalid_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('activities',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_new_activity(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,1)
+
+	def test_activity_not_created_zero_hours(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '0'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have no activities
+		self.assertEqual(Activity.objects.all().count(),0)
+		# check that we got a message
+		self.assertContains(response,'zero')
+
+	def test_update_to_activity(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,1)
+		# make an update
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,2)
+
+	def test_different_activity_type(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		test_activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# submit the page
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,1)
+		# make an update
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_2.pk),
+											'date' : '01/01/2018',
+											'hours' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),2)
+		# get the activity
+		activity = Activity.objects.get(person=person,activity_type=test_activity_type_2)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_2)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,2)
+
+	def test_activity_deletion(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,1)
+		# make an update
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '0'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),0)
+
+	def test_different_date_for_activity(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		# submit the page
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,1)
+		# make an update
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/02/2018',
+											'hours' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),2)
+		# get the activity
+		activity = Activity.objects.get(person=person,hours=2)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/02/2018')
+		self.assertEqual(activity.hours,2)
+		
 

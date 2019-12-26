@@ -648,10 +648,9 @@ class Activity(DataAccessMixin,models.Model):
 	hours = models.IntegerField()
 	# define the function that will return the name as the object reference
 	def __str__(self):
-		return self.person.full_name() + \
-				', ' + self.activity_type.name + \
+		return self.activity_type.name + \
 				' for ' + str(self.hours) + \
-				' on ' + self.date.strftime('%b %d %Y')
+				' hours on ' + self.date.strftime('%b %d %Y')
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'activities'

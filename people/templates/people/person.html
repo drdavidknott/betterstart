@@ -199,7 +199,7 @@
 		</div>
 	 </div>
 
-	 <div class="row">
+	<div class="row">
 		<div class="col-xs-12">
 				<hr>
 	 	</div>
@@ -227,7 +227,34 @@
 				{% endif %}
 			</div>
 		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
 	 </div>
+
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'activities' person.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if activities %}
+		 			{% for activity in activities %}
+		 				<div>
+		 					{{ activity }}
+						</div>
+					{% endfor %}
+				{% else %}
+					<div><strong>No activities</strong></div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
 
 	 <div class="row">
 		<div class="col-xs-12">

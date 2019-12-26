@@ -13,7 +13,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
-					DownloadDataForm, PersonRelationshipSearchForm
+					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm
 from .utilities import get_page_list, make_banner, extract_id
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
@@ -1321,6 +1321,60 @@ def build_trained_role(person,role_type_id,trained_status):
 	# go back to where we came from
 	return
 
+def build_activity(request, person, activity_type_id, date, hours):
+	# attempt to get the activity type
+	activity_type = Activity_Type.try_to_get(pk=activity_type_id)
+	# deal with exceptions if we didn't get a valid activity type
+	if not activity_type:
+		# set the error
+		messages.error(
+						request,
+						'Could not create activity: activity type' + str(activity_type_id) + ' does not exist.'
+						)
+		# and crash out
+		return False
+	# see whether we already have an activity
+	activity = Activity.try_to_get(person=person,activity_type=activity_type,date=date)
+	# if we got an activity, check whether this is an update or delete
+	if activity:
+		# check the action
+		if hours == 0:
+			# get the description
+			activity_desc = str(activity)
+			# delete the record
+			activity.delete()
+			# set the message
+			messages.success(request,activity_desc + ' - deleted successfully.')
+		# otherwise do the update
+		else:
+			# set the hours
+			activity.hours = hours
+			# and save the record
+			activity.save()
+			# and the message
+			messages.success(request,str(activity) + ' - updated successfully.')
+	# otherwise we have a new activity
+	else:
+		# check the action
+		if hours == 0:
+			# set a message to say that we haven't created anything
+			messages.success(request,'Activity not created - hours set to zero.')
+		# otherwise create the record
+		else:
+			# create the object
+			activity = Activity(
+								person = person,
+								activity_type = activity_type,
+								date = date,
+								hours = hours
+								)
+			# and save it to the database
+			activity.save()
+			# and set a message
+			messages.success(request,str(activity) + ' - created successfully.')
+	# and we're done
+	return activity
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -1822,7 +1876,8 @@ def person(request, person_id=0):
 	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
-				'registrations' : Event_Registration.objects.filter(person=person).order_by('-event__date'),
+				'registrations' : person.event_registration_set.order_by('-event__date'),
+				'activities' : person.activity_set.order_by('-date'),
 				'questions' : questions,
 				'answer_flag' : answer_flag,
 				'role_history' : person.role_history_set.all()
@@ -2856,6 +2911,41 @@ def downloaddata(request):
 	# return the HttpResponse
 	return HttpResponse(download_data_template.render(context=context, request=request))
 
-
+@login_required
+def activities(request,person_id=0):
+	# allow the user to add or edit an activity for a person
+	# load the template
+	activities_template = loader.get_template('people/activities.html')
+	# get the person
+	person = Person.try_to_get(pk=person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a form from the POST
+		activityform = ActivityForm(request.POST)
+		# validate the form
+		if activityform.is_valid():
+			# build the activity
+			activity = build_activity(
+										request,
+										person = person,
+										activity_type_id = activityform.cleaned_data['activity_type'],
+										date = activityform.cleaned_data['date'],
+										hours = activityform.cleaned_data['hours'],
+										)
+	else:
+		# create a blank form
+		activityform = ActivityForm()
+	# set the context from the person based on person id
+	context = build_context({
+				'activityform' : activityform,
+				'activities' : person.activity_set.order_by('-date'),
+				'person' : person,
+				'default_date' : datetime.date.today().strftime('%d/%m/%Y')
+				})
+	# return the response
+	return HttpResponse(activities_template.render(context=context, request=request))
 
 

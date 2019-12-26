@@ -201,7 +201,33 @@
 
 	<div class="row">
 		<div class="col-xs-12">
-				<hr>
+			<hr>
+	 	</div>
+	 </div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+			<span class="glyphicon glyphicon-dashboard"></span>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+				<div><strong>Registered:</strong> {{ person.registered_count }}</div>
+				<div><strong>Apologies:</strong> {{ person.apologies_count }}</div>
+				<div><strong>Participated:</strong> {{ person.participated_count }}</div>
+				<div><strong>Time Participated:</strong> {{ person.participated_time }}</div>
+				{% for activity_type in person.activity_types_with_hours %}
+					{% if activity_type.hours %}
+						<div><strong>{{ activity_type.name }}:</strong> {{ activity_type.hours }} hours</div>
+					{% endif %}
+				{% endfor %}
+				<div><strong>Time for Activities:</strong> {{ person.activity_hours }}</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+			<hr>
 	 	</div>
 	 </div>
 
@@ -212,6 +238,15 @@
  			</a>
  		</div>
  		<div class="col-xs-11">
+ 			<div class="row">
+				<div><strong>Registered:</strong> {{ person.registered_count }}</div>
+				<div><strong>Apologies:</strong> {{ person.apologies_count }}</div>
+				<div><strong>Participated:</strong> {{ person.participated_count }}</div>
+				<div><strong>Time Participated:</strong> {{ person.participated_time }}</div>
+			</div>
+			<div class="row">
+				<hr>
+			 </div>
  			<div class="row">
 		 		{% if registrations %}
 		 			{% for registration in registrations %}
@@ -242,6 +277,17 @@
  			</a>
  		</div>
  		<div class="col-xs-11">
+ 			<div class="row">
+				{% for activity_type in person.activity_types_with_hours %}
+					{% if activity_type.hours %}
+						<div><strong>{{ activity_type.name }}:</strong> {{ activity_type.hours }} hours</div>
+					{% endif %}
+				{% endfor %}
+				<div><strong>Time for Activities:</strong> {{ person.activity_hours }}</div>
+			</div>
+			<div class="row">
+				<hr>
+			</div>
  			<div class="row">
 		 		{% if activities %}
 		 			{% for activity in activities %}

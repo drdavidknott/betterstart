@@ -1,6 +1,8 @@
 from django.db import models
 from .django_extensions import DataAccessMixin
 from .utilities import extract_id, add_description
+from datetime import datetime, date, timedelta
+from django.db.models import Sum
 
 # Site model: provides configuration for the site
 class Site(DataAccessMixin,models.Model):
@@ -203,6 +205,19 @@ class Event(DataAccessMixin,models.Model):
 			areas += area.area_name
 		# return the result
 		return areas
+	# define a function to return the duration as a timedelta object
+	def duration(self):
+		# define the empty timedelta
+		duration = timedelta()
+		# check that we have both a start time and end time
+		if self.start_time and self.end_time:
+			# set the duration
+			duration = (
+						datetime.combine(date.min, self.end_time) 
+						- datetime.combine(date.min, self.start_time)
+						)
+		# and return the results
+		return duration
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):
@@ -318,6 +333,86 @@ class Person(DataAccessMixin,models.Model):
 			desc = 'Pregnant (or partner is pregnant), due on ' + self.due_date.strftime('%b %d %Y')
 		# return the value
 		return desc
+	# and a set of stats funcions
+	def registered_count(self):
+		# return the count of events the person has registered for
+		return self.event_registration_set.filter(registered=True).count()
+	# count the apologies
+	def apologies_count(self):
+		# return the count of events the person has apologised for
+		return self.event_registration_set.filter(apologies=True).count()
+	# and the participations
+	def participated_count(self):
+		# return the count of events the person has participated in
+		return self.event_registration_set.filter(participated=True).count()
+	# and the hours participated
+	def participated_time(self):
+		# set the total hours
+		time = timedelta()
+		# get the events
+		for event_registration in self.event_registration_set.filter(participated=True):
+			# add the hours
+			time += event_registration.event.duration()
+		# get the seconds
+		seconds = time.seconds
+		# get the hours
+		hours = seconds // 3600
+		# now get the minutes
+		minutes = (seconds - (hours * 3600)) // 60
+		# build the string
+		time_desc = ''
+		# set the hours
+		if hours:
+			# add the hours
+			time_desc += str(hours) + ' hours'
+			# and extend the string if there are minutes
+			if minutes:
+				# add the and
+				time_desc += ' and '
+		# set the minutes
+		if minutes:
+			# add the minutes
+			time_desc += str(minutes) + ' minutes'
+		# and set a negative description
+		if not hours and not minutes:
+			# set the description
+			time_desc = 'no participation'
+		# return the result
+		return time_desc
+	# and the hours per activity type
+	def activity_types_with_hours(self):
+		# get the activity types
+		activity_types = Activity_Type.objects.all().order_by('name')
+		# run through the types
+		for activity_type in activity_types:
+			# set the hours
+			activity_type.hours = 0
+			# get the hours per activity type
+			for activity in Activity.objects.filter(
+													person=self,
+													activity_type=activity_type):
+				# add the hours
+				activity_type.hours += activity.hours
+		# return the results
+		return activity_types
+	# and the total activity hours
+	def activity_hours(self):
+		# set the hours to zero
+		hours = 0
+		# go through the activities
+		for activity in self.activity_set.all():
+			# add the hours
+			hours += activity.hours
+		# set the string
+		if hours:
+			# build a description
+			hours_desc = str(hours) + ' hours'
+		# otherwise set the string to the negative value
+		else:
+			# set the string
+			hours_desc = ' no activities'
+		# return the string
+		return hours_desc
 	# and a class method to get a person by names and age status
 	@classmethod
 	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):

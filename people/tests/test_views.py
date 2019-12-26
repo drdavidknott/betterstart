@@ -2,7 +2,7 @@ from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
 							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type, \
 							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note, \
-							Trained_Role
+							Trained_Role, Activity_Type, Activity
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -5661,7 +5661,8 @@ class UploadDataViewTest(TestCase):
 							'Questions',
 							'Options',
 							'Answers',
-							'Answer Notes'
+							'Answer Notes',
+							'Activity Types'
 							]:
 			# open the file
 			invalid_file = open('people/tests/data/invalid.csv')
@@ -5762,6 +5763,62 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional event categories have been created
 		self.assertEqual(Event_Category.objects.all().count(),2)
+
+	def test_upload_activity_types(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activity_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activity Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_activity_type_1 = Activity_Type.objects.get(name='test activity type 1')
+		test_activity_type_2 = Activity_Type.objects.get(name='test activity type 2')
+
+	def test_upload_activity_types_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activity_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activity Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test event categories that should have been loaded
+		test_activity_type_1 = Activity_Type.objects.get(name='test activity type 1')
+		test_activity_type_2 = Activity_Type.objects.get(name='test activity type 2')
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/activity_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activity Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event categories have been created
+		self.assertEqual(Activity_Type.objects.all().count(),2)
 
 	def test_upload_areas(self):
 		# log the user in as a superuser

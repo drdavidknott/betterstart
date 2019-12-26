@@ -2738,6 +2738,7 @@ def uploaddata(request):
 							'Age Statuses' : {'file_class' : Age_Status, 'field_name' : 'status'},
 							'Ethnicities' : {'file_class' : Ethnicity, 'field_name' : 'description'},
 							'ABSS Types' : {'file_class' : ABSS_Type, 'field_name' : 'name'},
+							'Activity Types' : {'file_class' : Activity_Type, 'field_name' : 'name'},
 							}
 	# define the records that need more complex file handlers
 	file_handlers = {

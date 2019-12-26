@@ -747,7 +747,7 @@ class EventForm(forms.Form):
 									widget=forms.Select())
 	date = forms.DateField(
 									label="Date",
-									widget=forms.DateInput(																format='%d/%m/%Y',
+									widget=forms.DateInput(		format='%d/%m/%Y',
 																attrs={
 																	'class' : 'form-control datepicker',
 																	'autocomplete' : 'off'
@@ -1016,6 +1016,48 @@ class EventSearchForm(forms.Form):
 									Hidden('page','1'),
 									Row(
 										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									)
+
+class ActivityForm(forms.Form):
+	# Define the fields that we need in the form.
+	activity_type = forms.ChoiceField(
+										label="Activity",
+										widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
+	date = forms.DateField(
+							label="Date",
+							widget=forms.DateInput(
+													format='%d/%m/%Y',
+													attrs={
+														'class' : 'form-control datepicker',
+														'autocomplete' : 'off'
+														}
+													),
+							input_formats=['%d/%m/%Y']
+							)
+	hours = forms.IntegerField(
+								label="Hours",
+								min_value=0,
+								max_value=24
+								)
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(ActivityForm, self).__init__(*args, **kwargs)
+		# set the choices
+		self.fields['activity_type'].choices = build_choices(choice_class=Activity_Type,
+															choice_field='name')
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('activity_type',css_class='form-group col-xs-6 mbt-0'),
+										Column('date',css_class='form-group col-xs-4 mbt-0'),	
+										Column('hours',css_class='form-group col-xs-2 mbt-0'),
+										),
+									Row(
+										Column(Submit('submit', 'Submit'),css_class='col-xs-12 mb-0')
+										),
 									)
 
 class AnswerQuestionsForm(forms.Form):

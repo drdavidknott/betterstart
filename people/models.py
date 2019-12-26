@@ -638,7 +638,7 @@ class Activity_Type(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'activity role_types'
+		verbose_name_plural = 'activity types'
 
 # Activity model: represents an activity
 class Activity(DataAccessMixin,models.Model):

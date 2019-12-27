@@ -1614,6 +1614,7 @@ def people(request):
 	page_list = []
 	# and zero search results
 	number_of_people = 0
+	this_page = 0
 	# and blank search terms
 	names = ''
 	role_type = 0

@@ -1663,27 +1663,6 @@ def people(request):
 										attribute='last_name',
 										length=3
 										)
-			"""
-			# now go through the list and build page objects
-			for page in pages:
-				# set the values
-				start_index = (25 * (page - 1))
-				# and the end index
-				end_index = ((25 * page) - 1)
-				# check whether the end index is greater than the length
-				if end_index > (len(people) -1):
-					# set the end index
-					end_index = (len(people) - 1)
-				# create a page object in a new list
-				page_list.append(
-									Page(
-										number = page,
-										start = people[start_index].last_name,
-										end = people[end_index].last_name,
-										length = 3
-										)
-								)
-			"""
 			# set the previous page
 			previous_page = this_page - 1
 			# sort and truncate the list of people
@@ -1699,6 +1678,7 @@ def people(request):
 				'personsearchform' : personsearchform,
 				'people' : people,
 				'page_list' : page_list,
+				'this_page' : this_page,
 				'names' : names,
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,

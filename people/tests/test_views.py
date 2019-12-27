@@ -267,7 +267,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+		self.assertEqual(len(response.context['page_list']),20)
 
 	def test_search_with_no_criteria_second_page(self):
 		# log the user in
@@ -293,7 +293,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+		self.assertEqual(len(response.context['page_list']),20)
 
 	def test_search_include_all(self):
 		# set the ABSS dates for the different names
@@ -328,7 +328,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+		self.assertEqual(len(response.context['page_list']),20)
 
 	def test_search_include_all_second_page(self):
 		# set the ABSS dates for the different names
@@ -363,7 +363,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+		self.assertEqual(len(response.context['page_list']),20)
 
 	def test_search_dont_include_all(self):
 		# set the ABSS dates for the different names
@@ -398,7 +398,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+		self.assertEqual(len(response.context['page_list']),16)
 
 	def test_search_dont_include_all_second_page(self):
 		# set the ABSS dates for the different names
@@ -433,7 +433,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+		self.assertEqual(len(response.context['page_list']),16)
 
 	def test_search_include_left(self):
 		# set the ABSS dates for the different names
@@ -468,7 +468,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4])
+		self.assertEqual(len(response.context['page_list']),4)
 
 	def test_search_include_left_second_page(self):
 		# set the ABSS dates for the different names
@@ -503,7 +503,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4])
+		self.assertEqual(len(response.context['page_list']),4)
 
 	def test_search_for_parent_role_type(self):
 		# log the user in
@@ -531,7 +531,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_first_name_with_matching_case(self):
 		# log the user in
@@ -557,7 +557,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_first_name_with_non_matching_case(self):
 		# log the user in
@@ -583,7 +583,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_last_name_with_matching_case(self):
 		# set different last names
@@ -617,7 +617,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_last_name_with_matching_case(self):
 		# set different last names
@@ -651,7 +651,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_nicknames(self):
 		# set different last names
@@ -685,7 +685,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_prior_names(self):
 		# set different last names
@@ -719,7 +719,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_multiple_terms_first_name_last_name(self):
 		# set different last names
@@ -754,7 +754,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_multiple_terms_nicknames_prior_names(self):
 		# set different last names
@@ -789,7 +789,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_multiple_terms_exclude_partial_match(self):
 		# set different names
@@ -832,7 +832,7 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],50)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_for_short_set(self):
 		# log the user in
@@ -886,7 +886,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_by_multiple_names_and_role_type(self):
 		# set different names
@@ -922,7 +922,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_name_search_with_no_results(self):
 		# log the user in
@@ -1032,7 +1032,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),7)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_second_page_with_less_than_full_set_of_results_by_first_name(self):
 		# log the user in
@@ -1058,7 +1058,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),7)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ABSS_search_on_type(self):
 		# create some extra people
@@ -1086,7 +1086,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ABSS_search_on_type_and_name(self):
 		# create some extra people
@@ -1115,7 +1115,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ABSS_search_on_type_role(self):
 		# create some extra people
@@ -1144,7 +1144,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ABSS_search_on_type_and_name_and_role(self):
 		# create some extra people
@@ -1174,7 +1174,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ABSS_search_with_no_results(self):
 		# create a new ABSS type
@@ -1230,7 +1230,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_age_status_search_on_type_and_name(self):
 		# create some extra people
@@ -1259,7 +1259,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_age_status_search_on_type_role(self):
 		# create some extra people
@@ -1288,7 +1288,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_age_status_search_on_type_and_name_and_role(self):
 		# create some extra people
@@ -1318,7 +1318,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_age_status_search_on_type_and_name_and_role_and_ABSS(self):
 		# create some extra people
@@ -1349,7 +1349,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_age_status_search_with_no_results(self):
 		# create a new age status
@@ -1415,7 +1415,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_trained_champion_and_age_status(self):
 		# create some extra people
@@ -1454,7 +1454,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_trained_champion_search_on_champion_and_name(self):
 		# create some extra people
@@ -1493,7 +1493,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_trained_search_on_role(self):
 		# create some extra people
@@ -1532,7 +1532,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_trained_search_on_and_name_and_role(self):
 		# create some extra people
@@ -1572,7 +1572,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_trained_search_on_type_and_name_and_role_and_ABSS(self):
 		# create some extra people
@@ -1613,7 +1613,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_trained_search_with_no_results(self):
 		# log the user in
@@ -1683,7 +1683,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_champions_only(self):
 		# create some extra people
@@ -1726,7 +1726,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_champion_and_age_status(self):
 		# create some extra people
@@ -1765,7 +1765,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_champion_search_on_champion_and_name(self):
 		# create some extra people
@@ -1804,7 +1804,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_search_on_role(self):
 		# create some extra people
@@ -1843,7 +1843,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_search_on_and_name_and_role(self):
 		# create some extra people
@@ -1883,7 +1883,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_search_on_type_and_name_and_role_and_ABSS(self):
 		# create some extra people
@@ -1924,7 +1924,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_active_search_with_no_results(self):
 		# log the user in
@@ -1998,7 +1998,7 @@ class PeopleViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_on_ward_no_results(self):
 		# create some extra people
@@ -2108,7 +2108,7 @@ class PeopleQueryTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ABSS_type_search(self):
 		# log the user in
@@ -2126,7 +2126,7 @@ class PeopleQueryTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_age_status_search(self):
 		# log the user in
@@ -2144,7 +2144,7 @@ class PeopleQueryTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_ward_search(self):
 		# create some extra people
@@ -2174,7 +2174,7 @@ class PeopleQueryTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 class EventsViewTest(TestCase):
 	@classmethod

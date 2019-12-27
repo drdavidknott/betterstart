@@ -14,8 +14,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm
-from .utilities import get_page_list, make_banner, extract_id
-from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
+from .utilities import get_page_list, make_banner, extract_id, build_page_list
+from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard, Page
 from django.contrib import messages
 from django.urls import reverse, resolve
 import datetime
@@ -1610,6 +1610,7 @@ def people(request):
 	# set a blank list
 	people = []
 	# and a blank page_list
+	pages = []
 	page_list = []
 	# and zero search results
 	number_of_people = 0
@@ -1654,13 +1655,39 @@ def people(request):
 			# figure out how many people we got
 			number_of_people = len(people)
 			# get the page number
-			page = int(request.POST['page'])
+			this_page = int(request.POST['page'])
 			# figure out how many pages we have
-			page_list = get_page_list(people, results_per_page)
+			page_list = build_page_list(
+										objects=people,
+										page_length=results_per_page,
+										attribute='last_name',
+										length=3
+										)
+			"""
+			# now go through the list and build page objects
+			for page in pages:
+				# set the values
+				start_index = (25 * (page - 1))
+				# and the end index
+				end_index = ((25 * page) - 1)
+				# check whether the end index is greater than the length
+				if end_index > (len(people) -1):
+					# set the end index
+					end_index = (len(people) - 1)
+				# create a page object in a new list
+				page_list.append(
+									Page(
+										number = page,
+										start = people[start_index].last_name,
+										end = people[end_index].last_name,
+										length = 3
+										)
+								)
+			"""
 			# set the previous page
-			previous_page = page - 1
+			previous_page = this_page - 1
 			# sort and truncate the list of people
-			people = people.order_by('last_name','first_name')[previous_page*results_per_page:page*results_per_page]
+			people = people.order_by('last_name','first_name')[previous_page*results_per_page:this_page*results_per_page]
 	# otherwise set a bank form
 	else:
 		# create the blank form

@@ -28,6 +28,53 @@ def get_page_list(objects, page_length):
 	# return the result
 	return page_list
 
+def build_page_list(objects, page_length, attribute, length=False, separator='to'):
+	# take a list of objects and a page length, and build a list of pages
+	object_number = len(objects)
+	# see if we have more than one page
+	if object_number <= page_length:
+		# we only have one page, so make the list false
+		page_list = False
+	# otherwise we need to iterate through the list
+	else:
+		# create an empty pagelist
+		page_list = []
+		# create an empty list of pages
+		pages = [1]
+		# and a page number
+		page_number = 1
+		# iterate through the list
+		while (object_number > page_length):
+			# increase the page number
+			page_number += 1
+			# append to the list
+			pages.append(page_number)
+			# decrease the object number
+			object_number -= page_length
+		# now go through the list and build page objects
+		for page in pages:
+			# set the values
+			start_index = (25 * (page - 1))
+			# and the end index
+			end_index = ((25 * page) - 1)
+			# check whether the end index is greater than the length
+			if end_index > (len(objects) -1):
+				# set the end index
+				end_index = (len(objects) - 1)
+			# create a page object in a new list
+			page_list.append(
+								Page(
+									number = page,
+									start = getattr(objects[start_index],attribute),
+									end = getattr(objects[end_index],attribute),
+									length = length,
+									separator = separator
+									)
+							)
+	# return the result
+	return page_list
+
+
 def make_banner(request, banner_text):
 	# load the banner template
 	banner_template = loader.get_template('people/banner.html')
@@ -211,3 +258,24 @@ class Dashboard:
 		self.margin = margin
 		# and an empty list of columns
 		self.columns = []
+
+class Page:
+	# the class contains details of a page
+	def __init__(self,number,start,end,separator= 'to',length=False):
+		# set the attributes
+		self.number = number
+		self.separator = separator
+		# if we have a length, limit the length of the start and end string
+		if length:
+			# set the start and end
+			self.start = str(start)[:length]
+			self.end = str(end)[:length]
+		# otherwise, just take the start and end
+		else:
+			# set the start and end
+			self.start = str(start)
+			self.end = str(end)
+	# return the page description as a string
+	def __str__(self):
+		# return the page description
+		return self.start + ' ' + self.separator + ' ' + self.end

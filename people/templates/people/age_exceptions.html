@@ -9,24 +9,26 @@
 <div class="container">
 
 	<div class="row">
-		<div class="col-md-12">
-			<h2>
-				EXCEPTIONS: {{ age_status.status }} older than {{ age_status.maximum_age }}
-			</h2>
+ 		<div class="col-xs-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-user"></span>
+	 			<span class="glyphicon glyphicon-warning-sign"></span>
+	 			Age Exceptions: {{ age_status.status }} older than {{ age_status.maximum_age }}
+ 			</h3>
 		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 	{% if people %}
 
-		<div class="row">
-			<div class="col-md-12">
-				<table class="table table-striped panel panel-default">
-					<thead><tr>
-						<th>NAME:</th>
-						<th>DATE OF BIRTH:</th>
-						<th>GENDER:</th>
-						<th>ROLE:</th>
-					</tr></thead>
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
 					<tbody>
 				 		{% for person in people %}
 			 				<tr>
@@ -36,13 +38,10 @@
 									</a>
 								</td>
 								<td>
-									{{ person.date_of_birth }}
-								</td>
-								<td>
-									{{ person.gender }}
-								</td>
-								<td>
 									{{ person.default_role.role_type_name }}
+								</td>
+								<td>
+									{{ person.age_description }}
 								</td>
 							</tr>
 						{% endfor %}
@@ -53,9 +52,9 @@
 
 	{% else %}
 
-		<div class="row">
-			<div class="col-md-12">
-				No exceptions.
+		<div class="form-row">
+			<div class="col-xs-12">
+				No age exceptions
 			</div>
 		</div>
 

@@ -9,25 +9,26 @@
 <div class="container">
 
 	<div class="row">
-		<div class="col-md-12">
-			<h2>
-				Parents With Overdue Children
-			</h2>
+ 		<div class="col-xs-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-user"></span>
+	 			<span class="glyphicon glyphicon-warning-sign"></span>
+	 			Parents With Overdue Children
+ 			</h3>
 		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
 	</div>
 
 	{% if parents %}
 
-		<div class="row">
-			<div class="col-md-12">
-				<table class="table table-striped panel panel-default">
-					<thead><tr>
-						<th>NAME:</th>
-						<th>DATE OF BIRTH:</th>
-						<th>GENDER:</th>
-						<th>DUE DATE:</th>
-						<th>RELATIONSHIPS:</th>
-					</tr></thead>
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
 					<tbody>
 				 		{% for person in parents %}
 			 				<tr>
@@ -37,21 +38,18 @@
 									</a>
 								</td>
 								<td>
-									{{ person.date_of_birth }}
+									{{ person.default_role.role_type_name }}
 								</td>
 								<td>
-									{{ person.gender }}
-								</td>
-								<td>
-									{{ person.due_date }}
+									Child due on {{ person.due_date|date:'M d Y' }}
 								</td>
 								<td>
 									{% for rel_from in person.rel_from.all %}
 										<div>
-											{{ rel_from }}
-											{% if rel_from.relationship_to.date_of_birth != None %}
-												(Born {{ rel_from.relationship_to.date_of_birth }})
-											{% endif %}
+											{{ rel_from.relationship_type|capfirst }} of
+												<a href="{% url 'person' rel_from.relationship_to.pk %}"> 
+													{{ rel_from.relationship_to }}
+												</a>
 										</div>
 									{% endfor %}
 								</td>
@@ -64,29 +62,58 @@
 
 	{% else %}
 
-		<div class="row">
-			<div class="col-md-12">
-				No parents with overdue children.
+		<div class="form-row">
+			<div class="col-xs-12">
+				No parents with overdue children
 			</div>
 		</div>
 
 	{% endif %}
 
-</div>
-
-{% if page_list %}
-	<div class="container">
+	{% if page_list %}
+		
 		<div class="row">
-			<div class="col-md-12">
-				{% for target_page in page_list %}
-					<a href="{% url 'parents_with_overdue_children' target_page %}">
-						<button type="button" class="btn btn-default">{{ target_page }}</button>
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+		<div class="row">
+	 		<div class="col-xs-12">
+	 			<h4>
+		 			<span class="glyphicon glyphicon-user"></span>
+		 			<span class="glyphicon glyphicon-warning-sign"></span>
+		 			More results
+	 			</h4>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				{% for page in page_list %}
+					<a href="{% url 'parents_with_overdue_children' page.number %}">
+						<button 
+							type="button" 
+							class="btn btn-primary people-page-button"
+							{% if page.number == this_page %}
+								disabled
+							{% endif %}
+							>{{ page }}
+						</button>
 					</a>
 				{% endfor %}
 			</div>
 		</div>
-	</div>
-{% endif %}
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
 
 {% endblock %}
 

@@ -476,7 +476,8 @@ def get_age_status_exceptions():
 	for age_status in Age_Status.objects.all():
 		# get the exceptions
 		age_exceptions = age_status.person_set.filter(
-								date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age))
+								date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
+								ABSS_end_date__isnull=True)
 		# see whether we got any exceptions
 		if age_exceptions.count() > 0:
 			# add the count to the object
@@ -1652,7 +1653,7 @@ def people(request):
 									trained_role=trained_role,
 									street__post_code__ward_id=ward,
 									include_people=include_people
-									)
+									).order_by('last_name','first_name')
 			# figure out how many people we got
 			number_of_people = len(people)
 			# get the page number
@@ -1667,7 +1668,7 @@ def people(request):
 			# set the previous page
 			previous_page = this_page - 1
 			# sort and truncate the list of people
-			people = people.order_by('last_name','first_name')[previous_page*results_per_page:this_page*results_per_page]
+			people = people[previous_page*results_per_page:this_page*results_per_page]
 	# otherwise set a bank form
 	else:
 		# create the blank form
@@ -1750,12 +1751,6 @@ def exceptions(request, page=1):
 		parents = get_parents_with_overdue_children()
 		# set the url
 		exceptions_template = loader.get_template('people/parents_with_overdue_children.html')
-	# otherwise check for children over four
-	elif 'children_over_four' in path:
-		# set the variables, starting with the relevant list of parents
-		children = get_children_over_four().order_by('date_of_birth')
-		# set the url
-		exceptions_template = loader.get_template('people/children_over_four.html')
 	# and a blank page_list
 	page_list = []
 	# set the results per page
@@ -1763,7 +1758,12 @@ def exceptions(request, page=1):
 	# get the page number
 	page = int(page)
 	# figure out how many pages we have
-	page_list = get_page_list(parents, results_per_page)
+	page_list = build_page_list(
+								objects=parents,
+								page_length=results_per_page,
+								attribute='last_name',
+								length=3
+								)
 	# set the previous page
 	previous_page = page - 1
 	# sort and truncate the list of people
@@ -1773,6 +1773,7 @@ def exceptions(request, page=1):
 				'parents' : parents,
 				'children' : children,
 				'page_list' : page_list,
+				'this_page' : page
 				})
 	# return the HttpResponse
 	return HttpResponse(exceptions_template.render(context=context, request=request))
@@ -1791,7 +1792,7 @@ def age_exceptions(request, age_status_id=0):
 	# get the exceptions
 	age_exceptions = age_status.person_set.filter(
 							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-							ABSS_end_date__isnull=False)
+							ABSS_end_date__isnull=True).order_by('last_name','first_name')
 	# set the context from the person based on person id
 	context = build_context({
 				'age_status' : age_status,

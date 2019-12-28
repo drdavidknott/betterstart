@@ -347,14 +347,12 @@ class Person(DataAccessMixin,models.Model):
 		return self.event_registration_set.filter(participated=True).count()
 	# and the hours participated
 	def participated_time(self):
-		# set the total hours
-		time = timedelta()
+		# set the total seconds
+		seconds = 0
 		# get the events
 		for event_registration in self.event_registration_set.filter(participated=True):
 			# add the hours
-			time += event_registration.event.duration()
-		# get the seconds
-		seconds = time.seconds
+			seconds += event_registration.event.duration().seconds
 		# get the hours
 		hours = seconds // 3600
 		# now get the minutes

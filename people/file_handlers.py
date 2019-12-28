@@ -6,7 +6,7 @@ import csv, datetime
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note
+					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type
 
 class File_Field():
 	# this class defines a field witin a file
@@ -1593,3 +1593,120 @@ class Answer_Notes_File_Handler(File_Handler):
 							+ ' (' + str(record['age_status']) + ')' \
 							+ ' - ' + record['question'] + ' - ' + record['notes']
 
+class Activities_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Activities_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Activity
+		# set the file fields
+		self.first_name = File_Field(
+										name='first_name',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
+		self.age_status = File_Field(
+									name='age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True,
+									set_download_from_object=False
+									)
+		self.activity_type = File_Field(
+										name='activity_type',
+										mandatory=True,
+										corresponding_model=Activity_Type,
+										corresponding_must_exist=True,
+										corresponding_field='name',
+										use_corresponding_for_download=True
+										)
+		self.date = File_Datetime_Field(
+										name='date',
+										datetime_format='%d/%m/%Y',
+										mandatory=True
+										)
+		self.hours = File_Field(name='hours',mandatory=True)
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'age_status',
+						'activity_type',
+						'date',
+						'hours',
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether we the person exists, if we have a valid age status
+		if self.age_status.exists:
+			# check whether the person exists
+			person,message = Person.try_to_get_just_one(
+														first_name = self.first_name.value,
+														last_name = self.last_name.value,
+														age_status = self.age_status.value
+														)
+			# if there was an error, add it
+			if not person:
+				# append the error message
+				self.add_record_results(record,[' not created: ' + message])
+				# and set the flag
+				valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# get the records, starting with the person
+		person = Person.objects.get(
+									first_name = self.first_name.value,
+									last_name = self.last_name.value,
+									age_status = self.age_status.value
+									)
+		# attempt to get the existing activity
+		activity = Activity.try_to_get(
+										person=person,
+										activity_type=self.activity_type.value,
+										date=self.date.value
+										)
+		# deal with the failure
+		if not activity:
+			# create a record
+			activity = Activity(
+								person=person,
+								activity_type=self.activity_type.value,
+								date=self.date.value,
+								hours=self.hours.value
+								)
+		# set the values
+		activity.person = person
+		activity_type = self.activity_type.value
+		activity.date = self.date.value
+		activity.hours = self.hours.value
+		# save the record
+		activity.save()
+		# set a message
+		self.add_record_results(record,[' created.'])
+		# return the created record
+		return activity
+
+	def set_download_fields(self,activity):
+		# call the built in field setter
+		super(Activities_File_Handler, self).set_download_fields(activity)
+		# set the special fields
+		self.age_status.value = activity.person.age_status.status
+
+	def label(self,record):
+		# return the label
+		return str(record['first_name']) + ' ' + str(record['last_name']) \
+					+ ' (' + str(record['age_status']) + ')' \
+					+ ', ' + str(record['activity_type']) + ' on ' + str(record['date'])

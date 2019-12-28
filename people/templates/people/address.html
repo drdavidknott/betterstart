@@ -123,27 +123,57 @@
 
 	{% endif %}
 
-</div>
-
 {% if page_list %}
-	<div class="container">
+		
 		<div class="row">
-			<div class="col-md-12">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+		<div class="row">
+	 		<div class="col-xs-12">
+	 			<h4>
+		 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
+		 			More results
+	 			</h4>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div class="col-xs-12">
 				<form action ="{% url 'address' person.pk %}" method="post">
 					{% csrf_token %}
 					<input type="hidden" name="action" value="search">
 					<input type="hidden" name="house_name_or_number" value="{{ house_name_or_number }}">
 					<input type="hidden" name="street" value="{{ street }}">
 					<input type="hidden" name="post_code" value="{{ post_code }}">
-					{% for target_page in page_list %}
-						<input type="submit" name="page" value="{{ target_page }}">
+					{% for page in page_list %}
+						<button 
+							type="submit" 
+							name="page" 
+							value="{{ page.number }}" 
+							class="btn btn-sm btn-primary person-page-button"
+							{% if page.number == this_page %}
+								disabled
+							{% endif %}
+							>
+							{{ page }}
+						</button>
 					{% endfor %}
 				</form>
-			</div>
+			<div class="col-xs-12">
 		</div>
-	</div>
-{% endif %}
 
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
 
 {% endblock %}
 

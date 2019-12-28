@@ -1,0 +1,6 @@
+first_name,last_name,age_status,activity_type,date,hours
+test_adult_0,test_adult_0,Adult,Test activity type 1,01/01/2019,8
+test_adult_0,test_adult_0,Adult,Test activity type 1,01/02/2019,6
+test_adult_0,test_adult_0,Adult,Test activity type 2,01/01/2019,4
+test_child_0,test_child_0,Child under four,Test activity type 1,01/01/2019,2
+test_adult_1,test_adult_1,Adult,Test activity type 1,01/01/2019,10

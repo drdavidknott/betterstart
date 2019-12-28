@@ -28,7 +28,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Role_Types_File_Handler, File_Handler, Relationship_Types_File_Handler, \
 							People_File_Handler, Relationships_File_Handler, Events_File_Handler, \
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
-							Answers_File_Handler, Answer_Notes_File_Handler
+							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler
 
 @login_required
 def index(request):
@@ -2128,6 +2128,7 @@ def address(request,person_id=0):
 	search_results = []
 	# and a blank page_list
 	page_list = []
+	page = 0
 	# and zero search results
 	search_number = 0
 	# and blank search terms
@@ -2149,20 +2150,25 @@ def address(request,person_id=0):
 				street = addresssearchform.cleaned_data['street']
 				post_code = addresssearchform.cleaned_data['post_code']
 				# do the search
-				search_results = get_streets_by_name_and_post_code(
-																	name=street,
-																	post_code=post_code
-																	)
+				search_results = Street.search(
+												name__icontains=street,
+												post_code__post_code__icontains=post_code
+												).order_by('name')
 				# figure out how many results we got
 				search_number = len(search_results)
 				# get the page number
 				page = int(request.POST['page'])
 				# figure out how many pages we have
-				page_list = get_page_list(search_results, results_per_page)
+				page_list = build_page_list(
+								objects=search_results,
+								page_length=results_per_page,
+								attribute='name',
+								length=3
+								)
 				# set the previous page
 				previous_page = page - 1
 				# sort and truncate the list of results
-				search_results = search_results.order_by('name')[previous_page*results_per_page:page*results_per_page]
+				search_results = search_results[previous_page*results_per_page:page*results_per_page]
 		# see whether we got an update
 		elif request.POST['action'] == 'update':
 			# create an update form
@@ -2198,6 +2204,7 @@ def address(request,person_id=0):
 				'search_number' : search_number,
 				'person' : person,
 				'page_list' : page_list,
+				'this_page' : page,
 				'house_name_or_number' : house_name_or_number,
 				'street' : street,
 				'post_code' : post_code
@@ -2827,6 +2834,7 @@ def uploaddata(request):
 						'Options' : Options_File_Handler,
 						'Answers' : Answers_File_Handler,
 						'Answer Notes' : Answer_Notes_File_Handler,
+						'Activities' : Activities_File_Handler,
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':
@@ -2882,6 +2890,7 @@ def downloaddata(request):
 						'Options' : Options_File_Handler,
 						'Answers' : Answers_File_Handler,
 						'Answer Notes' : Answer_Notes_File_Handler,
+						'Activities' : Activities_File_Handler,
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':

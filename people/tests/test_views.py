@@ -4867,7 +4867,7 @@ class AddressViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['search_results']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5])
+		self.assertEqual(len(response.context['page_list']),5)
 
 	def test_search_on_post_code(self):
 		# log the user in
@@ -4890,7 +4890,7 @@ class AddressViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['search_results']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_on_street_and_post_code(self):
 		# log the user in
@@ -4913,7 +4913,7 @@ class AddressViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['search_results']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3])
+		self.assertEqual(len(response.context['page_list']),3)
 
 	def test_search_on_street_and_post_code_partial_page(self):
 		# log the user in
@@ -4936,7 +4936,7 @@ class AddressViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['search_results']),10)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3])
+		self.assertEqual(len(response.context['page_list']),3)
 
 	def test_search_on_street_and_post_code_no_results(self):
 		# log the user in
@@ -7912,28 +7912,17 @@ class UploadRelationshipsDataViewTest(TestCase):
 		# check the relationship type
 		self.assertEqual(child_relationship.relationship_type,child_relationship_type)
 
-class UploadRegistrationsDataViewTest(TestCase):
+class UploadActivitiesDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# create a test user
 		user = set_up_test_superuser()
 		# set up base data for people
 		set_up_people_base_data()
-		# and relationship data
-		set_up_relationship_base_data()
 		# and create an adult
 		set_up_test_people('test_adult_',number=2,age_status='Adult')
 		# and a child
 		set_up_test_people('test_child_',number=1,age_status='Child under four')
-		# and event base data
-		set_up_event_base_data()
-		# and an event
-		set_up_test_events(
-							'test_event_',
-							number=1,
-							event_type=Event_Type.objects.get(name='test_event_type'),
-							date='2019-01-01'
-							)
 
 	def test_upload_registration_data_missing_mandatory_fields(self):
 		# log the user in as a superuser
@@ -9247,4 +9236,301 @@ class ActivitiesViewTest(TestCase):
 		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/02/2018')
 		self.assertEqual(activity.hours,2)
 		
+class UploadActivitiesDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
 
+	def test_upload_activity_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' missing first name (Adult), Test activity type 1 on 01/01/2019 not created: mandatory field first_name not provided')
+		self.assertContains(response,'missing last name  (Adult), Test activity type 1 on 01/01/2019 not created: mandatory field last_name not provided')
+		self.assertContains(response,'missing age status last name (), Test activity type 1 on 01/01/2019 not created: mandatory field age_status not provided')
+		self.assertContains(response,'missing activity type last name (Adult),  on 01/01/2019 not created: mandatory field activity_type not provided')
+		self.assertContains(response,'missing date last name (Adult), Test activity type 1 on  not created: mandatory field date not provided')
+		self.assertContains(response,'missing hours last name (Adult), Test activity type 1 on 01/01/2019 not created: mandatory field hours not provided')
+		# check that no records have been created
+		self.assertFalse(Activity.objects.all().exists())	
+
+	def test_upload_activities_data_invalid_fields(self):
+		# create multiple people records
+		set_up_test_people('test_duplicate_',number=1,age_status='Adult')
+		set_up_test_people('test_duplicate_',number=1,age_status='Adult')
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities_invalid_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'invalid age status last name (invalid), Test activity type 1 on 01/01/2019 not created: Age_Status invalid does not exist')
+		self.assertContains(response,'invalid date last name (Adult), Test activity type 1 on 01/xx/2019 not created: date 01/xx/2019 is invalid date or time')
+		self.assertContains(response,'invalid activity type last name (Adult), invalid on 01/01/2019 not created: Activity_Type invalid does not exist')
+		self.assertContains(response,'invalid person last name (Adult), Test activity type 1 on 01/01/2019 not created: matching Person record does not exist')
+		self.assertContains(response,'test_duplicate_0 test_duplicate_0 (Adult), Test activity type 1 on 01/01/2019 not created: multiple matching Person records exist')
+		# check that no records have been created
+		self.assertFalse(Event_Registration.objects.all().exists())
+
+	def test_upload_activities(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and activity records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,3)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,5)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,1)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+
+	def test_upload_activities_updated(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and activity records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,3)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,5)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,1)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/activities_updated.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and activity records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,8)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,6)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,10)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+
+class DownloadActivitiesDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+
+	def test_download_activities(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and activity records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,3)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,5)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,1)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 1,01/01/2019,4')
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 1,01/02/2019,3')
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 2,01/01/2019,2')
+		self.assertContains(response,'test_child_0,test_child_0,Child under four,Test activity type 1,01/01/2019,1')
+		self.assertContains(response,'test_adult_1,test_adult_1,Adult,Test activity type 1,01/01/2019,5')

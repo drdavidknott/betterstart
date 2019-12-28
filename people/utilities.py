@@ -273,9 +273,9 @@ class Page:
 		# otherwise, just take the start and end
 		else:
 			# set the start and end
-			self.start = str(start)
-			self.end = str(end)
+			self.start = start
+			self.end = end
 	# return the page description as a string
 	def __str__(self):
 		# return the page description
-		return self.start + ' ' + self.separator + ' ' + self.end
+		return str(self.start) + ' ' + str(self.separator) + ' ' + str(self.end)

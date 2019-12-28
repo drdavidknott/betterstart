@@ -2397,6 +2397,7 @@ def events(request):
 	events = []
 	# and a blank page_list
 	page_list = []
+	page = 0
 	# and blank search terms
 	name = ''
 	event_type = 0
@@ -2433,17 +2434,21 @@ def events(request):
 										event_type_id=int(event_type),
 										event_type__event_category_id=int(event_category),
 										ward=int(ward)
-										)
+										).order_by('-date')
 				# set the number of results
 				number_of_events = len(events)
 				# get the page number
 				page = int(request.POST['page'])
 				# figure out how many pages we have
-				page_list = get_page_list(events, results_per_page)
+				page_list = build_page_list(
+										objects=events,
+										page_length=results_per_page,
+										attribute='date',
+										)
 				# set the previous page
 				previous_page = page - 1
 				# sort and truncate the list of events
-				events = events.order_by('-date')[previous_page*results_per_page:page*results_per_page]
+				events = events[previous_page*results_per_page:page*results_per_page]
 				# add the counts to the events
 				events = add_counts_to_events(events)
 			# otherwise we have incorrect dates
@@ -2469,7 +2474,8 @@ def events(request):
 				'page_list' : page_list,
 				'search_error' : search_error,
 				'default_date' : datetime.date.today().strftime('%d/%m/%Y'),
-				'number_of_events' : number_of_events
+				'number_of_events' : number_of_events,
+				'this_page' : page
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))

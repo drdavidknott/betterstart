@@ -2281,7 +2281,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21])
+		self.assertEqual(len(response.context['page_list']),21)
 
 	def test_search_with_no_criteria_second_page(self):
 		# log the user in
@@ -2307,7 +2307,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21])
+		self.assertEqual(len(response.context['page_list']),21)
 
 	def test_search_with_date_range(self):
 		# log the user in
@@ -2411,7 +2411,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_with_date_from_and_event_type(self):
 		# log the user in
@@ -2463,7 +2463,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6])
+		self.assertEqual(len(response.context['page_list']),6)
 
 	def test_search_with_date_to_and_event_type(self):
 		# log the user in
@@ -2489,7 +2489,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+		self.assertEqual(len(response.context['page_list']),19)
 
 	def test_search_with_date_range_and_event_type(self):
 		# log the user in
@@ -2545,7 +2545,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2,3,4,5,6])
+		self.assertEqual(len(response.context['page_list']),6)
 
 	def test_search_with_event_category_and_date(self):
 		# log the user in
@@ -2599,7 +2599,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_search_name(self):
 		# log the user in
@@ -2625,7 +2625,7 @@ class EventsViewTest(TestCase):
 		# check how many we got for this page
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
-		self.assertEqual(response.context['page_list'],[1,2])
+		self.assertEqual(len(response.context['page_list']),2)
 
 class EventViewTest(TestCase):
 	@classmethod

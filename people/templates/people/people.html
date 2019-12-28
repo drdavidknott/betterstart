@@ -101,7 +101,7 @@
 		</div>
 
 		<div class="form-row">
-			{% for page in page_list %}
+			<div class="col-xs-12">
 				<form action ="{% url 'listpeople' %}" method="post">
 					{% csrf_token %}
 					<input type="hidden" name="action" value="search">
@@ -112,16 +112,21 @@
 					<input type="hidden" name="trained_role" value="{{ trained_role }}">
 					<input type="hidden" name="ward" value="{{ ward }}">
 					<input type="hidden" name="include_people" value="{{ include_people }}">
-					<div class="col-sm-1">
-						<input type="hidden" name="page" value="{{ page.number }}">
-						{% if page.number == this_page %}
-							<input type="submit" value="{{ page }}" class="btn btn-sm btn-primary" disabled>
-						{% else %}
-							<input type="submit" value="{{ page }}" class="btn btn-sm btn-primary">
-						{% endif %}
-					</div>
+					{% for page in page_list %}
+							<button 
+								type="submit" 
+								name="page" 
+								value="{{ page.number }}" 
+								class="btn btn-sm btn-primary person-page-button"
+								{% if page.number == this_page %}
+									disabled
+								{% endif %}
+								>
+								{{ page }}
+							</button>
+					{% endfor %}
 				</form>
-			{% endfor %}
+			<div class="col-xs-12">
 		</div>
 
 		<div class="row">

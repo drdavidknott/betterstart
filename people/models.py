@@ -330,7 +330,11 @@ class Person(DataAccessMixin,models.Model):
 		# check whether person is pregnant
 		if self.pregnant:
 			# set the description
-			desc = 'Pregnant (or partner is pregnant), due on ' + self.due_date.strftime('%b %d %Y')
+			desc = 'Pregnant (or partner is pregnant)'
+			# and add to the description
+			if self.due_date:
+				# add the due date
+				desc += ', due on ' + self.due_date.strftime('%b %d %Y')
 		# return the value
 		return desc
 	# and a set of stats funcions

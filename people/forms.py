@@ -956,13 +956,13 @@ class EventSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	event_category = forms.ChoiceField(
 									label="Event Category",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
+									widget=forms.Select(attrs={'class' : 'form-control',}))
 	event_type = forms.ChoiceField(
 									label="Event Type",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
+									widget=forms.Select(attrs={'class' : 'form-control',}))
 	ward = forms.ChoiceField(
 									label="Ward",
-									widget=forms.Select(attrs={'class' : 'form-control select-fixed-width',}))
+									widget=forms.Select(attrs={'class' : 'form-control',}))
 	date_from = forms.DateField(
 									label="From",
 									required=False,

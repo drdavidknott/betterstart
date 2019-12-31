@@ -573,10 +573,6 @@ def get_event_categories_with_counts(date_from=0, date_to=0):
 	# return the results
 	return event_categories
 
-def get_event_registrations(event):
-	# return a list of registrations for an event
-	return event.event_registration_set.all()
-
 def get_role_types(events_or_people='all'):
 	# get a list of the role type objects
 	role_types = Role_Type.objects.all().order_by('role_type_name')
@@ -2615,7 +2611,7 @@ def event_registration(request,event_id=0):
 	if not event:
 		return make_banner(request, 'Event does not exist.')
 	# get existing registrations
-	registrations = get_event_registrations(event)
+	registrations = event.event_registration_set.all()
 	# get the role types
 	role_types = get_role_types()
 	# set the search results
@@ -2725,7 +2721,7 @@ def event_registration(request,event_id=0):
 		# create a blank form
 		personsearchform = PersonNameSearchForm()
 	# update the existing registrations: there may be new ones
-	registrations = get_event_registrations(event)
+	registrations = event.event_registration_set.all()
 	# if there are registrations, create the form
 	if registrations:
 		# clear the registration keys

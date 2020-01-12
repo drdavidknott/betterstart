@@ -1431,6 +1431,7 @@ def build_context(context_dict):
 	site_name = 'test site'
 	navbar_background = ''
 	navbar_text = ''
+	show_messages = True
 	# attempt to get the site
 	site = Site.objects.all().first()
 	# if we have a site, set the details
@@ -1439,10 +1440,12 @@ def build_context(context_dict):
 		site_name = site.name
 		navbar_background = site.navbar_background
 		navbar_text = site.navbar_text
+		show_messages = site.messages
 	# now set the dictionary
 	context_dict['site_name'] = site_name
 	context_dict['navbar_background'] = navbar_background
 	context_dict['navbar_text'] = navbar_text
+	context_dict['show_messages'] = show_messages
 	# check whether we have a default date
 	if not context_dict.get('default_date', False):
 		# set the default date to the default

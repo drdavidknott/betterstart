@@ -52,4 +52,5 @@ urlpatterns = [
     url(r'^answer_questions/(?P<person_id>[0-9]+)$', views.answer_questions, name='answer_questions'),
     url(r'^age_exceptions/(?P<age_status_id>[0-9]+)$', views.age_exceptions, name='age_exceptions'),
     url(r'^activities/(?P<person_id>[0-9]+)$', views.activities, name='activities'),
+    url(r'^dashboard$', views.dashboard, name='dashboard'),
 ]

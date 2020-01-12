@@ -7912,7 +7912,7 @@ class UploadRelationshipsDataViewTest(TestCase):
 		# check the relationship type
 		self.assertEqual(child_relationship.relationship_type,child_relationship_type)
 
-class UploadActivitiesDataViewTest(TestCase):
+class UploadRegistrationsDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# create a test user
@@ -7923,6 +7923,15 @@ class UploadActivitiesDataViewTest(TestCase):
 		set_up_test_people('test_adult_',number=2,age_status='Adult')
 		# and a child
 		set_up_test_people('test_child_',number=1,age_status='Child under four')
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
 
 	def test_upload_registration_data_missing_mandatory_fields(self):
 		# log the user in as a superuser

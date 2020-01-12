@@ -279,3 +279,43 @@ class Page:
 	def __str__(self):
 		# return the page description
 		return str(self.start) + ' ' + str(self.separator) + ' ' + str(self.end)
+
+class Chart:
+	# the class contains details of a chart
+	def __init__(
+					self,
+					title,
+					title_icon=False,
+					title_url=False,
+					fig='Not yet defined',
+					labels = None,
+					sizes = None,
+					queryset=False,
+					label_attr=False,
+					size_attr=False,
+					include_zeroes=False,
+					):
+		# set the attributes
+		self.title = title
+		self.title_icon = title_icon
+		self.title_url = title_url
+		self.fig = fig
+		# convert the Nones to empty lists, due to python's treatment of default list parameters
+		if labels is None:
+			self.labels = []
+		# and sizes
+		if sizes is None:
+			self.sizes = []
+		# if we have a queryset, set the labels and sizes
+		if queryset:
+			# set the labels and sizes
+			for record in queryset:
+				# check whether we have a size
+				if getattr(record,size_attr) or include_zeroes:
+					# get the values
+					size = getattr(record,size_attr)
+					label = getattr(record,label_attr) + ' (' + str(size) + ')'
+					# set the values
+					self.labels.append(label)
+					self.sizes.append(size)
+

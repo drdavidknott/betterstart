@@ -15,7 +15,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list
-from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard, Page
+from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard, Page, Chart
 from django.contrib import messages
 from django.urls import reverse, resolve
 import datetime
@@ -29,6 +29,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							People_File_Handler, Relationships_File_Handler, Events_File_Handler, \
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler
+import matplotlib.pyplot as plt, mpld3
 
 @login_required
 def index(request):
@@ -334,7 +335,7 @@ def index(request):
 	dashboard.columns.append(geo_dashboard_column)
 	# set the context
 	context = build_context({
-								'dashboard' : dashboard
+								'dashboard' : dashboard,
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
@@ -2968,4 +2969,33 @@ def activities(request,person_id=0):
 	# return the response
 	return HttpResponse(activities_template.render(context=context, request=request))
 
-
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def dashboard(request):
+	# create the list of charts
+	charts = []
+	# create the chart
+	roles_chart = Chart(
+						'Roles',
+						queryset = get_role_types_with_people_counts(),
+						label_attr = 'role_type_name',
+						size_attr = 'count'
+						)
+	# build the chart
+	figure, axes = plt.subplots()
+	# build a pie chart
+	axes.pie(roles_chart.sizes, labels=roles_chart.labels, autopct='%1.1f%%', startangle=90)
+	# make the axes equal
+	axes.axis('equal')
+	# set the title
+	plt.title(roles_chart.title)
+	# and append to the list of charts
+	charts.append(mpld3.fig_to_html(figure))
+	# get the template
+	dashboard_template = loader.get_template('people/dashboard.html')
+	# set the context
+	context = build_context({
+				'charts' : charts
+				})
+	# return the HttpResponse
+	return HttpResponse(dashboard_template.render(context=context, request=request))

@@ -3549,23 +3549,109 @@ class AddRelationshipViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
-	def test_find_existing_person_for_relationship(self):
+	def test_find_existing_person_for_relationship_in_project(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
+		# create the person that we are connecting to
+		set_up_test_people('Test_target_','test_role_type',1)
 		# create a person to add the relationships to
 		set_up_test_people('Test_exists_','test_role_type',1)
 		# submit a post for a person who doesn't exist
 		response = self.client.post(
-									reverse('add_relationship',args=[Person.objects.get(first_name='Test_exists_0').pk]),
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_target_0').pk]),
 									data = { 
 											'action' : 'search',
 											'names' : 'Test_exists_0',
+											'include_people' : 'in_project'
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# test that the result is contained within the response
 		self.assertContains(response,'Test_exists_0')
+
+	def test_find_existing_person_for_relationship_in_project_exclude_self(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create the person that we are connecting to
+		set_up_test_people('Test_target_','test_role_type',1)
+		# create a person to add the relationships to
+		set_up_test_people('Test_exists_','test_role_type',1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_target_0').pk]),
+									data = { 
+											'action' : 'search',
+											'names' : 'Test',
+											'include_people' : 'in_project'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# test that the result is contained within the response
+		self.assertContains(response,'of Test_exists_0')
+		# test that the person we are connecting to is not included
+		self.assertNotContains(response,'of Test_target_0')
+
+	def test_find_existing_person_for_relationship_left_project(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create the person that we are connecting to
+		set_up_test_people('Test_target_','test_role_type',1)
+		# create a person in the project
+		set_up_test_people('Test_in_project_','test_role_type',1)
+		# create a person who has left the project
+		set_up_test_people('Test_left_project_','test_role_type',1)
+		# get the person
+		person = Person.objects.get(first_name='Test_left_project_0')
+		# set the date
+		person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+		# and save the record
+		person.save()
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_target_0').pk]),
+									data = { 
+											'action' : 'search',
+											'names' : 'project',
+											'include_people' : 'left_project'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# test that the result is contained within the response
+		self.assertContains(response,'Test_left_project_0')
+		self.assertNotContains(response,'Test_in_project_0')
+
+	def test_find_existing_person_for_relationship_include_all(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create the person that we are connecting to
+		set_up_test_people('Test_target_','test_role_type',1)
+		# create a person in the project
+		set_up_test_people('Test_in_project_','test_role_type',1)
+		# create a person who has left the project
+		set_up_test_people('Test_left_project_','test_role_type',1)
+		# get the person
+		person = Person.objects.get(first_name='Test_left_project_0')
+		# set the date
+		person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+		# and save the record
+		person.save()
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_target_0').pk]),
+									data = { 
+											'action' : 'search',
+											'names' : 'project',
+											'include_people' : 'all'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# test that the result is contained within the response
+		self.assertContains(response,'Test_left_project_0')
+		self.assertContains(response,'Test_in_project_0')
 
 	def test_add_relationship_to_new_person(self):
 		# log the user in

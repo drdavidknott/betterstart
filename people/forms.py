@@ -487,11 +487,23 @@ class PersonSearchForm(forms.Form):
 		self.fields['trained_role'].choices = trained_role_choices
 
 class PersonNameSearchForm(forms.Form):
+	# Define the choices for who should be included in the search
+	include_people_choices = (
+								('in_project','In project'),
+								('all' , 'All'),
+								('left_project' , 'Left project'),
+								)
 	# Define the fields that we need in the form.
 	names = forms.CharField(
 							label="Names",
 							max_length=50,
 							widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	include_people = forms.ChoiceField(
+									label="Include people",
+									choices=include_people_choices,
+									initial='in_project',
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -501,7 +513,8 @@ class PersonNameSearchForm(forms.Form):
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('names',css_class='form-group col-md-12 mbt-0'),	
+										Column('names',css_class='form-group col-md-8 mbt-0'),
+										Column('include_people',css_class='form-group col-md-4 mbt-0'),	
 										),
 									Row(
 										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0')),

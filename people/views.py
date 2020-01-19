@@ -2021,8 +2021,13 @@ def add_relationship(request,person_id=0):
 			if personsearchform.is_valid():
 				# get the names
 				names = personsearchform.cleaned_data['names']
+				# and the flag of which people we include
+				include_people = personsearchform.cleaned_data['include_people']
 				# conduct a search
-				people = Person.search(names=names)
+				people = Person.search(
+										names=names,
+										include_people=include_people
+										)
 				# remove the people who already have a relationship
 				search_results = remove_existing_relationships(person, people)
 				# if there are search results, create a form to create relationships from the search results

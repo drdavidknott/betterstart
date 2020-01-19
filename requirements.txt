@@ -1,7 +1,7 @@
 asgiref==3.2.3
 certifi==2018.11.29
 cycler==0.10.0
-Django==3.0.1
+Django==3.0
 django-crispy-forms==1.8.0
 entrypoints==0.3
 flake8==3.7.9

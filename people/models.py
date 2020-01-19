@@ -297,6 +297,7 @@ class Person(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'people'
+		ordering = ('last_name','first_name')
 	# and a function to return the full name
 	def full_name(self):
 		return self.first_name + ' ' + self.last_name

@@ -192,6 +192,7 @@ class Event(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'events'
+		ordering = ['-date']
 	# define a function to return the areas as a comma separated string
 	def get_areas(self):
 		# set the string to blank

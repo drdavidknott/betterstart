@@ -6,7 +6,13 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Option, Answer, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity
 
-admin.site.register(Person)
+class PersonAdmin(admin.ModelAdmin):
+    search_fields = ['first_name','last_name']
+
+class EventAdmin(admin.ModelAdmin):
+    search_fields = ['name']
+
+admin.site.register(Person, PersonAdmin)
 admin.site.register(Relationship_Type)
 admin.site.register(Relationship)
 admin.site.register(Family)
@@ -18,7 +24,7 @@ admin.site.register(CC_Registration)
 admin.site.register(Area)
 admin.site.register(Ward)
 admin.site.register(Post_Code)
-admin.site.register(Event)
+admin.site.register(Event, EventAdmin)
 admin.site.register(Event_Type)
 admin.site.register(Event_Category)
 admin.site.register(Event_Registration)

@@ -199,6 +199,40 @@
 		</div>
 	 </div>
 
+	 <div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'answer_questions' person.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if answer_flag %}
+		 			{% for question in questions %}
+			 			{% if question.answer or question.note %}
+			 				<div>
+								<strong>Question: </strong>{{ question }}&nbsp{{ question.answer_text }}
+							</div>
+						{% endif %}
+			 			{% if question.note %}
+			 				<div>
+								<strong>{{ question.notes_label }}: </strong>{{ question.note }}
+							</div>
+						{% endif %}
+					{% endfor %}
+				{% else %}
+					<div><strong>No questions answered</strong></div>
+				{% endif %}
+			</div>
+		</div>
+	 </div>
+
 	<div class="row">
 		<div class="col-xs-12">
 			<hr>
@@ -275,40 +309,6 @@
 			</div>
 		</div>
 	</div>
-
-	 <div class="row">
-		<div class="col-xs-12">
-				<hr>
-	 	</div>
-	 </div>
-
- 	<div class="row">
- 		<div class='col-xs-1 text-right'>
- 			<a href="{% url 'answer_questions' person.pk %}">
- 				<span class="glyphicon glyphicon-pencil"></span>
- 			</a>
- 		</div>
- 		<div class="col-xs-11">
- 			<div class="row">
-		 		{% if answer_flag %}
-		 			{% for question in questions %}
-			 			{% if question.answer or question.note %}
-			 				<div>
-								<strong>Question: </strong>{{ question }}&nbsp{{ question.answer_text }}
-							</div>
-						{% endif %}
-			 			{% if question.note %}
-			 				<div>
-								<strong>{{ question.notes_label }}: </strong>{{ question.note }}
-							</div>
-						{% endif %}
-					{% endfor %}
-				{% else %}
-					<div><strong>No questions answered</strong></div>
-				{% endif %}
-			</div>
-		</div>
-	 </div>
 
 	<div class="row">
 		<div class="col-xs-12">

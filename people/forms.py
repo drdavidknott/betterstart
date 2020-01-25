@@ -181,14 +181,8 @@ class ProfileForm(forms.Form):
 									label="Last name",
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	nicknames = forms.CharField(
-									label="Nicknames",
-									max_length=50,
-									initial='',
-									required=False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	prior_names = forms.CharField(
-									label="Prior names",
+	other_names = forms.CharField(
+									label="Other names",
 									max_length=50,
 									initial='',
 									required=False,

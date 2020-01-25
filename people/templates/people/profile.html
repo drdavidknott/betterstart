@@ -29,19 +29,14 @@
 	<form action ="{% url 'profile' person.pk %}" method="post">
 	{% csrf_token %}					
 		<div class="form-row">
-			<div class="form-group col-md-6 mb-0">
+			<div class="form-group col-md-4 mb-0">
 				{{ profileform.first_name|as_crispy_field }}
 			</div>
-			<div class="form-group col-md-6 mb-0">
+			<div class="form-group col-md-4 mb-0">
 				{{ profileform.last_name|as_crispy_field }}
 			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-6 mb-0">
-				{{ profileform.nicknames|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-6 mb-0">
-				{{ profileform.prior_names|as_crispy_field }}
+			<div class="form-group col-md-4 mb-0">
+				{{ profileform.other_names|as_crispy_field }}
 			</div>
 		</div>
 		<div class="form-row">

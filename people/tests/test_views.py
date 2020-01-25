@@ -653,47 +653,13 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
-	def test_search_by_nicknames(self):
+	def test_search_by_other_names(self):
 		# set different last names
 		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
 		# go through them and set the date
 		for person in people_to_include:
-			# set the date
-			person.nicknames = 'name_search'
-			# and save the record
-			person.save()
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# attempt to get the events page
-		response = self.client.post(
-									reverse('listpeople'),
-									data = { 
-											'action' : 'search',
-											'names' : 'name_search',
-											'role_type' : '0',
-											'ABSS_type' : '0',
-											'age_status' : '0',
-											'trained_role' : 'none',
-											'ward' : '0',
-											'page' : '1'
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# check how many we got for this page
-		self.assertEqual(len(response.context['people']),25)
-		# check that we got the right number of people
-		self.assertEqual(response.context['number_of_people'],50)
-		# check that we got the right number of pages
-		self.assertEqual(len(response.context['page_list']),2)
-
-	def test_search_by_prior_names(self):
-		# set different last names
-		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
-		# go through them and set the date
-		for person in people_to_include:
-			# set the date
-			person.prior_names = 'name_search'
+			# set the other name
+			person.other_names = 'name_search'
 			# and save the record
 			person.save()
 		# log the user in
@@ -756,14 +722,14 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
-	def test_search_by_multiple_terms_nicknames_prior_names(self):
+	def test_search_by_multiple_terms_other_names_first_name(self):
 		# set different last names
 		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
 		# go through them and set the date
 		for person in people_to_include:
 			# set the names
-			person.nicknames = 'nick'
-			person.prior_names = 'prior'
+			person.other_names = 'other'
+			person.first_name = 'first'
 			# and save the record
 			person.save()
 		# log the user in
@@ -773,7 +739,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'names' : 'nick prior',
+											'names' : 'first other',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -797,8 +763,8 @@ class PeopleViewTest(TestCase):
 		# go through them and set the date
 		for person in people_to_include:
 			# set the names
-			person.nicknames = 'nick'
-			person.prior_names = 'prior'
+			person.other_names = 'other'
+			person.first_name = 'first'
 			# and save the record
 			person.save()
 		# set different names
@@ -806,7 +772,7 @@ class PeopleViewTest(TestCase):
 		# go through them and set the date
 		for person in people_to_include:
 			# set the names
-			person.nicknames = 'nick'
+			person.other_names = 'other'
 			# and save the record
 			person.save()
 		# log the user in
@@ -816,7 +782,7 @@ class PeopleViewTest(TestCase):
 									reverse('listpeople'),
 									data = { 
 											'action' : 'search',
-											'names' : 'nick prior',
+											'names' : 'first other',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -2832,8 +2798,7 @@ class ProfileViewTest(TestCase):
 											'first_name' : 'updated_first_name',
 											'middle_names' : 'updated_middle_names',
 											'last_name' : 'updated_last_name',
-											'nicknames' : 'updated nicknames',
-											'prior_names' : 'updated prior_names',
+											'other_names' : 'updated other_names',
 											'email_address' : 'updated_email_address@test.com',
 											'home_phone' : '123456',
 											'mobile_phone' : '678901',
@@ -2859,8 +2824,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'updated_first_name')
 		self.assertEqual(test_person.middle_names,'updated_middle_names')
 		self.assertEqual(test_person.last_name,'updated_last_name')
-		self.assertEqual(test_person.nicknames,'updated nicknames')
-		self.assertEqual(test_person.prior_names,'updated prior_names')
+		self.assertEqual(test_person.other_names,'updated other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'age_test_role')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -2946,15 +2910,15 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 
-	def test_update_profile_blank_nicknames_prior_names(self):
+	def test_update_profile_blank_other_names_prior_names(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create a person
 		set_up_test_people('Person_','test_role_type',1)
 		# get the record
 		test_person = Person.objects.get(first_name='Person_0')
-		# set the nicknames and prior names
-		test_person.nicknames = 'test nicknames'
+		# set the other_names and prior names
+		test_person.other_names = 'test other_names'
 		test_person.prior_names = 'test prior names'
 		# now save
 		test_person.save()
@@ -2965,8 +2929,7 @@ class ProfileViewTest(TestCase):
 											'first_name' : 'updated_first_name',
 											'middle_names' : '',
 											'last_name' : 'updated_last_name',
-											'nicknames' : '',
-											'prior_names' : '',
+											'other_names' : '',
 											'email_address' : 'updated_email_address@test.com',
 											'home_phone' : '123456',
 											'mobile_phone' : '678901',
@@ -2992,8 +2955,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'updated_first_name')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'updated_last_name')
-		self.assertEqual(test_person.nicknames,'')
-		self.assertEqual(test_person.prior_names,'')
+		self.assertEqual(test_person.other_names,'')
 		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
 		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7412,8 +7374,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7442,8 +7403,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test no dob')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7472,8 +7432,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test no street')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7520,8 +7479,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7549,8 +7507,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test no dob')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7579,8 +7536,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test no street')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7645,8 +7601,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -7674,8 +7629,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.first_name,'Test')
 		self.assertEqual(test_person.middle_names,'')
 		self.assertEqual(test_person.last_name,'Person')
-		self.assertEqual(test_person.nicknames,'test nicknames')
-		self.assertEqual(test_person.prior_names,'test prior names')
+		self.assertEqual(test_person.other_names,'test other_names')
 		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
@@ -8268,8 +8222,7 @@ class DownloadPeopleDataViewTest(TestCase):
 		# get the second test person
 		person = Person.objects.get(first_name='test_adult_1')
 		# set the values
-		person.nicknames = 'test nicknames'
-		person.prior_names = 'test prior names'
+		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
 		person.pregnant = True
@@ -8293,11 +8246,11 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_adult_0,test_adult_0,,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test nicknames,test prior names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd')
-		self.assertContains(response,'test_child_0,test_child_0,,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,')
 
 class DownloadEventsDataViewTest(TestCase):

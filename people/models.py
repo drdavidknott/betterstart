@@ -250,7 +250,7 @@ class Person(DataAccessMixin,models.Model):
 	first_name = models.CharField(max_length=50)
 	middle_names = models.CharField(max_length=50, default='', blank=True)
 	last_name = models.CharField(max_length=50)
-	nicknames = models.CharField(max_length=50, default='', blank=True)
+	other_names = models.CharField(max_length=50, default='', blank=True)
 	prior_names = models.CharField(max_length=50, default='', blank=True)
 	email_address = models.CharField(max_length=50, default='', blank=True)
 	home_phone = models.CharField(max_length=50, default='', blank=True)
@@ -286,13 +286,9 @@ class Person(DataAccessMixin,models.Model):
 		# set the name
 		name = self.first_name + ' ' + self.last_name
 		# set the nicknames
-		if self.nicknames:
+		if self.other_names:
 			# add the nicknames
-			name += ', also known as ' + self.nicknames
-		# and the prior names
-		if self.prior_names:
-			# add the nicknames
-			name += ', previously known as ' + self.prior_names
+			name += ', also known as ' + self.other_names
 		# return the name
 		return name
 	# set the name to be used in the admin console
@@ -495,8 +491,7 @@ class Person(DataAccessMixin,models.Model):
 				# attempt to find the name in the various name fields
 				results = results.filter(first_name__icontains=name) \
 							| results.filter(last_name__icontains=name) \
-							| results.filter(nicknames__icontains=name) \
-							| results.filter(prior_names__icontains=name)
+							| results.filter(other_names__icontains=name)
 		# order the results by name
 		results = results.order_by('last_name','first_name')
 		# return the results

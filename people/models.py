@@ -10,6 +10,7 @@ class Site(DataAccessMixin,models.Model):
 	navbar_background = models.CharField(max_length=50, blank=True)
 	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
 	messages = models.BooleanField(default=False)
+	dob_offset = models.IntegerField(default=0)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name

@@ -1430,6 +1430,7 @@ def build_context(context_dict):
 	navbar_background = ''
 	navbar_text = ''
 	show_messages = True
+	dob_offset = 0
 	# attempt to get the site
 	site = Site.objects.all().first()
 	# if we have a site, set the details
@@ -1439,6 +1440,7 @@ def build_context(context_dict):
 		navbar_background = site.navbar_background
 		navbar_text = site.navbar_text
 		show_messages = site.messages
+		dob_offset = site.dob_offset
 	# now set the dictionary
 	context_dict['site_name'] = site_name
 	context_dict['navbar_background'] = navbar_background
@@ -1447,7 +1449,15 @@ def build_context(context_dict):
 	# check whether we have a default date
 	if not context_dict.get('default_date', False):
 		# set the default date to the default
-		context_dict['default_date'] = '01/01/2010'
+		context_dict['default_date'] = datetime.date.today().strftime('%d/%m/%Y')
+	# check whether we have a date of birth
+	if not context_dict.get('default_date_of_birth', False):
+		# get today's date
+		today = datetime.date.today()
+		# set the date to 15 years ago
+		default_date_of_birth = today.replace(year=today.year-dob_offset)
+		# set the string for use in the page
+		context_dict['default_date_of_birth'] = default_date_of_birth.strftime('%d/%m/%Y')
 	# return the dictionary
 	return context_dict
 

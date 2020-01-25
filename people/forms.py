@@ -214,8 +214,8 @@ class ProfileForm(forms.Form):
 									widget=forms.DateInput(	
 																format='%d/%m/%Y',
 																attrs={
-																	'class' : 'form-control datepicker',
-																	'autocomplete' : 'off'
+																	'class' : 'form-control default-date-of-birth',
+																	'autocomplete' : 'off',
 																	}),
         							input_formats=('%d/%m/%Y',))
 	ABSS_type = forms.ChoiceField(
@@ -238,7 +238,7 @@ class ProfileForm(forms.Form):
 																format='%d/%m/%Y',
 																attrs={
 																	'class' : 'form-control datepicker',
-																	'autocomplete' : 'off'
+																	'autocomplete' : 'off',
 																	}),
 									input_formats=('%d/%m/%Y',))
 	age_status = forms.ChoiceField(

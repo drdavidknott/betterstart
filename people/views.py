@@ -1856,12 +1856,6 @@ def addperson(request):
 								)
 			# go to the profile of the person
 			return redirect('/profile/' + str(person.pk))
-		# otherwise set a message
-		else:
-			# set a warning message
-			messages.warning(request,'WARNING: At least one person with this name already exists.')
-			messages.warning(request,'Please press CONFIRM to create a new person with the same name.')
-			messages.warning(request,'Or click on the person below to view their details.')
 	# otherwise create a fresh form
 	else:
 		# create the fresh form

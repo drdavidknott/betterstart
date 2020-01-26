@@ -51,6 +51,18 @@ class Role_Type(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'role types'
 
+# Relationship_Type model: represents different types of relationship
+# This is reference data.
+class Relationship_Type(DataAccessMixin,models.Model):
+	relationship_type = models.CharField(max_length=50)
+	relationship_counterpart = models.CharField(max_length=50)
+	# define the function that will return the person name as the object reference
+	def __str__(self):
+		return self.relationship_type
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'relationship types'
+
 # ABSS type model: represents different types of relationship that a person can have with ABSS
 # This is reference data.
 class ABSS_Type(DataAccessMixin,models.Model):
@@ -67,6 +79,7 @@ class ABSS_Type(DataAccessMixin,models.Model):
 class Age_Status(DataAccessMixin,models.Model):
 	status = models.CharField(max_length=50)
 	role_types = models.ManyToManyField(Role_Type)
+	relationship_types = models.ManyToManyField(Relationship_Type)
 	default_role_type = models.ForeignKey(Role_Type,
 											blank=True,
 											null=True,
@@ -497,18 +510,6 @@ class Person(DataAccessMixin,models.Model):
 		results = results.order_by('last_name','first_name')
 		# return the results
 		return results
-
-# Relationship_Type model: represents different types of relationship
-# This is reference data.
-class Relationship_Type(DataAccessMixin,models.Model):
-	relationship_type = models.CharField(max_length=50)
-	relationship_counterpart = models.CharField(max_length=50)
-	# define the function that will return the person name as the object reference
-	def __str__(self):
-		return self.relationship_type
-	# set the name to be used in the admin console
-	class Meta:
-		verbose_name_plural = 'relationship types'
 
 # Relationship model: represents a relationship between two people.
 # This is an intermediate model for a many to many relationship between two Person objects.

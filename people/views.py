@@ -2040,7 +2040,8 @@ def add_relationship(request,person_id=0):
 				if search_results:
 					# create the form
 					addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
-															people=search_results
+															people=search_results,
+															from_person=person
 															)
 					# go through the search results and add a field name to the object
 					for result in search_results:
@@ -2104,7 +2105,8 @@ def add_relationship(request,person_id=0):
 	if relationships_to:
 		# build the form
 		editexistingrelationshipsform = EditExistingRelationshipsForm(
-																		relationships=relationships_to
+																		relationships=relationships_to,
+																		from_person=person
 																		)
 		# and go through the relationships, adding the name of the select field and the hidden field
 		for relationship_to in relationships_to:

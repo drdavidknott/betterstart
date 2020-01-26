@@ -20,19 +20,41 @@ def role_type_choices(role_types):
 	# return the list
 	return role_type_list
 
-def build_choices(choice_class,choice_field,default=False,default_label=''):
+def build_choices(choice_field='',choice_queryset=False,choice_class=False,default=False,default_label=''):
 	# create a blank list
 	choice_list = []
 	# check whether we have a default
 	if default:
 		# add a default
 		choice_list.append((0,default_label))
+	# check whether we have a queryset
+	if choice_queryset:
+		# set the choices
+		choices = choice_queryset.order_by(choice_field)
+	# otherwise, use the supplied class
+	else:
+		# set the choices
+		choices = choice_class.objects.all().order_by(choice_field)
 	# go through the choices, based on the supplied class
-	for choice in choice_class.objects.all().order_by(choice_field):
+	for choice in choices:
 		# append a list of value and display value to the list
 		choice_list.append((choice.pk, getattr(choice,choice_field)))
 	# return the list
 	return choice_list
+
+def check_relationship_types(relationship_types,to_person):
+	# take a copy of the queryset
+	valid_relationship_types = relationship_types
+	# this person checks whether relationship types in a queryset are valid for the person
+	for relationship_type in relationship_types:
+		# check whether the relationship type is valid for the to person
+		if not to_person.age_status.relationship_types.filter(
+														relationship_counterpart=relationship_type.relationship_type
+														):
+			# remove the relationship type from the queryset
+			valid_relationship_types = valid_relationship_types.exclude(pk=relationship_type.pk)
+	# return the results
+	return valid_relationship_types
 
 class LoginForm(forms.Form):
 	# Define the fields that we need in the form.
@@ -572,8 +594,10 @@ class AddRelationshipForm(forms.Form):
 		# call the built in constructor
 		super(AddRelationshipForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['relationship_type'].choices = build_choices(choice_class=Relationship_Type,
-																	choice_field='relationship_type')
+		self.fields['relationship_type'].choices = build_choices(
+													choice_queryset=person.age_status.relationship_types.all(),
+													choice_field='relationship_type'
+													)
 		self.fields['relationship_type'].initial = Relationship_Type.objects.get(relationship_type='parent').pk
 		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
 		self.fields['age_status'].initial = Age_Status.objects.get(status='Child under four').pk
@@ -605,41 +629,53 @@ class AddRelationshipToExistingPersonForm(forms.Form):
 	def __init__(self, *args, **kwargs):
 		# pull the person list out of the parameter
 		people = kwargs.pop('people')
+		from_person = kwargs.pop('from_person')
 		# call the built in constructor
 		super(AddRelationshipToExistingPersonForm, self).__init__(*args, **kwargs)
 		# now go through the people and build fields
 		for person in people:
 			# set the field name
 			field_name = 'relationship_type_' + str(person.pk)
+			# get the relationship types for the from person
+			relationship_types = from_person.age_status.relationship_types.all()
+			# now check that they are valid for the to person
+			relationship_types = check_relationship_types(relationship_types,person)
 			# create the field
 			self.fields[field_name]= forms.ChoiceField(
 										label="Relationship",
 										widget=forms.Select(),
-										choices=build_choices(choice_class=Relationship_Type,
-																	choice_field='relationship_type',
-																	default=True,
-																	default_label='none')
+										choices=build_choices(
+											choice_queryset=relationship_types,
+											choice_field='relationship_type',
+											default=True,
+											default_label='none')
 										)
 
 class EditExistingRelationshipsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
-		# pull the relationship types list out of the parameters
+		# pull the relationship types list and person out of the parameters
 		relationships = kwargs.pop('relationships')
+		from_person = kwargs.pop('from_person')
 		# call the built in constructor
 		super(EditExistingRelationshipsForm, self).__init__(*args, **kwargs)
 		# now go through the people and build fields
 		for person in relationships:
 			# set the field name for the relationship type
 			field_name = 'relationship_type_' + str(person.pk)
+			# get the relationship types for the from person
+			relationship_types = from_person.age_status.relationship_types.all()
+			# now check that they are valid for the to person
+			relationship_types = check_relationship_types(relationship_types,person)
 			# create the field
 			self.fields[field_name] = forms.ChoiceField(
 											label="Relationship",
 											widget=forms.Select(),
-											choices=build_choices(choice_class=Relationship_Type,
-																	choice_field='relationship_type',
-																	default=True,
-																	default_label='none'),
+											choices=build_choices(
+												choice_queryset=relationship_types,
+												choice_field='relationship_type',
+												default=True,
+												default_label='none'),
 											initial=person.relationship_type_pk
 											)
 

@@ -112,6 +112,12 @@ def set_up_relationship_base_data():
 	Relationship_Type.objects.create(relationship_type='child', relationship_counterpart='parent')
 	Relationship_Type.objects.create(relationship_type='from', relationship_counterpart='to')
 	Relationship_Type.objects.create(relationship_type='to', relationship_counterpart='from')
+	# allow the relationship type for each age status
+	for age_status in Age_Status.objects.all():
+		# go through the relationship types
+		for relationship_type in Relationship_Type.objects.all():
+			# add the relationship type to the age status
+			age_status.relationship_types.add(relationship_type)
 
 def set_up_address_base_data():
 	# create records required for an post code and street

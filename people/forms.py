@@ -993,15 +993,15 @@ class EditRegistrationForm(forms.Form):
 class EventSearchForm(forms.Form):
 	# Define the fields that we need in the form.
 	name = forms.CharField(
-									label="Event name",
+									label="Name",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	event_category = forms.ChoiceField(
-									label="Event Category",
+									label="Category",
 									widget=forms.Select(attrs={'class' : 'form-control',}))
 	event_type = forms.ChoiceField(
-									label="Event Type",
+									label="Type",
 									widget=forms.Select(attrs={'class' : 'form-control',}))
 	ward = forms.ChoiceField(
 									label="Ward",
@@ -1050,10 +1050,10 @@ class EventSearchForm(forms.Form):
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('name',css_class='form-group col-md-2 mbt-0'),
+										Column('name',css_class='form-group col-md-3 mbt-0'),
 										Column('event_category',css_class='form-group col-md-2 mbt-0'),	
 										Column('event_type',css_class='form-group col-md-2 mbt-0'),
-										Column('ward',css_class='form-group col-md-2 mbt-0'),
+										Column('ward',css_class='form-group col-md-1 mbt-0'),
 										Column('date_from',css_class='form-group col-md-2 mbt-0'),
 										Column('date_to',css_class='form-group col-md-2 mbt-0'),
 										),

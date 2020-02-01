@@ -2623,11 +2623,10 @@ def event_registration(request,event_id=0):
 		personsearchform = PersonNameSearchForm(request.POST)
 		# validate the form
 		if personsearchform.is_valid():
-			# get the names
-			names = personsearchform.cleaned_data['names']
 			# conduct a search
 			people = Person.search(
-									names = names
+									names = personsearchform.cleaned_data['names'],
+									include_people = personsearchform.cleaned_data['include_people']
 									)
 			# remove the people who already have a registration
 			search_results = remove_existing_registrations(event, people)

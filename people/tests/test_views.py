@@ -4076,6 +4076,96 @@ class EventRegistrationViewTest(TestCase):
 		# check that we got the right number of events
 		self.assertEqual(response.context['search_number'],17)
 
+	def test_event_registration_search_names_in_project(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some people
+		set_up_test_people('In_project',number=17)
+		set_up_test_people('Left_project',number=19)
+		# set left project date
+		people_left_project = Person.objects.filter(first_name__startswith='Left_project')
+		# go through them and set the date
+		for person in people_left_project:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'project',
+												'include_people' : 'in_project'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],17)
+
+	def test_event_registration_search_names_left_project(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some people
+		set_up_test_people('In_project',number=17)
+		set_up_test_people('Left_project',number=19)
+		# set left project date
+		people_left_project = Person.objects.filter(first_name__startswith='Left_project')
+		# go through them and set the date
+		for person in people_left_project:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'project',
+												'include_people' : 'left_project'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],19)
+
+	def test_event_registration_search_names_include_all(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some people
+		set_up_test_people('In_project',number=17)
+		set_up_test_people('Left_project',number=19)
+		# set left project date
+		people_left_project = Person.objects.filter(first_name__startswith='Left_project')
+		# go through them and set the date
+		for person in people_left_project:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'project',
+												'include_people' : 'all'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],36)
+
 	def test_event_registration_register_people_multiple_roles(self):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)

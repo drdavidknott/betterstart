@@ -4784,6 +4784,95 @@ class EventRegistrationViewTest(TestCase):
 		self.assertEqual(registration_3.participated,False)
 		self.assertEqual(registration_3.role_type,test_role_1)
 
+	def test_event_registration_add_person_invalid_age_status(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# get the records we need for the test
+		event = Event.objects.get(name='test_event_0')
+		age_status = Age_Status.objects.get(status='Child under four')
+		role_type = Role_Type.objects.get(role_type_name='adult_test_role')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# try to add the person
+		response = self.client.post(
+									reverse('event_registration',args=[event.pk]),
+									data = {
+												'action' : 'addpersonandregistration',
+												'first_name' : 'test',
+												'last_name' : 'invalid',
+												'age_status' : str(age_status.pk),
+												'role_type' : str(role_type.pk),
+												'registered' : 'on',
+												'apologies' : '',
+												'participated' : ''
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check tha we got an error
+		self.assertContains(response,'Role type is not valid for age status')
+
+	def test_event_registration_add_person_no_flags_selected(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# get the records we need for the test
+		event = Event.objects.get(name='test_event_0')
+		age_status = Age_Status.objects.get(status='Adult')
+		role_type = Role_Type.objects.get(role_type_name='adult_test_role')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# try to add the person
+		response = self.client.post(
+									reverse('event_registration',args=[event.pk]),
+									data = {
+												'action' : 'addpersonandregistration',
+												'first_name' : 'test',
+												'last_name' : 'invalid',
+												'age_status' : str(age_status.pk),
+												'role_type' : str(role_type.pk),
+												'registered' : '',
+												'apologies' : '',
+												'participated' : ''
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check tha we got an error
+		self.assertContains(response,'At least one of registered, apologies or participated must be selected')
+
+	def test_event_registration_add_person_registered(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# get the records we need for the test
+		event = Event.objects.get(name='test_event_0')
+		age_status = Age_Status.objects.get(status='Adult')
+		role_type = Role_Type.objects.get(role_type_name='adult_test_role')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# try to add the person
+		response = self.client.post(
+									reverse('event_registration',args=[event.pk]),
+									data = {
+												'action' : 'addpersonandregistration',
+												'first_name' : 'test',
+												'last_name' : 'registration',
+												'age_status' : str(age_status.pk),
+												'role_type' : str(role_type.pk),
+												'registered' : 'on',
+												'apologies' : '',
+												'participated' : ''
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the registration for the first person
+		registration = Event_Registration.objects.get(person=Person.objects.get(first_name='test'),event=event)
+		# check the values
+		self.assertEqual(registration.registered,True)
+		self.assertEqual(registration.apologies,False)
+		self.assertEqual(registration.participated,False)
+		self.assertEqual(registration.role_type,role_type)
+
 class EditEventViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

@@ -135,6 +135,34 @@
 
 	{% endif %}
 
+	{% if addpersonandregistrationform %}
+
+		<div class="row">
+	 		<div class="col-xs-12">
+		 		<div>
+		 			<h4>
+			 			<span class="glyphicon glyphicon-calendar"></span>
+			 			<span class="glyphicon glyphicon-resize-horizontal"></span>
+			 			<span class="glyphicon glyphicon-user"></span>
+			 			<span class="glyphicon glyphicon-plus"></span>
+			 			Add Registration for New Person:
+		 			<h4>
+		 		</div>
+			</div>
+		</div>
+
+	
+		{% crispy addpersonandregistrationform %}
+
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
 	{% if editregistrationform %}
 
 		<div class="row">

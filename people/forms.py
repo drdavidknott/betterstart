@@ -990,6 +990,103 @@ class EditRegistrationForm(forms.Form):
 																	registration.person.age_status.role_types.filter(use_for_events=True).order_by('role_type_name')),
 														)
 
+class AddPersonAndRegistrationForm(forms.Form):
+	# Define the fields that we need in the form to capture the basics of the person's profile
+	first_name = forms.CharField(
+									label="First name",
+									max_length=50, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	last_name = forms.CharField(
+									label="Last name",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	age_status = forms.ChoiceField(
+									label="Age status",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	role_type = forms.ChoiceField(
+									label="Role",
+									widget=forms.Select())
+	registered = forms.BooleanField(
+									label = "Registered",
+									required = False,
+									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+	apologies = forms.BooleanField(
+									label = "Apologies",
+									required = False,
+									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+	participated = forms.BooleanField(
+										label = "Participated",
+										required = False,
+										widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# initialise first name and last name
+		first_name = ''
+		last_name = ''
+		# pull the fields out of the parameters if we got them
+		if 'first_name' in kwargs.keys():
+			first_name = kwargs.pop('first_name')
+			last_name = kwargs.pop('last_name')
+		# call the built in constructor
+		super(AddPersonAndRegistrationForm, self).__init__(*args, **kwargs)
+		# set the choices
+		self.fields['role_type'].choices = build_choices(
+															choice_class=Role_Type,
+															choice_field='role_type_name'
+															)
+		self.fields['age_status'].choices = build_choices(
+															choice_class=Age_Status,
+															choice_field='status'
+															)
+		# set the initial values if we have been passed them
+		if first_name:
+			self.fields['first_name'].initial = first_name
+			self.fields['last_name'].initial = last_name
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('first_name',css_class='form-group col-md-3 mbt-0'),	
+										Column('last_name',css_class='form-group col-md-3 mbt-0'),
+										Column('age_status',css_class='form-group col-md-3 mbt-0'),
+										Column('role_type',css_class='form-group col-md-3 mbt-0'),		
+										),
+									Row(
+										Column('participated',css_class='form-group col-md-4 mbt-0'),	
+										Column('apologies',css_class='form-group col-md-4 mbt-0'),
+										Column('registered',css_class='form-group col-md-4 mbt-0'),		
+										),
+									Row(
+										Column(
+												Submit('submit', 'Create and Add Registration'),
+												css_class='col-md-12 mb-0'
+												)
+										),
+									Hidden('action','addpersonandregistration'),
+									)
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(AddPersonAndRegistrationForm, self).is_valid()
+		# now perform the additional checks
+		# get the age status
+		age_status = Age_Status.objects.get(id=self.cleaned_data['age_status'])
+		# check whether the role type is valid for the age status
+		if not age_status.role_types.filter(id=self.cleaned_data['role_type']).exists():
+			# set the error and invalidate the form
+			self.add_error(None,'Role type is not valid for age status')
+			valid = False
+		# check whether any registration field has been set
+		if (not self.cleaned_data['participated'] 
+			and not self.cleaned_data['apologies']
+			and not self.cleaned_data['registered']):
+			# set the error and invalidate the form
+			self.add_error(None,'At least one of registered, apologies or participated must be selected.')
+			valid = False
+		# return the result
+		return valid
+
 class EventSearchForm(forms.Form):
 	# Define the fields that we need in the form.
 	name = forms.CharField(
@@ -999,12 +1096,15 @@ class EventSearchForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	event_category = forms.ChoiceField(
 									label="Category",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control',}))
 	event_type = forms.ChoiceField(
 									label="Type",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control',}))
 	ward = forms.ChoiceField(
 									label="Ward",
+									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control',}))
 	date_from = forms.DateField(
 									label="From",
@@ -1050,10 +1150,12 @@ class EventSearchForm(forms.Form):
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('name',css_class='form-group col-md-3 mbt-0'),
-										Column('event_category',css_class='form-group col-md-2 mbt-0'),	
-										Column('event_type',css_class='form-group col-md-2 mbt-0'),
-										Column('ward',css_class='form-group col-md-1 mbt-0'),
+										Column('name',css_class='form-group col-md-12 mbt-0'),
+										),
+									Row(
+										Column('event_category',css_class='form-group col-md-3 mbt-0'),	
+										Column('event_type',css_class='form-group col-md-3 mbt-0'),
+										Column('ward',css_class='form-group col-md-2 mbt-0'),
 										Column('date_from',css_class='form-group col-md-2 mbt-0'),
 										Column('date_to',css_class='form-group col-md-2 mbt-0'),
 										),

@@ -13,7 +13,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
-					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm
+					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list
 from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard, Page, Chart
 from django.contrib import messages
@@ -1556,6 +1556,19 @@ def build_records(data_class,fields):
 	# return the results
 	return records
 
+def split_names(names):
+	# split a name string into a first name and last name
+	if ' ' in names:
+		# split the name
+		first_name, last_name = names.split(' ',1)
+	# otherwise set the names
+	else:
+		# set the names
+		first_name = names
+		last_name = ''
+	# return the results
+	return first_name, last_name
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -2041,15 +2054,8 @@ def add_relationship(request,person_id=0):
 					for result in search_results:
 						# add the field
 						result.field_name = 'relationship_type_' + str(result.pk)
-				# check whether we have a space in the name
-				if ' ' in names:
-					# split the name
-					first_name, last_name = names.split(' ',1)
-				# otherwise set the names
-				else:
-					# set the names
-					first_name = names
-					last_name = ''
+				# get the first name and last name from the names search string
+				first_name, last_name = split_names(names)
 				# create a form to add the relationship
 				addrelationshipform = AddRelationshipForm(
 															person = person,
@@ -2613,26 +2619,30 @@ def event_registration(request,event_id=0):
 	# edit the registration and participation in an event
 
 	# SUBFUNCTIONS TO HANDLE ACTION TYPES
-	def event_registration_search(request):
+	def event_registration_search(event,request):
 		# process the search
 		# initialise variables
 		search_keys = ''
 		search_key_delimiter = ''
 		addregistrationform = ''
+		addpersonandregistrationform = ''
 		# create a search form
 		personsearchform = PersonNameSearchForm(request.POST)
 		# validate the form
 		if personsearchform.is_valid():
+			# get the values from the form
+			names = personsearchform.cleaned_data['names']
+			include_people = personsearchform.cleaned_data['include_people']
 			# conduct a search
 			people = Person.search(
-									names = personsearchform.cleaned_data['names'],
-									include_people = personsearchform.cleaned_data['include_people']
+									names = names,
+									include_people = include_people
 									)
 			# remove the people who already have a registration
 			search_results = remove_existing_registrations(event, people)
 			# if there are search results, create a form to create relationships from the search results
 			if search_results:
-				# create the form
+				# create the form to add registrations
 				addregistrationform = AddRegistrationForm(people=search_results)
 			# add field names to each result, so that we know when to display them
 			for result in search_results:
@@ -2645,10 +2655,19 @@ def event_registration(request,event_id=0):
 				search_keys += search_key_delimiter + str(result.pk)
 				# and set the delimiter
 				search_key_delimiter = ','
+			# create the form to add a person and register that person if we have names
+			if names:
+				# get the first name and last name from the names search string
+				first_name, last_name = split_names(names)
+				# create a form to add the relationship
+				addpersonandregistrationform = AddPersonAndRegistrationForm(
+																			first_name = first_name,
+																			last_name = last_name
+																			)
 		# return the forms and results
-		return personsearchform, addregistrationform, search_results, search_keys
+		return personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys
 
-	def event_registration_addregistration(request):
+	def event_registration_addregistration(event,request):
 		# process the addition of registrations
 		# get the list of search keys from the hidden field
 		search_keys = request.POST['search_keys'].split(',')
@@ -2672,37 +2691,36 @@ def event_registration(request,event_id=0):
 													role_type_id = int(role_type_id)
 													)
 
-	def event_registration_editregistration(request):
+	def event_registration_editregistration(event,request):
 		# get the list of registration keys from the hidden field
 		registration_keys = request.POST['registration_keys'].split(',')
 		# go through the keys
 		for registration_key in registration_keys:
-			# get the indicators and role type
-				# get the indicators of whether the person registered or participated, as well as the role type
-				registered = check_checkbox(request.POST, 'registered_' + registration_key)
-				apologies = check_checkbox(request.POST, 'apologies_' + registration_key)
-				participated = check_checkbox(request.POST, 'participated_' + registration_key)
-				role_type_id = request.POST.get('role_type_' + registration_key, False)
-				# if the person participated or registered, we need to build a registration
-				if registered or participated or apologies:
-					# build the registration
-					registration = build_registration(
-														request = request,
-														event = event,
-														person_id = int(registration_key),
-														registered = registered,
-														apologies = apologies,
-														participated = participated,
-														role_type_id = int(role_type_id)
-														)
-				# otherwise we need to remove the registration
-				else:
-					# remove the registration
-					remove_registration(
-										request = request,
-										event = event,
-										person_id = int(registration_key)
-									)
+			# get the indicators of whether the person registered or participated, as well as the role type
+			registered = check_checkbox(request.POST, 'registered_' + registration_key)
+			apologies = check_checkbox(request.POST, 'apologies_' + registration_key)
+			participated = check_checkbox(request.POST, 'participated_' + registration_key)
+			role_type_id = request.POST.get('role_type_' + registration_key, False)
+			# if the person participated or registered, we need to build a registration
+			if registered or participated or apologies:
+				# build the registration
+				registration = build_registration(
+													request = request,
+													event = event,
+													person_id = int(registration_key),
+													registered = registered,
+													apologies = apologies,
+													participated = participated,
+													role_type_id = int(role_type_id)
+													)
+			# otherwise we need to remove the registration
+			else:
+				# remove the registration
+				remove_registration(
+									request = request,
+									event = event,
+									person_id = int(registration_key)
+								)
 
 	def event_registration_registrations(event):
 		# initialise variables
@@ -2731,34 +2749,67 @@ def event_registration(request,event_id=0):
 		# return the results
 		return registrations, registration_keys, editregistrationform
 
+	def event_registration_addpersonandregistration(event,request):
+		# process the request to add a person and register them to this event
+		# create a form
+		addpersonandregistrationform = AddPersonAndRegistrationForm(request.POST)
+		# validate the form
+		if addpersonandregistrationform.is_valid():
+			# create the person
+			# we now need to create the person
+			person = create_person(
+									first_name = addpersonandregistrationform.cleaned_data['first_name'],
+									last_name = addpersonandregistrationform.cleaned_data['last_name'],
+									age_status = addpersonandregistrationform.cleaned_data['age_status']
+									)
+			# set a message to say that we have create a new person
+			messages.success(request, str(person) + ' created.')
+			# now build the registration
+			registration = build_registration(
+											request = request,
+											event = event,
+											person_id = person.pk,
+											registered = addpersonandregistrationform.cleaned_data['registered'],
+											apologies = addpersonandregistrationform.cleaned_data['apologies'],
+											participated = addpersonandregistrationform.cleaned_data['participated'],
+											role_type_id = addpersonandregistrationform.cleaned_data['role_type']
+											)
+			# blank out the form
+			addpersonandregistrationform = ''
+		# return the result
+		return addpersonandregistrationform
+
 	# MAIN VIEW PROCESSING
-	# initalise the forms which we might not need
-	addregistrationform = ''
-	# and a blank search form
-	personsearchform = PersonNameSearchForm()
-	# load the template
-	event_registration_template = loader.get_template('people/event_registration.html')
 	# get the event
 	event = Event.try_to_get(pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
+	# load the template
+	event_registration_template = loader.get_template('people/event_registration.html')
 	# initialise variables
 	search_results = []
 	search_keys = ''
 	search_error = ''
+	# initalise forms
+	addregistrationform = ''
+	addpersonandregistrationform = ''
+	personsearchform = PersonNameSearchForm()
 	# check whether this is a post
 	if request.method == 'POST':
 		# process the POST depending on the action field:
-		# search returns search results and builds a form to add results
+		# search returns search results and builds the forms necessary to add and edit registrations
 		# addregistration processes registration of new people for the event
 		# editregistration processes changes to registration for existing people for the event
 		if request.POST['action'] == 'search':
-			personsearchform, addregistrationform, search_results, search_keys = event_registration_search(request)
+			personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys = \
+			event_registration_search(event,request)
 		elif request.POST['action'] == 'addregistration':
-			event_registration_addregistration(request)
+			event_registration_addregistration(event,request)
 		elif request.POST['action'] == 'editregistration':
-			event_registration_editregistration(request)
+			event_registration_editregistration(event,request)
+		elif request.POST['action'] == 'addpersonandregistration':
+			addpersonandregistrationform = event_registration_addpersonandregistration(event,request)
 	# build the form to edit registrations, along with an enriched list of existing registrations
 	registrations, registration_keys, editregistrationform = event_registration_registrations(event)
 	# set the context from the person based on person id
@@ -2766,6 +2817,7 @@ def event_registration(request,event_id=0):
 				'personsearchform' : personsearchform,
 				'addregistrationform' : addregistrationform,
 				'editregistrationform' : editregistrationform,
+				'addpersonandregistrationform' : addpersonandregistrationform,
 				'search_results' : search_results,
 				'search_keys' : search_keys,
 				'search_error' : search_error,

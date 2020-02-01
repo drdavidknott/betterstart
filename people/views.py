@@ -2611,9 +2611,132 @@ def edit_event(request, event_id=0):
 def event_registration(request,event_id=0):
 	# this is one of the most complex views on the site, which allows the user to search for people and to 
 	# edit the registration and participation in an event
+
+	# SUBFUNCTIONS TO HANDLE ACTION TYPES
+	def event_registration_search(request):
+		# process the search
+		# initialise variables
+		search_keys = ''
+		search_key_delimiter = ''
+		addregistrationform = ''
+		# create a search form
+		personsearchform = PersonNameSearchForm(request.POST)
+		# validate the form
+		if personsearchform.is_valid():
+			# get the names
+			names = personsearchform.cleaned_data['names']
+			# conduct a search
+			people = Person.search(
+									names = names
+									)
+			# remove the people who already have a registration
+			search_results = remove_existing_registrations(event, people)
+			# if there are search results, create a form to create relationships from the search results
+			if search_results:
+				# create the form
+				addregistrationform = AddRegistrationForm(people=search_results)
+			# add field names to each result, so that we know when to display them
+			for result in search_results:
+				# add the three field names
+				result.role_type_field_name = 'role_type_' + str(result.pk)
+				result.registered_field_name = 'registered_' + str(result.pk)
+				result.apologies_field_name = 'apologies_' + str(result.pk)
+				result.participated_field_name = 'participated_' + str(result.pk)
+				# add the key of the search result to the string of keys
+				search_keys += search_key_delimiter + str(result.pk)
+				# and set the delimiter
+				search_key_delimiter = ','
+		# return the forms and results
+		return personsearchform, addregistrationform, search_results, search_keys
+
+	def event_registration_addregistration(request):
+		# process the addition of registrations
+		# get the list of search keys from the hidden field
+		search_keys = request.POST['search_keys'].split(',')
+		# go through the search keys
+		for search_key in search_keys:
+			# get the indicators of whether the person registered or participated, as well as the role type
+			registered = check_checkbox(request.POST, 'registered_' + search_key)
+			apologies = check_checkbox(request.POST, 'apologies_' + search_key)
+			participated = check_checkbox(request.POST, 'participated_' + search_key)
+			role_type_id = request.POST.get('role_type_' + search_key, False)
+			# if the person participated or registered, we need to build a registration
+			if registered or participated or apologies:
+				# build the registration
+				registration = build_registration(
+													request = request,
+													event = event,
+													person_id = int(search_key),
+													registered = registered,
+													apologies = apologies,
+													participated = participated,
+													role_type_id = int(role_type_id)
+													)
+
+	def event_registration_editregistration(request):
+		# get the list of registration keys from the hidden field
+		registration_keys = request.POST['registration_keys'].split(',')
+		# go through the keys
+		for registration_key in registration_keys:
+			# get the indicators and role type
+				# get the indicators of whether the person registered or participated, as well as the role type
+				registered = check_checkbox(request.POST, 'registered_' + registration_key)
+				apologies = check_checkbox(request.POST, 'apologies_' + registration_key)
+				participated = check_checkbox(request.POST, 'participated_' + registration_key)
+				role_type_id = request.POST.get('role_type_' + registration_key, False)
+				# if the person participated or registered, we need to build a registration
+				if registered or participated or apologies:
+					# build the registration
+					registration = build_registration(
+														request = request,
+														event = event,
+														person_id = int(registration_key),
+														registered = registered,
+														apologies = apologies,
+														participated = participated,
+														role_type_id = int(role_type_id)
+														)
+				# otherwise we need to remove the registration
+				else:
+					# remove the registration
+					remove_registration(
+										request = request,
+										event = event,
+										person_id = int(registration_key)
+									)
+
+	def event_registration_registrations(event):
+		# initialise variables
+		registration_keys = ''
+		registration_key_delimiter = ''
+		editregistrationform = ''
+		# update the existing registrations: there may be new ones
+		registrations = event.event_registration_set.all()
+		# if there are registrations, create the form
+		if registrations:
+			# clear the registration keys
+			registration_keys = ''
+			# create the form
+			editregistrationform = EditRegistrationForm(registrations = registrations)
+			# add field names to each registration, so that we know when to display them
+			for registration in registrations:
+				# add the three field names
+				registration.role_type_field_name = 'role_type_' + str(registration.person.pk)
+				registration.registered_field_name = 'registered_' + str(registration.person.pk)
+				registration.apologies_field_name = 'apologies_' + str(registration.person.pk)
+				registration.participated_field_name = 'participated_' + str(registration.person.pk)
+				# add the key of the registered person to the string of keys
+				registration_keys += registration_key_delimiter + str(registration.person.pk)
+				# and set the delimiter
+				registration_key_delimiter = ','
+		# return the results
+		return registrations, registration_keys, editregistrationform
+
+	# MAIN VIEW PROCESSING
 	# initalise the forms which we might not need
 	addregistrationform = ''
-	editregistrationform = ''
+	# and a blank search form
+	personsearchform = PersonNameSearchForm()
 	# load the template
 	event_registration_template = loader.get_template('people/event_registration.html')
 	# get the event
@@ -2621,135 +2744,24 @@ def event_registration(request,event_id=0):
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
-	# get existing registrations
-	registrations = event.event_registration_set.all()
-	# get the role types
-	role_types = get_role_types()
-	# set the search results
+	# initialise variables
 	search_results = []
-	# and a blank string of search result keys
 	search_keys = ''
-	# and a blank delimiter
-	search_key_delimiter = ''
-	# set a blank search_error
 	search_error = ''
-	# set a blank set of registration keys
-	registration_keys = ''
-	# and a blank delimiter
-	registration_key_delimiter = ''
 	# check whether this is a post
 	if request.method == 'POST':
-		# check what type of submission we got
+		# process the POST depending on the action field:
+		# search returns search results and builds a form to add results
+		# addregistration processes registration of new people for the event
+		# editregistration processes changes to registration for existing people for the event
 		if request.POST['action'] == 'search':
-			# create a search form
-			personsearchform = PersonNameSearchForm(request.POST)
-			# validate the form
-			if personsearchform.is_valid():
-				# get the names
-				names = personsearchform.cleaned_data['names']
-				# conduct a search
-				people = Person.search(
-										names = names
-										)
-				# remove the people who already have a registration
-				search_results = remove_existing_registrations(event, people)
-				# if there are search results, create a form to create relationships from the search results
-				if search_results:
-					# create the form
-					addregistrationform = AddRegistrationForm(people=search_results)
-				# add field names to each result, so that we know when to display them
-				for result in search_results:
-					# add the three field names
-					result.role_type_field_name = 'role_type_' + str(result.pk)
-					result.registered_field_name = 'registered_' + str(result.pk)
-					result.apologies_field_name = 'apologies_' + str(result.pk)
-					result.participated_field_name = 'participated_' + str(result.pk)
-					# add the key of the search result to the string of keys
-					search_keys += search_key_delimiter + str(result.pk)
-					# and set the delimiter
-					search_key_delimiter = ','
-		# check whether we have been asked to add registrations
+			personsearchform, addregistrationform, search_results, search_keys = event_registration_search(request)
 		elif request.POST['action'] == 'addregistration':
-			# get the list of search keys from the hidden field
-			search_keys = request.POST['search_keys'].split(',')
-			# go through the search keys
-			for search_key in search_keys:
-				# get the indicators of whether the person registered or participated, as well as the role type
-				registered = check_checkbox(request.POST, 'registered_' + search_key)
-				apologies = check_checkbox(request.POST, 'apologies_' + search_key)
-				participated = check_checkbox(request.POST, 'participated_' + search_key)
-				role_type_id = request.POST.get('role_type_' + search_key, False)
-				# if the person participated or registered, we need to build a registration
-				if registered or participated or apologies:
-					# build the registration
-					registration = build_registration(
-														request = request,
-														event = event,
-														person_id = int(search_key),
-														registered = registered,
-														apologies = apologies,
-														participated = participated,
-														role_type_id = int(role_type_id)
-														)
-			# create a blank search form
-			personsearchform = PersonNameSearchForm()
-		# check whether we have been asked to edit registations
-		elif request.POST['action'] == 'editregistration' :
-			# get the list of registration keys from the hidden field
-			registration_keys = request.POST['registration_keys'].split(',')
-			# go through the keys
-			for registration_key in registration_keys:
-				# get the indicators and role type
-					# get the indicators of whether the person registered or participated, as well as the role type
-					registered = check_checkbox(request.POST, 'registered_' + registration_key)
-					apologies = check_checkbox(request.POST, 'apologies_' + registration_key)
-					participated = check_checkbox(request.POST, 'participated_' + registration_key)
-					role_type_id = request.POST.get('role_type_' + registration_key, False)
-					# if the person participated or registered, we need to build a registration
-					if registered or participated or apologies:
-						# build the registration
-						registration = build_registration(
-															request = request,
-															event = event,
-															person_id = int(registration_key),
-															registered = registered,
-															apologies = apologies,
-															participated = participated,
-															role_type_id = int(role_type_id)
-															)
-					# otherwise we need to remove the registration
-					else:
-						# remove the registration
-						remove_registration(
-											request = request,
-											event = event,
-											person_id = int(registration_key)
-										)
-			# create a blank search form
-			personsearchform = PersonNameSearchForm()
-	# otherwise we didn't get a post
-	else:
-		# create a blank form
-		personsearchform = PersonNameSearchForm()
-	# update the existing registrations: there may be new ones
-	registrations = event.event_registration_set.all()
-	# if there are registrations, create the form
-	if registrations:
-		# clear the registration keys
-		registration_keys = ''
-		# create the form
-		editregistrationform = EditRegistrationForm(registrations = registrations)
-		# add field names to each registration, so that we know when to display them
-		for registration in registrations:
-			# add the three field names
-			registration.role_type_field_name = 'role_type_' + str(registration.person.pk)
-			registration.registered_field_name = 'registered_' + str(registration.person.pk)
-			registration.apologies_field_name = 'apologies_' + str(registration.person.pk)
-			registration.participated_field_name = 'participated_' + str(registration.person.pk)
-			# add the key of the registered person to the string of keys
-			registration_keys += registration_key_delimiter + str(registration.person.pk)
-			# and set the delimiter
-			registration_key_delimiter = ','
+			event_registration_addregistration(request)
+		elif request.POST['action'] == 'editregistration':
+			event_registration_editregistration(request)
+	# build the form to edit registrations, along with an enriched list of existing registrations
+	registrations, registration_keys, editregistrationform = event_registration_registrations(event)
 	# set the context from the person based on person id
 	context = build_context({
 				'personsearchform' : personsearchform,

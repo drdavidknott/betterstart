@@ -1008,16 +1008,16 @@ class AddPersonAndRegistrationForm(forms.Form):
 									widget=forms.Select())
 	registered = forms.BooleanField(
 									label = "Registered",
-									required = False,
-									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+									required = False,)
+									# widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	apologies = forms.BooleanField(
 									label = "Apologies",
-									required = False,
-									widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+									required = False,)
+									#widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	participated = forms.BooleanField(
 										label = "Participated",
-										required = False,
-										widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+										required = False,)
+										#widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# initialise first name and last name
@@ -1053,9 +1053,9 @@ class AddPersonAndRegistrationForm(forms.Form):
 										Column('role_type',css_class='form-group col-md-3 mbt-0'),		
 										),
 									Row(
-										Column('participated',css_class='form-group col-md-4 mbt-0'),	
-										Column('apologies',css_class='form-group col-md-4 mbt-0'),
-										Column('registered',css_class='form-group col-md-4 mbt-0'),		
+										Column('participated',css_class='form-group col-md-3 mbt-0'),	
+										Column('apologies',css_class='form-group col-md-3 mbt-0'),
+										Column('registered',css_class='form-group col-md-3 mbt-0'),		
 										),
 									Row(
 										Column(

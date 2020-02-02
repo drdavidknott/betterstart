@@ -11,6 +11,7 @@ steps:
 # get settings file
 - name: gcr.io/cloud-builders/gsutil
   args: ['cp', '${_BETTERSTART_ENV_SCRIPT}', 'setenv']
+  id: get_settings_file
 # decrypt environment variables
 - name: gcr.io/cloud-builders/gcloud
   args:
@@ -21,7 +22,7 @@ steps:
   - --location=global
   - --keyring=${_BETTERSTART_KEYRING}
   - --key=${_BETTERSTART_KEY}
-  id: decrypt_settings
+  id: decrypt_settings_file
 # prep for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'

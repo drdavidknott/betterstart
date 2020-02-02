@@ -123,6 +123,7 @@ class DownloadDataForm(forms.Form):
 	file_type_choices = (
 							('People','People'),
 							('Events','Events'),
+							('Event Summary','Event Summary'),
 							('Relationships','Relationships'),
 							('Registrations','Registrations'),
 							('Questions','Questions'),

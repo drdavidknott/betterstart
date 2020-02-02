@@ -255,6 +255,27 @@ class File_Boolean_Field(File_Field):
 		# set the value
 		self.value = (self.value in self.true_values)
 
+class File_Count_Field(File_Field):
+	# this class defines a field within a file that contains a count 
+	# over-ride the built in __init__ method to add additional values
+	def __init__(self, *args, **kwargs):
+		# pull the special fields out of the kwargs
+		self.filter = kwargs.pop('filter')
+		self.count_field = kwargs.pop('count_field')
+		# call the built in constructor
+		super(File_Count_Field, self).__init__(*args, **kwargs)
+
+	def set_download_value(self, object):
+		# get the queryset object
+		queryset = getattr(object,self.count_field)
+		# apply the filter if we have a filter, otherwise get all the objects
+		if self.filter:
+			queryset = queryset.filter(**self.filter)
+		else:
+			queryset = queryset.all()
+		# set the value to the number of objects in the queryset
+		self.value = queryset.count()
+
 class File_Handler():
 	# this class handles upload and download functions for a file, as well as validation
 	def __init__(self,*args,**kwargs):
@@ -262,6 +283,7 @@ class File_Handler():
 		self.results = []
 		self.fields = []
 		self.file_class = ''
+		self.upload = True
 		# check whether we have received a file class
 		if 'file_class' in kwargs.keys():
 			# set the file class
@@ -289,21 +311,26 @@ class File_Handler():
 	def handle_uploaded_file(self, file):
 		# clear the results
 		self.results = []
-		# read the file as a csv file
-		records = csv.DictReader(file)
-		# check that we have the fields we were expecting
-		if self.file_format_valid(records.fieldnames.copy()):
-			# go through the records
-			for record in records:
-				# do the simple validation
-				fields_valid = self.fields_valid(record)
-				# and the complex validation
-				complex_valid = self.complex_validation_valid(record)
-				# validate the record
-				if (fields_valid and complex_valid):
-					# create the record
-					self.create_record(record)
-		# print(self.results)
+		# check whhether we are allowed to upload this file
+		if self.upload:
+			# read the file as a csv file
+			records = csv.DictReader(file)
+			# check that we have the fields we were expecting
+			if self.file_format_valid(records.fieldnames.copy()):
+				# go through the records
+				for record in records:
+					# do the simple validation
+					fields_valid = self.fields_valid(record)
+					# and the complex validation
+					complex_valid = self.complex_validation_valid(record)
+					# validate the record
+					if (fields_valid and complex_valid):
+						# create the record
+						self.create_record(record)
+			# print(self.results)
+		else:
+			# set the message to say that upload is not allowed
+			self.results.append('This file type cannot be uploaded.')
 
 	# provide records for download
 	def handle_download(self):
@@ -1708,3 +1735,50 @@ class Activities_File_Handler(File_Handler):
 		return str(record['first_name']) + ' ' + str(record['last_name']) \
 					+ ' (' + str(record['age_status']) + ')' \
 					+ ', ' + str(record['activity_type']) + ' on ' + str(record['date'])
+
+class Event_Summary_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Event_Summary_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Event
+		# set the flag to indicate that this file type is for downloads only
+		self.upload = False
+		# set the file fields
+		self.name = File_Field(name='name')
+		self.location = File_Field(name='location')
+		self.date = File_Datetime_Field(
+										name='date',
+										datetime_format='%d/%m/%Y',
+										)
+		self.registered = File_Count_Field(
+											name='registered',
+											count_field='event_registration_set',
+											filter={ 'registered' : True }
+											)
+		self.apologies = File_Count_Field(
+											name='apologies',
+											count_field='event_registration_set',
+											filter={ 'apologies' : True }
+											)
+		self.participated = File_Count_Field(
+											name='registered',
+											count_field='event_registration_set',
+											filter={ 'participated' : True }
+											)
+		self.total = File_Count_Field(
+											name='total',
+											count_field='event_registration_set',
+											filter=None
+											)
+		# and a list of the fields
+		self.fields = [
+						'name',
+						'date',
+						'location',
+						'registered',
+						'apologies',
+						'participated',
+						'total'
+						]

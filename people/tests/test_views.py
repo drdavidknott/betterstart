@@ -8687,6 +8687,105 @@ class DownloadRegistrationsDataViewTest(TestCase):
 		self.assertContains(response,'test_adult_1,test_adult_1,Adult,test_event_0,01/01/2019,True,False,True,test_role_type')
 		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_event_0,01/01/2019,True,True,False,test_role_type')
 
+class DownloadEventSummaryDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and relationship data
+		set_up_relationship_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		# and a child
+		set_up_test_people('test_child_',number=1,age_status='Child under four')
+		# and event base data
+		set_up_event_base_data()
+		# and an event
+		set_up_test_events(
+							'test_event_',
+							number=1,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/downloaddata')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/downloaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_download_registrations(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Event Summary',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_event_0,01/01/2019,Test location,2,2,2,3')
+
 class UploadDownloadAnswersViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

@@ -14,8 +14,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm
-from .utilities import get_page_list, make_banner, extract_id, build_page_list
-from .utilities import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard, Page, Chart
+from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
+from .dashboards import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from django.contrib import messages
 from django.urls import reverse, resolve
 import datetime
@@ -3046,7 +3046,7 @@ def activities(request,person_id=0):
 
 @login_required
 @user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
-def dashboard(request):
+def alpha_graph_dashboard(request):
 	# create the list of charts
 	charts = []
 	# create the chart
@@ -3074,3 +3074,314 @@ def dashboard(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(dashboard_template.render(context=context, request=request))
+
+@login_required
+def dashboard(request):
+	# get the templates
+	index_template = loader.get_template('people/index.html')
+	# get the exceptions
+	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
+	# get parents with overdue children
+	parents_with_overdue_children = get_parents_with_overdue_children()
+	# create a dashboard
+	dashboard = Dashboard(margin=0)
+	# create the roles column for the dashboard
+	roles_dashboard_column = Dashboard_Column(width=4)
+	# add the role types dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'ROLES',
+															title_icon = 'glyphicon-user',
+															column_names = ['counts'],
+															rows = get_role_types_with_people_counts(),
+															row_name = 'role_type_name',
+															row_values = ['count'],
+															row_url = 'role_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the trained roles dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'TRAINED ROLES',
+															title_icon = 'glyphicon-user',
+															column_names = ['counts'],
+															rows = get_trained_role_types_with_people_counts(),
+															row_name = 'trained_role_name',
+															row_values = ['count'],
+															row_url = 'trained_role',
+															row_parameter_name = 'trained_role_key',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the age status dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'ADULTS AND CHILDREN',
+															title_icon = 'glyphicon-user',
+															column_names = ['counts'],
+															rows = get_age_statuses_with_counts(),
+															row_name = 'status',
+															row_values = ['count'],
+															row_url = 'age_status',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the ABSS dashboard panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'ABSS',
+															title_icon = 'glyphicon-user',
+															column_names = ['counts'],
+															rows = get_ABSS_types_with_counts(),
+															row_name = 'name',
+															row_values = ['count'],
+															row_url = 'ABSS_type',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# create the exceptions dashboard panel
+	exceptions_dashboard_panel = Dashboard_Panel(
+														title = 'EXCEPTIONS: PARENTS',
+														title_icon = 'glyphicon-warning-sign',
+														column_names = ['counts'],
+														label_width = 8,
+														column_width = 3,
+														right_margin = 1)
+	# add the parents with no children row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Parents with no children',
+																values = [len(parents_with_no_children)],
+																url = 'parents_with_no_children',
+																parameter = 1
+																)
+											)
+	# add the parents with no children under four row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Parents with no children under four',
+																values = [len(parents_with_no_children_under_four)],
+																url = 'parents_without_children_under_four',
+																parameter = 1
+																)
+											)
+	# add the overdue parents row to the panel
+	exceptions_dashboard_panel.rows.append(
+											Dashboard_Panel_Row(
+																label = 'Parents with overdue children',
+																values = [len(parents_with_overdue_children)],
+																url = 'parents_with_overdue_children',
+																parameter = 1
+																)
+											)
+	# append the parent exceptions panel to the column
+	roles_dashboard_column.panels.append(exceptions_dashboard_panel)
+	# add the children age exceptions panel
+	roles_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EXCEPTIONS: AGE STATUS',
+															title_icon = 'glyphicon-warning-sign',
+															title_url = '',
+															column_names = ['counts'],
+															rows = get_age_status_exceptions(),
+															row_name = 'status',
+															row_values = ['count'],
+															row_url = 'age_exceptions',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# append the roles column to the dashboard
+	dashboard.columns.append(roles_dashboard_column)
+	# create the events column for the dashboard
+	events_dashboard_column = Dashboard_Column(width=4)
+	# get the event dashboard dates
+	event_dashboard_dates = get_dashboard_dates()
+	# set variables for convenience
+	first_day_of_this_month = event_dashboard_dates['first_day_of_this_month']
+	first_day_of_last_month = event_dashboard_dates['first_day_of_last_month']
+	last_day_of_last_month = event_dashboard_dates['last_day_of_last_month']
+	first_day_of_this_year = event_dashboard_dates['first_day_of_this_year']
+	# add the this month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: ' + \
+																	first_day_of_this_month.strftime('%B'),
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_this_month',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(
+																					date_from=first_day_of_this_month
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category_this_month',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the last month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: ' + \
+																	first_day_of_last_month.strftime('%B'),
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_last_month',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(
+																					date_from=first_day_of_last_month,
+																					date_to=last_day_of_last_month
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category_last_month',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the last month event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: Since ' + \
+																	first_day_of_this_year.strftime('%d %B %Y'),
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_this_year',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(
+																					date_from=first_day_of_this_year
+																								),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category_this_year',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the all time event panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS: ALL TIME',
+															title_icon = 'glyphicon-calendar',
+															title_url = 'events_all_time',
+															column_names = ['Registered','Participated'],
+															show_column_names = True,
+															rows = get_event_categories_with_counts(),
+															row_name = 'name',
+															row_values = ['registered_count','participated_count'],
+															row_url = 'event_category',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 5,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# append the events column to the dashboard
+	dashboard.columns.append(events_dashboard_column)
+	# create the geo column for the dashboard
+	geo_dashboard_column = Dashboard_Column(width=4)
+	# add the events in wards panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS IN WARD',
+															title_icon = 'glyphicon-map-marker',
+															column_names = ['counts'],
+															rows = get_wards_with_event_counts(),
+															row_name = 'ward_name',
+															row_values = ['count'],
+															row_url = 'event_ward',
+															row_parameter_name = 'pk',
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the events in areas panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'EVENTS IN AREA',
+															title_icon = 'glyphicon-map-marker',
+															column_names = ['counts'],
+															rows = get_areas_with_event_counts(),
+															row_name = 'area_name',
+															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the people in wards panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'PEOPLE IN WARD',
+															title_icon = 'glyphicon-map-marker',
+															column_names = ['counts'],
+															rows = get_wards_with_people_counts(),
+															row_name = 'ward_name',
+															row_url = 'ward',
+															row_parameter_name='pk',
+															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# add the people in areas panel
+	geo_dashboard_column.panels.append(
+											Dashboard_Panel(
+															title = 'PEOPLE IN AREA',
+															title_icon = 'glyphicon-map-marker',
+															column_names = ['counts'],
+															rows = get_areas_with_people_counts(),
+															row_name = 'area_name',
+															row_values = ['count'],
+															totals = True,
+															label_width = 8,
+															column_width = 3,
+															right_margin = 1,
+															)
+											)
+	# append the geo column to the dashboard
+	dashboard.columns.append(geo_dashboard_column)
+	# set the context
+	context = build_context({
+								'dashboard' : dashboard,
+								})
+	# return the HttpResponse
+	return HttpResponse(index_template.render(context=context, request=request))
+
+

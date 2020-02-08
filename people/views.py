@@ -3221,6 +3221,17 @@ def dashboard(request):
 	first_day_of_last_month = event_dashboard_dates['first_day_of_last_month']
 	last_day_of_last_month = event_dashboard_dates['last_day_of_last_month']
 	first_day_of_this_year = event_dashboard_dates['first_day_of_this_year']
+	# add the event types dashboard panel
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															spec_name = 'Events last year'
+															)
+											)
+	events_dashboard_column.panels.append(
+											Dashboard_Panel(
+															spec_name = 'Events last month'
+															)
+											)
 	# add the this month event panel
 	events_dashboard_column.panels.append(
 											Dashboard_Panel(

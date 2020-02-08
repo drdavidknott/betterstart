@@ -5,6 +5,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, \
 					Dashboard_Panel_Spec, Dashboard_Column_Spec, Dashboard_Column_Inclusion, \
 					Filter_Spec
+import datetime
 
 def class_from_str(class_str):
 	# this function takes the name of a class in a string and returns the class, if it exists
@@ -150,12 +151,66 @@ class Dashboard_Panel:
 		filter_dict = {}
 		# apply filters to a queryset and return the result
 		for filter in filters:
-			# create a dictionary
-			filter_dict[filter.term] = filter.value
+			# set the value depending on the type
+			if filter.filter_type == 'boolean':
+				filter_dict[filter.term] = filter.boolean_value
+			elif filter.filter_type == 'string':
+				filter_dict[filter.term] = filter.string_value
+			elif filter.filter_type == 'period':
+				filter_dict = self.add_period_filters(filter, filter_dict)
 			# apply the filter
 			queryset = queryset.filter(**filter_dict)
 		# return the result
 		return queryset
+
+	def add_period_filters(self,filter,filter_dict):
+		# get the start and end of the period, based on the type of period
+		period_start, period_end = self.get_period_dates(filter.period)
+		# set the terms based on the supplied term
+		start_term = filter.term + '__gte'
+		end_term = filter.term + '__lte'
+		# add the start filter
+		filter_dict[start_term] = period_start
+		filter_dict[end_term] = period_end
+		# return the results
+		return filter_dict
+
+	def get_period_dates(self,period):
+		# initialise the variables
+		period_start = False
+		period_end = False
+		today = datetime.date.today()
+		# build a set of useful dates
+		this_month_start = today.replace(day=1)
+		last_month_end = this_month_start - datetime.timedelta(days=1)
+		last_month_start = last_month_end.replace(day=1)
+		this_project_year_start = today.replace(day=1,month=4)
+		# check if we have jumped into the future
+		if this_project_year_start > today:
+			this_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
+		last_project_year_end = this_project_year_start - datetime.timedelta(days=1)
+		last_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
+		this_calendar_year_start = today.replace(day=1,month=1)
+		last_calendar_year_start = today.replace(day=1,month=1,year=this_calendar_year_start.year-1)
+		last_calendar_year_end = this_calendar_year_start - datetime.timedelta(days=1)
+		# set the dates dependent on the period type we are looking for
+		if period == 'this_month':
+			period_start = this_month_start
+		elif period == 'last_month':
+			period_start = last_month_start
+			period_end = last_month_end
+		elif period == 'this_project_year':
+			period_start = this_project_year_start
+		elif period == 'last_project_year':
+			period_start = last_project_year_start
+			period_end = last_project_year_end
+		elif period == 'this_calendar_year':
+			period_start = this_calendar_year_start
+		elif period == 'last_calendar_year':
+			period_start = last_calendar_year_start
+			period_end = last_calendar_year_end
+		# return the results
+		return period_start, period_end
 
 	def set_panel_error(self, error='ERROR'):
 		# set up the panel to show that we have failed to load it

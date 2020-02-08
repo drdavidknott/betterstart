@@ -755,10 +755,43 @@ class Activity(DataAccessMixin,models.Model):
 # Filter_Spec model: used to define filter terms for a dashboard model
 class Filter_Spec(DataAccessMixin,models.Model):
 	term = models.CharField(max_length=50)
-	value = models.CharField(max_length=50)
-	# define the function that will return the event name, date and time as the object reference
+	filter_type = models.CharField(
+									max_length=50,
+									choices = [
+												('string','string'),
+												('boolean','boolean'),
+												('period','period')
+												],
+									default='',
+									blank=True
+									)
+	string_value = models.CharField(max_length=50, default='', blank=True)
+	boolean_value = models.BooleanField(default=False)
+	period = models.CharField(
+								max_length=50,
+								choices = [
+											('','no period'),
+											('this_month','this month'),
+											('last_month','last_month'),
+											('this_project_year','this project year'),
+											('last_project_year','last project year'),
+											('this_calendar_year','this calendar year'),
+											('last_calendar_year','last_calendar_year')
+											],
+								default='',
+								blank=True
+								)
+	# define the function that will return a description of the filter
 	def __str__(self):
-		return self.term + ' = '  + self.value
+		# build the description depending on the type of filter
+		if self.filter_type == 'boolean':
+			filter_str = self.term + ' = '  + str(self.boolean_value)
+		elif self.filter_type == 'period':
+			filter_str = self.term + ' within ' + self.period
+		else: 
+			filter_str = self.term + ' = '  + self.string_value
+		#return the value
+		return filter_str
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'filter specs'
@@ -769,21 +802,6 @@ class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	title = models.CharField(max_length=50, default='', blank=True)
 	count_field = models.CharField(max_length=50)
-	date_field = models.CharField(max_length=50, default='', blank=True)
-	date_filter = models.CharField(
-									max_length=50,
-									choices = [
-												('','no date filter'),
-												('this_month','this month'),
-												('last_month','last_month'),
-												('this_project_year','this project year'),
-												('last_project_year','last project year'),
-												('this_calendar_year','this calendar year'),
-												('last_calendar_year','last_calendar_year')
-												],
-									default='',
-									blank=True
-									)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
@@ -805,26 +823,11 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 	right_margin = models.IntegerField(default=0)
 	row_url = models.CharField(max_length=50, default='', blank=True)
 	row_parameter_name = models.CharField(max_length=50, default='', blank=True)
-	row_name_field = models.CharField(max_length=50, default='', blank=True)
+	row_name_field = models.CharField(max_length=50)
 	sort_field = models.CharField(max_length=50, default='', blank=True)
 	totals = models.BooleanField(default=False)
 	display_zeroes = models.BooleanField(default=False)
 	model = models.CharField(max_length=50)
-	date_filter = models.CharField(
-									max_length=50,
-									choices = [
-												('','no date filter'),
-												('this_month','this month'),
-												('last_month','last_month'),
-												('this_project_year','this project year'),
-												('last_project_year','last project year'),
-												('this_calendar_year','this calendar year'),
-												('last_calendar_year','last_calendar_year')
-												],
-									default='',
-									blank=True
-									)
-	date_field = models.CharField(max_length=50, blank=True)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Dashboard_Column_Inclusion')
 	# define the function that will return the event name, date and time as the object reference

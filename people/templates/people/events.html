@@ -25,7 +25,8 @@
  		<div class="col-md-12">
  			<h3>
 	 			<span class="glyphicon glyphicon-calendar"></span><span class="glyphicon glyphicon-search"></span>
-	 			Search for Events:{% if number_of_events %} ({{ number_of_events }} found){% endif %}
+	 			Search for Events:
+	 				{% if number_of_events or search_attempted %} ({{ number_of_events }} found){% endif %}
  			<h3>
 		</div>
 	</div>

@@ -1638,6 +1638,7 @@ def people(request):
 	# and zero search results
 	number_of_people = 0
 	this_page = 0
+	search_attempted = False
 	# and blank search terms
 	names = ''
 	role_type = 0
@@ -1656,6 +1657,8 @@ def people(request):
 		personsearchform = PersonSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
+			# set the flag to show that a search was attempted
+			search_attempted = True
 			# validate the form
 			personsearchform.is_valid()
 			# get the names
@@ -1711,7 +1714,8 @@ def people(request):
 				'ward' : ward,
 				'include_people' : include_people,
 				'search_error' : search_error,
-				'number_of_people' : number_of_people
+				'number_of_people' : number_of_people,
+				'search_attempted' : search_attempted
 				})
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
@@ -2427,6 +2431,7 @@ def events(request):
 	date_from = 0
 	date_to = 0
 	ward = 0
+	search_attempted = False
 	# set a blank search_error
 	search_error = ''
 	# and a zero number of results
@@ -2439,6 +2444,8 @@ def events(request):
 		eventsearchform = EventSearchForm(request.POST)
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
+			# set the flag to show that a search was attempted
+			search_attempted = True
 			# validate the form
 			if eventsearchform.is_valid():
 				# get the values
@@ -2497,7 +2504,8 @@ def events(request):
 				'search_error' : search_error,
 				'default_date' : datetime.date.today().strftime('%d/%m/%Y'),
 				'number_of_events' : number_of_events,
-				'this_page' : page
+				'this_page' : page,
+				'search_attempted' : search_attempted
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))
@@ -2792,6 +2800,7 @@ def event_registration(request,event_id=0):
 	search_results = []
 	search_keys = ''
 	search_error = ''
+	search_attempted = False
 	# initalise forms
 	addregistrationform = ''
 	addpersonandregistrationform = ''
@@ -2805,6 +2814,7 @@ def event_registration(request,event_id=0):
 		if request.POST['action'] == 'search':
 			personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys = \
 			event_registration_search(event,request)
+			search_attempted = True
 		elif request.POST['action'] == 'addregistration':
 			event_registration_addregistration(event,request)
 		elif request.POST['action'] == 'editregistration':
@@ -2825,7 +2835,8 @@ def event_registration(request,event_id=0):
 				'search_number' : len(search_results),
 				'event' : event,
 				'registrations' : registrations,
-				'registration_keys' : registration_keys
+				'registration_keys' : registration_keys,
+				'search_attempted' : search_attempted
 				})
 	# return the response
 	return HttpResponse(event_registration_template.render(context=context, request=request))

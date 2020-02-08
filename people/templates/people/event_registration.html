@@ -30,7 +30,8 @@
 	 		<div>
 	 			<h4>
 		 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
-		 			Search for People:{% if search_results %} ({{ search_results|length }} found){% endif %}
+		 			Search for People:
+		 				{% if search_results or search_attempted %} ({{ search_results|length }} found){% endif %}
 	 			<h4>
 	 		</div>
 		</div>

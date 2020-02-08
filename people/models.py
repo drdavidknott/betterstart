@@ -752,3 +752,99 @@ class Activity(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'activities'
 
+# Filter_Spec model: used to define filter terms for a dashboard model
+class Filter_Spec(DataAccessMixin,models.Model):
+	term = models.CharField(max_length=50)
+	value = models.CharField(max_length=50)
+	# define the function that will return the event name, date and time as the object reference
+	def __str__(self):
+		return self.term + ' = '  + self.value
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'filter specs'
+		ordering = ['term']
+
+# Dashboard_Column model: used to define a dashboard column
+class Dashboard_Column_Spec(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	title = models.CharField(max_length=50, default='', blank=True)
+	count_field = models.CharField(max_length=50)
+	date_field = models.CharField(max_length=50, default='', blank=True)
+	date_filter = models.CharField(
+									max_length=50,
+									choices = [
+												('','no date filter'),
+												('this_month','this month'),
+												('last_month','last_month'),
+												('this_project_year','this project year'),
+												('last_project_year','last project year'),
+												('this_calendar_year','this calendar year'),
+												('last_calendar_year','last_calendar_year')
+												],
+									default='',
+									blank=True
+									)
+	filters = models.ManyToManyField(Filter_Spec, blank=True)
+	# define the function that will return the event name, date and time as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard column specs'
+		ordering = ['title']
+
+# Dashboard_Panel_Spec model: used to define a dashboard panel
+class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	title = models.CharField(max_length=50)
+	title_url = models.CharField(max_length=50, default='', blank=True)
+	title_icon = models.CharField(max_length=50, default='', blank=True)
+	show_column_names = models.BooleanField(default=False)
+	label_width = models.IntegerField(default=6)
+	column_width = models.IntegerField(default=6)
+	right_margin = models.IntegerField(default=0)
+	row_url = models.CharField(max_length=50, default='', blank=True)
+	row_parameter_name = models.CharField(max_length=50, default='', blank=True)
+	row_name_field = models.CharField(max_length=50, default='', blank=True)
+	sort_field = models.CharField(max_length=50, default='', blank=True)
+	totals = models.BooleanField(default=False)
+	display_zeroes = models.BooleanField(default=False)
+	model = models.CharField(max_length=50)
+	date_filter = models.CharField(
+									max_length=50,
+									choices = [
+												('','no date filter'),
+												('this_month','this month'),
+												('last_month','last_month'),
+												('this_project_year','this project year'),
+												('last_project_year','last project year'),
+												('this_calendar_year','this calendar year'),
+												('last_calendar_year','last_calendar_year')
+												],
+									default='',
+									blank=True
+									)
+	date_field = models.CharField(max_length=50, blank=True)
+	filters = models.ManyToManyField(Filter_Spec, blank=True)
+	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Dashboard_Column_Inclusion')
+	# define the function that will return the event name, date and time as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard panel specs'
+		ordering = ['name']
+
+# Dashboard_Column model: used to define a dashboard column
+class Dashboard_Column_Inclusion(DataAccessMixin,models.Model):
+	order = models.IntegerField(default=0)
+	dashboard_panel_spec = models.ForeignKey(Dashboard_Panel_Spec, on_delete=models.CASCADE)
+	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
+	# define the function that will return the event name, date and time as the object reference
+	def __str__(self):
+		return self.dashboard_column_spec.name + ' in ' + self.dashboard_panel_spec.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard column inclusions'
+
+

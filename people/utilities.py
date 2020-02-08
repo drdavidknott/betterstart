@@ -74,7 +74,6 @@ def build_page_list(objects, page_length, attribute, length=False, separator='to
 	# return the result
 	return page_list
 
-
 def make_banner(request, banner_text):
 	# load the banner template
 	banner_template = loader.get_template('people/banner.html')

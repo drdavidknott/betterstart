@@ -2,14 +2,20 @@ import collections
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity
+					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, \
+					Dashboard_Panel_Spec, Dashboard_Column_Spec, Dashboard_Column_Inclusion, \
+					Filter_Spec
+
+def class_from_str(class_str):
+	# this function takes the name of a class in a string and returns the class, if it exists
+	return globals()[class_str] if class_str in globals() else False
 
 class Dashboard_Panel:
 	# this class contains the data and structure for a dashboard panel
 	def __init__(
 					self, 
-					title,
-					column_names,
+					title='',
+					column_names=False,
 					title_url=False,
 					title_icon=False,
 					show_column_names=False,
@@ -23,16 +29,16 @@ class Dashboard_Panel:
 					row_parameter_name=False,
 					totals=False,
 					display_zeroes=False,
-					record_name=False,
-					record=False
+					spec_name=False,
+					spec=False,
 					):
-		# if we got a record name or value, set the values from the record, otherwise use parameters
-		if record or record_name:
+		# if we got a spec name or value, set the values from the spec, otherwise use parameters
+		if spec or spec_name:
 			# set the values
-			self.record = record
-			self.record_name = record_name
+			self.spec = spec
+			self.spec_name = spec_name
 			# build the values
-			self.build_from_record()
+			self.build_panel_from_spec()
 		# otherwise use the parameters as supplied
 		else:
 			self.title = title
@@ -59,8 +65,111 @@ class Dashboard_Panel:
 											totals = totals
 											)
 
-	def build_from_record():
-		pass
+	def build_panel_from_spec(self):
+		# if we've been passed a spec name, try to get the corresponding spec record
+		if self.spec_name:
+			self.spec = Dashboard_Panel_Spec.try_to_get(name=self.spec_name)
+		# if we have no record, set the errors and return
+		if not self.spec:
+			self.set_panel_error('SPEC DOES NOT EXIST')
+			return
+		# set the panel level variables
+		self.title = self.spec.title
+		self.title_url = self.spec.title_url
+		self.title_icon = self.spec.title_icon
+		self.show_column_names = self.spec.show_column_names
+		self.label_width = self.spec.label_width
+		self.column_width = self.spec.column_width
+		self.right_margin = self.spec.right_margin
+		self.totals = self.spec.totals
+		self.display_zeroes = self.spec.display_zeroes
+		self.row_url = self.spec.row_url
+		self.row_parameter_name = self.spec.row_parameter_name
+		# try to set the model for the panel
+		self.model = class_from_str(self.spec.model)
+		# if that didn't work, set panel level errors and return
+		if not self.model:
+			self.set_panel_error('MODEL DOES NOT EXIST')
+			return
+		# now build the rows
+		self.build_rows_from_spec()
+
+	def build_rows_from_spec(self):
+		# get the columns
+		columns = self.spec.dashboard_column_inclusion_set.order_by('order')
+		# initialise variables
+		rows = []
+		row_values = []
+		self.column_names = []
+		self.rows = []
+		# build the row value and column titles
+		for column in columns:
+			row_values.append(column.dashboard_column_spec.name)
+			self.column_names.append(column.dashboard_column_spec.title)
+		# get the queryset
+		panel_queryset = self.get_panel_queryset()
+		# go through the rows, based on the model for the panel
+		for row in panel_queryset:
+			# for each row, go through each column
+			for column in columns:
+				# get the queryset
+				count_queryset = getattr(row,column.dashboard_column_spec.count_field).all()
+				# apply filters
+				count_queryset = self.apply_filters(count_queryset,column.dashboard_column_spec.filters.all())
+				# add the count field to the row object
+				setattr(
+						row,
+						column.dashboard_column_spec.name,
+						count_queryset.count()
+						)
+			# append the row to the list
+			rows.append(row)
+		# call the function to populate the rows from a list of objects
+		self.load_rows_from_objects(
+									rows=rows,
+									row_name=self.spec.row_name_field,
+									row_values=row_values,
+									row_url=self.row_url,
+									row_parameter_name=self.row_parameter_name,
+									totals = self.totals
+									)
+
+	def get_panel_queryset(self):
+		# get the queryset used to populate the panel
+		panel_queryset = self.model.objects.all()
+		# order it if it needs ordering
+		if self.spec.sort_field:
+			panel_queryset = panel_queryset.order_by(self.spec.sort_field)
+		# and filter it if it needs filtering
+		panel_queryset = self.apply_filters(panel_queryset,self.spec.filters.all())
+		# return the results
+		return panel_queryset
+
+	def apply_filters(self,queryset,filters):
+		# set an empty dict
+		filter_dict = {}
+		# apply filters to a queryset and return the result
+		for filter in filters:
+			# create a dictionary
+			filter_dict[filter.term] = filter.value
+			# apply the filter
+			queryset = queryset.filter(**filter_dict)
+		# return the result
+		return queryset
+
+	def set_panel_error(self, error='ERROR'):
+		# set up the panel to show that we have failed to load it
+		self.title = error
+		# initialise variables to help display the error
+		self.rows = []
+		self.totals = False
+		# create a single row object
+		self.rows.append(Dashboard_Panel_Row(
+												label = error,
+												values = [error],
+												url = False,
+												parameter = 0
+												))
 
 	def load_rows_from_objects(
 								self,

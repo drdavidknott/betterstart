@@ -3090,18 +3090,7 @@ def dashboard(request):
 	# add the role types dashboard panel
 	roles_dashboard_column.panels.append(
 											Dashboard_Panel(
-															title = 'ROLES',
-															title_icon = 'glyphicon-user',
-															column_names = ['counts'],
-															rows = get_role_types_with_people_counts(),
-															row_name = 'role_type_name',
-															row_values = ['count'],
-															row_url = 'role_type',
-															row_parameter_name = 'pk',
-															totals = True,
-															label_width = 8,
-															column_width = 3,
-															right_margin = 1,
+															spec_name = 'Role types with people counts'
 															)
 											)
 	# add the trained roles dashboard panel

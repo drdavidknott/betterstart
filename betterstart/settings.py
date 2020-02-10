@@ -81,7 +81,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'betterstart.wsgi.application'
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases

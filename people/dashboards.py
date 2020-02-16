@@ -319,7 +319,12 @@ class Dashboard_Panel_Row():
 
 class Dashboard_Column:
 	# this class contains the data and sructure for a dashboard column
-	def __init__(self, heading='', width=5, margins=1):
+	def __init__(
+					self,
+					heading='',
+					width=5,
+					margins=1
+					):
 		# set the attributes
 		self.heading = heading
 		self.width = width
@@ -356,6 +361,13 @@ class Dashboard:
 		if not self.spec:
 			set_dashboard_error('NO DASHBOARD SPEC')
 			return
+		# go through the columns
+		for column_spec in spec.dashboard_column_inclusion_set.all().order_by('order'):
+			# create the column and append it to the dashboard
+			column = Dashboard_Column(spec=column_spec.dashboard_column_spec)
+			self.columns.append(
+								Dashboard_Column
+								)
 
 	def set_dashboard_error(self, error='ERROR'):
 		# create a panel row to show the error

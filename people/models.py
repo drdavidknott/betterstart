@@ -854,6 +854,7 @@ class Dashboard_Panel_Column_Inclusion(DataAccessMixin,models.Model):
 class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	width = models.IntegerField(default=4)
+	margins = models.IntegerField(default=1)
 	panels = models.ManyToManyField(Dashboard_Panel_Spec, through='Dashboard_Panel_Inclusion')
 	# define the function that will return the name
 	def __str__(self):

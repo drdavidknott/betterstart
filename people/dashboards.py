@@ -406,6 +406,9 @@ class Dashboard:
 			# create the column and append it to the dashboard
 			column = Dashboard_Column(spec=column_spec.dashboard_column_spec)
 			self.columns.append(column)
+		# set the title and margin from the spec
+		self.title = self.spec.title
+		self.margin = self.spec.margin
 
 	def set_dashboard_error(self, error='ERROR'):
 		# create a panel row to show the error

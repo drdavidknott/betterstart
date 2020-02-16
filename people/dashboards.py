@@ -3,7 +3,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, \
-					Dashboard_Panel_Spec, Dashboard_Column_Spec, Dashboard_Column_Inclusion, \
+					Dashboard_Panel_Spec, Dashboard_Panel_Column_Spec, Dashboard_Panel_Column_Inclusion, \
 					Filter_Spec
 import datetime
 
@@ -97,7 +97,7 @@ class Dashboard_Panel:
 
 	def build_rows_from_spec(self):
 		# get the columns
-		columns = self.spec.dashboard_column_inclusion_set.order_by('order')
+		columns = self.spec.dashboard_panel_column_inclusion_set.order_by('order')
 		# initialise variables
 		rows = []
 		row_values = []
@@ -105,8 +105,8 @@ class Dashboard_Panel:
 		self.rows = []
 		# build the row value and column titles
 		for column in columns:
-			row_values.append(column.dashboard_column_spec.name)
-			self.column_names.append(column.dashboard_column_spec.title)
+			row_values.append(column.dashboard_panel_column_spec.name)
+			self.column_names.append(column.dashboard_panel_column_spec.title)
 		# get the queryset
 		panel_queryset = self.get_panel_queryset()
 		# go through the rows, based on the model for the panel
@@ -114,13 +114,13 @@ class Dashboard_Panel:
 			# for each row, go through each column
 			for column in columns:
 				# get the queryset
-				count_queryset = getattr(row,column.dashboard_column_spec.count_field).all()
+				count_queryset = getattr(row,column.dashboard_panel_column_spec.count_field).all()
 				# apply filters
-				count_queryset = self.apply_filters(count_queryset,column.dashboard_column_spec.filters.all())
+				count_queryset = self.apply_filters(count_queryset,column.dashboard_panel_column_spec.filters.all())
 				# add the count field to the row object
 				setattr(
 						row,
-						column.dashboard_column_spec.name,
+						column.dashboard_panel_column_spec.name,
 						count_queryset.count()
 						)
 			# append the row to the list

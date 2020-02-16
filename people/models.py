@@ -798,7 +798,7 @@ class Filter_Spec(DataAccessMixin,models.Model):
 		ordering = ['term']
 
 # Dashboard_Column model: used to define a dashboard column
-class Dashboard_Column_Spec(DataAccessMixin,models.Model):
+class Dashboard_Panel_Column_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	title = models.CharField(max_length=50, default='', blank=True)
 	count_field = models.CharField(max_length=50)
@@ -808,7 +808,7 @@ class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard column specs'
+		verbose_name_plural = 'dashboard panel column specs'
 		ordering = ['title']
 
 # Dashboard_Panel_Spec model: used to define a dashboard panel
@@ -829,7 +829,7 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 	display_zeroes = models.BooleanField(default=False)
 	model = models.CharField(max_length=50)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
-	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Dashboard_Column_Inclusion')
+	columns = models.ManyToManyField(Dashboard_Panel_Column_Spec, through='Dashboard_Panel_Column_Inclusion')
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name
@@ -839,15 +839,15 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 		ordering = ['name']
 
 # Dashboard_Column model: used to define a dashboard column
-class Dashboard_Column_Inclusion(DataAccessMixin,models.Model):
+class Dashboard_Panel_Column_Inclusion(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	dashboard_panel_spec = models.ForeignKey(Dashboard_Panel_Spec, on_delete=models.CASCADE)
-	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
+	dashboard_panel_column_spec = models.ForeignKey(Dashboard_Panel_Column_Spec, on_delete=models.CASCADE)
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
-		return self.dashboard_column_spec.name + ' in ' + self.dashboard_panel_spec.name
+		return self.dashboard_panel_column_spec.name + ' in ' + self.dashboard_panel_spec.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard column inclusions'
+		verbose_name_plural = 'dashboard panel column inclusions'
 
 

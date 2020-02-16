@@ -353,6 +353,10 @@ class Dashboard_Column:
 			# create the panel and append it to the column
 			panel = Dashboard_Panel(spec=panel_spec.dashboard_panel_spec)
 			self.panels.append(panel)
+		# set the layout value from the spec
+		self.width = self.spec.width
+		self.heading = self.spec.heading
+		self.margins = self.spec.margins
 
 	def set_column_error(self, error='ERROR'):
 		# create a panel row to show the error

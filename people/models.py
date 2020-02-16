@@ -803,7 +803,7 @@ class Dashboard_Panel_Column_Spec(DataAccessMixin,models.Model):
 	title = models.CharField(max_length=50, default='', blank=True)
 	count_field = models.CharField(max_length=50)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
-	# define the function that will return the event name, date and time as the object reference
+	# define the function that will return the name
 	def __str__(self):
 		return self.name
 	# set the name to be used in the admin console
@@ -843,11 +843,57 @@ class Dashboard_Panel_Column_Inclusion(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	dashboard_panel_spec = models.ForeignKey(Dashboard_Panel_Spec, on_delete=models.CASCADE)
 	dashboard_panel_column_spec = models.ForeignKey(Dashboard_Panel_Column_Spec, on_delete=models.CASCADE)
-	# define the function that will return the event name, date and time as the object reference
+	# define the function that will return the name
 	def __str__(self):
 		return self.dashboard_panel_column_spec.name + ' in ' + self.dashboard_panel_spec.name
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'dashboard panel column inclusions'
 
+# Dashboard_Column_Spec model: used to define a dashboard column
+class Dashboard_Column_Spec(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	panels = models.ManyToManyField(Dashboard_Panel_Spec, through='Dashboard_Panel_Inclusion')
+	# define the function that will return the name
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard column specs'
+		ordering = ['name']
 
+# Dashboard_Panel_Inclusion model: used to define the inclusion of a panel within a column
+class Dashboard_Panel_Inclusion(DataAccessMixin,models.Model):
+	order = models.IntegerField(default=0)
+	dashboard_panel_spec = models.ForeignKey(Dashboard_Panel_Spec, on_delete=models.CASCADE)
+	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
+	# define the function that will return the name
+	def __str__(self):
+		return self.dashboard_panel_spec.name + ' in ' + self.dashboard_column_spec.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard panel inclusions'
+
+# Dashboard_Spec model: used to define a dashboard
+class Dashboard_Spec(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Dashboard_Column_Inclusion')
+	# define the function that will return the name
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard column specs'
+		ordering = ['name']
+
+# Dashboard_Column_Inclusion model: used to define the inclusion of a column within a dashboard
+class Dashboard_Column_Inclusion(DataAccessMixin,models.Model):
+	order = models.IntegerField(default=0)
+	dashboard_spec = models.ForeignKey(Dashboard_Spec, on_delete=models.CASCADE)
+	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
+	# define the function that will return the name
+	def __str__(self):
+		return self.dashboard_column_spec.name + ' in ' + self.dashboard_spec.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'dashboard column inclusions'

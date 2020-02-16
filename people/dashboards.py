@@ -4,7 +4,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, \
 					Dashboard_Panel_Spec, Dashboard_Panel_Column_Spec, Dashboard_Panel_Column_Inclusion, \
-					Filter_Spec
+					Filter_Spec, Dashboard_Column_Spec, Dashboard_Panel_Inclusion, Dashboard_Spec, \
+					Dashboard_Column_Inclusion
 import datetime
 
 def class_from_str(class_str):

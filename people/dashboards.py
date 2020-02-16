@@ -323,14 +323,54 @@ class Dashboard_Column:
 					self,
 					heading='',
 					width=5,
-					margins=1
+					margins=1,
+					spec = False,
+					spec_name = False
 					):
 		# set the attributes
 		self.heading = heading
 		self.width = width
 		self.margins = margins
+		self.spec = spec
+		self.spec_name = spec_name
 		# and an empty list of panels
 		self.panels = []
+		# build from spec if we have a spec
+		if self.spec or self.spec_name:
+			self.build_column_from_spec()
+
+	# function to build the column contents from a spec defined in the database
+	def build_column_from_spec(self):
+		# if we have a name, attempt to get the object
+		if self.spec_name:
+			self.spec = Dashboard_Column_Spec.try_to_get(name=self.spec_name)
+		# if we don't have a spec, build errors
+		if not self.spec:
+			self.set_column_error('NO COLUMN SPEC')
+			return
+		# go through the panels
+		for panel_spec in self.spec.dashboard_panel_inclusion_set.all().order_by('order'):
+			# create the panel and append it to the column
+			panel = Dashboard_Panel(spec=panel_spec.dashboard_panel_spec)
+			self.panels.append(panel)
+
+	def set_column_error(self, error='ERROR'):
+		# create a panel row to show the error
+		error_row = Dashboard_Panel_Row(
+										label=error,
+										values=[error]
+										)
+		# and a panel, with the row appended
+		error_panel = Dashboard_Panel(
+										title = error,
+										title_icon = 'glyphicon-warning-sign',
+										label_width = 6,
+										column_width = 5,
+										right_margin = 1,
+										)
+		error_panel.rows.append(error_row)
+		# and, finally, append the panel
+		self.panels.append(error_panel)
 
 class Dashboard:
 	# the class contains the data to be shown in the dashboard, as well as the dashboard structure
@@ -359,15 +399,13 @@ class Dashboard:
 			self.spec = Dashboard_Spec.try_to_get(name=self.spec_name)
 		# if we don't have a spec, build errors
 		if not self.spec:
-			set_dashboard_error('NO DASHBOARD SPEC')
+			self.set_dashboard_error('NO DASHBOARD SPEC')
 			return
 		# go through the columns
-		for column_spec in spec.dashboard_column_inclusion_set.all().order_by('order'):
+		for column_spec in self.spec.dashboard_column_inclusion_set.all().order_by('order'):
 			# create the column and append it to the dashboard
 			column = Dashboard_Column(spec=column_spec.dashboard_column_spec)
-			self.columns.append(
-								Dashboard_Column
-								)
+			self.columns.append(column)
 
 	def set_dashboard_error(self, error='ERROR'):
 		# create a panel row to show the error

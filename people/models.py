@@ -886,7 +886,7 @@ class Dashboard_Spec(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard column specs'
+		verbose_name_plural = 'dashboard specs'
 		ordering = ['name']
 
 # Dashboard_Column_Inclusion model: used to define the inclusion of a column within a dashboard

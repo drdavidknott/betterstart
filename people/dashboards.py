@@ -329,9 +329,51 @@ class Dashboard_Column:
 
 class Dashboard:
 	# the class contains the data to be shown in the dashboard, as well as the dashboard structure
-	def __init__(self, title = '', margin=1):
+	def __init__(
+					self,
+					title = '',
+					margin=1,
+					spec = False,
+					spec_name = False
+					):
 		# set the attributes
 		self.title = title
 		self.margin = margin
+		self.spec = spec
+		self.spec_name = spec_name
 		# and an empty list of columns
 		self.columns = []
+		# build from spec if we have a spec
+		if self.spec or self.spec_name:
+			self.build_dashboard_from_spec()
+
+	# function to build the dashboard contents from a spec defined in the database
+	def build_dashboard_from_spec(self):
+		# if we have a name, attempt to get the object
+		if self.spec_name:
+			self.spec = Dashboard_Spec.try_to_get(name=self.spec_name)
+		# if we don't have a spec, build errors
+		if not self.spec:
+			set_dashboard_error('NO DASHBOARD SPEC')
+			return
+
+	def set_dashboard_error(self, error='ERROR'):
+		# create a panel row to show the error
+		error_row = Dashboard_Panel_Row(
+										label=error,
+										values=[error]
+										)
+		# and a panel, with the row appended
+		error_panel = Dashboard_Panel(
+										title = error,
+										title_icon = 'glyphicon-warning-sign',
+										label_width = 6,
+										column_width = 5,
+										right_margin = 1,
+										)
+		error_panel.rows.append(error_row)
+		# and a column with the row appended
+		error_column = Dashboard_Column(width=4)
+		error_column.panels.append(error_panel)
+		# and, finally, append the column
+		self.columns.append(error_column)

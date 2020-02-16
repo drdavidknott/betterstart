@@ -853,6 +853,7 @@ class Dashboard_Panel_Column_Inclusion(DataAccessMixin,models.Model):
 # Dashboard_Column_Spec model: used to define a dashboard column
 class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
+	width = models.IntegerField(default=4)
 	panels = models.ManyToManyField(Dashboard_Panel_Spec, through='Dashboard_Panel_Inclusion')
 	# define the function that will return the name
 	def __str__(self):
@@ -877,6 +878,7 @@ class Dashboard_Panel_Inclusion(DataAccessMixin,models.Model):
 # Dashboard_Spec model: used to define a dashboard
 class Dashboard_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
+	margin = models.IntegerField(default=1)
 	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Dashboard_Column_Inclusion')
 	# define the function that will return the name
 	def __str__(self):

@@ -7,6 +7,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Filter_Spec, Dashboard_Column_Spec, Dashboard_Panel_Inclusion, Dashboard_Spec, \
 					Dashboard_Column_Inclusion
 import datetime
+from .utilities import get_period_dates
 
 def class_from_str(class_str):
 	# this function takes the name of a class in a string and returns the class, if it exists
@@ -114,10 +115,19 @@ class Dashboard_Panel:
 		for row in panel_queryset:
 			# for each row, go through each column
 			for column in columns:
-				# get the queryset
-				count_queryset = getattr(row,column.dashboard_panel_column_spec.count_field).all()
+				# get the queryset depending on the type of query
+				if column.dashboard_panel_column_spec.query_type == 'query from one':
+					count_queryset = getattr(row,column.dashboard_panel_column_spec.count_field).all()
+				else:
+					# try to get the model type, then get all the object for the model
+					count_model = class_from_str(column.dashboard_panel_column_spec.count_model)
+					count_queryset = count_model.objects.all()
 				# apply filters
-				count_queryset = self.apply_filters(count_queryset,column.dashboard_panel_column_spec.filters.all())
+				count_queryset = self.apply_filters(
+													queryset=count_queryset,
+													filters=column.dashboard_panel_column_spec.filters.all(),
+													master_object=row
+													)
 				# add the count field to the row object
 				setattr(
 						row,
@@ -147,7 +157,7 @@ class Dashboard_Panel:
 		# return the results
 		return panel_queryset
 
-	def apply_filters(self,queryset,filters):
+	def apply_filters(self,queryset,filters,master_object=False):
 		# set an empty dict
 		filter_dict = {}
 		# apply filters to a queryset and return the result
@@ -159,6 +169,8 @@ class Dashboard_Panel:
 				filter_dict[filter.term] = filter.string_value
 			elif filter.filter_type == 'period':
 				filter_dict = self.add_period_filters(filter, filter_dict)
+			elif filter.filter_type == 'object':
+				filter_dict[filter.term] = master_object
 			# apply the filter
 			queryset = queryset.filter(**filter_dict)
 		# return the result
@@ -166,7 +178,7 @@ class Dashboard_Panel:
 
 	def add_period_filters(self,filter,filter_dict):
 		# get the start and end of the period, based on the type of period
-		period_start, period_end = self.get_period_dates(filter.period)
+		period_start, period_end = get_period_dates(filter.period)
 		# set the terms based on the supplied term
 		start_term = filter.term + '__gte'
 		end_term = filter.term + '__lte'
@@ -175,43 +187,6 @@ class Dashboard_Panel:
 		filter_dict[end_term] = period_end
 		# return the results
 		return filter_dict
-
-	def get_period_dates(self,period):
-		# initialise the variables
-		period_start = False
-		period_end = False
-		today = datetime.date.today()
-		# build a set of useful dates
-		this_month_start = today.replace(day=1)
-		last_month_end = this_month_start - datetime.timedelta(days=1)
-		last_month_start = last_month_end.replace(day=1)
-		this_project_year_start = today.replace(day=1,month=4)
-		# check if we have jumped into the future
-		if this_project_year_start > today:
-			this_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
-		last_project_year_end = this_project_year_start - datetime.timedelta(days=1)
-		last_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
-		this_calendar_year_start = today.replace(day=1,month=1)
-		last_calendar_year_start = today.replace(day=1,month=1,year=this_calendar_year_start.year-1)
-		last_calendar_year_end = this_calendar_year_start - datetime.timedelta(days=1)
-		# set the dates dependent on the period type we are looking for
-		if period == 'this_month':
-			period_start = this_month_start
-		elif period == 'last_month':
-			period_start = last_month_start
-			period_end = last_month_end
-		elif period == 'this_project_year':
-			period_start = this_project_year_start
-		elif period == 'last_project_year':
-			period_start = last_project_year_start
-			period_end = last_project_year_end
-		elif period == 'this_calendar_year':
-			period_start = this_calendar_year_start
-		elif period == 'last_calendar_year':
-			period_start = last_calendar_year_start
-			period_end = last_calendar_year_end
-		# return the results
-		return period_start, period_end
 
 	def set_panel_error(self, error='ERROR'):
 		# set up the panel to show that we have failed to load it

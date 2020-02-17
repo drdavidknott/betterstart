@@ -3,6 +3,7 @@
 from django.template import loader
 from django.shortcuts import render, HttpResponse, redirect
 import collections
+import datetime
 
 def get_page_list(objects, page_length):
 	# take a list of objects and a page length, and build a list of pages
@@ -103,6 +104,45 @@ def add_description(value,text,delimiter=', ',desc=''):
 		desc += text
 	# return the desc
 	return desc
+
+# function to take a string defining a period and return the start and end dates
+def get_period_dates(period):
+	# initialise the variables
+	period_start = False
+	period_end = False
+	today = datetime.date.today()
+	# build a set of useful dates
+	this_month_start = today.replace(day=1)
+	last_month_end = this_month_start - datetime.timedelta(days=1)
+	last_month_start = last_month_end.replace(day=1)
+	this_project_year_start = today.replace(day=1,month=4)
+	# check if we have jumped into the future
+	if this_project_year_start > today:
+		this_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
+	last_project_year_end = this_project_year_start - datetime.timedelta(days=1)
+	last_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
+	this_calendar_year_start = today.replace(day=1,month=1)
+	last_calendar_year_start = today.replace(day=1,month=1,year=this_calendar_year_start.year-1)
+	last_calendar_year_end = this_calendar_year_start - datetime.timedelta(days=1)
+	# set the dates dependent on the period type we are looking for
+	if period == 'this_month':
+		period_start = this_month_start
+	elif period == 'last_month':
+		period_start = last_month_start
+		period_end = last_month_end
+	elif period == 'this_project_year':
+		period_start = this_project_year_start
+	elif period == 'last_project_year':
+		period_start = last_project_year_start
+		period_end = last_project_year_end
+	elif period == 'this_calendar_year':
+		period_start = this_calendar_year_start
+	elif period == 'last_calendar_year':
+		period_start = last_calendar_year_start
+		period_end = last_calendar_year_end
+	# return the results
+	return period_start, period_end
+
 
 class Page:
 	# the class contains details of a page

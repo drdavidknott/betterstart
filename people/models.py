@@ -760,7 +760,8 @@ class Filter_Spec(DataAccessMixin,models.Model):
 									choices = [
 												('string','string'),
 												('boolean','boolean'),
-												('period','period')
+												('period','period'),
+												('object','object')
 												],
 									default='',
 									blank=True
@@ -788,6 +789,8 @@ class Filter_Spec(DataAccessMixin,models.Model):
 			filter_str = self.term + ' = '  + str(self.boolean_value)
 		elif self.filter_type == 'period':
 			filter_str = self.term + ' within ' + self.period
+		elif self.filter_type == 'object':
+			filter_str = self.term + ' = object'
 		else: 
 			filter_str = self.term + ' = '  + self.string_value
 		#return the value
@@ -801,7 +804,17 @@ class Filter_Spec(DataAccessMixin,models.Model):
 class Dashboard_Panel_Column_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	title = models.CharField(max_length=50, default='', blank=True)
-	count_field = models.CharField(max_length=50)
+	query_type = models.CharField(
+							max_length=50,
+							choices = [
+										('query from one','query from one'),
+										('query from many','query from many'),
+										],
+							default='query from one',
+							blank=True
+							)
+	count_field = models.CharField(max_length=50, default='', blank=True)
+	count_model = models.CharField(max_length=50, default='', blank=True)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	# define the function that will return the name
 	def __str__(self):

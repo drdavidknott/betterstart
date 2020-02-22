@@ -16,6 +16,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
 from .dashboards import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
+from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
 from django.urls import reverse, resolve
 import datetime
@@ -41,12 +42,12 @@ def index(request):
 	# get parents with overdue children
 	parents_with_overdue_children = get_parents_with_overdue_children()
 	# create a dashboard
-	dashboard = Dashboard(margin=0)
+	dashboard = Old_Dashboard(margin=0)
 	# create the roles column for the dashboard
-	roles_dashboard_column = Dashboard_Column(width=4)
+	roles_dashboard_column = Old_Dashboard_Column(width=4)
 	# add the role types dashboard panel
 	roles_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'ROLES',
 															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
@@ -63,7 +64,7 @@ def index(request):
 											)
 	# add the trained roles dashboard panel
 	roles_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'TRAINED ROLES',
 															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
@@ -80,7 +81,7 @@ def index(request):
 											)
 	# add the age status dashboard panel
 	roles_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'ADULTS AND CHILDREN',
 															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
@@ -97,7 +98,7 @@ def index(request):
 											)
 	# add the ABSS dashboard panel
 	roles_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'ABSS',
 															title_icon = 'glyphicon-user',
 															column_names = ['counts'],
@@ -113,7 +114,7 @@ def index(request):
 															)
 											)
 	# create the exceptions dashboard panel
-	exceptions_dashboard_panel = Dashboard_Panel(
+	exceptions_dashboard_panel = Old_Dashboard_Panel(
 														title = 'EXCEPTIONS: PARENTS',
 														title_icon = 'glyphicon-warning-sign',
 														column_names = ['counts'],
@@ -122,7 +123,7 @@ def index(request):
 														right_margin = 1)
 	# add the parents with no children row to the panel
 	exceptions_dashboard_panel.rows.append(
-											Dashboard_Panel_Row(
+											Old_Dashboard_Panel_Row(
 																label = 'Parents with no children',
 																values = [len(parents_with_no_children)],
 																url = 'parents_with_no_children',
@@ -131,7 +132,7 @@ def index(request):
 											)
 	# add the parents with no children under four row to the panel
 	exceptions_dashboard_panel.rows.append(
-											Dashboard_Panel_Row(
+											Old_Dashboard_Panel_Row(
 																label = 'Parents with no children under four',
 																values = [len(parents_with_no_children_under_four)],
 																url = 'parents_without_children_under_four',
@@ -140,7 +141,7 @@ def index(request):
 											)
 	# add the overdue parents row to the panel
 	exceptions_dashboard_panel.rows.append(
-											Dashboard_Panel_Row(
+											Old_Dashboard_Panel_Row(
 																label = 'Parents with overdue children',
 																values = [len(parents_with_overdue_children)],
 																url = 'parents_with_overdue_children',
@@ -151,7 +152,7 @@ def index(request):
 	roles_dashboard_column.panels.append(exceptions_dashboard_panel)
 	# add the children age exceptions panel
 	roles_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EXCEPTIONS: AGE STATUS',
 															title_icon = 'glyphicon-warning-sign',
 															title_url = '',
@@ -170,7 +171,7 @@ def index(request):
 	# append the roles column to the dashboard
 	dashboard.columns.append(roles_dashboard_column)
 	# create the events column for the dashboard
-	events_dashboard_column = Dashboard_Column(width=4)
+	events_dashboard_column = Old_Dashboard_Column(width=4)
 	# get the event dashboard dates
 	event_dashboard_dates = get_dashboard_dates()
 	# set variables for convenience
@@ -180,7 +181,7 @@ def index(request):
 	first_day_of_this_year = event_dashboard_dates['first_day_of_this_year']
 	# add the this month event panel
 	events_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EVENTS: ' + \
 																	first_day_of_this_month.strftime('%B'),
 															title_icon = 'glyphicon-calendar',
@@ -202,7 +203,7 @@ def index(request):
 											)
 	# add the last month event panel
 	events_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EVENTS: ' + \
 																	first_day_of_last_month.strftime('%B'),
 															title_icon = 'glyphicon-calendar',
@@ -225,7 +226,7 @@ def index(request):
 											)
 	# add the last month event panel
 	events_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EVENTS: Since ' + \
 																	first_day_of_this_year.strftime('%d %B %Y'),
 															title_icon = 'glyphicon-calendar',
@@ -247,7 +248,7 @@ def index(request):
 											)
 	# add the all time event panel
 	events_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EVENTS: ALL TIME',
 															title_icon = 'glyphicon-calendar',
 															title_url = 'events_all_time',
@@ -267,10 +268,10 @@ def index(request):
 	# append the events column to the dashboard
 	dashboard.columns.append(events_dashboard_column)
 	# create the geo column for the dashboard
-	geo_dashboard_column = Dashboard_Column(width=4)
+	geo_dashboard_column = Old_Dashboard_Column(width=4)
 	# add the events in wards panel
 	geo_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EVENTS IN WARD',
 															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
@@ -287,7 +288,7 @@ def index(request):
 											)
 	# add the events in areas panel
 	geo_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'EVENTS IN AREA',
 															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
@@ -302,7 +303,7 @@ def index(request):
 											)
 	# add the people in wards panel
 	geo_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'PEOPLE IN WARD',
 															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],
@@ -319,7 +320,7 @@ def index(request):
 											)
 	# add the people in areas panel
 	geo_dashboard_column.panels.append(
-											Dashboard_Panel(
+											Old_Dashboard_Panel(
 															title = 'PEOPLE IN AREA',
 															title_icon = 'glyphicon-map-marker',
 															column_names = ['counts'],

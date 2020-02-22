@@ -843,7 +843,7 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 	display_zeroes = models.BooleanField(default=False)
 	model = models.CharField(max_length=50)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
-	columns = models.ManyToManyField(Dashboard_Panel_Column_Spec, through='Dashboard_Panel_Column_Inclusion')
+	columns = models.ManyToManyField(Dashboard_Panel_Column_Spec, through='Panel_Column_In_Panel')
 	prebuilt_panel = models.CharField(
 										max_length=50,
 										choices = [
@@ -862,7 +862,7 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 		ordering = ['name']
 
 # Dashboard_Column model: used to define a dashboard column
-class Dashboard_Panel_Column_Inclusion(DataAccessMixin,models.Model):
+class Panel_Column_In_Panel(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	dashboard_panel_spec = models.ForeignKey(Dashboard_Panel_Spec, on_delete=models.CASCADE)
 	dashboard_panel_column_spec = models.ForeignKey(Dashboard_Panel_Column_Spec, on_delete=models.CASCADE)
@@ -879,7 +879,7 @@ class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 	heading = models.CharField(max_length=50, default='', blank=True)
 	width = models.IntegerField(default=4)
 	margins = models.IntegerField(default=1)
-	panels = models.ManyToManyField(Dashboard_Panel_Spec, through='Dashboard_Panel_Inclusion')
+	panels = models.ManyToManyField(Dashboard_Panel_Spec, through='Panel_In_Column')
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -888,8 +888,8 @@ class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 		verbose_name_plural = 'dashboard column specs'
 		ordering = ['name']
 
-# Dashboard_Panel_Inclusion model: used to define the inclusion of a panel within a column
-class Dashboard_Panel_Inclusion(DataAccessMixin,models.Model):
+# Panel_In_Column model: used to define the inclusion of a panel within a column
+class Panel_In_Column(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	dashboard_panel_spec = models.ForeignKey(Dashboard_Panel_Spec, on_delete=models.CASCADE)
 	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
@@ -905,7 +905,7 @@ class Dashboard_Spec(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	title = models.CharField(max_length=50)
 	margin = models.IntegerField(default=1)
-	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Dashboard_Column_Inclusion')
+	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Column_In_Dashboard')
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -914,8 +914,8 @@ class Dashboard_Spec(DataAccessMixin,models.Model):
 		verbose_name_plural = 'dashboard specs'
 		ordering = ['name']
 
-# Dashboard_Column_Inclusion model: used to define the inclusion of a column within a dashboard
-class Dashboard_Column_Inclusion(DataAccessMixin,models.Model):
+# Column_In_Dashboard model: used to define the inclusion of a column within a dashboard
+class Column_In_Dashboard(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	dashboard_spec = models.ForeignKey(Dashboard_Spec, on_delete=models.CASCADE)
 	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)

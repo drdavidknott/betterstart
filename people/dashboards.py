@@ -3,9 +3,9 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, \
-					Dashboard_Panel_Spec, Dashboard_Panel_Column_Spec, Dashboard_Panel_Column_Inclusion, \
-					Filter_Spec, Dashboard_Column_Spec, Dashboard_Panel_Inclusion, Dashboard_Spec, \
-					Dashboard_Column_Inclusion
+					Dashboard_Panel_Spec, Dashboard_Panel_Column_Spec, Panel_Column_In_Panel, \
+					Filter_Spec, Dashboard_Column_Spec, Panel_In_Column, Dashboard_Spec, \
+					Column_In_Dashboard
 import datetime
 from .utilities import get_period_dates
 
@@ -102,7 +102,7 @@ class Dashboard_Panel:
 
 	def build_rows_from_spec(self):
 		# get the columns
-		columns = self.spec.dashboard_panel_column_inclusion_set.order_by('order')
+		columns = self.spec.panel_column_in_panel_set.order_by('order')
 		# initialise variables
 		rows = []
 		row_values = []
@@ -324,7 +324,7 @@ class Dashboard_Column:
 			self.set_column_error('NO COLUMN SPEC')
 			return
 		# go through the panels
-		for panel_spec in self.spec.dashboard_panel_inclusion_set.all().order_by('order'):
+		for panel_spec in self.spec.panel_in_column_set.all().order_by('order'):
 			# create the panel and append it to the column
 			panel = self.build_panel_from_spec(panel_spec=panel_spec.dashboard_panel_spec)
 			self.panels.append(panel)
@@ -392,7 +392,7 @@ class Dashboard:
 			self.set_dashboard_error('NO DASHBOARD SPEC')
 			return
 		# go through the columns
-		for column_spec in self.spec.dashboard_column_inclusion_set.all().order_by('order'):
+		for column_spec in self.spec.column_in_dashboard_set.all().order_by('order'):
 			# create the column and append it to the dashboard
 			column = Dashboard_Column(spec=column_spec.dashboard_column_spec)
 			self.columns.append(column)

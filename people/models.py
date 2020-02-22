@@ -874,6 +874,16 @@ class Panel(DataAccessMixin,models.Model):
 		self.build()
 		return self.rows
 
+	# return a set of column names
+	def get_column_names(self):
+		# initialise the variables
+		columns = self.panel_column_in_panel_set.order_by('order')
+		self.column_names = []
+		# get and return the column names
+		for column in columns:
+			self.column_names.append(column.panel_column.title)
+		return self.column_names
+
 	# build the contents of the panel from the database
 	def build(self):
 		# check whether we have a prebuilt panel
@@ -1010,12 +1020,10 @@ class Panel(DataAccessMixin,models.Model):
 		columns = self.panel_column_in_panel_set.order_by('order')
 		# initialise variables
 		self.row_values = []
-		self.column_names = []
 		self.rows = []
 		# build the row value and column titles
 		for column in columns:
 			self.row_values.append(column.panel_column.name)
-			self.column_names.append(column.panel_column.title)
 		# get the queryset
 		panel_queryset = self.get_panel_queryset()
 		# go through the rows, based on the model for the panel

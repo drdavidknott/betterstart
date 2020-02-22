@@ -41,7 +41,7 @@
 				 			{% if panel.show_column_names %}
 				 				<div class="row">
 					 				<div class="col-xs-{{ panel.label_width }}"></div>
-									{% for column_name in panel.column_names %}
+									{% for column_name in panel.get_column_names %}
 										<div class="col-xs-{{ panel.column_width }}" align="right">
 											{{ column_name }}
 										</div>

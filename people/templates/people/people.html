@@ -71,6 +71,7 @@
 												<a href="{% url 'person' rel_from.relationship_to.pk %}"> 
 													{{ rel_from.relationship_to }}
 												</a>
+											 ({{ rel_from.relationship_to.age_status.status }})
 										</div>
 									{% endfor %}
 								</td>

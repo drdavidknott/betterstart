@@ -13,7 +13,7 @@ def class_from_str(class_str):
 	# this function takes the name of a class in a string and returns the class, if it exists
 	return globals()[class_str] if class_str in globals() else False
 
-class Dashboard_Panel:
+class Old_Dashboard_Panel_Spec:
 	# this class contains the data and structure for a dashboard panel
 	def __init__(
 					self, 
@@ -338,11 +338,11 @@ class Dashboard_Column:
 		# if we have a prebuilt panel, build from the class in the record, otherwise build from the spec in the record
 		if panel_spec.prebuilt_panel:
 			panel_class = class_from_str(panel_spec.prebuilt_panel)
-			panel = panel_class()
+			panel_spec = panel_class()
 		else:
-			panel = Dashboard_Panel(spec=panel_spec)
+			panel_spec.build()
 		# return the results
-		return panel
+		return panel_spec
 
 	def set_column_error(self, error='ERROR'):
 		# create a panel row to show the error
@@ -421,7 +421,7 @@ class Dashboard:
 		# and, finally, append the column
 		self.columns.append(error_column)
 
-class Parent_Exceptions_Panel(Dashboard_Panel):
+class Parent_Exceptions_Panel(Old_Dashboard_Panel_Spec):
 	# this class contains the data and structure for a dashboard panel
 	def __init__(self,*args,**kwargs):
 		# call the built in __init__ method for the parent class
@@ -512,7 +512,7 @@ class Parent_Exceptions_Panel(Dashboard_Panel):
 								due_date__lt=datetime.date.today()
 								)
 
-class Age_Status_Exceptions_Panel(Dashboard_Panel):
+class Age_Status_Exceptions_Panel(Old_Dashboard_Panel_Spec):
 	# this class contains the data and structure for a dashboard panel
 	def __init__(self,*args,**kwargs):
 		# call the built in __init__ method for the parent class

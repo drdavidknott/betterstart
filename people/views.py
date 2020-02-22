@@ -3,7 +3,7 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity
+					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard
 import os
 import csv
 import copy
@@ -15,7 +15,6 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
-from .dashboards import Dashboard_Panel_Row, Dashboard_Panel, Dashboard_Column, Dashboard
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
 from django.urls import reverse, resolve

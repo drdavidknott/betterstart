@@ -809,7 +809,7 @@ class Filter_Spec(DataAccessMixin,models.Model):
 		ordering = ['term']
 
 # Dashboard_Column model: used to define a dashboard column
-class Dashboard_Panel_Column_Spec(DataAccessMixin,models.Model):
+class Panel_Column(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	title = models.CharField(max_length=50, default='', blank=True)
 	query_type = models.CharField(
@@ -829,8 +829,8 @@ class Dashboard_Panel_Column_Spec(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard panel column specs'
-		ordering = ['title']
+		verbose_name_plural = 'panel columns'
+		ordering = ['name']
 
 # Panel model: used to define a dashboard panel
 class Panel(DataAccessMixin,models.Model):
@@ -851,7 +851,7 @@ class Panel(DataAccessMixin,models.Model):
 	display_zeroes = models.BooleanField(default=False)
 	model = models.CharField(max_length=50)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
-	columns = models.ManyToManyField(Dashboard_Panel_Column_Spec, through='Panel_Column_In_Panel')
+	columns = models.ManyToManyField(Panel_Column, through='Panel_Column_In_Panel')
 	prebuilt_panel = models.CharField(
 										max_length=50,
 										choices = [
@@ -1014,8 +1014,8 @@ class Panel(DataAccessMixin,models.Model):
 		self.rows = []
 		# build the row value and column titles
 		for column in columns:
-			self.row_values.append(column.dashboard_panel_column_spec.name)
-			self.column_names.append(column.dashboard_panel_column_spec.title)
+			self.row_values.append(column.panel_column.name)
+			self.column_names.append(column.panel_column.title)
 		# get the queryset
 		panel_queryset = self.get_panel_queryset()
 		# go through the rows, based on the model for the panel
@@ -1035,16 +1035,16 @@ class Panel(DataAccessMixin,models.Model):
 		# go through the columns
 		for column in columns:
 			# get the queryset depending on the type of query
-			if column.dashboard_panel_column_spec.query_type == 'query from one':
-				count_queryset = getattr(row,column.dashboard_panel_column_spec.count_field).all()
+			if column.panel_column.query_type == 'query from one':
+				count_queryset = getattr(row,column.panel_column.count_field).all()
 			else:
 				# try to get the model type, then get all the object for the model
-				count_model = class_from_str(column.dashboard_panel_column_spec.count_model)
+				count_model = class_from_str(column.panel_column.count_model)
 				count_queryset = count_model.objects.all()
 			# apply filters
 			count_queryset = self.apply_filters(
 												queryset=count_queryset,
-												filters=column.dashboard_panel_column_spec.filters.all(),
+												filters=column.panel_column.filters.all(),
 												master_object=row
 												)
 			# append the value
@@ -1182,13 +1182,14 @@ class Panel(DataAccessMixin,models.Model):
 class Panel_Column_In_Panel(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
-	dashboard_panel_column_spec = models.ForeignKey(Dashboard_Panel_Column_Spec, on_delete=models.CASCADE)
+	panel_column = models.ForeignKey(Panel_Column, on_delete=models.CASCADE)
 	# define the function that will return the name
 	def __str__(self):
-		return self.dashboard_panel_column_spec.name + ' in ' + self.panel.name
+		return self.panel_column.name + ' in ' + self.panel.name
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'panel columns in panels'
+		ordering = ('panel__name','order')
 
 # Column model: used to define a dashboard column
 class Column(DataAccessMixin,models.Model):

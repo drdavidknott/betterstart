@@ -866,7 +866,7 @@ class Panel(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard panel specs'
+		verbose_name_plural = 'panels'
 		ordering = ['name']
 
 	# build and return a set of rows
@@ -1202,7 +1202,7 @@ class Column(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard column specs'
+		verbose_name_plural = 'columns'
 		ordering = ['name']
 
 	def get_panels(self):
@@ -1237,7 +1237,7 @@ class Dashboard(DataAccessMixin,models.Model):
 		return self.name
 	# set the name to be used in the admin console
 	class Meta:
-		verbose_name_plural = 'dashboard specs'
+		verbose_name_plural = 'dashboards'
 		ordering = ['name']
 
 	def get_columns(self):

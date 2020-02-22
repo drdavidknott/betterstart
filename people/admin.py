@@ -6,7 +6,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Option, Answer, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Filter_Spec, \
 					Dashboard_Panel_Column_Spec, Panel_Column_In_Panel, Panel, \
-					Dashboard_Column_Spec, Panel_In_Column, Dashboard_Spec, Column_In_Dashboard
+					Column, Panel_In_Column, Dashboard, Column_In_Dashboard
 
 class PersonAdmin(admin.ModelAdmin):
     search_fields = ['first_name','last_name']
@@ -46,7 +46,7 @@ admin.site.register(Filter_Spec)
 admin.site.register(Dashboard_Panel_Column_Spec)
 admin.site.register(Panel_Column_In_Panel)
 admin.site.register(Panel)
-admin.site.register(Dashboard_Column_Spec)
+admin.site.register(Column)
 admin.site.register(Panel_In_Column)
-admin.site.register(Dashboard_Spec)
+admin.site.register(Dashboard)
 admin.site.register(Column_In_Dashboard)

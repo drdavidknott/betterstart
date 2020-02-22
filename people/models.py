@@ -869,16 +869,140 @@ class Panel(DataAccessMixin,models.Model):
 		verbose_name_plural = 'dashboard panel specs'
 		ordering = ['name']
 
+	# build and return a set of rows
+	def get_rows(self):
+		self.build()
+		return self.rows
+
 	# build the contents of the panel from the database
 	def build(self):
-		# try to set the model for the panel
-		self.model = class_from_str(self.model)
-		# if that didn't work, set panel level errors and return
-		if not self.model:
-			self.set_panel_error('MODEL DOES NOT EXIST')
-			return
-		# now build the rows
-		self.build_rows()
+		# check whether we have a prebuilt panel
+		if self.prebuilt_panel:
+			self.build_from_prebuilt_panel()
+		else:
+			# try to set the model for the panel
+			self.model = class_from_str(self.model)
+			# if that didn't work, set panel level errors and return
+			if not self.model:
+				self.set_panel_error('MODEL DOES NOT EXIST')
+				return
+			# now build the rows
+			self.build_rows()
+
+	def build_from_prebuilt_panel(self):
+		# define a dictionary of functions for prebuilt panels
+		prebuilt_panels = {
+							'Parent_Exceptions_Panel' : self.build_parent_exceptions,
+							'Age_Status_Exceptions_Panel' : self.build_age_status_exceptions
+							}
+		# check that the prebuilt model is in the dictionary
+		if self.prebuilt_panel in prebuilt_panels:
+			# build using the function
+			prebuilt_function = prebuilt_panels[self.prebuilt_panel]
+			prebuilt_function()
+		# otherwise set the error
+		else:
+			self.set_panel_error('PREBUILT DOES NOT EXIST')
+
+	def build_age_status_exceptions(self):
+		# initialise the variables
+		age_statuses = []
+		today = datetime.date.today()
+		self.rows = []
+		# now go through the age statuses and get the exceptions
+		for age_status in Age_Status.objects.all():
+			age_exceptions = age_status.person_set.filter(
+									date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
+									ABSS_end_date__isnull=True)
+			# add the exception count to the list if we got any
+			if age_exceptions.count() > 0:
+				print('hello')
+				# create a row and append it to the list of rows
+				dashboard_panel_row = Dashboard_Panel_Row(
+															label=age_status.status,
+															values=[age_exceptions.count()],
+															url='age_exceptions',
+															parameter=age_status.pk)
+				self.rows.append(dashboard_panel_row)
+
+	def build_parent_exceptions(self):
+		# initialise the variables
+		parents_with_no_children, parents_with_no_children_under_four = self.get_parents_without_children()
+		parents_with_overdue_children = self.get_parents_with_overdue_children()
+		self.rows=[]
+		# build the the rows
+		self.rows.append(
+							Dashboard_Panel_Row(
+												label = 'Parents with no children',
+												values = [len(parents_with_no_children)],
+												url = 'parents_with_no_children',
+												parameter = 1
+												)
+						)
+		self.rows.append(
+							Dashboard_Panel_Row(
+												label = 'Parents with no children under four',
+												values = [len(parents_with_no_children_under_four)],
+												url = 'parents_without_children_under_four',
+												parameter = 1
+												)
+						)
+		self.rows.append(
+							Dashboard_Panel_Row(
+												label = 'Parents with overdue children',
+												values = [len(parents_with_overdue_children)],
+												url = 'parents_with_overdue_children',
+												parameter = 1
+												)
+						)
+
+	def get_parents_without_children(self):
+		# create an empty list
+		parents_with_no_children = []
+		parents_with_no_children_under_four = []
+		# get today's date
+		today = datetime.date.today()
+		# get the date four years ago
+		today_four_years_ago = today.replace(year=today.year-4)
+		# attempt to get parents with no children
+		parents = Person.search(default_role__role_type_name__contains='Parent')
+		# exclude those with pregnancy dates in the future
+		parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
+		# order the list
+		parents = parents.order_by('last_name','first_name')
+		# now exclude those where we can find a child relationship
+		for parent in parents:
+			# attempt to get parent relationships
+			parent_relationships = parent.rel_from.filter(relationship_type__relationship_type='parent')
+			# if we didn't get a parent relationship, add the parent to the no children list
+			if not parent_relationships:
+				# append to the no children list
+				parents_with_no_children.append(parent)
+			# otherwise check how old the children are
+			else:
+				# set a flag
+				child_under_four = False
+				# go through the relationships
+				for relationship in parent_relationships:
+					# check whether the child has a date of birth
+					if relationship.relationship_to.date_of_birth != None:
+						# and whether the date is less than four years ago
+						if relationship.relationship_to.date_of_birth >= today_four_years_ago:
+							# set the flag
+							child_under_four = True
+				# see whether we got a child
+				if not child_under_four:
+					# add the parent to the list
+					parents_with_no_children_under_four.append(parent)
+		# return the results
+		return parents_with_no_children, parents_with_no_children_under_four
+
+	def get_parents_with_overdue_children(self):
+		# return a list of parents with a pregnancy flag and a due date before today
+		return Person.search(
+								pregnant=True,
+								due_date__lt=datetime.date.today()
+								)
 
 	# function to build the row in the panel
 	def build_rows(self):
@@ -1066,8 +1190,8 @@ class Panel_Column_In_Panel(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'panel columns in panels'
 
-# Dashboard_Column_Spec model: used to define a dashboard column
-class Dashboard_Column_Spec(DataAccessMixin,models.Model):
+# Column model: used to define a dashboard column
+class Column(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	heading = models.CharField(max_length=50, default='', blank=True)
 	width = models.IntegerField(default=4)
@@ -1081,24 +1205,33 @@ class Dashboard_Column_Spec(DataAccessMixin,models.Model):
 		verbose_name_plural = 'dashboard column specs'
 		ordering = ['name']
 
+	def get_panels(self):
+		# get the through models in order and return a list of panels
+		panels = []
+		# go through the panels
+		for panel_in_column in self.panel_in_column_set.all().order_by('order'):
+			panels.append(panel_in_column.panel)
+		# return the results
+		return panels
+
 # Panel_In_Column model: used to define the inclusion of a panel within a column
 class Panel_In_Column(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
-	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
+	column = models.ForeignKey(Column, on_delete=models.CASCADE)
 	# define the function that will return the name
 	def __str__(self):
-		return self.panel.name + ' in ' + self.dashboard_column_spec.name
+		return self.panel.name + ' in ' + self.column.name
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'panels in columns'
 
-# Dashboard_Spec model: used to define a dashboard
-class Dashboard_Spec(DataAccessMixin,models.Model):
+# Dashboard model: used to define a dashboard
+class Dashboard(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	title = models.CharField(max_length=50)
 	margin = models.IntegerField(default=1)
-	columns = models.ManyToManyField(Dashboard_Column_Spec, through='Column_In_Dashboard')
+	columns = models.ManyToManyField(Column, through='Column_In_Dashboard')
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -1107,14 +1240,23 @@ class Dashboard_Spec(DataAccessMixin,models.Model):
 		verbose_name_plural = 'dashboard specs'
 		ordering = ['name']
 
+	def get_columns(self):
+		# get the through models in order and return a list of columns
+		columns = []
+		# go through the columns
+		for column_in_dashboard in self.column_in_dashboard_set.all().order_by('order'):
+			columns.append(column_in_dashboard.column)
+		# return the results
+		return columns
+
 # Column_In_Dashboard model: used to define the inclusion of a column within a dashboard
 class Column_In_Dashboard(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
-	dashboard_spec = models.ForeignKey(Dashboard_Spec, on_delete=models.CASCADE)
-	dashboard_column_spec = models.ForeignKey(Dashboard_Column_Spec, on_delete=models.CASCADE)
+	dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE)
+	column = models.ForeignKey(Column, on_delete=models.CASCADE)
 	# define the function that will return the name
 	def __str__(self):
-		return self.dashboard_column_spec.name + ' in ' + self.dashboard_spec.name
+		return self.column.name + ' in ' + self.dashboard.name
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'columns in dashboards'
@@ -1130,285 +1272,11 @@ class Dashboard_Panel_Row():
 
 	def has_data(self):
 		# check whether any of the values contain data
-		# set a flag
 		has_data = False
-		# go through the values
+		# go through the values and set the flag if we have a value
 		for value in self.values:
-			# check that it has a positive value
 			if value:
-				# set the flag
 				has_data = True
 		# return the value
 		return has_data
-
-class Dashboard_Column:
-	# this class contains the data and sructure for a dashboard column
-	def __init__(
-					self,
-					heading='',
-					width=5,
-					margins=1,
-					spec = False,
-					spec_name = False
-					):
-		# set the attributes
-		self.heading = heading
-		self.width = width
-		self.margins = margins
-		self.spec = spec
-		self.spec_name = spec_name
-		# and an empty list of panels
-		self.panels = []
-		# build from spec if we have a spec
-		if self.spec or self.spec_name:
-			self.build_column_from_spec()
-
-	# function to build the column contents from a spec defined in the database
-	def build_column_from_spec(self):
-		# if we have a name, attempt to get the object
-		if self.spec_name:
-			self.spec = Dashboard_Column_Spec.try_to_get(name=self.spec_name)
-		# if we don't have a spec, build errors
-		if not self.spec:
-			self.set_column_error('NO COLUMN SPEC')
-			return
-		# go through the panels
-		for panel_spec in self.spec.panel_in_column_set.all().order_by('order'):
-			# create the panel and append it to the column
-			panel = self.build_panel_from_spec(panel_spec=panel_spec.panel)
-			self.panels.append(panel)
-		# set the layout value from the spec
-		self.width = self.spec.width
-		self.heading = self.spec.heading
-		self.margins = self.spec.margins
-
-	# function to build the panel from a spec
-	def build_panel_from_spec(self,panel_spec):
-		# if we have a prebuilt panel, build from the class in the record, otherwise build from the spec in the record
-		if panel_spec.prebuilt_panel:
-			panel_class = class_from_str(panel_spec.prebuilt_panel)
-			panel_spec = panel_class()
-		else:
-			panel_spec.build()
-		# return the results
-		return panel_spec
-
-	def set_column_error(self, error='ERROR'):
-		# create a panel row to show the error
-		error_row = Dashboard_Panel_Row(
-										label=error,
-										values=[error]
-										)
-		# and a panel, with the row appended
-		error_panel = Dashboard_Panel(
-										title = error,
-										title_icon = 'glyphicon-warning-sign',
-										label_width = 6,
-										column_width = 5,
-										right_margin = 1,
-										)
-		error_panel.rows.append(error_row)
-		# and, finally, append the panel
-		self.panels.append(error_panel)
-
-class Dashboard:
-	# the class contains the data to be shown in the dashboard, as well as the dashboard structure
-	def __init__(
-					self,
-					title = '',
-					margin=1,
-					spec = False,
-					spec_name = False
-					):
-		# set the attributes
-		self.title = title
-		self.margin = margin
-		self.spec = spec
-		self.spec_name = spec_name
-		# and an empty list of columns
-		self.columns = []
-		# build from spec if we have a spec
-		if self.spec or self.spec_name:
-			self.build_dashboard_from_spec()
-
-	# function to build the dashboard contents from a spec defined in the database
-	def build_dashboard_from_spec(self):
-		# if we have a name, attempt to get the object
-		if self.spec_name:
-			self.spec = Dashboard_Spec.try_to_get(name=self.spec_name)
-		# if we don't have a spec, build errors
-		if not self.spec:
-			self.set_dashboard_error('NO DASHBOARD SPEC')
-			return
-		# go through the columns
-		for column_spec in self.spec.column_in_dashboard_set.all().order_by('order'):
-			# create the column and append it to the dashboard
-			column = Dashboard_Column(spec=column_spec.dashboard_column_spec)
-			self.columns.append(column)
-		# set the title and margin from the spec
-		self.title = self.spec.title
-		self.margin = self.spec.margin
-
-	def set_dashboard_error(self, error='ERROR'):
-		# create a panel row to show the error
-		error_row = Dashboard_Panel_Row(
-										label=error,
-										values=[error]
-										)
-		# and a panel, with the row appended
-		error_panel = Dashboard_Panel(
-										title = error,
-										title_icon = 'glyphicon-warning-sign',
-										label_width = 6,
-										column_width = 5,
-										right_margin = 1,
-										)
-		error_panel.rows.append(error_row)
-		# and a column with the row appended
-		error_column = Dashboard_Column(width=4)
-		error_column.panels.append(error_panel)
-		# and, finally, append the column
-		self.columns.append(error_column)
-
-class Parent_Exceptions_Panel(Panel):
-	# declare the model as Abstract (i.e. not included in the database)
-	class Meta:
-		abstract = True
-
-	# this class contains the data and structure for a dashboard panel
-	def __init__(self,*args,**kwargs):
-		# call the built in __init__ method for the parent class
-		super(Parent_Exceptions_Panel, self).__init__(*args, **kwargs)
-		# set the attributes
-		self.title = 'EXCEPTIONS: PARENTS'
-		self.title_icon = 'glyphicon-warning-sign'
-		self.column_names = ['counts']
-		self.label_width = 8
-		self.column_width = 3
-		self.right_margin = 1
-		# initialise the list of rows
-		self.rows = []
-		# build the rows from the exception functions
-		self.build()
-
-	def build(self):
-		# initialise the variables
-		parents_with_no_children, parents_with_no_children_under_four = self.get_parents_without_children()
-		parents_with_overdue_children = self.get_parents_with_overdue_children()
-		# build the the rows
-		self.rows.append(
-							Dashboard_Panel_Row(
-												label = 'Parents with no children',
-												values = [len(parents_with_no_children)],
-												url = 'parents_with_no_children',
-												parameter = 1
-												)
-						)
-		self.rows.append(
-							Dashboard_Panel_Row(
-												label = 'Parents with no children under four',
-												values = [len(parents_with_no_children_under_four)],
-												url = 'parents_without_children_under_four',
-												parameter = 1
-												)
-						)
-		self.rows.append(
-							Dashboard_Panel_Row(
-												label = 'Parents with overdue children',
-												values = [len(parents_with_overdue_children)],
-												url = 'parents_with_overdue_children',
-												parameter = 1
-												)
-						)
-
-	def get_parents_without_children(self):
-		# create an empty list
-		parents_with_no_children = []
-		parents_with_no_children_under_four = []
-		# get today's date
-		today = datetime.date.today()
-		# get the date four years ago
-		today_four_years_ago = today.replace(year=today.year-4)
-		# attempt to get parents with no children
-		parents = Person.search(default_role__role_type_name__contains='Parent')
-		# exclude those with pregnancy dates in the future
-		parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
-		# order the list
-		parents = parents.order_by('last_name','first_name')
-		# now exclude those where we can find a child relationship
-		for parent in parents:
-			# attempt to get parent relationships
-			parent_relationships = parent.rel_from.filter(relationship_type__relationship_type='parent')
-			# if we didn't get a parent relationship, add the parent to the no children list
-			if not parent_relationships:
-				# append to the no children list
-				parents_with_no_children.append(parent)
-			# otherwise check how old the children are
-			else:
-				# set a flag
-				child_under_four = False
-				# go through the relationships
-				for relationship in parent_relationships:
-					# check whether the child has a date of birth
-					if relationship.relationship_to.date_of_birth != None:
-						# and whether the date is less than four years ago
-						if relationship.relationship_to.date_of_birth >= today_four_years_ago:
-							# set the flag
-							child_under_four = True
-				# see whether we got a child
-				if not child_under_four:
-					# add the parent to the list
-					parents_with_no_children_under_four.append(parent)
-		# return the results
-		return parents_with_no_children, parents_with_no_children_under_four
-
-	def get_parents_with_overdue_children(self):
-		# return a list of parents with a pregnancy flag and a due date before today
-		return Person.search(
-								pregnant=True,
-								due_date__lt=datetime.date.today()
-								)
-
-class Age_Status_Exceptions_Panel(Panel):
-	# this class contains the data and structure for a predefined panel
-
-	# declare the model as Abstract (i.e. not included in the database)
-	class Meta:
-		abstract = True
-
-	def __init__(self,*args,**kwargs):
-		# call the built in __init__ method for the parent class
-		super(Age_Status_Exceptions_Panel, self).__init__(*args, **kwargs)
-		# set the attributes
-		self.title = 'EXCEPTIONS: AGE STATUS'
-		self.title_icon = 'glyphicon-warning-sign'
-		self.column_names = ['counts']
-		self.label_width = 8
-		self.column_width = 3
-		self.right_margin = 1
-		# build the list of rows
-		self.build()
-
-	def build(self):
-		# return a list of all the age statuses, supplemented with counts of people outside the age range
-		# initialise the variables
-		age_statuses = []
-		today = datetime.date.today()
-		self.rows = []
-		# now go through the age statuses and get the exceptions
-		for age_status in Age_Status.objects.all():
-			age_exceptions = age_status.person_set.filter(
-									date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-									ABSS_end_date__isnull=True)
-			# add the exception count to the list if we got any
-			if age_exceptions.count() > 0:
-				# create a row and append it to the list of rows
-				dashboard_panel_row = Dashboard_Panel_Row(
-															label=age_status.status,
-															values=[age_exceptions.count()],
-															url='age_exceptions',
-															parameter=age_status.pk)
-				self.rows.append(dashboard_panel_row)
-
-
 

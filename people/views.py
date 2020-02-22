@@ -3089,9 +3089,9 @@ def alpha_graph_dashboard(request):
 @login_required
 def dashboard(request):
 	# get the templates
-	index_template = loader.get_template('people/index.html')
-	# create a dashboard
-	dashboard = Dashboard(spec_name='beta_dashboard')
+	index_template = loader.get_template('people/beta_dashboard.html')
+	# create and build a dashboard
+	dashboard = Dashboard.objects.get(name='beta_dashboard')
 	# set the context
 	context = build_context({
 								'dashboard' : dashboard,

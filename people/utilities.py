@@ -87,10 +87,14 @@ def make_banner(request, banner_text):
 
 # function to extract an id number from the end of an underscore delimited string
 def extract_id(field_name):
-	# build a list from the string
-	name_elements = field_name.split('_')
-	# now return the final element
-	return name_elements[-1]
+	# build a list from the string if it contains underscore, else just take the string
+	if '_' in field_name:
+		name_elements = field_name.split('_')
+		extracted_id = name_elements[-1]
+	else:
+		extracted_id = field_name
+	# now return the results
+	return extracted_id
 
 # function to take a string, a value, a descriptor and delimiter, and build a description
 def add_description(value,text,delimiter=', ',desc=''):

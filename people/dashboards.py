@@ -30,6 +30,7 @@ class Dashboard_Panel:
 					row_values=False,
 					row_url=False,
 					row_parameter_name=False,
+					row_parameter_prefix='',
 					totals=False,
 					display_zeroes=False,
 					spec_name=False,
@@ -65,6 +66,7 @@ class Dashboard_Panel:
 											row_values=row_values,
 											row_url=row_url,
 											row_parameter_name=row_parameter_name,
+											row_parameter_prefix=row_parameter_prefix,
 											totals = totals
 											)
 
@@ -88,6 +90,7 @@ class Dashboard_Panel:
 		self.display_zeroes = self.spec.display_zeroes
 		self.row_url = self.spec.row_url
 		self.row_parameter_name = self.spec.row_parameter_name
+		self.row_parameter_prefix = self.spec.row_parameter_prefix
 		# try to set the model for the panel
 		self.model = class_from_str(self.spec.model)
 		# if that didn't work, set panel level errors and return
@@ -143,6 +146,7 @@ class Dashboard_Panel:
 									row_values=row_values,
 									row_url=self.row_url,
 									row_parameter_name=self.row_parameter_name,
+									row_parameter_prefix=self.row_parameter_prefix,
 									totals = self.totals
 									)
 
@@ -209,29 +213,25 @@ class Dashboard_Panel:
 								row_values,
 								row_url,
 								row_parameter_name,
+								row_parameter_prefix,
 								totals
 								):
-	# this function will populate the panel from a list of objects, based on the name of the row field and the row
-	# values fields
-		# process the passed list of objects
+		# this function will populate the panel from a list of objects, based on the name of the row field and the row
+		# values fields
 		for row in rows:
 			# get the row label using the passed row field name
 			label = getattr(row, row_name)
-			# get the parameter value using the passed paramter field nae
+			# get the parameter value using the passed parameter field name, adding the prefix, otherwise set to zero
 			if row_parameter_name:
-				# get the parameter
 				parameter = getattr(row, row_parameter_name)
-			# otherwise set the parameter to zero
+				parameter = row_parameter_prefix + str(parameter)
 			else:
-				# set the parameter to zero
 				parameter = 0
 			# set an empty list of values
 			values = []
 			# now build the list of values
 			for row_value in row_values:
-				# get the value
 				value = getattr(row, row_value)
-				# append the value
 				values.append(value)
 			# create a row object
 			self.rows.append(Dashboard_Panel_Row(
@@ -326,12 +326,23 @@ class Dashboard_Column:
 		# go through the panels
 		for panel_spec in self.spec.dashboard_panel_inclusion_set.all().order_by('order'):
 			# create the panel and append it to the column
-			panel = Dashboard_Panel(spec=panel_spec.dashboard_panel_spec)
+			panel = self.build_panel_from_spec(panel_spec=panel_spec.dashboard_panel_spec)
 			self.panels.append(panel)
 		# set the layout value from the spec
 		self.width = self.spec.width
 		self.heading = self.spec.heading
 		self.margins = self.spec.margins
+
+	# function to build the panel from a spec
+	def build_panel_from_spec(self,panel_spec):
+		# if we have a prebuilt panel, build from the class in the record, otherwise build from the spec in the record
+		if panel_spec.prebuilt_panel:
+			panel_class = class_from_str(panel_spec.prebuilt_panel)
+			panel = panel_class()
+		else:
+			panel = Dashboard_Panel(spec=panel_spec)
+		# return the results
+		return panel
 
 	def set_column_error(self, error='ERROR'):
 		# create a panel row to show the error
@@ -409,3 +420,137 @@ class Dashboard:
 		error_column.panels.append(error_panel)
 		# and, finally, append the column
 		self.columns.append(error_column)
+
+class Parent_Exceptions_Panel(Dashboard_Panel):
+	# this class contains the data and structure for a dashboard panel
+	def __init__(self,*args,**kwargs):
+		# call the built in __init__ method for the parent class
+		super(Parent_Exceptions_Panel, self).__init__(*args, **kwargs)
+		# get the values for the panel
+		parents_with_no_children, parents_with_no_children_under_four = self.get_parents_without_children()
+		parents_with_overdue_children = self.get_parents_with_overdue_children()
+		# set the attributes
+		self.title = 'EXCEPTIONS: PARENTS'
+		self.title_icon = 'glyphicon-warning-sign'
+		self.column_names = ['counts']
+		self.label_width = 8
+		self.column_width = 3
+		self.right_margin = 1
+		# initialise the list of rows
+		self.rows = []
+		# build the rows from the exception functions
+		self.rows.append(
+							Dashboard_Panel_Row(
+												label = 'Parents with no children',
+												values = [len(parents_with_no_children)],
+												url = 'parents_with_no_children',
+												parameter = 1
+												)
+						)
+		self.rows.append(
+							Dashboard_Panel_Row(
+												label = 'Parents with no children under four',
+												values = [len(parents_with_no_children_under_four)],
+												url = 'parents_without_children_under_four',
+												parameter = 1
+												)
+						)
+		self.rows.append(
+							Dashboard_Panel_Row(
+												label = 'Parents with overdue children',
+												values = [len(parents_with_overdue_children)],
+												url = 'parents_with_overdue_children',
+												parameter = 1
+												)
+						)
+
+	def get_parents_without_children(self):
+		# create an empty list
+		parents_with_no_children = []
+		parents_with_no_children_under_four = []
+		# get today's date
+		today = datetime.date.today()
+		# get the date four years ago
+		today_four_years_ago = today.replace(year=today.year-4)
+		# attempt to get parents with no children
+		parents = Person.search(default_role__role_type_name__contains='Parent')
+		# exclude those with pregnancy dates in the future
+		parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
+		# order the list
+		parents = parents.order_by('last_name','first_name')
+		# now exclude those where we can find a child relationship
+		for parent in parents:
+			# attempt to get parent relationships
+			parent_relationships = parent.rel_from.filter(relationship_type__relationship_type='parent')
+			# if we didn't get a parent relationship, add the parent to the no children list
+			if not parent_relationships:
+				# append to the no children list
+				parents_with_no_children.append(parent)
+			# otherwise check how old the children are
+			else:
+				# set a flag
+				child_under_four = False
+				# go through the relationships
+				for relationship in parent_relationships:
+					# check whether the child has a date of birth
+					if relationship.relationship_to.date_of_birth != None:
+						# and whether the date is less than four years ago
+						if relationship.relationship_to.date_of_birth >= today_four_years_ago:
+							# set the flag
+							child_under_four = True
+				# see whether we got a child
+				if not child_under_four:
+					# add the parent to the list
+					parents_with_no_children_under_four.append(parent)
+		# return the results
+		return parents_with_no_children, parents_with_no_children_under_four
+
+	def get_parents_with_overdue_children(self):
+		# return a list of parents with a pregnancy flag and a due date before today
+		return Person.search(
+								pregnant=True,
+								due_date__lt=datetime.date.today()
+								)
+
+class Age_Status_Exceptions_Panel(Dashboard_Panel):
+	# this class contains the data and structure for a dashboard panel
+	def __init__(self,*args,**kwargs):
+		# call the built in __init__ method for the parent class
+		super(Age_Status_Exceptions_Panel, self).__init__(*args, **kwargs)
+		# set the attributes
+		self.title = 'EXCEPTIONS: AGE STATUS'
+		self.title_icon = 'glyphicon-warning-sign'
+		self.column_names = ['counts']
+		self.label_width = 8
+		self.column_width = 3
+		self.right_margin = 1
+		# get the list of rows
+		rows = self.get_age_status_exceptions()
+		# build the rows from the list
+		self.load_rows_from_objects(
+									rows=rows,
+									row_name='status',
+									row_values=['count'],
+									row_url='age_exceptions',
+									row_parameter_name='pk',
+									row_parameter_prefix='',
+									totals = True
+									)
+
+	def get_age_status_exceptions(self):
+		# return a list of all the age statuses, supplemented with counts of people outside the age range
+		# initialise the variables
+		age_statuses = []
+		today = datetime.date.today()
+		# now go through the age statuses and get the exceptions
+		for age_status in Age_Status.objects.all():
+			age_exceptions = age_status.person_set.filter(
+									date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
+									ABSS_end_date__isnull=True)
+			# add the exception count to the list if we got any
+			if age_exceptions.count() > 0:
+				age_status.count = age_exceptions.count()
+				age_statuses.append(age_status)
+		# return the results
+		return age_statuses
+

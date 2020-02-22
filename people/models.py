@@ -836,6 +836,7 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 	right_margin = models.IntegerField(default=0)
 	row_url = models.CharField(max_length=50, default='', blank=True)
 	row_parameter_name = models.CharField(max_length=50, default='', blank=True)
+	row_parameter_prefix = models.CharField(max_length=50, default='', blank=True)
 	row_name_field = models.CharField(max_length=50)
 	sort_field = models.CharField(max_length=50, default='', blank=True)
 	totals = models.BooleanField(default=False)
@@ -843,6 +844,15 @@ class Dashboard_Panel_Spec(DataAccessMixin,models.Model):
 	model = models.CharField(max_length=50)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	columns = models.ManyToManyField(Dashboard_Panel_Column_Spec, through='Dashboard_Panel_Column_Inclusion')
+	prebuilt_panel = models.CharField(
+										max_length=50,
+										choices = [
+													('Parent_Exceptions_Panel','Parent Exceptions'),
+													('Age_Status_Exceptions_Panel','Age Status Exceptions')
+													],
+										default='',
+										blank=True
+										)
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name

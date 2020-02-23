@@ -811,7 +811,7 @@ class EventForm(forms.Form):
 									required=False, 
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	ward = forms.ChoiceField(
-									label="Ward",
+									label="Ward in which event takes place",
 									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):

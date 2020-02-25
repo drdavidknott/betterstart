@@ -3,7 +3,6 @@ from .django_extensions import DataAccessMixin
 from .utilities import extract_id, add_description
 from datetime import datetime, date, timedelta
 from django.db.models import Sum
-import datetime
 from .utilities import get_period_dates
 import collections
 

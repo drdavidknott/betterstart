@@ -219,12 +219,12 @@ class ProfileForm(forms.Form):
 									label="Home phone number",
 									max_length=50,
 									required = False,
-									widget=forms.NumberInput(attrs={'class' : 'form-control',}))
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	mobile_phone = forms.CharField(
 									label="Mobile phone number",
 									max_length=50,
 									required = False,
-									widget=forms.NumberInput(attrs={'class' : 'form-control',}))
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	emergency_contact_details = forms.CharField(
 									label="Emergency contact details",
 									required=False,

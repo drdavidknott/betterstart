@@ -370,37 +370,29 @@ class ProfileForm(forms.Form):
 				self.data = form_data_copy
 		# get the role type to determine whether it must be trained
 		role_type = Role_Type.objects.get(pk=self.cleaned_data['role_type'])
-		# check the role type
+		# if the role type requires training, check that the person is trained
 		if role_type.trained:
-			# check the corresponding field
 			if self.cleaned_data['trained_role_' + str(role_type.pk)] not in ['trained','active']:
-				# set an error
 				self._errors['role_type'] = ['Must be trained to perform this role.']
-				# and the validity flag
 				valid = False
-		# now check whether we have a child under four whose date of birth is more than four years ago
-		# get today's date
-		today = datetime.date.today()
-		# now check the age
-		if self.cleaned_data['date_of_birth'] != None and \
-			self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
-			#set the error message
-			self._errors['date_of_birth'] = ["Must be less than " + str(age_status.maximum_age) + " years old."]
-			# set the validity flag
-			valid = False
-		# and check that we don't have an ABSS end date without a start date
-		if self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] == None:
-			# set the error message
-			self._errors['ABSS_end_date'] = ['ABSS end date can only be entered if ABSS start date is entered.']
-			# set the flag
-			valid = False
-		# and check that we don't have an ABSS end date before the start date
-		if (self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] != None 
-				and self.cleaned_data['ABSS_end_date'] <= self.cleaned_data['ABSS_start_date'] ):
-			# set the error message
-			self._errors['ABSS_end_date'] = ['ABSS end date must be after ABSS start date.']
-			# set the flag
-			valid = False
+		# if we have a valid date of birth, check whether it is allowed by age status
+		if 'date_of_birth' in self.cleaned_data:
+			today = datetime.date.today()
+			if self.cleaned_data['date_of_birth'] != None and \
+				self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
+				self._errors['date_of_birth'] = ["Must be less than " + str(age_status.maximum_age) + " years old."]
+				valid = False
+		# if we have valid ABSS dates, check that they are valid in relation to each other
+		if 'ABSS_start_date' in self.cleaned_data and 'ABSS_end_date' in self.cleaned_data:
+			# check that we don't have an ABSS end date without a start date
+			if self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] == None:
+				self._errors['ABSS_end_date'] = ['ABSS end date can only be entered if ABSS start date is entered.']
+				valid = False
+			# check that we don't have an ABSS end date before the start date
+			if (self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] != None 
+					and self.cleaned_data['ABSS_end_date'] <= self.cleaned_data['ABSS_start_date'] ):
+				self._errors['ABSS_end_date'] = ['ABSS end date must be after ABSS start date.']
+				valid = False
 		# return the result
 		return valid
 

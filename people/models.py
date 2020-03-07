@@ -885,18 +885,48 @@ class Panel(DataAccessMixin,models.Model):
 
 	# build the contents of the panel from the database
 	def build(self):
-		# check whether we have a prebuilt panel
+		# build from a prebuilt panel if we have, otherwise check validity and build from data if valid
 		if self.prebuilt_panel:
 			self.build_from_prebuilt_panel()
-		else:
-			# try to set the model for the panel
+		elif self.is_valid():
 			self.model = class_from_str(self.model)
-			# if that didn't work, set panel level errors and return
-			if not self.model:
-				self.set_panel_error('MODEL DOES NOT EXIST')
-				return
-			# now build the rows
 			self.build_rows()
+
+	# check whether the panel is valid
+	def is_valid(self):
+		# check whether the model is a valid class
+		model = class_from_str(self.model)
+		if not model:
+			self.set_panel_error('MODEL DOES NOT EXIST')
+			return False
+		# get one record, so that we can test attributes
+		test_object = model.objects.first()
+		# check the sort field
+		if self.sort_field and not hasattr(test_object,self.sort_field):
+			self.set_panel_error('SORT FIELD DOES NOT EXIST')
+			return False
+		# check the name field
+		if not hasattr(test_object,self.row_name_field):
+			self.set_panel_error('ROW NAME FIELD DOES NOT EXIST')
+			return False
+		# check the parameter field
+		if self.row_parameter_name and not hasattr(test_object,self.row_parameter_name):
+			self.set_panel_error('ROW PARAMETER FIELD DOES NOT EXIST')
+			return False
+		# go through the columns
+		for column in self.panel_column_in_panel_set.order_by('order'):
+			# check the count field
+			if column.panel_column.query_type == 'query from one':
+				if not hasattr(test_object,column.panel_column.count_field):
+					self.set_panel_error('COUNT FIELD DOES NOT EXIST')
+					return False
+			else:
+				# check the count model
+				if not class_from_str(column.panel_column.count_model):
+					self.set_panel_error('COUNT MODEL DOES NOT EXIST')
+					return False
+		# we made it this far, so it must be valid
+		return True
 
 	def build_from_prebuilt_panel(self):
 		# define a dictionary of functions for prebuilt panels
@@ -916,7 +946,7 @@ class Panel(DataAccessMixin,models.Model):
 	def build_age_status_exceptions(self):
 		# initialise the variables
 		age_statuses = []
-		today = datetime.date.today()
+		today = date.today()
 		self.rows = []
 		# now go through the age statuses and get the exceptions
 		for age_status in Age_Status.objects.all():
@@ -970,13 +1000,13 @@ class Panel(DataAccessMixin,models.Model):
 		parents_with_no_children = []
 		parents_with_no_children_under_four = []
 		# get today's date
-		today = datetime.date.today()
+		today = date.today()
 		# get the date four years ago
 		today_four_years_ago = today.replace(year=today.year-4)
 		# attempt to get parents with no children
 		parents = Person.search(default_role__role_type_name__contains='Parent')
 		# exclude those with pregnancy dates in the future
-		parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
+		parents = parents.exclude(pregnant=True, due_date__gte=today)
 		# order the list
 		parents = parents.order_by('last_name','first_name')
 		# now exclude those where we can find a child relationship
@@ -1010,7 +1040,7 @@ class Panel(DataAccessMixin,models.Model):
 		# return a list of parents with a pregnancy flag and a due date before today
 		return Person.search(
 								pregnant=True,
-								due_date__lt=datetime.date.today()
+								due_date__lt=date.today()
 								)
 
 	# function to build the row in the panel
@@ -1025,15 +1055,17 @@ class Panel(DataAccessMixin,models.Model):
 			self.row_values.append(column.panel_column.name)
 		# get the queryset
 		panel_queryset = self.get_panel_queryset()
-		# go through the rows, based on the model for the panel
-		for row in panel_queryset:
-			self.add_row(row,columns)
+		# go through the rows, based on the model for the panel if we got a valid result
+		if panel_queryset:
+			for row in panel_queryset:
+				self.add_row(row,columns)
 
 	# function to build an individual row
 	def add_row(self,row,columns):
 		# initialise variables
 		parameter = ''
 		values = []
+		# try to get the field attribute
 		label = getattr(row, self.row_name_field)
 		# build the parameter if we have a parameter name
 		if self.row_parameter_name:
@@ -1049,20 +1081,23 @@ class Panel(DataAccessMixin,models.Model):
 				count_model = class_from_str(column.panel_column.count_model)
 				count_queryset = count_model.objects.all()
 			# apply filters
-			count_queryset = self.apply_filters(
-												queryset=count_queryset,
-												filters=column.panel_column.filters.all(),
-												master_object=row
-												)
-			# append the value
-			values.append(count_queryset.count())
+			count_queryset, valid_filters = self.apply_filters(
+																queryset=count_queryset,
+																filters=column.panel_column.filters.all(),
+																master_object=row
+																)
+			# if it was valid, append the value, else append an error
+			if valid_filters:
+				values.append(count_queryset.count())
+			else:
+				values.append('ERROR')
 		# build the row and append it to the list of rows
 		dashboard_panel_row = Dashboard_Panel_Row(
 													label=label,
 													values=values,
 													url=self.row_url,
 													parameter=parameter)
-		# return the results
+		# append the results
 		self.rows.append(dashboard_panel_row)
 
 	def get_panel_queryset(self):
@@ -1072,13 +1107,17 @@ class Panel(DataAccessMixin,models.Model):
 		if self.sort_field:
 			panel_queryset = panel_queryset.order_by(self.sort_field)
 		# and filter it if it needs filtering
-		panel_queryset = self.apply_filters(panel_queryset,self.filters.all())
+		panel_queryset, valid_filters = self.apply_filters(panel_queryset,self.filters.all())
+		# deal with the error if we got an error
+		if not valid_filters:
+			self.set_panel_error('INVALID PANEL FILTERS')
 		# return the results
 		return panel_queryset
 
 	def apply_filters(self,queryset,filters,master_object=False):
-		# set an empty dict
+		# initialise the variables
 		filter_dict = {}
+		valid = True
 		# apply filters to a queryset and return the result
 		for filter in filters:
 			# set the value depending on the type
@@ -1090,10 +1129,16 @@ class Panel(DataAccessMixin,models.Model):
 				filter_dict = self.add_period_filters(filter, filter_dict)
 			elif filter.filter_type == 'object':
 				filter_dict[filter.term] = master_object
-			# apply the filter
-			queryset = queryset.filter(**filter_dict)
+			# try to apply the filter
+			try:
+				queryset = queryset.filter(**filter_dict)
+			except:
+				print(filter_dict)
+				queryset = False
+				valid = False
+				self.totals = False
 		# return the result
-		return queryset
+		return queryset, valid
 
 	def add_period_filters(self,filter,filter_dict):
 		# get the start and end of the period, based on the type of period
@@ -1120,41 +1165,6 @@ class Panel(DataAccessMixin,models.Model):
 												url = False,
 												parameter = 0
 												))
-
-	def load_rows_from_objects(
-								self,
-								rows,
-								row_name,
-								row_values,
-								row_url,
-								row_parameter_name,
-								row_parameter_prefix,
-								totals
-								):
-		# this function will populate the panel from a list of objects, based on the name of the row field and the row
-		# values fields
-		for row in rows:
-			# get the row label using the passed row field name
-			label = getattr(row, row_name)
-			# get the parameter value using the passed parameter field name, adding the prefix, otherwise set to zero
-			if row_parameter_name:
-				parameter = getattr(row, row_parameter_name)
-				parameter = row_parameter_prefix + str(parameter)
-			else:
-				parameter = 0
-			# set an empty list of values
-			values = []
-			# now build the list of values
-			for row_value in row_values:
-				value = getattr(row, row_value)
-				values.append(value)
-			# create a row object
-			self.rows.append(Dashboard_Panel_Row(
-													label = label,
-													values = values,
-													url = row_url,
-													parameter = parameter
-													))
 
 	def get_totals(self):
 		# return a list of totals for the panel

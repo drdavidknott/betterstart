@@ -2,7 +2,8 @@ from django.test import TestCase
 from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Event_Type, Event_Category, \
 							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type, \
 							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note, \
-							Trained_Role, Activity_Type, Activity
+							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
+							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -2627,6 +2628,180 @@ class EventViewTest(TestCase):
 		response = self.client.get(reverse('event',args=[1]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
+
+class DashboardViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create an event category
+		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+		# create two test event types
+		test_event_type_1 = Event_Type.objects.create(
+														name = 'test_event_type_1',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_2 = Event_Type.objects.create(
+														name = 'test_event_type_2',
+														description = 'type desc',
+														event_category = test_event_category)
+		# Create 10 test events for each type
+		set_up_test_events('Test_Event_Type_1_', test_event_type_1,10)
+		set_up_test_events('Test_Event_Type_2_', test_event_type_2,10)
+		# create the dashboard
+		test_dashboard = Dashboard.objects.create(
+													name='beta_dashboard',
+													title='Test Dashboard',
+													margin=1,
+													)
+		# create a column
+		test_column = Column.objects.create(
+											name='test_column',
+											)
+		# connect the column to the dashboard
+		Column_In_Dashboard.objects.create(
+											dashboard=test_dashboard,
+											column=test_column
+											)
+		# create a panel
+		test_panel = Panel.objects.create(
+											name='test_panel',
+											title='Test Panel',
+											row_name_field='name',
+											totals=True,
+											model='Event_Type',
+											)
+		# add the panel to the column
+		Panel_In_Column.objects.create(
+										column=test_column,
+										panel=test_panel
+										)
+		# create a panel column
+		test_panel_column = Panel_Column.objects.create(
+														name='test_panel_column',
+														count_field='event_set',
+														)
+		# add the column to the panel
+		Panel_Column_In_Panel.objects.create(
+												panel=test_panel,
+												panel_column=test_panel_column
+												)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/dashboard')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/dashboard')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_default_rows_included(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		dashboard = response.context['dashboard']
+		for column in dashboard.get_columns():
+			for panel in column.get_panels():
+				for row in panel.get_rows():
+					for value in row.values:
+						self.assertEqual(value,10)
+		self.assertContains(response,'test_event_type_1')
+		self.assertContains(response,'test_event_type_2')
+
+	def test_panel_model_error(self):
+		# change the panel model to an invalid value
+		test_panel = Panel.objects.get(name='test_panel')
+		test_panel.model = 'invalid'
+		test_panel.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'MODEL DOES NOT EXIST')
+
+	def test_panel_sort_field_error(self):
+		# change the panel model to an invalid value
+		test_panel = Panel.objects.get(name='test_panel')
+		test_panel.sort_field = 'invalid'
+		test_panel.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'SORT FIELD DOES NOT EXIST')
+
+	def test_panel_row_name_field_error(self):
+		# change the panel model to an invalid value
+		test_panel = Panel.objects.get(name='test_panel')
+		test_panel.row_name_field = 'invalid'
+		test_panel.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'ROW NAME FIELD DOES NOT EXIST')
+
+	def test_panel_row_parameter_field_error(self):
+		# change the panel model to an invalid value
+		test_panel = Panel.objects.get(name='test_panel')
+		test_panel.row_parameter_name = 'invalid'
+		test_panel.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'ROW PARAMETER FIELD DOES NOT EXIST')
+
+	def test_panel_column_count_field_error(self):
+		# change the panel model to an invalid value
+		test_panel_column = Panel_Column.objects.get(name='test_panel_column')
+		test_panel_column.query_type = 'query_from_many'
+		test_panel_column.count_model = 'invalid'
+		test_panel_column.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'COUNT MODEL DOES NOT EXIST')
+
+	def test_panel_column_count_model_error(self):
+		# change the panel model to an invalid value
+		test_panel_column = Panel_Column.objects.get(name='test_panel_column')
+		test_panel_column.count_field = 'invalid'
+		test_panel_column.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'COUNT FIELD DOES NOT EXIST')
 
 class AddPersonViewTest(TestCase):
 	@classmethod

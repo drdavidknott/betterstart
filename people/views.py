@@ -1003,8 +1003,39 @@ def build_registration(request, event, person_id, registered, apologies, partici
 			if show_messages:
 				# set the success message
 				messages.success(request,'Registration (' + str(registration) + ') updated.')
+	# check whether the role type requires training, and, if it does set the role to active for the person
+	if role_type.trained:
+		set_trained_role_to_active(
+									person=person,
+									role_type = role_type
+									)
 	# return the registration
 	return registration
+
+def set_trained_role_to_active(person, role_type):
+	# take a person and role type and, if the role type requires training, set it to active
+	# check whether the role type requires training: return if it doesn't
+	if not role_type.trained:
+		return
+	# check whether a relationship exists
+	trained_role = Trained_Role.try_to_get(
+											person=person,
+											role_type=role_type
+											)
+	# if we have a role, check whether it's active, and set it to active if it isn't
+	if trained_role:
+		if not trained_role.active:
+			trained_role.active = True
+			trained_role.save()
+		# otherwise we don't have a trained role, so create one
+		else:
+			Trained_Role.objects.create(
+										person=person,
+										role_type=role_type,
+										active=True
+										)
+	# return the trained role
+	return trained_role
 
 def remove_registration(request, event, person_id):
 	# attempt to remove a registration record, checking first that the registration exists

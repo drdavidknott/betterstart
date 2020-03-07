@@ -918,11 +918,8 @@ class AddRegistrationForm(forms.Form):
 			# get the list of roles available
 			role_types = person.age_status.role_types.filter(use_for_events=True).order_by('role_type_name')
 			# go through the role types and exclude any where the role requires training and the person is not trained
-			# and active
 			for role_type in role_types:
-				# check to see if the role is trained
-				if role_type.trained and not person.trained_role_set.filter(role_type=role_type,active=True).exists():
-					# remove the role type from the query set
+				if role_type.trained and not person.trained_role_set.filter(role_type=role_type).exists():
 					role_types = role_types.exclude(pk=role_type.pk)
 			# create the field
 			self.fields[field_name]= forms.ChoiceField(
@@ -972,15 +969,20 @@ class EditRegistrationForm(forms.Form):
 														required = False,
 														initial = registration.participated,
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
-			# set the field name for role
+			# get the the person, then build the list of roles available for the person
+			person = registration.person
+			role_types = person.age_status.role_types.filter(use_for_events=True).order_by('role_type_name')
+			# go through the role types and exclude any where the role requires training and the person is not trained
+			for role_type in role_types:
+				if role_type.trained and not person.trained_role_set.filter(role_type=role_type).exists():
+					role_types = role_types.exclude(pk=role_type.pk)
+			# build the field
 			field_name = 'role_type_' + str(registration.person.pk)
-			# create the field
 			self.fields[field_name]= forms.ChoiceField(
 														label="Role",
 														widget=forms.Select(attrs={'class' : 'form-control'}),
 														initial=registration.role_type.pk,
-														choices=role_type_choices(
-																	registration.person.age_status.role_types.filter(use_for_events=True).order_by('role_type_name')),
+														choices=role_type_choices(role_types),
 														)
 
 class AddPersonAndRegistrationForm(forms.Form):

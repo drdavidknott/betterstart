@@ -1122,7 +1122,6 @@ class Panel(DataAccessMixin,models.Model):
 			try:
 				queryset = queryset.filter(**filter_dict)
 			except:
-				print(filter_dict)
 				queryset = False
 				valid = False
 				self.totals = False
@@ -1135,9 +1134,11 @@ class Panel(DataAccessMixin,models.Model):
 		# set the terms based on the supplied term
 		start_term = filter.term + '__gte'
 		end_term = filter.term + '__lte'
-		# add the start filter
-		filter_dict[start_term] = period_start
-		filter_dict[end_term] = period_end
+		# add the filters if we have values
+		if period_start:
+			filter_dict[start_term] = period_start
+		if period_end:
+			filter_dict[end_term] = period_end
 		# return the results
 		return filter_dict
 

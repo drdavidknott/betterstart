@@ -812,6 +812,7 @@ class Panel_Column(DataAccessMixin,models.Model):
 	count_field = models.CharField(max_length=50, default='', blank=True)
 	count_model = models.CharField(max_length=50, default='', blank=True)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
+	apply_sub_filters = models.BooleanField(default=True)
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -839,6 +840,7 @@ class Panel(DataAccessMixin,models.Model):
 	display_zeroes = models.BooleanField(default=False)
 	model = models.CharField(max_length=50)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
+	sub_filters = models.ManyToManyField(Filter_Spec, blank=True, related_name='owning_panels')
 	columns = models.ManyToManyField(Panel_Column, through='Panel_Column_In_Panel')
 	prebuilt_panel = models.CharField(
 										max_length=50,

@@ -14,6 +14,10 @@ class PersonAdmin(admin.ModelAdmin):
 class EventAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
+class AnswerAdmin(admin.ModelAdmin):
+	list_display = ['person','__str__']
+	search_fields = ['person__last_name']
+
 admin.site.register(Person, PersonAdmin)
 admin.site.register(Relationship_Type)
 admin.site.register(Relationship)
@@ -33,7 +37,7 @@ admin.site.register(Event_Registration)
 admin.site.register(Capture_Type)
 admin.site.register(Question)
 admin.site.register(Option)
-admin.site.register(Answer)
+admin.site.register(Answer, AnswerAdmin)
 admin.site.register(Role_History)
 admin.site.register(ABSS_Type)
 admin.site.register(Age_Status)

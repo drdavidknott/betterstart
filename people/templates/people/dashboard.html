@@ -10,18 +10,22 @@
 
  		<div class="col-md-{{ dashboard.margin }}"></div>
 
- 		<div class="col-md-12">
- 			<h3>
-	 			<span class="glyphicon glyphicon-dashboard"></span>
-	 			{{ dashboard.title }}
- 			</h3>
-		</div>
+ 		{% if show_title %}
 
-		<div class="row">
-			<div class="col-xs-12">
-	 			<hr>
-		 	</div>
-		</div>
+	 		<div class="col-md-12">
+	 			<h3>
+		 			<span class="glyphicon glyphicon-dashboard"></span>
+		 			{{ dashboard.title }}
+	 			</h3>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+		 			<hr>
+			 	</div>
+			</div>
+
+		{% endif %}
 
 		{% for column in dashboard.get_columns %}
 

@@ -1,0 +1,67 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		{% if people %}
+			$(".search-box").hide();
+		{% endif %}
+		$(".search-trigger").click(function() {
+			$(".search-box").toggle()
+		});
+	});
+</script>
+
+<div class="container">
+
+	<div class="row">
+ 		<div class="col-md-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-dashboard"></span>
+	 			Dashboards
+ 			</h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	{% if dashboards %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
+					<tbody>
+				 		{% for dashboard in dashboards %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'dashboard' dashboard.name %}">
+										{{ dashboard.title }}
+									</a>
+									{% if not dashboard.live %}
+										(BETA)
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

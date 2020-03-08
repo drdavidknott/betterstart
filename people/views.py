@@ -3118,14 +3118,25 @@ def alpha_graph_dashboard(request):
 	return HttpResponse(dashboard_template.render(context=context, request=request))
 
 @login_required
-def dashboard(request):
-	# get the templates
-	index_template = loader.get_template('people/beta_dashboard.html')
-	# create and build a dashboard
-	dashboard = Dashboard.objects.get(name='beta_dashboard')
+def dashboard(request,name=''):
+	# initialise the variables
+	dashboard = False
+	dashboards = False
+	# if we have a dashboard name, attempt to get the dashboard
+	if name:
+		dashboard = Dashboard.try_to_get(name=name)
+		index_template = loader.get_template('people/dashboard.html')
+	# if we don't have a dashboard, get the list of dashboards
+	if not dashboard:
+		dashboards = Dashboard.objects.all().order_by('title')
+		index_template = loader.get_template('people/dashboards.html')
+		# if the user is not a superuser, exclude all non-live dashboards
+		if not request.user.is_superuser:
+			dashboards = dashboards.exclude(live=False)
 	# set the context
 	context = build_context({
 								'dashboard' : dashboard,
+								'dashboards' : dashboards
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))

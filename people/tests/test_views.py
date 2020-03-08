@@ -2650,7 +2650,7 @@ class DashboardViewTest(TestCase):
 		set_up_test_events('Test_Event_Type_2_', test_event_type_2,10)
 		# create the dashboard
 		test_dashboard = Dashboard.objects.create(
-													name='beta_dashboard',
+													name='test_dashboard',
 													title='Test Dashboard',
 													margin=1,
 													)
@@ -2697,7 +2697,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
@@ -2705,7 +2705,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
@@ -2726,7 +2726,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
@@ -2740,7 +2740,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
@@ -2754,7 +2754,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
@@ -2768,7 +2768,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
@@ -2783,7 +2783,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
@@ -2797,7 +2797,7 @@ class DashboardViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('dashboard'))
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response

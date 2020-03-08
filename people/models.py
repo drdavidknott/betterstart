@@ -1250,6 +1250,7 @@ class Dashboard(DataAccessMixin,models.Model):
 	title = models.CharField(max_length=50)
 	margin = models.IntegerField(default=1)
 	columns = models.ManyToManyField(Column, through='Column_In_Dashboard')
+	live = models.BooleanField(default=False)
 	# define the function that will return the name
 	def __str__(self):
 		return self.name

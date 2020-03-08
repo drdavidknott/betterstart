@@ -11,17 +11,6 @@ def class_from_str(class_str):
 	# this function takes the name of a class in a string and returns the class, if it exists
 	return globals()[class_str] if class_str in globals() else False
 
-# Site model: provides configuration for the site
-class Site(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
-	navbar_background = models.CharField(max_length=50, blank=True)
-	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
-	messages = models.BooleanField(default=False)
-	dob_offset = models.IntegerField(default=0)
-	# define the function that will return the SITE name as the object reference
-	def __str__(self):
-		return self.name
-
 # Family model: represents a family.
 # Has a many to many relationship with Person
 class Family(DataAccessMixin,models.Model):
@@ -1299,3 +1288,14 @@ class Dashboard_Panel_Row():
 		# return the value
 		return has_data
 
+# Site model: provides configuration for the site
+class Site(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	navbar_background = models.CharField(max_length=50, blank=True)
+	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
+	messages = models.BooleanField(default=False)
+	dob_offset = models.IntegerField(default=0)
+	dashboard = models.ForeignKey(Dashboard, null=True, blank=True, on_delete=models.SET_NULL)
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.name

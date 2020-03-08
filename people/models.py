@@ -1077,6 +1077,13 @@ class Panel(DataAccessMixin,models.Model):
 																filters=column.panel_column.filters.all(),
 																master_object=row
 																)
+			# if we need to apply sub filters, apply those too
+			if column.panel_column.apply_sub_filters:
+				count_queryset, valid_filters = self.apply_filters(
+																queryset=count_queryset,
+																filters=self.sub_filters.all(),
+																master_object=row
+																)
 			# if it was valid, append the value, else append an error
 			if valid_filters:
 				values.append(count_queryset.count())
@@ -1111,7 +1118,6 @@ class Panel(DataAccessMixin,models.Model):
 		valid = True
 		# apply filters to a queryset and return the result
 		for filter in filters:
-			# set the value depending on the type
 			if filter.filter_type == 'boolean':
 				filter_dict[filter.term] = filter.boolean_value
 			elif filter.filter_type == 'string':
@@ -1120,13 +1126,13 @@ class Panel(DataAccessMixin,models.Model):
 				filter_dict = self.add_period_filters(filter, filter_dict)
 			elif filter.filter_type == 'object':
 				filter_dict[filter.term] = master_object
-			# try to apply the filter
-			try:
-				queryset = queryset.filter(**filter_dict)
-			except:
-				queryset = False
-				valid = False
-				self.totals = False
+		# try to apply the filters
+		try:
+			queryset = queryset.filter(**filter_dict)
+		except:
+			queryset = False
+			valid = False
+			self.totals = False
 		# return the result
 		return queryset, valid
 

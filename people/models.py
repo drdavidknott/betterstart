@@ -230,6 +230,13 @@ class Event(DataAccessMixin,models.Model):
 						)
 		# and return the results
 		return duration
+	# define a set of functions to return counts based on registration, participation and apologies
+	def registered_count(self):
+		return self.event_registration_set.filter(registered=True).count()
+	def apologies_count(self):
+		return self.event_registration_set.filter(apologies=True).count()
+	def participated_count(self):
+		return self.event_registration_set.filter(participated=True).count()
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):
@@ -946,7 +953,6 @@ class Panel(DataAccessMixin,models.Model):
 									ABSS_end_date__isnull=True)
 			# add the exception count to the list if we got any
 			if age_exceptions.count() > 0:
-				print('hello')
 				# create a row and append it to the list of rows
 				dashboard_panel_row = Dashboard_Panel_Row(
 															label=age_status.status,
@@ -1101,14 +1107,14 @@ class Panel(DataAccessMixin,models.Model):
 	def get_panel_queryset(self):
 		# get the queryset used to populate the panel
 		panel_queryset = self.model.objects.all()
-		# order it if it needs ordering
-		if self.sort_field:
-			panel_queryset = panel_queryset.order_by(self.sort_field)
-		# and filter it if it needs filtering
+		# filter it if it needs filtering
 		panel_queryset, valid_filters = self.apply_filters(panel_queryset,self.filters.all())
 		# deal with the error if we got an error
 		if not valid_filters:
 			self.set_panel_error('INVALID PANEL FILTERS')
+		# and try to order it if it needs ordering
+		if valid_filters and self.sort_field:
+				panel_queryset = panel_queryset.order_by(self.sort_field)
 		# return the results
 		return panel_queryset
 

@@ -5144,6 +5144,59 @@ class EventRegistrationViewTest(TestCase):
 		# check the values
 		self.assertEqual(trained_role.active,True)
 
+	def test_event_registration_edit_trained_role_already_active(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True,trained=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		# create  a person
+		set_up_test_people('Registered_',number=1)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		# create a trained role with an inactive status
+		trained_role = Trained_Role.objects.create(person=person_1,role_type=test_role_1,active=True)
+		# and a registration
+		Event_Registration.objects.create(
+											event=Event.objects.get(name='test_event_0'),
+											person=Person.objects.get(first_name='Registered_0'),
+											role_type=test_role_2,
+											registered=True,
+											participated=False,
+											apologies=False
+											)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# set the keys
+		keys = str(Person.objects.get(first_name='Registered_0').pk)
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'editregistration',
+												'registration_keys' : keys,
+												'registered_' + str(person_1.pk) : 'on',
+												'apologies_' + str(person_1.pk) : '',
+												'participated_' + str(person_1.pk) : '',
+												'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the event
+		event = Event.objects.get(name='test_event_0')
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=person_1,event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,True)
+		self.assertEqual(registration_1.apologies,False)
+		self.assertEqual(registration_1.participated,False)
+		self.assertEqual(registration_1.role_type,test_role_1)
+		# get the trained role
+		trained_role = Trained_Role.objects.get(person=person_1,role_type=test_role_1)
+		# check the values
+		self.assertEqual(trained_role.active,True)
+
 class EditEventViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

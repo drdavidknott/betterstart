@@ -736,13 +736,13 @@ def set_trained_role_to_active(person, role_type):
 		if not trained_role.active:
 			trained_role.active = True
 			trained_role.save()
-		# otherwise we don't have a trained role, so create one
-		else:
-			Trained_Role.objects.create(
-										person=person,
-										role_type=role_type,
-										active=True
-										)
+	# otherwise we don't have a trained role, so create one
+	else:
+		Trained_Role.objects.create(
+									person=person,
+									role_type=role_type,
+									active=True
+									)
 	# return the trained role
 	return trained_role
 

@@ -2084,7 +2084,8 @@ def add_relationship(request,person_id=0):
 									)
 			# remove the people who already have a relationship
 			search_results = remove_existing_relationships(person, people)
-			# if there are search results, create a form to create relationships from the search results
+			# if there are search results, and the names are not all numeric create a form to create 
+			# relationships from the search results
 			if search_results:
 				addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
 														people=search_results,
@@ -2095,12 +2096,13 @@ def add_relationship(request,person_id=0):
 					result.field_name = 'relationship_type_' + str(result.pk)
 			# get the first name and last name from the names search string
 			first_name, last_name = split_names(names)
-			# create a form to add the relationship
-			addrelationshipform = AddRelationshipForm(
-														person = person,
-														first_name = first_name,
-														last_name = last_name
-														)
+			# create a form to add the relationship unless we have just a membership number in the names
+			if not all(map(str.isdigit,names)):
+				addrelationshipform = AddRelationshipForm(
+															person = person,
+															first_name = first_name,
+															last_name = last_name
+															)
 		# return the results
 		return search_results, addrelationshiptoexistingpersonform, addrelationshipform
 

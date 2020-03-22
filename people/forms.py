@@ -508,7 +508,7 @@ class PersonNameSearchForm(forms.Form):
 								)
 	# Define the fields that we need in the form.
 	names = forms.CharField(
-							label="Names",
+							label="Names or membership number",
 							max_length=50,
 							widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	include_people = forms.ChoiceField(

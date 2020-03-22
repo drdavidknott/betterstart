@@ -2052,6 +2052,93 @@ def profile(request, person_id=0):
 def add_relationship(request,person_id=0):
 	# this is one of the most complex views on the site, which allows the user to search for people and to 
 	# add relationships to both existing and new people
+
+	# SUBFUNCTIONS TO PROCESS DIFFERENT ACTION TYPES
+	# search function: searches on the basis of criteria suppied, and creates forms to add relationships
+	# to the people found, and to create a new person if necessary
+	def add_relationship_search(person,request):
+		# initialise variables
+		search_results = []
+		addrelationshipform = ''
+		addrelationshiptoexistingpersonform = ''
+		# create a search form from the POST
+		personsearchform = PersonNameSearchForm(request.POST)
+		# validate the form
+		if personsearchform.is_valid():
+			# get the names
+			names = personsearchform.cleaned_data['names']
+			# and the flag of which people we include
+			include_people = personsearchform.cleaned_data['include_people']
+			# conduct a search
+			people = Person.search(
+									names=names,
+									include_people=include_people
+									)
+			# remove the people who already have a relationship
+			search_results = remove_existing_relationships(person, people)
+			# if there are search results, create a form to create relationships from the search results
+			if search_results:
+				addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
+														people=search_results,
+														from_person=person
+														)
+				# go through the search results and add a field name to the object
+				for result in search_results:
+					result.field_name = 'relationship_type_' + str(result.pk)
+			# get the first name and last name from the names search string
+			first_name, last_name = split_names(names)
+			# create a form to add the relationship
+			addrelationshipform = AddRelationshipForm(
+														person = person,
+														first_name = first_name,
+														last_name = last_name
+														)
+		# return the results
+		return search_results, addrelationshiptoexistingpersonform, addrelationshipform
+
+	# edit relationships function: goes through the form and updates the relationship if it has changed or is new
+	def add_relationship_editrelationships(person,request):
+		# go through the post
+		for field_name, field_value in request.POST.items():
+			# check whether this is a relevant field
+			if field_name.startswith('relationship_type'):
+				# try to find a person using the id at the end of the field name
+				person_to = Person.try_to_get(pk=int(extract_id(field_name)))
+				# if we got a person, edit the relationship
+				if person_to:
+					edit_relationship(request, person, person_to, int(field_value))
+		# return - no results returned at the moment
+		return
+
+	# add relationship to new person function: creates the person if valid, and then indicates that we should
+	# redirect to edit the page for that person
+	def add_relationship_addrelationshiptonewperson(person,request):
+		# initialise the variables
+		person_to = False
+		# create the form
+		addrelationshipform = AddRelationshipForm(
+													request.POST,
+													person = person,
+													first_name = request.POST['first_name'],
+													last_name = request.POST['last_name']
+													)
+		# check whether the form is valid
+		if addrelationshipform.is_valid():
+			# we now need to create the person
+			person_to = create_person(
+										first_name = addrelationshipform.cleaned_data['first_name'],
+										middle_names = addrelationshipform.cleaned_data['middle_names'],
+										last_name = addrelationshipform.cleaned_data['last_name'],
+										age_status = addrelationshipform.cleaned_data['age_status']
+										)
+			# set a message to say that we have created a new person
+			messages.success(request, str(person_to) + ' created.')
+			# now create the relationship
+			edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
+		# return the form and the result
+		return addrelationshipform, person_to
+
+	# MAIN VIEW LOGIC
 	# initalise the forms which we might not need
 	addrelationshipform = ''
 	addrelationshiptoexistingpersonform = ''
@@ -2075,76 +2162,14 @@ def add_relationship(request,person_id=0):
 	if request.method == 'POST':
 		# check what type of submission we got
 		if request.POST['action'] == 'search':
-			# create a search form from the POST
-			personsearchform = PersonNameSearchForm(request.POST)
-			# validate the form
-			if personsearchform.is_valid():
-				# get the names
-				names = personsearchform.cleaned_data['names']
-				# and the flag of which people we include
-				include_people = personsearchform.cleaned_data['include_people']
-				# conduct a search
-				people = Person.search(
-										names=names,
-										include_people=include_people
-										)
-				# remove the people who already have a relationship
-				search_results = remove_existing_relationships(person, people)
-				# if there are search results, create a form to create relationships from the search results
-				if search_results:
-					# create the form
-					addrelationshiptoexistingpersonform = AddRelationshipToExistingPersonForm(
-															people=search_results,
-															from_person=person
-															)
-					# go through the search results and add a field name to the object
-					for result in search_results:
-						# add the field
-						result.field_name = 'relationship_type_' + str(result.pk)
-				# get the first name and last name from the names search string
-				first_name, last_name = split_names(names)
-				# create a form to add the relationship
-				addrelationshipform = AddRelationshipForm(
-															person = person,
-															first_name = first_name,
-															last_name = last_name
-															)
-		# check whether we have been asked to edit relationships
-		# note that we get this action for editing existing relationships and creating new relationships
+			search_results, addrelationshiptoexistingpersonform, addrelationshipform = \
+				add_relationship_search(person,request)
 		elif request.POST['action'] == 'editrelationships':
-			# go through the post
-			for field_name, field_value in request.POST.items():
-				# check whether this is a relevant field
-				if field_name.startswith('relationship_type'):
-					# try to find a person using the id at the end of the field name
-					person_to = Person.try_to_get(pk=int(extract_id(field_name)))
-					# if we got a person, edit the relationship
-					if person_to:
-						# edit the relationship
-						edit_relationship(request, person, person_to, int(field_value))
-		# check whether we have been asked to add a relationship to a new person
+			add_relationship_editrelationships(person,request)
 		elif request.POST['action'] == 'addrelationshiptonewperson':
-			# create the form
-			addrelationshipform = AddRelationshipForm(
-														request.POST,
-														person = person,
-														first_name = request.POST['first_name'],
-														last_name = request.POST['last_name']
-														)
-			# check whether the form is valid
-			if addrelationshipform.is_valid():
-				# we now need to create the person
-				person_to = create_person(
-											first_name = addrelationshipform.cleaned_data['first_name'],
-											middle_names = addrelationshipform.cleaned_data['middle_names'],
-											last_name = addrelationshipform.cleaned_data['last_name'],
-											age_status = addrelationshipform.cleaned_data['age_status']
-											)
-				# set a message to say that we have create a new person
-				messages.success(request, str(person_to) + ' created.')
-				# now create the relationship
-				edit_relationship(request,person, person_to, addrelationshipform.cleaned_data['relationship_type'])
-				# redirect to the profile form for the new person
+			addrelationshipform, person_to = add_relationship_addrelationshiptonewperson(person,request)
+			# redirect if we successfully created a new person
+			if person_to:
 				return redirect('/profile/' + str(person_to.pk))
 	# update the existing relationships: there may be new ones
 	relationships_to = get_relationships_to(person)
@@ -2157,7 +2182,6 @@ def add_relationship(request,person_id=0):
 																		)
 		# and go through the relationships, adding the name of the select field and the hidden field
 		for relationship_to in relationships_to:
-			# set the values
 			relationship_to.select_name = 'relationship_type_' + str(relationship_to.pk)
 			relationship_to.hidden_name = 'original_relationship_type_' + str(relationship_to.pk)
 	# set the context from the person based on person id

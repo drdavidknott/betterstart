@@ -2746,6 +2746,20 @@ class DashboardViewTest(TestCase):
 		# check the values in the response
 		self.assertContains(response,'SORT FIELD DOES NOT EXIST')
 
+	def test_panel_sort_field_method_instead_of_field_error(self):
+		# change the panel model to an invalid value
+		test_panel = Panel.objects.get(name='test_panel')
+		test_panel.sort_field = '__str__'
+		test_panel.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('dashboard',args=['test_dashboard']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'SORT FIELD DOES NOT EXIST')
+
 	def test_panel_row_name_field_error(self):
 		# change the panel model to an invalid value
 		test_panel = Panel.objects.get(name='test_panel')

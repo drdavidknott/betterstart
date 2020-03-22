@@ -11,6 +11,16 @@ def class_from_str(class_str):
 	# this function takes the name of a class in a string and returns the class, if it exists
 	return globals()[class_str] if class_str in globals() else False
 
+# function to check whether a model contains a field
+def has_field(model,field_name):
+	# this function takes a model Class and the name of a field, and uses the _meta API to check whether the 
+	# field exists on the model, returning True if it does and False if it doesn't
+	try:
+		model._meta.get_field(field_name)
+		return True
+	except models.FieldDoesNotExist:
+		return False
+
 # Family model: represents a family.
 # Has a many to many relationship with Person
 class Family(DataAccessMixin,models.Model):
@@ -900,7 +910,7 @@ class Panel(DataAccessMixin,models.Model):
 		# get one record, so that we can test attributes
 		test_object = model.objects.first()
 		# check the sort field
-		if self.sort_field and not hasattr(test_object,self.sort_field):
+		if self.sort_field and not has_field(model,self.sort_field):
 			self.set_panel_error('SORT FIELD DOES NOT EXIST')
 			return False
 		# check the name field

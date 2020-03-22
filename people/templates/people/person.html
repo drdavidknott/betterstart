@@ -50,6 +50,16 @@
 	 		<div class="row">
 				<strong>Role: </strong>{{ person.default_role.role_type_name }}&nbsp
 	 		</div>
+	 		{% if person.ABSS_type.membership_number_required %}
+	 			<div class="row">
+		 			<strong>Membership number: </strong>
+		 				{% if person.membership_number %}
+		 					{{ person.membership_number }}
+		 				{% else %}
+		 					Number not allocated
+		 				{% endif %}
+		 		</div>
+		 	{% endif %}
 	 		{% for trained_role in person.trained_role_set.all %}
 		 		<div class="row">
 		 			<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}

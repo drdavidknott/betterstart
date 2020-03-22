@@ -451,35 +451,38 @@ def create_person(
 					first_name,
 					last_name,
 					middle_names='',
-					default_role=False,
+					default_role_id=False,
 					date_of_birth=None,
 					gender='',
-					ethnicity=0,
-					ABSS_type=0,
-					age_status=0,
+					ethnicity_id=0,
+					ABSS_type_id=0,
+					age_status_id=0,
 					):
-	# get the age status
-	if not age_status:
-		# set the default to adult
-		age_status = Age_Status.objects.get(status='Adult').pk
-	# otherwise get the actual age status
+	# get the age status, defaulting to Adult if not supplied
+	if not age_status_id:
+		age_status = Age_Status.objects.get(status='Adult')
 	else:
-		# get the age status
-		age_status = Age_Status.try_to_get(pk=age_status)
-	# check whether we have a role type
-	if default_role:
-		# get the role
-		default_role = Role_Type.try_to_get(pk=default_role)
-	# otherwise set unknown
+		age_status = Age_Status.try_to_get(pk=age_status_id)
+	# get the role, defaulting to the age status default if not supplied
+	if default_role_id:
+		default_role = Role_Type.try_to_get(pk=default_role_id)
 	else:
-		# get the role type dependent on the age status
 		default_role = age_status.default_role_type
-	# get the default values for ethnicity, ABSS Type and age_status
-	if not ethnicity:
-		ethnicity = Ethnicity.objects.get(description='Prefer not to say').pk
+	# get the ethnicity, defaulting to Prefer not to say if not supplied
+	if not ethnicity_id:
+		ethnicity = Ethnicity.objects.get(description='Prefer not to say')
+	else:
+		ethnicity = Ethnicity.try_to_get(pk=ethnicity_id)
 	# and the ABSS type
-	if not ABSS_type:
-		ABSS_type = ABSS_Type.objects.get(name='ABSS beneficiary').pk
+	if not ABSS_type_id:
+		ABSS_type = ABSS_Type.objects.get(name='ABSS beneficiary')
+	else:
+		ABSS_type = ABSS_Type.try_to_get(pk=ABSS_type_id)
+	# and get a membership if the ABSS type needs it, otherwise set it to zero
+	if ABSS_type.membership_number_required:
+		membership_number = Person.get_next_membership_number()
+	else:
+		membership_number = 0
 	# create a person
 	person = Person(
 					first_name = first_name,
@@ -488,9 +491,10 @@ def create_person(
 					date_of_birth = date_of_birth,
 					gender = gender,
 					default_role = default_role,
-					ethnicity = Ethnicity.try_to_get(pk=ethnicity),
-					ABSS_type = ABSS_Type.try_to_get(pk=ABSS_type),
+					ethnicity = ethnicity,
+					ABSS_type = ABSS_type,
 					age_status = age_status,
+					membership_number = membership_number
 						)
 	# save the record
 	person.save()
@@ -895,7 +899,8 @@ def update_person(
 					ABSS_start_date,
 					ABSS_end_date,
 					age_status_id,
-					notes
+					notes,
+					membership_number
 				):
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
@@ -959,6 +964,7 @@ def update_person(
 	person.ABSS_start_date = ABSS_start_date
 	person.ABSS_end_date = ABSS_end_date
 	person.emergency_contact_details = emergency_contact_details
+	person.membership_number = membership_number
 	# save the record
 	person.save()
 	# and save a role history if the role has changed
@@ -1892,7 +1898,7 @@ def addperson(request):
 				person = create_person(
 										first_name = first_name,
 										last_name = last_name,
-										age_status = age_status
+										age_status_id = age_status
 										)
 				# set a success message
 				messages.success(request,
@@ -1908,7 +1914,7 @@ def addperson(request):
 			person = create_person(
 									first_name = first_name,
 									last_name = last_name,
-									age_status = age_status
+									age_status_id = age_status
 									)
 			# set a success message
 			messages.success(request,
@@ -1994,6 +2000,7 @@ def profile(request, person_id=0):
 								ABSS_end_date = profileform.cleaned_data['ABSS_end_date'],
 								age_status_id = profileform.cleaned_data['age_status'],
 								notes = profileform.cleaned_data['notes'],
+								membership_number = profileform.cleaned_data['membership_number']
 									)
 			# clear out the existing trained roles
 			person.trained_role_set.all().delete()
@@ -2030,7 +2037,8 @@ def profile(request, person_id=0):
 						'ABSS_start_date' : person.ABSS_start_date,
 						'ABSS_end_date' : person.ABSS_end_date,
 						'age_status' : person.age_status.pk,
-						'notes' : person.notes
+						'notes' : person.notes,
+						'membership_number' : person.membership_number
 						}
 		# add the trained role values to the profile dictionary
 		for trained_role in Role_Type.objects.filter(trained=True):
@@ -2129,7 +2137,7 @@ def add_relationship(request,person_id=0):
 										first_name = addrelationshipform.cleaned_data['first_name'],
 										middle_names = addrelationshipform.cleaned_data['middle_names'],
 										last_name = addrelationshipform.cleaned_data['last_name'],
-										age_status = addrelationshipform.cleaned_data['age_status']
+										age_status_id = addrelationshipform.cleaned_data['age_status']
 										)
 			# set a message to say that we have created a new person
 			messages.success(request, str(person_to) + ' created.')
@@ -2835,7 +2843,7 @@ def event_registration(request,event_id=0):
 			person = create_person(
 									first_name = addpersonandregistrationform.cleaned_data['first_name'],
 									last_name = addpersonandregistrationform.cleaned_data['last_name'],
-									age_status = addpersonandregistrationform.cleaned_data['age_status']
+									age_status_id = addpersonandregistrationform.cleaned_data['age_status']
 									)
 			# set a message to say that we have create a new person
 			messages.success(request, str(person) + ' created.')

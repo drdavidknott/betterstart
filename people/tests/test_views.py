@@ -694,6 +694,37 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_search_by_membership_number(self):
+		# set different last names
+		last_person = Person.objects.filter(first_name__startswith='Test_Role_1').last()
+		# update the membership number for the last person
+		last_person.membership_number = 999
+		last_person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '999',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),1)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],1)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
 	def test_search_by_multiple_terms_first_name_last_name(self):
 		# set different last names
 		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
@@ -2882,6 +2913,56 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'')
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.membership_number,0)
+
+	def test_create_person_increment_membership_number(self):
+		# set the ABSS beneficiary record to require a membership number
+		ABSS_type = ABSS_Type.objects.get(name='ABSS beneficiary')
+		ABSS_type.membership_number_required = True
+		ABSS_type.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addperson'),
+									data = { 
+												'first_name' : 'Testfirst',
+												'last_name' : 'Testlast',
+												'age_status' : str(Age_Status.objects.get(status='Adult').pk)
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/profile/' + str(Person.objects.get(first_name='Testfirst').pk))
+		# get the record
+		test_person = Person.objects.get(first_name='Testfirst')
+		# check the record contents
+		self.assertEqual(test_person.first_name,'Testfirst')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Testlast')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_person.email_address,'')
+		self.assertEqual(test_person.home_phone,'')
+		self.assertEqual(test_person.mobile_phone,'')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,False)
+		self.assertEqual(test_person.due_date,None)
+		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.membership_number,1)
 
 	def test_person_already_exists(self):
 		# log the user in
@@ -3009,6 +3090,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3043,6 +3125,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 
 	def test_update_profile_blank_middle_name(self):
 		# log the user in
@@ -3071,6 +3154,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3104,6 +3188,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 
 	def test_update_profile_blank_other_names_prior_names(self):
 		# log the user in
@@ -3140,6 +3225,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3174,6 +3260,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 
 	def test_update_profile_age_status_default_only(self):
 		# log the user in
@@ -3202,6 +3289,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3235,6 +3323,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 
 	def test_update_profile_age_status_multiple_choices(self):
 		# log the user in
@@ -3263,6 +3352,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '1',
 											}
 									)
 		# check the response
@@ -3296,6 +3386,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '1',
 											}
 									)
 		# check the response
@@ -3329,6 +3420,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2016',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3371,6 +3463,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3404,6 +3497,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 		# get the trained role record
 		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
 		# check the active status
@@ -3445,6 +3539,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3478,6 +3573,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 		# get the trained role record
 		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
 		# check the active status
@@ -3519,6 +3615,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3552,6 +3649,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 		# check that no trained role records exist
 		self.assertEqual(test_person.trained_roles.all().exists(),False)
 
@@ -3591,6 +3689,7 @@ class ProfileViewTest(TestCase):
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
 											}
 									)
 		# check the response
@@ -3624,6 +3723,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
+		self.assertEqual(test_person.membership_number,0)
 		# check that no trained role records exist
 		self.assertEqual(test_person.trained_roles.all().exists(),False)
 

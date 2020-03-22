@@ -264,6 +264,10 @@ class ProfileForm(forms.Form):
 																	'autocomplete' : 'off',
 																	}),
 									input_formats=('%d/%m/%Y',))
+	membership_number = forms.CharField(
+									label="Membership number",
+									max_length=10,
+									widget=forms.NumberInput(attrs={'class' : 'form-control',}))
 	age_status = forms.ChoiceField(
 									label="Age status",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
@@ -405,7 +409,7 @@ class PersonSearchForm(forms.Form):
 								)
 	# Define the fields that we need in the form.
 	names = forms.CharField(
-									label="Names",
+									label="Names or membership number",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))

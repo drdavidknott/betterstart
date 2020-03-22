@@ -73,6 +73,7 @@ class Relationship_Type(DataAccessMixin,models.Model):
 # This is reference data.
 class ABSS_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
+	membership_number_required = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.name
@@ -308,6 +309,7 @@ class Person(DataAccessMixin,models.Model):
 	street = models.ForeignKey(Street, null=True, blank=True, on_delete=models.SET_NULL)
 	datetime_created = models.DateTimeField(auto_now_add=True)
 	datetime_updated = models.DateTimeField(auto_now=True)
+	membership_number = models.IntegerField(default=0)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		# set the name
@@ -464,65 +466,73 @@ class Person(DataAccessMixin,models.Model):
 			error = ' duplicate with name and age status.'
 		# return the errors
 		return error
+
 	# supplement the mixin search function
 	@classmethod
 	def search(cls,*args,**kwargs):
-		# set a blank trained role
+		# initialise variables
 		trained_role = 'none'
-		# and a blank in_project
 		include_people = 'in_project'
-		# and blank names
 		names = False
-		# check whether we have a trained role in the search request
+
+		# get values from the search request if we have them
 		if 'trained_role' in kwargs.keys():
-			# pull the trained role out of the kwargs
 			trained_role = kwargs.pop('trained_role')
-		# check whether we have a trained role in the search request
 		if 'include_people' in kwargs.keys():
-			# pull the include all out of the kwargs
 			include_people = kwargs.pop('include_people')
-		# check whether we have names in the search request
 		if 'names' in kwargs.keys():
-			# pull the include all out of the kwargs
 			names = kwargs.pop('names')
+
 		# call the mixin method
 		results = super().search(**kwargs)
+
 		# if we have a trained role, filter by the trained role
 		if trained_role != 'none':
-			# get the role type
 			role_type = Role_Type.objects.get(pk=int(extract_id(trained_role)))
-			# do the filter
 			results = results.filter(trained_roles=role_type)
-			# and check whether we want active only
+			# filter further if we want active only
 			if 'active' in trained_role:
-				# got through the people
 				for person in results:
-					# attempt to get the active record
 					if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
-						# exclude the person
 						results = results.exclude(pk=person.pk)
-		# if we should only include people in the project exclude those who have left
+
+		# filter further depending on whether we want people in the project, or those who have left
 		if include_people == 'in_project' or include_people == '':
-			# do the filter
 			results = results.exclude(ABSS_end_date__isnull=False)
-		# otherwise check whether we only want people in the project
 		elif include_people == 'left_project':
-			# do the filter
 			results = results.exclude(ABSS_end_date__isnull=True)
-		# check to see whether we have names
+
+		# if we have names in the search terms, split on spaces and attempt to find matches in the name fields
+		# and the membership number field
 		if names:
-			# start by splitting on spaces
 			name_list = names.split(' ')
-			# go through the names
 			for name in name_list:
-				# attempt to find the name in the various name fields
-				results = results.filter(first_name__icontains=name) \
-							| results.filter(last_name__icontains=name) \
-							| results.filter(other_names__icontains=name)
+				# see whether this is a name or a number
+				if all(map(str.isdigit,name)):
+					# we have a number, so search on membership number
+					results = results.filter(membership_number=int(name))
+				else:
+					# we have a name, so search on name
+					results = results.filter(first_name__icontains=name) \
+								| results.filter(last_name__icontains=name) \
+								| results.filter(other_names__icontains=name)
+
 		# order the results by name
 		results = results.order_by('last_name','first_name')
+
 		# return the results
 		return results
+
+	# class method to get the next membership number
+	@classmethod
+	def get_next_membership_number(cls,*args,**kwargs):
+		# if we have any people get the latest number, otherwise set it to 0
+		if Person.objects.all().exists():
+			last_number = Person.objects.all().order_by('membership_number').last().membership_number
+		else:
+			last_number = 0
+		# return an incremented version of the number
+		return last_number + 1
 
 # Relationship model: represents a relationship between two people.
 # This is an intermediate model for a many to many relationship between two Person objects.
@@ -1324,3 +1334,5 @@ class Site(DataAccessMixin,models.Model):
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
+
+

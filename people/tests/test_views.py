@@ -259,6 +259,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'names' : '',
+											'keywords' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -285,6 +286,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'search',
 											'names' : '',
+											'keywords' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
@@ -524,6 +526,177 @@ class PeopleViewTest(TestCase):
 											'action' : 'search',
 											'names' : '',
 											'role_type' : str(parent_role_type.pk),
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_dont_include_all_keywords(self):
+		# set the ABSS dates for the different names
+		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_to_exclude:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'in project',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],392)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),16)
+
+	def test_search_dont_include_all_second_page_keywords(self):
+		# set the ABSS dates for the different names
+		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_to_exclude:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'in project',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],392)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),16)
+
+	def test_search_include_left_keywords(self):
+		# set the ABSS dates for the different names
+		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_to_exclude:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'keywords' : 'left project',
+											'include_people' : 'all',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),4)
+
+	def test_search_include_left_second_page_keywords(self):
+		# set the ABSS dates for the different names
+		people_to_exclude = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_to_exclude:
+			# set the date
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'keywords' : 'left project',
+											'include_people' : 'all',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),4)
+
+	def test_search_for_parent_role_type_keywords(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the parent role type record
+		parent_role_type = Role_Type.objects.get(role_type_name='Parent')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'parent',
+											'role_type' : '0',
 											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
@@ -928,6 +1101,72 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_search_by_names_and_role_type_keywords(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the test role type record
+		test_role_type_1 = Role_Type.objects.get(role_type_name='test role 1')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'Different',
+											'keywords' : 'test role 1',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_by_multiple_names_and_role_type_keywords(self):
+		# set different names
+		people_to_include = Person.objects.filter(first_name__startswith='Different')
+		# go through them and set the date
+		for person in people_to_include:
+			# set the names
+			person.last_name = 'difflast'
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the test role type record
+		test_role_type_1 = Role_Type.objects.get(role_type_name='test role 1')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'Different difflast',
+											'keywords' : 'test role 1',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 	def test_name_search_with_no_results(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -1092,6 +1331,35 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_ABSS_search_on_type_keywords(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_','test role 1',30,'second_test_ABSS_type')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'second_test_ABSS_type',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 	def test_ABSS_search_on_type_and_name(self):
 		# create some extra people
 		set_up_test_people('ABSS_test_find_','test role 1',30,'second_test_ABSS_type')
@@ -1165,6 +1433,97 @@ class PeopleViewTest(TestCase):
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],37)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_ABSS_search_on_type_and_name_keywords(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_find_','test role 1',30,'second_test_ABSS_type')
+		set_up_test_people('ABSS_not_found_','test role 1',30,'second_test_ABSS_type')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'find',
+											'keywords' : 'second_test_ABSS_type',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_ABSS_search_on_type_role_keywords(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_role_1','test role 1',30,'test_ABSS_type')
+		set_up_test_people('ABSS_test_role_2','test role 2',35,'second_test_ABSS_type')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'test role 2 second_test_ABSS_type',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_ABSS_search_on_type_and_name_and_role_keywords(self):
+		# create some extra people
+		set_up_test_people('ABSS_test_role_1','test role 1',30,'second_test_ABSS_type')
+		set_up_test_people('ABSS_test_role_2','test role 2',35,'second_test_ABSS_type')
+		set_up_test_people('ABSS_test_find','test role 2',37,'second_test_ABSS_type')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'find',
+											'keywords' : 'test role 2 second_test_ABSS_type',
+											'role_type' : '0',
+											'ABSS_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1355,6 +1714,158 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_age_status_on_type_keywords(self):
+		# create some extra people
+		set_up_test_people('age_status_test_','test role 1',30,'test_ABSS_type','Child')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'child',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_age_status_search_on_type_and_name_keywords(self):
+		# create some extra people
+		set_up_test_people('age_test_find_','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_not_found_','test role 1',30,'test_ABSS_type','Child')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'find',
+											'keywords' : 'child',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_age_status_search_on_type_role_keywords(self):
+		# create some extra people
+		set_up_test_people('age_status_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'test role 2 child',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_age_status_search_on_type_and_name_and_role_keywords(self):
+		# create some extra people
+		set_up_test_people('age_status_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_find','test role 2',37,'test_ABSS_type','Child')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'find',
+											'keywords' : 'test role 2 child',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],37)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_age_status_search_on_type_and_name_and_role_and_ABSS_keywords(self):
+		# create some extra people
+		set_up_test_people('age_status_test_role_1','test role 1',30,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_2','test role 2',35,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_role_3','test role 3',37,'test_ABSS_type','Child')
+		set_up_test_people('age_status_test_find','test role 2',39,'second_test_ABSS_type','Child')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'find',
+											'keywords' : 'test role 2 second_test_ABSS_type child',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],39)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 	def test_age_status_search_with_no_results(self):
 		# create a new age status
 		age_status = Age_Status.objects.create(status='Third test age status')
@@ -1408,6 +1919,45 @@ class PeopleViewTest(TestCase):
 											'ABSS_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'trained_' + str(role_type.pk),
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_trained_champions_keywords(self):
+		# create some extra people
+		set_up_test_people('trained_champion_test_','test role 1',30,'test_ABSS_type','Adult')
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# create trained status for the new people
+		for person in Person.objects.filter(first_name__startswith='trained_champion_test_'):
+			# set up the trained role
+			Trained_Role.objects.create(person=person,role_type=role_type)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'test role 1 adult',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
 											'ward' : '0',
 											'page' : '1'
 											}
@@ -2004,6 +2554,49 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_search_on_ward_keywords(self):
+		# create some extra people
+		set_up_test_people('test_ward',role_type='test role 1',number=30)
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC',number=1)
+		# and a bunch of streets
+		set_up_test_streets('ABC street ','ABC0',number=1)
+		# get the street
+		street = Street.objects.get(name='ABC street 0')
+		# set up the addresses for the people
+		for person in Person.objects.filter(first_name__startswith='test_ward'):
+			# set the street
+			person.street = street
+			# save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'Test ward',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 	def test_search_on_ward_no_results(self):
 		# create some extra people
 		set_up_test_people('test_ward',role_type='test role 1',number=30)
@@ -2034,6 +2627,110 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : str(Ward.objects.get(ward_name='Test ward 2').pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_question(self):
+		# create the test question and option
+		question = Question.objects.create(question_text = 'test question')
+		option = Option.objects.create(
+								option_label = 'test option',
+								question = question,
+								keyword = 'keyword'
+								)
+		# create and get an extra person
+		set_up_test_people('test_answer_',role_type='test role 1',number=1)
+		person = Person.objects.get(first_name='test_answer_0')
+		# answer the question
+		answer = Answer.objects.create(
+										option=option,
+										person=person,
+										question=question
+										)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'keyword',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],1)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),1)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_question_no_results(self):
+		# create the test question and option
+		question = Question.objects.create(question_text = 'test question')
+		option = Option.objects.create(
+								option_label = 'test option',
+								question = question,
+								keyword = 'keyword'
+								)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'keyword',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_keyword_no_results(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'invalid',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
 											'page' : '1'
 											}
 									)

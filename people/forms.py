@@ -413,6 +413,11 @@ class PersonSearchForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	keywords = forms.CharField(
+									label="Keywords",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	role_type = forms.ChoiceField(
 									label="Role",
 									required=False,
@@ -457,6 +462,9 @@ class PersonSearchForm(forms.Form):
 		self.helper.layout = Layout(
 									Row(
 										Column('names',css_class='form-group col-md-12 mbt-0'),
+										),
+									Row(
+										Column('keywords',css_class='form-group col-md-12 mbt-0'),
 										),
 									Row(
 										Column('role_type',css_class='form-group col-md-2 mbt-0'),

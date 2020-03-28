@@ -265,6 +265,7 @@ class Question(DataAccessMixin,models.Model):
 class Option(DataAccessMixin,models.Model):
 	option_label = models.CharField(max_length=50)
 	question = models.ForeignKey(Question, on_delete=models.CASCADE)
+	keyword = models.CharField(max_length=50, default='', blank=True)
 	# define the function that will return the option label as the object reference
 	def __str__(self):
 		return self.question.question_text + ' ' + self.option_label
@@ -474,6 +475,7 @@ class Person(DataAccessMixin,models.Model):
 		trained_role = 'none'
 		include_people = 'in_project'
 		names = False
+		keywords = False
 
 		# get values from the search request if we have them
 		if 'trained_role' in kwargs.keys():
@@ -482,6 +484,8 @@ class Person(DataAccessMixin,models.Model):
 			include_people = kwargs.pop('include_people')
 		if 'names' in kwargs.keys():
 			names = kwargs.pop('names')
+		if 'keywords' in kwargs.keys():
+			keywords = kwargs.pop('keywords')
 
 		# call the mixin method
 		results = super().search(**kwargs)
@@ -517,8 +521,69 @@ class Person(DataAccessMixin,models.Model):
 								| results.filter(last_name__icontains=name) \
 								| results.filter(other_names__icontains=name)
 
+		# if we have any terms in keywords, call the function to search by keywords
+		if keywords:
+			results = Person.search_by_keywords(keywords,results)
+
 		# order the results by name
 		results = results.order_by('last_name','first_name')
+
+		# return the results
+		return results
+
+	# supplement the mixin search function further with a keyword search
+	@classmethod
+	def search_by_keywords(cls,keywords,results):
+
+		# initialise variables
+		filter_dict = {}
+
+		# create a dictionary of search terms and filters: each search term identifies a dictionary
+		# that will be used to build the filter
+		keyword_filters = {
+						'pregnant' : { 'pregnant' : True },
+						'in project' : { 'ABSS_end_date__isnull' : True },
+						'left project' : { 'ABSS_end_date__isnull' : False }
+						}
+
+		# build more keyword filters from reference data
+		for role_type in Role_Type.objects.filter(trained=False):
+			keyword_filters[role_type.role_type_name] = \
+					{ 'default_role__role_type_name' : role_type.role_type_name }
+
+		for role_type in Role_Type.objects.filter(trained=True):
+			keyword_filters[role_type.role_type_name] = \
+					{ 'trained_role__role_type__role_type_name' : role_type.role_type_name }
+
+		for ward in Ward.objects.all():
+			keyword_filters[ward.ward_name] = \
+					{ 'street__post_code__ward__ward_name' : ward.ward_name }
+
+		for age_status in Age_Status.objects.all():
+			keyword_filters[age_status.status] = \
+					{ 'age_status__status' : age_status.status }
+
+		for ABSS_type in ABSS_Type.objects.all():
+			keyword_filters[ABSS_type.name] = \
+					{ 'ABSS_type__name' : ABSS_type.name }
+
+		for option in Option.objects.exclude(keyword=''):
+			keyword_filters[option.keyword] = \
+					{ 'answer__option__keyword' : option.keyword }
+
+		# split the keywords, then go through the search terms looking for matches, converting keywords to 
+		# lower case to avoid case sensitivity
+		for keyword in keyword_filters.keys():
+			if keyword.lower() in keywords.lower():
+				# go through the terms in the dictionary, adding them to the filter
+				for keyword_filter in keyword_filters[keyword].keys():
+					filter_dict[keyword_filter] = keyword_filters[keyword][keyword_filter]
+
+		# if we have a filter dictionary, filter, otherwise return an empty queryset
+		if filter_dict:
+			results = results.filter(**filter_dict)
+		else:
+			results = Person.objects.none()
 
 		# return the results
 		return results

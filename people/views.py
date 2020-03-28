@@ -1689,6 +1689,7 @@ def people(request):
 	search_attempted = False
 	# and blank search terms
 	names = ''
+	keywords = ''
 	role_type = 0
 	ABSS_type = 0
 	age_status = 0
@@ -1711,6 +1712,7 @@ def people(request):
 			personsearchform.is_valid()
 			# get the names
 			names = personsearchform.cleaned_data['names']
+			keywords = personsearchform.cleaned_data['keywords']
 			role_type = personsearchform.cleaned_data['role_type']
 			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			age_status = personsearchform.cleaned_data['age_status']
@@ -1720,6 +1722,7 @@ def people(request):
 			# conduct a search
 			people = Person.search(
 									names=names,
+									keywords=keywords,
 									default_role_id=role_type,
 									ABSS_type_id=ABSS_type,
 									age_status_id=age_status,
@@ -1755,6 +1758,7 @@ def people(request):
 				'page_list' : page_list,
 				'this_page' : this_page,
 				'names' : names,
+				'keywords' : keywords,
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,
 				'age_status' : age_status,

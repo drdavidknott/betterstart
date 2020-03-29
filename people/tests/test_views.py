@@ -2743,6 +2743,44 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
 
+	def test_search_ethnicity_keywords(self):
+		# create a new test ethnicity
+		test_ethnicity = Ethnicity.objects.create(description='test_ethnicity_2')
+		# set the ABSS dates for the different names
+		people_for_search = Person.objects.filter(first_name__startswith='Different_Name_')
+		# go through them and set the date
+		for person in people_for_search:
+			# set the date
+			person.ethnicity = test_ethnicity
+			# and save the record
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : '',
+											'keywords' : 'test_ethnicity_2',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),4)
+
 class PeopleQueryTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

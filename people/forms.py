@@ -461,10 +461,8 @@ class PersonSearchForm(forms.Form):
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('names',css_class='form-group col-md-12 mbt-0'),
-										),
-									Row(
-										Column('keywords',css_class='form-group col-md-12 mbt-0'),
+										Column('names',css_class='form-group col-md-6 mbt-0'),
+										Column('keywords',css_class='form-group col-md-6 mbt-0'),
 										),
 									Row(
 										Column('role_type',css_class='form-group col-md-2 mbt-0'),

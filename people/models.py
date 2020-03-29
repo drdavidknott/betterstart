@@ -567,6 +567,10 @@ class Person(DataAccessMixin,models.Model):
 			keyword_filters[ABSS_type.name] = \
 					{ 'ABSS_type__name' : ABSS_type.name }
 
+		for ethnicity in Ethnicity.objects.all():
+			keyword_filters[ethnicity.description] = \
+					{ 'ethnicity__description' : ethnicity.description }
+
 		for option in Option.objects.exclude(keyword=''):
 			keyword_filters[option.keyword] = \
 					{ 'answer__option__keyword' : option.keyword }

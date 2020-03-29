@@ -157,6 +157,7 @@ class Post_Code(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'post codes'
+		ordering = ('post_code',)
 
 # Street model: represents valid streets aligned to post codes
 class Street(DataAccessMixin,models.Model):

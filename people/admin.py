@@ -14,6 +14,9 @@ class PersonAdmin(admin.ModelAdmin):
 class EventAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
+class Post_CodeAdmin(admin.ModelAdmin):
+    search_fields = ['post_code']
+
 class AnswerAdmin(admin.ModelAdmin):
 	list_display = ['person','__str__']
 	search_fields = ['person__last_name']
@@ -29,7 +32,7 @@ admin.site.register(Children_Centre)
 admin.site.register(CC_Registration)
 admin.site.register(Area)
 admin.site.register(Ward)
-admin.site.register(Post_Code)
+admin.site.register(Post_Code, Post_CodeAdmin)
 admin.site.register(Event, EventAdmin)
 admin.site.register(Event_Type)
 admin.site.register(Event_Category)

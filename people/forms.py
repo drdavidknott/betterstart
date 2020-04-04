@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward, Area, Activity_Type
+							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -779,6 +779,140 @@ class AddressToRelationshipsForm(forms.Form):
 														label = "Apply",
 														required = False,
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
+
+class AddVenueForm(forms.Form):
+	# Define the fields that we need in the form to capture initial venue details and search for address
+	name = forms.CharField(
+							label="Name",
+							max_length=50,
+							widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	venue_type = forms.ChoiceField(
+									label="Venue type",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	building_name_or_number = forms.CharField(
+									label="Building name or number",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	street = forms.CharField(
+									label="Street",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	post_code = forms.CharField(
+									label="Post Code",
+									max_length=10,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to define the form layout
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(AddVenueForm, self).__init__(*args, **kwargs)
+		# build choices
+		self.fields['venue_type'].choices = build_choices(choice_class=Venue_Type,choice_field='name')
+		# define the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+									Row(
+										Column('name',css_class='form-group col-md-6 mbt-0'),
+										Column('venue_type',css_class='form-group col-md-6 mbt-0'),	
+										),
+									Row(
+										Column('building_name_or_number',css_class='form-group col-md-4 mbt-0'),
+										Column('street',css_class='form-group col-md-4 mbt-0'),
+										Column('post_code',css_class='form-group col-md-4 mbt-0'),	
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									)	
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(AddVenueForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# now perform the additional checks
+		# start by checking whether we have either a post code or a street
+		if not self.cleaned_data['post_code'] and not self.cleaned_data['street']:
+			self.add_error(None,'Either post code or street must be entered.')
+			valid = False
+		# and check whether we already have a venue with this name
+		if Venue.try_to_get(name=self.cleaned_data['name']):
+			self.add_error(None,'Venue with this name already exists.')
+			valid = False
+		# return the result
+		return valid
+
+class EditVenueForm(forms.Form):
+	# Define the fields that we need in the form to capture initial venue details and search for address
+	name = forms.CharField(
+							label="Name",
+							max_length=50,
+							widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	venue_type = forms.ChoiceField(
+									label="Venue type",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	building_name_or_number = forms.CharField(
+									label="Building name or number",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	street = forms.CharField(
+									label="Street",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	post_code = forms.CharField(
+									label="Post Code",
+									max_length=10,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to define the form layout
+	def __init__(self, *args, **kwargs):
+		# pull the venue id out of the parameters
+		self.venue_id = kwargs.pop('venue_id')
+		# call the built in constructor
+		super(EditVenueForm, self).__init__(*args, **kwargs)
+		# build choices
+		self.fields['venue_type'].choices = build_choices(choice_class=Venue_Type,choice_field='name')
+		# define the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+									Row(
+										Column('name',css_class='form-group col-md-6 mbt-0'),
+										Column('venue_type',css_class='form-group col-md-6 mbt-0'),	
+										),
+									Row(
+										Column('building_name_or_number',css_class='form-group col-md-4 mbt-0'),
+										Column('street',css_class='form-group col-md-4 mbt-0'),
+										Column('post_code',css_class='form-group col-md-4 mbt-0'),	
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									)	
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(EditVenueForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# now perform the additional checks
+		# start by checking whether we have either a post code or a street
+		if not self.cleaned_data['post_code'] and not self.cleaned_data['street']:
+			self.add_error(None,'Either post code or street must be entered.')
+			valid = False
+		# and check whether we already have a venue with this name, other than the record itself
+		venue = Venue.try_to_get(pk=self.venue_id)
+		venue_by_name = Venue.try_to_get(name=self.cleaned_data['name'])
+		if venue_by_name and (venue_by_name != venue):
+			self.add_error(None,'Venue with this name already exists.')
+			valid = False
+		# return the result
+		return valid
 
 class EventForm(forms.Form):
 	# Define the fields that we need in the form to capture the event

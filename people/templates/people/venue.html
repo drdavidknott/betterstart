@@ -1,0 +1,78 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-home"></span>
+ 				{{ venue }}
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
+
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'edit_venue' venue.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class='col-xs-11'>
+			<div class="row">
+	 			<strong>Name: </strong>{{ venue.name }}
+	 		</div>
+	 		<div class="row">
+	 			<strong>Type: </strong>{{ venue.venue_type.name }}
+	 		</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'edit_venue' venue.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+ 			<div class="row">
+		 		{% if venue.building_name_or_number %}
+					<div><strong>Address: </strong>{{ venue.building_name_or_number }} {{ venue.street.name }}</div>
+					<div><strong>Post Code: </strong>{{ venue.street.post_code.post_code }}</div>
+					<div><strong>Ward: </strong>{{ venue.street.post_code.ward.ward_name }}</div>
+					<div><strong>Area: </strong>{{ venue.street.post_code.ward.area.area_name }}</div>
+				{% else %}
+					<div><strong>No address</strong></div>
+				{% endif %}
+			</div>
+		</div>
+	 </div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+</div>
+
+
+{% endblock %}
+

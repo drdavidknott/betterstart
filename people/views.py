@@ -3,7 +3,8 @@ from django.template import loader
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard
+					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
+					Venue_Type, Venue
 import os
 import csv
 import copy
@@ -13,7 +14,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
-					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm
+					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
+					AddVenueForm, EditVenueForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
@@ -2216,7 +2218,7 @@ def add_relationship(request,person_id=0):
 def address(request,person_id=0):
 	# this view is used to set the address for a person, by searching on post code or street name
 	# load the template
-	person_template = loader.get_template('people/address.html')
+	address_template = loader.get_template('people/address.html')
 	# get the person
 	person = Person.try_to_get(pk=person_id)
 	# if the person doesn't exist, crash to a banner
@@ -2308,7 +2310,7 @@ def address(request,person_id=0):
 				'post_code' : post_code
 				})
 	# return the response
-	return HttpResponse(person_template.render(context=context, request=request))
+	return HttpResponse(address_template.render(context=context, request=request))
 
 @login_required
 def address_to_relationships(request,person_id=0):
@@ -2383,6 +2385,199 @@ def address_to_relationships(request,person_id=0):
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
+
+@login_required
+def add_venue(request):
+	# this view is used to create a venue
+	# initialise variables
+	add_venue_template = loader.get_template('people/add_venue.html')
+	search_results = []
+	page_list = []
+	page = 0
+	search_number = 0
+	name = ''
+	building_name_or_number = ''
+	street = ''
+	post_code = ''
+	venue_type = ''
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a venue search form
+		addvenueform = AddVenueForm(request.POST)
+		# check what type of submission we got
+		if request.POST['action'] in ('search','create'):
+			# validate the form
+			if addvenueform.is_valid():
+				# get the form details
+				name = addvenueform.cleaned_data['name']
+				venue_type_id = addvenueform.cleaned_data['venue_type']
+				venue_type = Venue_Type.objects.get(id=venue_type_id)
+				building_name_or_number = addvenueform.cleaned_data['building_name_or_number']
+				street = addvenueform.cleaned_data['street']
+				post_code = addvenueform.cleaned_data['post_code']
+				# do the search if we have been asked to do a search
+				if request.POST['action'] == 'search':
+					# do the search
+					search_results = Street.search(
+													name__icontains=street,
+													post_code__post_code__icontains=post_code
+													).order_by('name')
+					# do the pagination
+					search_number = len(search_results)
+					page = int(request.POST['page'])
+					page_list = build_page_list(
+									objects=search_results,
+									page_length=results_per_page,
+									attribute='name',
+									length=3
+									)
+					previous_page = page - 1
+					search_results = search_results[previous_page*results_per_page:page*results_per_page]
+				# otherwise do the creation
+				else:
+					# get the other objects
+					street = Street.objects.get(id=street)
+					# create the object
+					venue = Venue(
+									name = name,
+									venue_type = venue_type,
+									street = street,
+									building_name_or_number = building_name_or_number
+									)
+					# and save it
+					venue.save()
+					# and redirect to the venue page
+					return redirect('/venue/' + str(venue.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a blank form
+		addvenueform = AddVenueForm()
+	# set the context from the person based on person id
+	context = build_context({
+				'addvenuesearchform' : addvenueform,
+				'search_results' : search_results,
+				'search_number' : search_number,
+				'page_list' : page_list,
+				'this_page' : page,
+				'name' : name,
+				'venue_type' : venue_type,
+				'building_name_or_number' : building_name_or_number,
+				'street' : street,
+				'post_code' : post_code
+				})
+	# return the response
+	return HttpResponse(add_venue_template.render(context=context, request=request))
+
+@login_required
+def edit_venue(request, venue_id=0):
+	# this view is used to edit a venue
+	# try to get the venue, crashing to a banner if unsuccessful
+	venue = Venue.try_to_get(pk=venue_id)
+	if not venue:
+		return make_banner(request, 'Venue does not exist.')
+	# initialise variables
+	edit_venue_template = loader.get_template('people/edit_venue.html')
+	search_results = []
+	page_list = []
+	page = 0
+	search_number = 0
+	name = venue.name
+	building_name_or_number = venue.building_name_or_number
+	street = venue.street.name
+	post_code = venue.street.post_code.post_code
+	venue_type = venue.venue_type
+	venue_id = venue.pk
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a venue search form
+		editvenueform = EditVenueForm(request.POST, venue_id=venue_id)
+		# check what type of submission we got
+		if request.POST['action'] in ('search','update'):
+			# validate the form
+			if editvenueform.is_valid():
+				# get the form details
+				name = editvenueform.cleaned_data['name']
+				venue_type_id = editvenueform.cleaned_data['venue_type']
+				venue_type = Venue_Type.objects.get(id=venue_type_id)
+				building_name_or_number = editvenueform.cleaned_data['building_name_or_number']
+				street = editvenueform.cleaned_data['street']
+				post_code = editvenueform.cleaned_data['post_code']
+				# do the search if we have been asked to do a search
+				if request.POST['action'] == 'search':
+					# do the search
+					search_results = Street.search(
+													name__icontains=street,
+													post_code__post_code__icontains=post_code
+													).order_by('name')
+					# do the pagination
+					search_number = len(search_results)
+					page = int(request.POST['page'])
+					page_list = build_page_list(
+									objects=search_results,
+									page_length=results_per_page,
+									attribute='name',
+									length=3
+									)
+					previous_page = page - 1
+					search_results = search_results[previous_page*results_per_page:page*results_per_page]
+				# otherwise do the creation
+				else:
+					# update and save the venue record
+					venue.name = name
+					venue.venue_type = venue_type
+					venue.building_name_or_number = building_name_or_number
+					venue.street = Street.objects.get(id=street)
+					venue.save()
+					# and redirect to the venue page
+					return redirect('/venue/' + str(venue.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a form initialised from the record
+		editvenueform = EditVenueForm(
+										{
+											'name' : name,
+											'venue_type' : venue_type.pk,
+											'building_name_or_number' : building_name_or_number,
+											'street' : street,
+											'post_code' : post_code
+										},
+										venue_id = venue.pk
+									)
+	# set the context from the person based on person id
+	context = build_context({
+				'editvenueform' : editvenueform,
+				'search_results' : search_results,
+				'search_number' : search_number,
+				'page_list' : page_list,
+				'this_page' : page,
+				'venue' : venue,
+				'name' : name,
+				'venue_type' : venue_type,
+				'building_name_or_number' : building_name_or_number,
+				'street' : street,
+				'post_code' : post_code
+				})
+	# return the response
+	return HttpResponse(edit_venue_template.render(context=context, request=request))
+
+@login_required
+def venue(request, venue_id=0):
+	# load the template
+	venue_template = loader.get_template('people/venue.html')
+	# try to get the venue, crashing to a banner if unsuccessful
+	venue = Venue.try_to_get(pk=venue_id)
+	if not venue:
+		return make_banner(request, 'Venue does not exist.')
+	# get the additional data
+	# TODO: get events
+	# set the context
+	context = build_context({
+				'venue' : venue,
+				})
+	# return the response
+	return HttpResponse(venue_template.render(context=context, request=request))
 
 @login_required
 def addevent(request):

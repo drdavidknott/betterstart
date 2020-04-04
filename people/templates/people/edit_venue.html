@@ -1,0 +1,147 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-home"></span>
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 				Add Venue
+ 			</h3>
+	 	</div>
+	 </div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-md-12">
+	 		<div>
+	 			<h4>
+		 			<span class="glyphicon glyphicon-map-marker"></span>
+		 			<span class="glyphicon glyphicon-search"></span>
+		 			Update Details and Find Address: {% if search_number %}({{ search_number }} found){% endif %}
+	 			<h4>
+	 		</div>
+		</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+			{% crispy editvenueform %}
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	{% if search_results %}
+
+		<div class = "form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
+					<tbody>
+						{% for result in search_results %}
+							<form action ="{% url 'edit_venue' venue.pk %}" method="post">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="update">
+								<input type="hidden" name="street" value="{{ result.pk }}">
+								<input type="hidden" name="post_code" value="{{ street.post_code.pk }}">
+								<input type="hidden" name="name" value="{{ name }}">
+								<input type="hidden" name="venue_type" value="{{ venue_type.pk }}">
+								<input 	
+										type="hidden"
+										name="building_name_or_number"
+										value="{{ building_name_or_number }}">
+								<tr>
+									<td>
+										{{ name }} 
+										({{ venue_type.name }}),
+										{{ building_name_or_number }}
+										{{ result.name }}
+										{{ result.post_code }}
+									</td>
+									<td align="left">
+										<input type="submit" class="btn btn-primary btn-sm" value="Update">
+									</td>
+								</tr>
+							</form>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% endif %}
+
+{% if page_list %}
+		
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+		<div class="row">
+	 		<div class="col-xs-12">
+	 			<h4>
+		 			<span class="glyphicon glyphicon-map-marker"></span><span class="glyphicon glyphicon-search"></span>
+		 			More results
+	 			</h4>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<form action ="{% url 'edit_venue' venue.pk %}" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="search">
+					<input type="hidden" name="building_name_or_number" value="{{ building_name_or_number }}">
+					<input type="hidden" name="street" value="{{ street }}">
+					<input type="hidden" name="post_code" value="{{ post_code }}">
+					<input type="hidden" name="name" value="{{ name }}">
+					<input type="hidden" name="venue_type" value="{{ venue_type }}">
+					{% for page in page_list %}
+						<button 
+							type="submit" 
+							name="page" 
+							value="{{ page.number }}" 
+							class="btn btn-sm btn-primary person-page-button"
+							{% if page.number == this_page %}
+								disabled
+							{% endif %}
+							>
+							{{ page }}
+						</button>
+					{% endfor %}
+				</form>
+			<div class="col-xs-12">
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

@@ -170,6 +170,32 @@ class Street(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'streets'
 
+# Venue Type model: represents the list of types of venues.
+# Has a one to many relationship with Venue
+class Venue_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	# define the function that will return the venue type name as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'venue types'
+
+# Venue model: represents the list of venues in which events can take place.
+# Has a many to one relationship with venue type.
+# Has a one to many relationship with venue.
+class Venue(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	venue_type = models.ForeignKey(Venue_Type, on_delete=models.CASCADE)
+	building_name_or_number = models.CharField(max_length=50)
+	street = models.ForeignKey(Street, blank=True, null=True, on_delete=models.SET_NULL)
+	# define the function that will return the venue name as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'venues'
+
 # Event Type model: represents categories of event types.
 # This is reference data
 class Event_Category(DataAccessMixin,models.Model):

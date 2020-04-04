@@ -15,7 +15,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
-					AddVenueForm, EditVenueForm
+					AddVenueForm, EditVenueForm, VenueSearchForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
@@ -2400,6 +2400,7 @@ def add_venue(request):
 	street = ''
 	post_code = ''
 	venue_type = ''
+	venue_type_id = 0
 	results_per_page = 25
 	# check whether this is a post
 	if request.method == 'POST':
@@ -2578,6 +2579,79 @@ def venue(request, venue_id=0):
 				})
 	# return the response
 	return HttpResponse(venue_template.render(context=context, request=request))
+
+@login_required
+def venues(request):
+	# this view searches for venues and displays a list
+	# initialise variables
+	venues = []
+	pages = []
+	page_list = []
+	number_of_venues = 0
+	this_page = 0
+	search_attempted = False
+	name = ''
+	ward = 0
+	area = 0
+	venue_type = 0
+	# set a blank search_error
+	search_error = ''
+	# set the results per page
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		venuesearchform = VenueSearchForm(request.POST)
+		# check what type of submission we got
+		if request.POST['action'] == 'search':
+			# set the flag to show that a search was attempted
+			search_attempted = True
+			# validate the form
+			venuesearchform.is_valid()
+			# get the search terms
+			name = venuesearchform.cleaned_data['name']
+			ward = venuesearchform.cleaned_data['ward']
+			area = venuesearchform.cleaned_data['area']
+			venue_type = venuesearchform.cleaned_data['venue_type']
+			# conduct a search
+			venues = Venue.search(
+									name__icontains=name,
+									street__post_code__ward_id=ward,
+									street__post_code__ward__area_id=area,
+									venue_type_id=venue_type
+									).order_by('name')
+			# figure out how many people we got
+			number_of_venues = len(venues)
+			# do the pagination
+			this_page = int(request.POST['page'])
+			page_list = build_page_list(
+										objects=venues,
+										page_length=results_per_page,
+										attribute='name',
+										length=3
+										)
+			previous_page = this_page - 1
+			venues = venues[previous_page*results_per_page:this_page*results_per_page]
+	# otherwise set a bank form
+	else:
+		venuesearchform = VenueSearchForm()
+	# get the template
+	venues_template = loader.get_template('people/venues.html')
+	# set the context
+	context = build_context({
+				'venuesearchform' : venuesearchform,
+				'venues' : venues,
+				'page_list' : page_list,
+				'this_page' : this_page,
+				'name' : name,
+				'ward' : ward,
+				'area' : area,
+				'venue_type' : venue_type,
+				'number_of_venues' : number_of_venues,
+				'search_attempted' : search_attempted
+				})
+	# return the HttpResponse
+	return HttpResponse(venues_template.render(context=context, request=request))
 
 @login_required
 def addevent(request):

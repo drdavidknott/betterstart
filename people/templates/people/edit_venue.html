@@ -115,7 +115,7 @@
 					<input type="hidden" name="street" value="{{ street }}">
 					<input type="hidden" name="post_code" value="{{ post_code }}">
 					<input type="hidden" name="name" value="{{ name }}">
-					<input type="hidden" name="venue_type" value="{{ venue_type }}">
+					<input type="hidden" name="venue_type" value="{{ venue_type.pk }}">
 					{% for page in page_list %}
 						<button 
 							type="submit" 

@@ -1,0 +1,132 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		{% if venues %}
+			$(".search-box").hide();
+		{% endif %}
+		$(".search-trigger").click(function() {
+			$(".search-box").toggle()
+		});
+	});
+</script>
+
+<div class="container">
+
+	<div class="row">
+ 		<div class="col-md-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-home"></span><span class="glyphicon glyphicon-search"></span>
+	 			Search for Venues:
+	 				{% if number_of_venues or search_attempted %} ({{ number_of_venues }} found){% endif %}
+ 			</h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+		 	<div>{% crispy venuesearchform %}</div>
+		</div>
+	</div>
+
+	<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+	</div>
+
+	{% if venues %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
+					<tbody>
+				 		{% for venue in venues %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'venue' venue.pk %}">
+										{{ venue.name }}
+									</a>
+									({{ venue.venue_type.name }}),
+									{{ venue.building_name_or_number }}
+									{{ venue.street.name }}
+									{{ venue.street.post_code.post_code }}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% endif %}
+
+	{% if page_list %}
+		
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+		<div class="row">
+	 		<div class="col-xs-12">
+	 			<h4>
+		 			<span class="glyphicon glyphicon-home"></span><span class="glyphicon glyphicon-search"></span>
+		 			More results
+	 			</h4>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<form action ="{% url 'venues' %}" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="search">
+					<input type="hidden" name="name" value="{{ name }}">
+					<input type="hidden" name="venue_type" value="{{ venue_type }}">
+					<input type="hidden" name="ward" value="{{ ward }}">
+					<input type="hidden" name="area" value="{{ area }}">
+					{% for page in page_list %}
+							<button 
+								type="submit" 
+								name="page" 
+								value="{{ page.number }}" 
+								class="btn btn-sm btn-primary person-page-button"
+								{% if page.number == this_page %}
+									disabled
+								{% endif %}
+								>
+								{{ page }}
+							</button>
+					{% endfor %}
+				</form>
+			<div class="col-xs-12">
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

@@ -914,6 +914,67 @@ class EditVenueForm(forms.Form):
 		# return the result
 		return valid
 
+class VenueSearchForm(forms.Form):
+	# Define the fields that we need in the form.
+	name = forms.CharField(
+									label="Name",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	venue_type = forms.ChoiceField(
+									label="Venue type",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	ward = forms.ChoiceField(
+									label="Ward",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	area = forms.ChoiceField(
+									label="Area",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	action = forms.CharField(
+									initial='action',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
+	page = forms.CharField(
+									initial='1',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(VenueSearchForm, self).__init__(*args, **kwargs)
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+									Row(
+										Column('name',css_class='form-group col-md-3 mbt-0'),
+										Column('venue_type',css_class='form-group col-md-3 mbt-0'),
+										Column('ward',css_class='form-group col-md-3 mbt-0'),
+										Column('area',css_class='form-group col-md-3 mbt-0'),
+										),
+									Hidden('action','search'),
+									Hidden('page','1'),
+									Row(
+										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									)
+		# set the choices
+		self.fields['venue_type'].choices = build_choices(
+															choice_class=Venue_Type,
+															choice_field='name',
+															default=True,
+															default_label='Any')
+		self.fields['area'].choices = build_choices(
+															choice_class=Area,
+															choice_field='area_name',
+															default=True,
+															default_label='Any')
+		self.fields['ward'].choices = build_choices(
+															choice_class=Ward,
+															choice_field='ward_name',
+															default=True,
+															default_label='Any')
+
+
 class EventForm(forms.Form):
 	# Define the fields that we need in the form to capture the event
 	name = forms.CharField(

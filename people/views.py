@@ -2795,17 +2795,15 @@ def event_group(request, event_group='0'):
 	event_type = 0
 	event_category = 0
 	ward = 0
+	venue = 0
 	# get the calling url
 	path = request.get_full_path()
 	# set the grouping based on the path
 	if 'type' in path:
-		# we have an event type
 		event_type = event_group
 	elif 'category' in path:
-		# we have an event category
 		event_category = event_group
 	elif 'ward' in path:
-		# we have a ward
 		ward = event_group
 	# get the dashboard dates
 	dashboard_dates = get_dashboard_dates()
@@ -2814,17 +2812,11 @@ def event_group(request, event_group='0'):
 	date_to = ''
 	# set the dates, dependent on the url
 	if 'this_month' in path:
-		# set the date_from to the first of the month
 		date_from = dashboard_dates['first_day_of_this_month'].strftime('%d/%m/%Y')
-	# otherwise check for last month
 	elif 'last_month' in path:
-		# set the date from to the first of last month
 		date_from = dashboard_dates['first_day_of_last_month'].strftime('%d/%m/%Y')
-		# and the date to to the last of last month
 		date_to = dashboard_dates['last_day_of_last_month'].strftime('%d/%m/%Y')
-	# otherwise check for this year
 	elif 'this_year' in path:
-		# set the date from to the beginning of the year
 		date_from = dashboard_dates['first_day_of_this_year'].strftime('%d/%m/%Y')
 	# copy the request
 	copy_POST = request.POST.copy()
@@ -2833,6 +2825,7 @@ def event_group(request, event_group='0'):
 	copy_POST['event_type'] = event_type
 	copy_POST['event_category'] = event_category
 	copy_POST['ward'] = ward
+	copy_POST['venue'] = venue
 	copy_POST['name'] = ''
 	copy_POST['date_from'] = date_from
 	copy_POST['date_to'] = date_to
@@ -2858,6 +2851,7 @@ def events(request):
 	date_from = 0
 	date_to = 0
 	ward = 0
+	venue = 0
 	search_attempted = False
 	# set a blank search_error
 	search_error = ''
@@ -2927,6 +2921,7 @@ def events(request):
 				'event_type' : event_type,
 				'event_category' : event_category,
 				'ward' : ward,
+				'venue' : venue,
 				'date_from' : date_from,
 				'date_to' : date_to,
 				'page_list' : page_list,

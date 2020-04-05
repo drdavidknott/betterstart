@@ -974,7 +974,6 @@ class VenueSearchForm(forms.Form):
 															default=True,
 															default_label='Any')
 
-
 class EventForm(forms.Form):
 	# Define the fields that we need in the form to capture the event
 	name = forms.CharField(
@@ -1003,43 +1002,43 @@ class EventForm(forms.Form):
 									label="End Time",
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
 	location = forms.CharField(
-									label="Location",
+									label="Location (free format)",
 									max_length=50,
 									required=False, 
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	ward = forms.ChoiceField(
 									label="Ward in which event takes place",
 									widget=forms.Select())
+	venue = forms.ChoiceField(
+									label="Venue",
+									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
 		super(EventForm, self).__init__(*args, **kwargs)
-		# set the choices
+		# build the choices
 		self.fields['event_type'].choices = build_choices(choice_class=Event_Type,choice_field='name')
-		# and for the wards
 		self.fields['ward'].choices = build_choices(choice_class=Ward,
 													choice_field='ward_name',
 													default=True,
 													default_label='None')
-		# and the initial choice for the ward
 		self.fields['ward'].initial = 0
-		# create an empty list of columns for the areas
+		self.fields['venue'].choices = build_choices(choice_class=Venue,
+													choice_field='name',
+													default=True,
+													default_label='None')
+		self.fields['venue'].initial = 0
+		# build the area selector
 		area_columns = []
-		# now go through the areas and build fields
 		for area in Area.objects.filter(use_for_events=True).order_by('area_name'):
-			# set the field name for the area
 			field_name = 'area_' + str(area.pk)
-			# create the field
 			self.fields[field_name] = forms.BooleanField(
 														label = area.area_name,
 														required = False
 														)
-			# and append the column
 			area_columns.append(Column(field_name,css_class='form-group col-md-4 mb-0'))
-		# create the crispy form layout
-		# define the crispy form helper
+		# build the crispy form
 		self.helper = FormHelper()
-		# and define the layout
 		self.helper.layout = Layout(
 									Row(
 										Column('name',css_class='form-group col-md-6 mb-0'),
@@ -1057,8 +1056,9 @@ class EventForm(forms.Form):
 										css_class='form-row'	
 										),
 									Row(
-										Column('location',css_class='form-group col-md-6 mb-0'),
-										Column('ward',css_class='form-group col-md-6 mb-0'),
+										Column('venue',css_class='form-group col-md-4 mb-0'),
+										Column('location',css_class='form-group col-md-4 mb-0'),
+										Column('ward',css_class='form-group col-md-4 mb-0'),
 										css_class='form-row'	
 										),
 									Row(

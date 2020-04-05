@@ -24,7 +24,7 @@
 	<div class="row">
  		<div class="col-md-12">
  			<h3>
-	 			<span class="glyphicon glyphicon-home"></span><span class="glyphicon glyphicon-search"></span>
+	 			<span class="glyphicon glyphicon-map-marker"></span><span class="glyphicon glyphicon-search"></span>
 	 			Search for Venues:
 	 				{% if number_of_venues or search_attempted %} ({{ number_of_venues }} found){% endif %}
  			</h3>
@@ -53,7 +53,7 @@
 
 		<div class="form-row">
 			<div class="col-xs-12">
-				<table class="table table-striped" id="people">
+				<table class="table table-striped" id="venues">
 					<tbody>
 				 		{% for venue in venues %}
 			 				<tr>
@@ -86,7 +86,7 @@
 		<div class="row">
 	 		<div class="col-xs-12">
 	 			<h4>
-		 			<span class="glyphicon glyphicon-home"></span><span class="glyphicon glyphicon-search"></span>
+		 			<span class="glyphicon glyphicon-map-marker"></span><span class="glyphicon glyphicon-search"></span>
 		 			More results
 	 			</h4>
 			</div>

@@ -75,6 +75,14 @@
  			</a>
  		</div>
  		<div class='col-xs-11'>
+ 			{% if event.venue %}
+				<div class="row">
+	 				<strong>Venue: </strong>
+ 					<a href="{% url 'venue' event.venue.pk %}">
+ 						{{ event.venue.name }}
+ 					</a>
+	 			</div>
+			{% endif %}
 	 		{% if event.location %}
 				<div class="row">
 	 				<strong>Location: </strong>{{ event.location }}
@@ -90,7 +98,7 @@
 			 		<strong>Areas: </strong>{{ event.get_areas }}
 			 	</div>
 			{% endif %}
-			{% if not event.location and not event.ward and not event.get_areas %}
+			{% if not event.location and not event.ward and not event.get_areas and not event.venue %}
 				<div class="row">
 					No location information
 				</div>

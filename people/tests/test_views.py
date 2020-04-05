@@ -3,7 +3,8 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Event_Registration, Role_History, Relationship_Type, Relationship, ABSS_Type, \
 							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note, \
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
-							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard
+							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
+							Venue, Venue_Type
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -153,6 +154,18 @@ def set_up_test_streets(
 									name = name_root + str(n),
 									post_code = Post_Code.objects.get(post_code=post_code)
 									)
+
+def set_up_venue_base_data():
+	# create records for venues - depends on address base data having been set up first
+	set_up_test_post_codes('TV1',number=1)
+	set_up_test_streets('venue_street','TV10',1)
+	test_venue_type = Venue_Type.objects.create(name='test_venue_type')
+	test_venue = Venue.objects.create(
+										name = 'test_venue',
+										building_name_or_number = '123',
+										venue_type = test_venue_type,
+										street = Street.objects.get(name='venue_street0')
+										)
 
 def set_up_test_events(name_root,event_type,number,date='2019-01-01',ward=None):
 	# set up the number of people asked for
@@ -4462,61 +4475,6 @@ class ProfileViewTest(TestCase):
 		# check that no trained role records exist
 		self.assertEqual(test_person.trained_roles.all().exists(),False)
 
-class AddEventViewTest(TestCase):
-	@classmethod
-	def setUpTestData(cls):
-		# create a test user
-		user = set_up_test_user()
-		# set up base data for people
-		set_up_event_base_data()
-		# and set up base data for addresses
-		set_up_address_base_data()
-
-	def test_redirect_if_not_logged_in(self):
-		# get the response
-		response = self.client.get('/addevent')
-		# check the response
-		self.assertRedirects(response, '/people/login?next=/addevent')
-
-	def test_successful_response_if_logged_in(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# attempt to get the events page
-		response = self.client.get(reverse('addevent'))
-		# check the response
-		self.assertEqual(response.status_code, 200)
-
-	def test_create_person(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('addevent'),
-									data = { 
-												'name' : 'Testevent',
-												'description' : 'Testdescription',
-												'location' : 'Testlocation',
-												'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
-												'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
-												'date' : '01/01/2019',
-												'start_time' : '10:00',
-												'end_time' : '11:00'
-											}
-									)
-		# check that we got a redirect response
-		self.assertRedirects(response, '/event_registration/1')
-		# get the record
-		test_event = Event.objects.get(name='Testevent')
-		# check the record contents
-		self.assertEqual(test_event.name,'Testevent')
-		self.assertEqual(test_event.description,'Testdescription')
-		self.assertEqual(test_event.location,'Testlocation')
-		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
-		self.assertEqual(test_event.event_type.name,'test_event_type')
-		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/01/2019')
-		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
-		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
-
 class AddRelationshipViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -4810,10 +4768,10 @@ class AddEventViewTest(TestCase):
 	def setUpTestData(cls):
 		# create a test user
 		user = set_up_test_user()
-		# set up base data for events
+		# set up base data
 		set_up_event_base_data()
-		# and set up base data for addresses
 		set_up_address_base_data()
+		set_up_venue_base_data()
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -4839,6 +4797,7 @@ class AddEventViewTest(TestCase):
 												'name' : 'Testevent',
 												'description' : 'Testeventdesc',
 												'location' : 'Testeventloc',
+												'venue' : str(Venue.objects.get(name='test_venue').pk),
 												'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
@@ -4856,6 +4815,7 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
 		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.venue.name,'test_venue')
 		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
@@ -4873,6 +4833,7 @@ class AddEventViewTest(TestCase):
 												'name' : 'Testevent',
 												'description' : 'Testeventdesc',
 												'location' : 'Testeventloc',
+												'venue' : str(Venue.objects.get(name='test_venue').pk),
 												'ward' : '0',
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
@@ -4890,6 +4851,7 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
 		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.venue.name,'test_venue')
 		self.assertEqual(test_event.ward,None)
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
@@ -4907,6 +4869,7 @@ class AddEventViewTest(TestCase):
 												'name' : 'Testevent',
 												'description' : 'Testeventdesc',
 												'location' : 'Testeventloc',
+												'venue' : str(Venue.objects.get(name='test_venue').pk),
 												'ward' : '0',
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
@@ -4924,6 +4887,7 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
 		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.venue.name,'test_venue')
 		self.assertEqual(test_event.ward,None)
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
@@ -4941,6 +4905,7 @@ class AddEventViewTest(TestCase):
 												'name' : 'Testevent',
 												'description' : 'Testeventdesc',
 												'location' : 'Testeventloc',
+												'venue' : str(Venue.objects.get(name='test_venue').pk),
 												'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
@@ -4958,6 +4923,7 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
 		self.assertEqual(test_event.location,'Testeventloc')
+		self.assertEqual(test_event.venue.name,'test_venue')
 		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
@@ -6051,10 +6017,10 @@ class EditEventViewTest(TestCase):
 	def setUpTestData(cls):
 		# create a test user
 		user = set_up_test_user()
-		# set up base data for event
+		# set up base data
 		set_up_event_base_data()
-		# and set up base data for addresses
 		set_up_address_base_data()
+		set_up_venue_base_data()
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -6092,6 +6058,7 @@ class EditEventViewTest(TestCase):
 											'name' : 'updated_name',
 											'description' : 'updated_description',
 											'location' : 'updated_location',
+											'venue' : str(Venue.objects.get(name='test_venue').pk),
 											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
@@ -6109,6 +6076,51 @@ class EditEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')
 		self.assertEqual(test_event.location,'updated_location')
+		self.assertEqual(test_event.venue.name,'test_venue')
+		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')
+		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
+		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
+
+	def test_edit_event_updated_venue(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create an event and a new venue
+		set_up_test_events('Event_',Event_Type.objects.get(name='test_event_type'),1)
+		updated_venue = Venue.objects.create(
+												name = 'updated_venue',
+												building_name_or_number = '456',
+												venue_type = Venue_Type.objects.get(name='test_venue_type'),
+												street = Street.objects.get(name='venue_street0')
+												)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_event',args=[Event.objects.get(name='Event_0').pk]),
+									data = { 
+											'name' : 'updated_name',
+											'description' : 'updated_description',
+											'location' : 'updated_location',
+											'venue' : updated_venue.pk,
+											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
+											'date' : '05/05/2019',
+											'start_time' : '13:00',
+											'end_time' : '14:00',
+											'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
+											'area_' + str(Area.objects.get(area_name='Test area').pk) : 'on',
+											'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,302)
+		# get the record
+		test_event = Event.objects.get(name='updated_name')
+		# check the record contents
+		self.assertEqual(test_event.name,'updated_name')
+		self.assertEqual(test_event.description,'updated_description')
+		self.assertEqual(test_event.location,'updated_location')
+		self.assertEqual(test_event.venue.name,'updated_venue')
 		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
@@ -6128,6 +6140,7 @@ class EditEventViewTest(TestCase):
 											'name' : 'updated_name',
 											'description' : 'updated_description',
 											'location' : 'updated_location',
+											'venue' : str(Venue.objects.get(name='test_venue').pk),
 											'ward' : '0',
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
@@ -6145,6 +6158,7 @@ class EditEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')
 		self.assertEqual(test_event.location,'updated_location')
+		self.assertEqual(test_event.venue.name,'test_venue')
 		self.assertEqual(test_event.ward,None)
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
@@ -6164,6 +6178,7 @@ class EditEventViewTest(TestCase):
 											'name' : 'updated_name',
 											'description' : 'updated_description',
 											'location' : 'updated_location',
+											'venue' : str(Venue.objects.get(name='test_venue').pk),
 											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
@@ -6181,6 +6196,7 @@ class EditEventViewTest(TestCase):
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')
 		self.assertEqual(test_event.location,'updated_location')
+		self.assertEqual(test_event.venue.name,'test_venue')
 		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')

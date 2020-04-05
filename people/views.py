@@ -622,41 +622,46 @@ def edit_relationship(request, person_from, person_to, relationship_type_id, sho
 	# return the result
 	return success
 
-def build_event(request, name, description, date, start_time, end_time, event_type_id, location, ward_id, areas):
-	# get the event type
+def build_event(
+				request,
+				name,
+				description,
+				date,
+				start_time,
+				end_time,
+				event_type_id,
+				location,
+				venue,
+				ward_id,
+				areas
+				):
+	# get the related objects
 	event_type = Event_Type.try_to_get(pk=event_type_id)
-	# check whether we have a ward
-	if ward_id != '0':
-		# get the ward
-		ward = Ward.try_to_get(pk=ward_id)
-	# otherwise set null
-	else:
-		# set the ward to null
-		ward = None
-	# if we got an event type, create the event
+	ward = Ward.try_to_get(pk=ward_id) if ward_id != '0' else None
+	venue = Venue.try_to_get(pk=venue) if venue != '0' else None
+	# create the event
 	if event_type:
 		# create the event
-		event = create_event(
-								name = name,
-								description = description,
-								location = location,
-								ward = ward,
-								date = date,
-								start_time = start_time,
-								end_time = end_time,
-								event_type = event_type
-							)
+		event = Event(
+						name = name,
+						description = description,
+						location = location,
+						venue = venue,
+						ward = ward,
+						date = date,
+						start_time = start_time,
+						end_time = end_time,
+						event_type = event_type
+						)
+		event.save()
 		# set a message
 		messages.success(request, 'New event (' + str(event) + ') created.')
-		# got through the areas
+		# got through the areas and add them
 		for area_id in areas.keys():
-			# determine whether the event is available to this area
 			if (areas[area_id] == True) or (ward and ward.area.pk == area_id):
-				# add the area
 				event.areas.add(Area.objects.get(id=area_id))
 	# otherwise set a message
 	else:
-		# set the failed creation message
 		messages.error(request, 'Event (' + name + ') could not be created: event type does not exist.')
 	# return the event
 	return event
@@ -2576,6 +2581,7 @@ def venue(request, venue_id=0):
 	# set the context
 	context = build_context({
 				'venue' : venue,
+				'events' : venue.event_set.all()
 				})
 	# return the response
 	return HttpResponse(venue_template.render(context=context, request=request))
@@ -2666,6 +2672,7 @@ def addevent(request):
 								request,
 								name = addeventform.cleaned_data['name'],
 								description = addeventform.cleaned_data['description'],
+								venue = addeventform.cleaned_data['venue'],
 								location = addeventform.cleaned_data['location'],
 								ward_id = addeventform.cleaned_data['ward'],
 								date = addeventform.cleaned_data['date'],
@@ -2881,81 +2888,71 @@ def edit_event(request, event_id=0):
 			event.date = editeventform.cleaned_data['date']
 			event.start_time = editeventform.cleaned_data['start_time']
 			event.end_time = editeventform.cleaned_data['end_time']
-			# attempt to get the event type
+			# validate the event type, crashing to a banner if it doesn't exist
 			event_type = Event_Type.try_to_get(pk=editeventform.cleaned_data['event_type'])
-			# set the value for the event
 			if event_type:
-				# set the value
 				event.event_type = event_type
-			# otherwise crash out to a banner
 			else:
-				# set the banner
 				return make_banner(request, 'Event type does not exist.')
-			# attempt to get the ward
+			# validate the ward, crashing to a banner if it doesn't exist
 			ward_id = editeventform.cleaned_data['ward']
-			# check whether we have a ward id
+			event.ward = Ward.try_to_get(pk=ward_id) if ward_id != '0' else None
+			"""
+			ward_id = editeventform.cleaned_data['ward']
 			if ward_id != '0':
-				# get the ward
 				ward = Ward.try_to_get(pk=ward_id)
-				# set the value for the event
 				if ward:
-					# set the value
 					event.ward = ward
-				# otherwise crash out to a banner
 				else:
-					# set the banner
 					return make_banner(request, 'Ward does not exist.')
-			# otherwise, set null
 			else:
-				# set the ward to none
 				event.ward = None
+			"""
+			# get and set the venue
+			venue_id = editeventform.cleaned_data['venue']
+			if venue_id != '0':
+				venue = Venue.try_to_get(pk=venue_id)
+				if venue:
+					event.venue = venue
+				else:
+					return make_banner(request, 'Venue does not exist.')
+			else:
+				event.venue = None
 			# save the record
 			event.save()
 			# set a success message
 			messages.success(request, str(event) + ' updated.')
 			# get the dictionary
 			area_dict = build_event_area_dict(editeventform.cleaned_data)
-			# go through the areas and update the area relationships
+			# go through the areas, removing unchecked areas and adding checked areas
 			for area_id in area_dict.keys():
-				# check whether the box is unchecked but the record exists
 				if not area_dict[area_id] and event.areas.filter(pk=area_id).exists():
-					# remove the record
 					event.areas.remove(Area.objects.get(pk=area_id))
-				# if the box is checked or this is the area for the ward, add the record
 				if area_dict[area_id] or (event.ward and area_id == event.ward.area.pk):
-					# add the record
 					event.areas.add(Area.objects.get(pk=area_id))
 			# send the user back to the main event page
 			return redirect('/event/' + str(event.pk))
 	else:
-		# check whether we have a ward
-		if not event.ward:
-			# set the id to the 'unknown' ward
-			ward_id = 0
-		# otherwise, get the ward id
-		else:
-			# get the ward id
-			ward_id = event.ward.pk
+		# set the values for optional relationships
+		ward_id = event.ward.pk if event.ward else 0
+		venue_id = event.venue.pk if event.venue else 0
 		# there is an event, so build a dictionary of initial values we want to set
 		event_dict = {
 						'name' : event.name,
 						'description' : event.description,
 						'location' : event.location,
 						'ward' : ward_id,
+						'venue' : venue_id,
 						'date' : event.date,
 						'start_time' : event.start_time,
 						'end_time' : event.end_time,
 						'event_type' : event.event_type.pk
 						}
-		# go through the areas and add the values
+		# build the values for the areas
 		for area in Area.objects.all():
-			# set the initial value
 			available_in_area = False
-			# check whether the event is available in the area
 			if area in event.areas.all():
-				# set the value to True
 				available_in_area = True
-			# now update the dict
 			event_dict['area_' + str(area.pk)] = available_in_area
 		# create the form
 		editeventform = EventForm(

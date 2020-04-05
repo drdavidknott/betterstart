@@ -2580,7 +2580,7 @@ def edit_venue(request, venue_id=0):
 				venue.name = name
 				venue.venue_type = venue_type
 				venue.building_name_or_number = building_name_or_number
-				venue.street = Street.objects.get(id=street) if request.POST['action'] == 'Update address' \
+				venue.street = Street.objects.get(id=street) if request.POST['action'] == 'update_address' \
 																else venue.street
 				venue.contact_name = contact_name
 				venue.phone = phone

@@ -47,7 +47,7 @@
 						{% for result in search_results %}
 							<form action ="{% url 'edit_venue' venue.pk %}" method="post">
 								{% csrf_token %}
-								<input type="hidden" name="action" value="update">
+								<input type="hidden" name="action" value="update_address">
 								<input type="hidden" name="street" value="{{ result.pk }}">
 								<input type="hidden" name="post_code" value="{{ street.post_code.pk }}">
 								<input type="hidden" name="name" value="{{ name }}">
@@ -73,7 +73,7 @@
 										{{ result.post_code }}
 									</td>
 									<td align="left">
-										<input type="submit" class="btn btn-primary btn-sm" value="Update address">
+										<input type="submit" class="btn btn-primary btn-sm" value="Update">
 									</td>
 								</tr>
 							</form>

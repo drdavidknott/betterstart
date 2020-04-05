@@ -73,6 +73,94 @@
 
 	<div class="row">
  		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'edit_venue' venue.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class='col-xs-11'>
+ 			{% if venue.contact_name %}
+				<div class="row">
+	 				<span class="glyphicon glyphicon-user"></span>
+	 				<strong>Contact: </strong>{{ venue.contact_name }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if venue.email_address %}
+				<div class="row">
+	 				<span class="glyphicon glyphicon-envelope"></span>
+	 				<strong>Email address: </strong>{{ venue.email_address }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if venue.phone %}
+				<div class="row">
+	 				<span class="glyphicon glyphicon-phone-alt"></span>
+	 				<strong>Phone: </strong>{{ venue.phone }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if venue.mobile_phone %}
+				<div class="row">
+	 				<span class="glyphicon glyphicon-phone"></span>
+	 				<strong>Mobile: </strong>{{ venue.mobile_phone }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if venue.website %}
+	 			<div class="row">
+	 				<span class="glyphicon glyphicon-globe"></span>
+	 				<strong>Website: </strong>
+	 				<a href="{{ venue.website }}">{{ venue.website }}</a>
+	 			</div>
+ 			{% endif %}
+ 			{% if not venue.email_address and not venue.phone and not venue.mobile_phone and not venue.website and not venue.contact_name %}
+ 				<div class="row">
+	 				No contact details
+	 			</div>
+	 		{% endif %}
+	 	</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'edit_venue' venue.pk %}">
+ 				<span class="glyphicon glyphicon-pencil"></span>
+ 			</a>
+ 		</div>
+ 		<div class='col-xs-11'>
+ 			{% if venue.price %}
+				<div class="row">
+	 				<strong>Price: </strong>{{ venue.price }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if venue.facilities %}
+				<div class="row">
+	 				<strong>Facilities: </strong>{{ venue.facilities }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if venue.opening_hours %}
+				<div class="row">
+	 				<strong>Opening Hours: </strong>{{ venue.opening_hours }}&nbsp
+	 			</div>
+ 			{% endif %}
+ 			{% if not venue.price and not venue.facilities and not venue.opening_hours %}
+ 				<div class="row">
+	 				No additional details
+	 			</div>
+	 		{% endif %}
+	 	</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
  			<a href="{% url 'events' %}">
  				<span class="glyphicon glyphicon-calendar"></span>
  			</a>

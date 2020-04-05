@@ -3023,6 +3023,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3049,6 +3050,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '2'
 											}
 									)
@@ -3075,6 +3077,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3101,6 +3104,7 @@ class EventsViewTest(TestCase):
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3127,6 +3131,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : str(Event_Category.objects.get(name='test_event_category_3').pk),
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3153,6 +3158,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3179,6 +3185,7 @@ class EventsViewTest(TestCase):
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_6').pk),
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3205,6 +3212,7 @@ class EventsViewTest(TestCase):
 											'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3231,6 +3239,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3259,6 +3268,7 @@ class EventsViewTest(TestCase):
 											'event_type' : str(test_event_type_6.pk),
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3287,6 +3297,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : str(test_event_category_2.pk),
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3315,6 +3326,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : str(test_event_category_3.pk),
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -3341,6 +3353,41 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
+											'venue' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_venue(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create venue data
+		set_up_venue_base_data()
+		# associate events with venues
+		venue = Venue.objects.get(name='test_venue')
+		for event in Event.objects.filter(name__startswith='Test_Event_Type_3_'):
+			event.venue = venue
+			event.save()
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : '0',
+											'venue' : str(venue.pk),
 											'page' : '1'
 											}
 									)
@@ -3367,6 +3414,7 @@ class EventsViewTest(TestCase):
 											'event_type' : '0',
 											'event_category' : '0',
 											'ward' : '0',
+											'venue' : '0',
 											'page' : '1'
 											}
 									)

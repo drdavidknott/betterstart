@@ -780,7 +780,7 @@ class AddressToRelationshipsForm(forms.Form):
 														required = False,
 														widget=forms.CheckboxInput(attrs={'class' : 'form-control'}))
 
-class AddVenueForm(forms.Form):
+class VenueForm(forms.Form):
 	# Define the fields that we need in the form to capture initial venue details and search for address
 	name = forms.CharField(
 							label="Name",
@@ -803,13 +803,56 @@ class AddVenueForm(forms.Form):
 									max_length=10,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	contact_name = forms.CharField(
+									label="Contact Name",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	phone = forms.CharField(
+									label="Phone",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	mobile_phone = forms.CharField(
+									label="Mobile",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	email_address = forms.CharField(
+									label="Email",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	website = forms.CharField(
+									label="Website",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	price = forms.CharField(
+									label="Price",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	facilities = forms.CharField(
+									label="Facilities",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	opening_hours = forms.CharField(
+									label="Opening Hours",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to define the form layout
 	def __init__(self, *args, **kwargs):
+		# pull the venue id out of the parameters
+		self.venue_id = kwargs.pop('venue_id') if 'venue_id' in kwargs.keys() else False
 		# call the built in constructor
-		super(AddVenueForm, self).__init__(*args, **kwargs)
+		super(VenueForm, self).__init__(*args, **kwargs)
 		# build choices
 		self.fields['venue_type'].choices = build_choices(choice_class=Venue_Type,choice_field='name')
 		# define the crispy form
+		submit_text = 'Update' if self.venue_id else 'Search'
 		self.helper = FormHelper()
 		self.helper.layout = Layout(
 									Row(
@@ -821,15 +864,27 @@ class AddVenueForm(forms.Form):
 										Column('street',css_class='form-group col-md-4 mbt-0'),
 										Column('post_code',css_class='form-group col-md-4 mbt-0'),	
 										),
+									Row(
+										Column('contact_name',css_class='form-group col-md-4 mbt-0'),
+										Column('phone',css_class='form-group col-md-2 mbt-0'),
+										Column('mobile_phone',css_class='form-group col-md-2 mbt-0'),	
+										Column('email_address',css_class='form-group col-md-2 mbt-0'),
+										Column('website',css_class='form-group col-md-2 mbt-0'),	
+										),
+									Row(
+										Column('price',css_class='form-group col-md-4 mbt-0'),
+										Column('facilities',css_class='form-group col-md-4 mbt-0'),
+										Column('opening_hours',css_class='form-group col-md-4 mbt-0'),	
+										),
 									Hidden('action','search'),
 									Hidden('page','1'),
 									Row(
-										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+										Column(Submit('submit', submit_text),css_class='col-md-12 mb-0'))
 									)	
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function
-		valid = super(AddVenueForm, self).is_valid()
+		valid = super(VenueForm, self).is_valid()
 		# set the return value if the built in validation function fails
 		if valid == False:
 			return valid
@@ -839,76 +894,8 @@ class AddVenueForm(forms.Form):
 			self.add_error(None,'Either post code or street must be entered.')
 			valid = False
 		# and check whether we already have a venue with this name
-		if Venue.try_to_get(name=self.cleaned_data['name']):
-			self.add_error(None,'Venue with this name already exists.')
-			valid = False
-		# return the result
-		return valid
-
-class EditVenueForm(forms.Form):
-	# Define the fields that we need in the form to capture initial venue details and search for address
-	name = forms.CharField(
-							label="Name",
-							max_length=50,
-							widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	venue_type = forms.ChoiceField(
-									label="Venue type",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
-	building_name_or_number = forms.CharField(
-									label="Building name or number",
-									max_length=50,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	street = forms.CharField(
-									label="Street",
-									max_length=50,
-									required=False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	post_code = forms.CharField(
-									label="Post Code",
-									max_length=10,
-									required=False,
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	# over-ride the __init__ method to define the form layout
-	def __init__(self, *args, **kwargs):
-		# pull the venue id out of the parameters
-		self.venue_id = kwargs.pop('venue_id')
-		# call the built in constructor
-		super(EditVenueForm, self).__init__(*args, **kwargs)
-		# build choices
-		self.fields['venue_type'].choices = build_choices(choice_class=Venue_Type,choice_field='name')
-		# define the crispy form
-		self.helper = FormHelper()
-		self.helper.layout = Layout(
-									Row(
-										Column('name',css_class='form-group col-md-6 mbt-0'),
-										Column('venue_type',css_class='form-group col-md-6 mbt-0'),	
-										),
-									Row(
-										Column('building_name_or_number',css_class='form-group col-md-4 mbt-0'),
-										Column('street',css_class='form-group col-md-4 mbt-0'),
-										Column('post_code',css_class='form-group col-md-4 mbt-0'),	
-										),
-									Hidden('action','search'),
-									Hidden('page','1'),
-									Row(
-										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
-									)	
-	def is_valid(self):
-		# the validation function
-		# start by calling the built in validation function
-		valid = super(EditVenueForm, self).is_valid()
-		# set the return value if the built in validation function fails
-		if valid == False:
-			return valid
-		# now perform the additional checks
-		# start by checking whether we have either a post code or a street
-		if not self.cleaned_data['post_code'] and not self.cleaned_data['street']:
-			self.add_error(None,'Either post code or street must be entered.')
-			valid = False
-		# and check whether we already have a venue with this name, other than the record itself
-		venue = Venue.try_to_get(pk=self.venue_id)
-		venue_by_name = Venue.try_to_get(name=self.cleaned_data['name'])
-		if venue_by_name and (venue_by_name != venue):
+		venue = Venue.try_to_get(name=self.cleaned_data['name'])
+		if venue and (not self.venue_id or (self.venue_id and venue.pk != self.venue_id)):
 			self.add_error(None,'Venue with this name already exists.')
 			valid = False
 		# return the result
@@ -1302,6 +1289,10 @@ class EventSearchForm(forms.Form):
 									label="Type",
 									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control',}))
+	venue = forms.ChoiceField(
+									label="Venue",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control',}))
 	ward = forms.ChoiceField(
 									label="Ward",
 									required=False,
@@ -1329,20 +1320,30 @@ class EventSearchForm(forms.Form):
 		# call the built in constructor
 		super(EventSearchForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['event_type'].choices = build_choices(choice_class=Event_Type,
+		self.fields['event_type'].choices = build_choices(
+															choice_class=Event_Type,
 															choice_field='name',
 															default=True,
-															default_label='Any')
-		# set the choices
-		self.fields['event_category'].choices = build_choices(choice_class=Event_Category,
+															default_label='Any'
+															)
+		self.fields['event_category'].choices = build_choices(
+																choice_class=Event_Category,
 																choice_field='name',
 																default=True,
-																default_label='Any')
-		# set the wards
-		self.fields['ward'].choices = build_choices(choice_class=Ward,
+																default_label='Any'
+																)
+		self.fields['ward'].choices = build_choices(
+													choice_class=Ward,
 													choice_field='ward_name',
 													default=True,
-													default_label='Any')
+													default_label='Any'
+													)
+		self.fields['venue'].choices = build_choices(
+													choice_class=Venue,
+													choice_field='name',
+													default=True,
+													default_label='Any'
+													)
 		# define the crispy form helper
 		self.helper = FormHelper()
 		# and the action
@@ -1353,8 +1354,9 @@ class EventSearchForm(forms.Form):
 										Column('name',css_class='form-group col-md-12 mbt-0'),
 										),
 									Row(
-										Column('event_category',css_class='form-group col-md-3 mbt-0'),	
-										Column('event_type',css_class='form-group col-md-3 mbt-0'),
+										Column('event_category',css_class='form-group col-md-2 mbt-0'),	
+										Column('event_type',css_class='form-group col-md-2 mbt-0'),
+										Column('venue',css_class='form-group col-md-2 mbt-0'),
 										Column('ward',css_class='form-group col-md-2 mbt-0'),
 										Column('date_from',css_class='form-group col-md-2 mbt-0'),
 										Column('date_to',css_class='form-group col-md-2 mbt-0'),

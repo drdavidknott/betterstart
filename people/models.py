@@ -189,6 +189,15 @@ class Venue(DataAccessMixin,models.Model):
 	venue_type = models.ForeignKey(Venue_Type, on_delete=models.CASCADE)
 	building_name_or_number = models.CharField(max_length=50)
 	street = models.ForeignKey(Street, blank=True, null=True, on_delete=models.SET_NULL)
+	contact_name = models.CharField(max_length=50, default='', null=True)
+	phone = models.CharField(max_length=50, default='', null=True)
+	mobile_phone = models.CharField(max_length=50, default='', null=True)
+	email_address = models.CharField(max_length=50, default='', null=True)
+	website = models.CharField(max_length=50, default='', null=True)
+	price = models.CharField(max_length=50, default='', null=True)
+	facilities = models.CharField(max_length=50, default='', null=True)
+	opening_hours = models.CharField(max_length=50, default='', null=True)
+
 	# define the function that will return the venue name as the object reference
 	def __str__(self):
 		return self.name

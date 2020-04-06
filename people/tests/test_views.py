@@ -6252,6 +6252,473 @@ class EditEventViewTest(TestCase):
 		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
 		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
 
+class AddVenueViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data
+		set_up_event_base_data()
+		set_up_address_base_data()
+		set_up_venue_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/addvenue')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/addvenue')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the event page
+		response = self.client.get(reverse('addvenue'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_venue_search_without_street_or_post_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addvenue'),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : '',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertContains(response,'Either post code or street must be entered')
+
+	def test_venue_search_with_matching_name(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addvenue'),
+									data = { 
+											'name' : 'test_venue',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : '',
+											'post_code' : 'TV10',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertContains(response,'Venue with this name already exists')
+
+	def test_venue_search_multiple_pages(self):
+		# create test streets
+		set_up_test_streets('test_street_','TV10',50)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addvenue'),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : 'test_street',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['search_number'],50)
+		self.assertEqual(len(response.context['search_results']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+		self.assertContains(response,'50 found')
+
+	def test_venue_search_multiple_pages_pagination(self):
+		# create test streets
+		set_up_test_streets('test_street_','TV10',45)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addvenue'),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : 'test_street',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '2'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['search_number'],45)
+		self.assertEqual(len(response.context['search_results']),20)
+		self.assertEqual(len(response.context['page_list']),2)
+		self.assertContains(response,'45 found')
+
+	def test_venue_create(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addvenue'),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : str(Street.objects.get(name='venue_street0').pk),
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'create',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,302)
+		# check the results
+		venue = Venue.objects.get(name='test venue name')
+		self.assertEqual(venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(venue.building_name_or_number,'123')
+		self.assertEqual(venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(venue.contact_name,'test contact name')
+		self.assertEqual(venue.phone,'12345')
+		self.assertEqual(venue.mobile_phone,'67890')
+		self.assertEqual(venue.email_address,'test@test.com')
+		self.assertEqual(venue.website,'website.com')
+		self.assertEqual(venue.price,'test price')
+		self.assertEqual(venue.facilities,'test facilities')
+		self.assertEqual(venue.opening_hours,'test opening hours')
+
+class EditVenueViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data
+		set_up_event_base_data()
+		set_up_address_base_data()
+		set_up_venue_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/edit_venue/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/edit_venue/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the event page
+		response = self.client.get(reverse('edit_venue',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_invalid_venue(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('edit_venue',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_venue_search_without_street_or_post_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : '',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertContains(response,'Either post code or street must be entered')
+
+	def test_venue_search_with_matching_name_to_self(self):
+		# create test streets
+		set_up_test_streets('test_street_','TV10',50)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'test_venue',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : 'test_street',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['search_number'],50)
+		self.assertEqual(len(response.context['search_results']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_venue_search_with_matching_name_to_other(self):
+		# create a venue
+		Venue.objects.create(
+								name='matching_name',
+								venue_type=Venue_Type.objects.get(name='test_venue_type'),
+								street=Street.objects.get(name='venue_street0')
+								)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'matching_name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : '',
+											'post_code' : 'TV10',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertContains(response,'Venue with this name already exists')
+
+	def test_venue_search_multiple_pages(self):
+		# create test streets
+		set_up_test_streets('test_street_','TV10',50)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : 'test_street',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['search_number'],50)
+		self.assertEqual(len(response.context['search_results']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_venue_search_multiple_pages_pagination(self):
+		# create test streets
+		set_up_test_streets('test_street_','TV10',45)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : 'test_street',
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'search',
+											'page' : '2'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['search_number'],45)
+		self.assertEqual(len(response.context['search_results']),20)
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_venue_update_address(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : str(Street.objects.get(name='venue_street0').pk),
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'update_address',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,302)
+		# check the results
+		venue = Venue.objects.get(name='test venue name')
+		self.assertEqual(venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(venue.building_name_or_number,'123')
+		self.assertEqual(venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(venue.contact_name,'test contact name')
+		self.assertEqual(venue.phone,'12345')
+		self.assertEqual(venue.mobile_phone,'67890')
+		self.assertEqual(venue.email_address,'test@test.com')
+		self.assertEqual(venue.website,'website.com')
+		self.assertEqual(venue.price,'test price')
+		self.assertEqual(venue.facilities,'test facilities')
+		self.assertEqual(venue.opening_hours,'test opening hours')
+
+	def test_venue_update(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
+									data = { 
+											'name' : 'test venue name',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'building_name_or_number' : '123',
+											'street' : str(Street.objects.get(name='venue_street0').pk),
+											'post_code' : '',
+											'contact_name' : 'test contact name',
+											'phone' : '12345',
+											'mobile_phone' : '67890',
+											'email_address' : 'test@test.com',
+											'website' : 'website.com',
+											'price' : 'test price',
+											'facilities' : 'test facilities',
+											'opening_hours' : 'test opening hours',
+											'action' : 'update',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,302)
+		# check the results
+		venue = Venue.objects.get(name='test venue name')
+		self.assertEqual(venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(venue.building_name_or_number,'123')
+		self.assertEqual(venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(venue.contact_name,'test contact name')
+		self.assertEqual(venue.phone,'12345')
+		self.assertEqual(venue.mobile_phone,'67890')
+		self.assertEqual(venue.email_address,'test@test.com')
+		self.assertEqual(venue.website,'website.com')
+		self.assertEqual(venue.price,'test price')
+		self.assertEqual(venue.facilities,'test facilities')
+		self.assertEqual(venue.opening_hours,'test opening hours')
+
 class AddressViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

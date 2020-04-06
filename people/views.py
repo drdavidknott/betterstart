@@ -2415,6 +2415,7 @@ def add_venue(request):
 	price = ''
 	facilities = ''
 	opening_hours = ''
+	search_attempted = True
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a venue search form
@@ -2446,6 +2447,7 @@ def add_venue(request):
 													post_code__post_code__icontains=post_code
 													).order_by('name')
 					# do the pagination
+					search_attempted = True
 					search_number = len(search_results)
 					page = int(request.POST['page'])
 					page_list = build_page_list(
@@ -2488,6 +2490,7 @@ def add_venue(request):
 				'addvenuesearchform' : addvenueform,
 				'search_results' : search_results,
 				'search_number' : search_number,
+				'search_attempted' : search_attempted,
 				'page_list' : page_list,
 				'this_page' : page,
 				'name' : name,

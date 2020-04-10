@@ -6719,6 +6719,284 @@ class EditVenueViewTest(TestCase):
 		self.assertEqual(venue.facilities,'test facilities')
 		self.assertEqual(venue.opening_hours,'test opening hours')
 
+class VenuesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data
+		set_up_event_base_data()
+		set_up_address_base_data()
+		# set up a set of post codes and streets
+		Post_Code.objects.create(
+									post_code = 'WD',
+									ward = Ward.objects.get(ward_name='Test ward')
+									)
+		Post_Code.objects.create(
+									post_code = 'W2',
+									ward = Ward.objects.get(ward_name='Test ward 2')
+									)
+		Post_Code.objects.create(
+									post_code = 'W3',
+									ward = Ward.objects.get(ward_name='Unknown')
+									)
+		Street.objects.create(
+									name = 'WD street',
+									post_code = Post_Code.objects.get(post_code='WD')
+									)
+		Street.objects.create(
+									name = 'W2 street',
+									post_code = Post_Code.objects.get(post_code='W2')
+									)
+		Street.objects.create(
+									name = 'W3 street',
+									post_code = Post_Code.objects.get(post_code='W3')
+									)
+		# and venue type and venues
+		test_venue_type = Venue_Type.objects.create(name='test_venue_type')
+		test_venue_type_2 = Venue_Type.objects.create(name='test_venue_type_2')
+		for n in range(25):
+			Venue.objects.create(
+									name = 'test_venuez',
+									building_name_or_number = '123',
+									venue_type = test_venue_type,
+									street = Street.objects.get(name='WD street')
+									)
+		for n in range(25):
+			Venue.objects.create(
+									name = 'test_venue',
+									building_name_or_number = '123',
+									venue_type = test_venue_type_2,
+									street = Street.objects.get(name='WD street')
+									)
+		for n in range(15):
+			Venue.objects.create(
+									name = 'test_venuez',
+									building_name_or_number = '123',
+									venue_type = test_venue_type,
+									street = Street.objects.get(name='W2 street')
+									)
+		for n in range(15):
+			Venue.objects.create(
+									name = 'test_venue',
+									building_name_or_number = '123',
+									venue_type = test_venue_type_2,
+									street = Street.objects.get(name='W2 street')
+									)
+		for n in range(10):
+			Venue.objects.create(
+									name = 'test_venuez',
+									building_name_or_number = '123',
+									venue_type = test_venue_type,
+									street = Street.objects.get(name='W3 street')
+									)
+		for n in range(10):
+			Venue.objects.create(
+									name = 'test_venue',
+									building_name_or_number = '123',
+									venue_type = test_venue_type_2,
+									street = Street.objects.get(name='W3 street')
+									)
+		# and an additional set of venues
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/venues')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/venues')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the event page
+		response = self.client.get(reverse('venues'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_search_with_no_criteria(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : '',
+											'ward' : '0',
+											'area' : '0',
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],100)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),4)
+		self.assertContains(response,'100 found')
+
+	def test_search_with_no_criteria(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : '',
+											'ward' : '0',
+											'area' : '0',
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],100)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),4)
+		self.assertContains(response,'100 found')
+
+	def test_search_by_name(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : 'venuez',
+											'ward' : '0',
+											'area' : '0',
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],50)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+		self.assertContains(response,'50 found')
+
+	def test_search_by_ward(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : '',
+											'ward' :  str(Ward.objects.get(ward_name='Test ward').pk),
+											'area' : '0',
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],50)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+		self.assertContains(response,'50 found')
+
+	def test_search_by_area(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : '',
+											'ward' : '0',
+											'area' : str(Area.objects.get(area_name='Test area').pk),
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],70)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),3)
+		self.assertContains(response,'70 found')
+
+	def test_search_by_venue_type(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : '',
+											'ward' : '0',
+											'area' : '0',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],50)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+		self.assertContains(response,'50 found')
+
+	def test_search_short_set(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : 'venuez',
+											'ward' : str(Ward.objects.get(ward_name='Test ward 2').pk),
+											'area' : '0',
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],15)
+		self.assertEqual(len(response.context['venues']),15)
+		self.assertEqual(response.context['page_list'],False)
+		self.assertContains(response,'15 found')
+
+	def test_search_multiple_criteria(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : 'venuez',
+											'ward' : str(Ward.objects.get(ward_name='Test ward 2').pk),
+											'area' : str(Area.objects.get(area_name='Test area 2').pk),
+											'venue_type' : '0',
+											'action' : 'search',
+											'page' : '1'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],15)
+		self.assertEqual(len(response.context['venues']),15)
+		self.assertEqual(response.context['page_list'],False)
+		self.assertContains(response,'15 found')
+
 class AddressViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

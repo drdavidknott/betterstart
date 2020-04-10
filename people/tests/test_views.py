@@ -6997,6 +6997,29 @@ class VenuesViewTest(TestCase):
 		self.assertEqual(response.context['page_list'],False)
 		self.assertContains(response,'15 found')
 
+	def test_pagination(self):
+		# log the user in	
+		self.client.login(username='testuser', password='testword')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('venues'),
+									data = { 
+											'name' : '',
+											'ward' : '0',
+											'area' : '0',
+											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
+											'action' : 'search',
+											'page' : '2'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,200)
+		# check the results
+		self.assertEqual(response.context['number_of_venues'],50)
+		self.assertEqual(len(response.context['venues']),25)
+		self.assertEqual(len(response.context['page_list']),2)
+		self.assertContains(response,'50 found')
+
 class AddressViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

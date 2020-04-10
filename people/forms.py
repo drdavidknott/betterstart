@@ -862,7 +862,7 @@ class VenueForm(forms.Form):
 									Row(
 										Column('building_name_or_number',css_class='form-group col-md-4 mbt-0'),
 										Column('street',css_class='form-group col-md-4 mbt-0'),
-										Column('post_code',css_class='form-group col-md-4 mbt-0'),	
+										Column('post_code',css_class='form-group col-md-4 mbt-0'),
 										),
 									Row(
 										Column('contact_name',css_class='form-group col-md-4 mbt-0'),

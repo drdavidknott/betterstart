@@ -909,7 +909,8 @@ class VenueForm(forms.Form):
 									Row(
 										Column(Submit('action', submit_text),css_class='col-md-12 mb-0')
 										),
-									)	
+									)
+	# override the validation to provide additional checks	
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function
@@ -935,6 +936,17 @@ class VenueForm(forms.Form):
 			valid = False
 		# return the result
 		return valid
+	# over-ride cleaning to handle street field
+	def clean(self):
+		# custom clean method to remove key errors on street search
+		# call the built in method
+		cleaned_data = super(VenueForm, self).clean()
+    	# remove the error and add the street back into the cleaned data
+		if 'street' in self.errors:
+			del self._errors['street']
+			cleaned_data['street'] = self.data['street']
+		# return the results
+		return cleaned_data
 
 class VenueSearchForm(forms.Form):
 	# Define the fields that we need in the form.

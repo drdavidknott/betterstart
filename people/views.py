@@ -2396,116 +2396,40 @@ def add_venue(request):
 	# this view is used to create a venue
 	# initialise variables
 	add_venue_template = loader.get_template('people/add_venue.html')
-	search_results = []
-	page_list = []
-	page = 0
-	search_number = 0
-	name = ''
-	building_name_or_number = ''
-	street = ''
-	post_code = ''
-	venue_type = ''
-	venue_type_id = 0
-	results_per_page = 25
-	contact_name = ''
-	phone = ''
-	mobile_phone = ''
-	email_address = ''
-	website = ''
-	price = ''
-	facilities = ''
-	opening_hours = ''
-	search_attempted = True
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a venue search form
 		addvenueform = VenueForm(request.POST)
-		# check what type of submission we got
-		if request.POST['action'] in ('search','create'):
-			# validate the form
-			if addvenueform.is_valid():
-				# get the form details
-				name = addvenueform.cleaned_data['name']
-				venue_type_id = addvenueform.cleaned_data['venue_type']
-				venue_type = Venue_Type.objects.get(id=venue_type_id)
-				building_name_or_number = addvenueform.cleaned_data['building_name_or_number']
-				street = addvenueform.cleaned_data['street']
-				post_code = addvenueform.cleaned_data['post_code']
-				contact_name = addvenueform.cleaned_data['contact_name']
-				phone = addvenueform.cleaned_data['phone']
-				mobile_phone = addvenueform.cleaned_data['mobile_phone']
-				email_address = addvenueform.cleaned_data['email_address']
-				website = addvenueform.cleaned_data['website']
-				price = addvenueform.cleaned_data['price']
-				facilities = addvenueform.cleaned_data['facilities']
-				opening_hours = addvenueform.cleaned_data['opening_hours']
-				# do the search if we have been asked to do a search
-				if request.POST['action'] == 'search':
-					# do the search
-					search_results = Street.search(
-													name__icontains=street,
-													post_code__post_code__icontains=post_code
-													).order_by('name')
-					# do the pagination
-					search_attempted = True
-					search_number = len(search_results)
-					page = int(request.POST['page'])
-					page_list = build_page_list(
-									objects=search_results,
-									page_length=results_per_page,
-									attribute='name',
-									length=3
-									)
-					previous_page = page - 1
-					search_results = search_results[previous_page*results_per_page:page*results_per_page]
-				# otherwise do the creation
-				else:
-					# get the other objects
-					street = Street.objects.get(id=street)
-					# create the object
-					venue = Venue(
-									name = name,
-									venue_type = venue_type,
-									street = street,
-									building_name_or_number = building_name_or_number,
-									contact_name = contact_name,
-									phone = phone,
-									mobile_phone = mobile_phone,
-									email_address = email_address,
-									website = website,
-									price = price,
-									facilities = facilities,
-									opening_hours = opening_hours
-									)
-					# and save it
-					venue.save()
-					# and redirect to the venue page
-					return redirect('/venue/' + str(venue.pk))
+		# validate the form and check whether we got a create request
+		if addvenueform.is_valid() and request.POST['action'] == ('Create'):
+			# get the related objects
+			venue_type = Venue_Type.objects.get(pk=addvenueform.cleaned_data['venue_type'])
+			street = Street.objects.get(pk=addvenueform.cleaned_data['street'])
+			# create the object
+			venue = Venue(
+							name = addvenueform.cleaned_data['name'],
+							venue_type = venue_type,
+							street = street,
+							building_name_or_number = addvenueform.cleaned_data['building_name_or_number'],
+							contact_name = addvenueform.cleaned_data['contact_name'],
+							phone = addvenueform.cleaned_data['phone'],
+							mobile_phone = addvenueform.cleaned_data['mobile_phone'],
+							email_address= addvenueform.cleaned_data['email_address'],
+							website = addvenueform.cleaned_data['website'],
+							price = addvenueform.cleaned_data['price'],
+							facilities = addvenueform.cleaned_data['facilities'],
+							opening_hours = addvenueform.cleaned_data['opening_hours']
+							)
+			venue.save()
+			# and redirect to the venue page
+			return redirect('/venue/' + str(venue.pk))
 	# otherwise we didn't get a post
 	else:
 		# create a blank form
 		addvenueform = VenueForm()
 	# set the context from the person based on person id
 	context = build_context({
-				'addvenuesearchform' : addvenueform,
-				'search_results' : search_results,
-				'search_number' : search_number,
-				'search_attempted' : search_attempted,
-				'page_list' : page_list,
-				'this_page' : page,
-				'name' : name,
-				'venue_type' : venue_type,
-				'building_name_or_number' : building_name_or_number,
-				'street' : street,
-				'post_code' : post_code,
-				'contact_name' : contact_name,
-				'phone' : phone,
-				'mobile_phone' : mobile_phone,
-				'email_address' : email_address,
-				'website' : website,
-				'price' : price,
-				'facilities' : facilities,
-				'opening_hours' : opening_hours
+				'addvenueform' : addvenueform,
 				})
 	# return the response
 	return HttpResponse(add_venue_template.render(context=context, request=request))
@@ -2519,125 +2443,57 @@ def edit_venue(request, venue_id=0):
 		return make_banner(request, 'Venue does not exist.')
 	# initialise variables
 	edit_venue_template = loader.get_template('people/edit_venue.html')
-	search_results = []
-	page_list = []
-	page = 0
-	search_number = 0
-	name = venue.name
-	building_name_or_number = venue.building_name_or_number
-	street = venue.street.name
-	post_code = venue.street.post_code.post_code
-	venue_type = venue.venue_type
-	contact_name = venue.contact_name
-	phone = venue.phone
-	mobile_phone = venue.mobile_phone
-	email_address = venue.email_address
-	website = venue.website
-	price = venue.price
-	facilities = venue.facilities
-	opening_hours = venue.opening_hours
-	venue_id = venue.pk
-	results_per_page = 25
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a venue search form
 		editvenueform = VenueForm(request.POST, venue_id=venue_id)
-		# validate the form
-		if editvenueform.is_valid():
-			# get the form details
-			name = editvenueform.cleaned_data['name']
-			venue_type_id = editvenueform.cleaned_data['venue_type']
-			venue_type = Venue_Type.objects.get(id=venue_type_id)
-			building_name_or_number = editvenueform.cleaned_data['building_name_or_number']
-			street = editvenueform.cleaned_data['street']
-			post_code = editvenueform.cleaned_data['post_code']
-			contact_name = editvenueform.cleaned_data['contact_name']
-			phone = editvenueform.cleaned_data['phone']
-			mobile_phone = editvenueform.cleaned_data['mobile_phone']
-			email_address = editvenueform.cleaned_data['email_address']
-			website = editvenueform.cleaned_data['website']
-			price = editvenueform.cleaned_data['price']
-			facilities = editvenueform.cleaned_data['facilities']
-			opening_hours = editvenueform.cleaned_data['opening_hours']
-			# do the search if the street or post code have changed
-			if (request.POST['action'] == 'search' and 
-					(street != venue.street.name or post_code != venue.street.post_code.post_code)):
-				# do the search
-				search_results = Street.search(
-												name__icontains=street,
-												post_code__post_code__icontains=post_code
-												).order_by('name')
-				# do the pagination
-				search_number = len(search_results)
-				page = int(request.POST['page'])
-				page_list = build_page_list(
-								objects=search_results,
-								page_length=results_per_page,
-								attribute='name',
-								length=3
-								)
-				previous_page = page - 1
-				search_results = search_results[previous_page*results_per_page:page*results_per_page]
-			# otherwise do the update
-			else:
-				venue.name = name
-				venue.venue_type = venue_type
-				venue.building_name_or_number = building_name_or_number
-				venue.street = Street.objects.get(id=street) if request.POST['action'] == 'update_address' \
-																else venue.street
-				venue.contact_name = contact_name
-				venue.phone = phone
-				venue.mobile_phone = mobile_phone
-				venue.email_address = email_address
-				venue.website = website
-				venue.price = price
-				venue.facilities = facilities
-				venue.opening_hours = opening_hours
-				venue.save()
-				# and redirect to the venue page
-				return redirect('/venue/' + str(venue.pk))
+		# validate the form and check whether we got an update request
+		if editvenueform.is_valid() and request.POST['action'] == 'Update':
+			# get the related objects
+			venue_type = Venue_Type.objects.get(id=editvenueform.cleaned_data['venue_type'])
+			street = Street.objects.get(id=editvenueform.cleaned_data['street'])
+			# update the venue
+			venue.name = editvenueform.cleaned_data['name']
+			venue.venue_type = venue_type
+			venue.building_name_or_number = editvenueform.cleaned_data['building_name_or_number']
+			venue.street = street
+			venue.contact_name = editvenueform.cleaned_data['contact_name']
+			venue.phone = editvenueform.cleaned_data['phone']
+			venue.mobile_phone = editvenueform.cleaned_data['mobile_phone']
+			venue.email_address = editvenueform.cleaned_data['email_address']
+			venue.website = editvenueform.cleaned_data['website']
+			venue.price = editvenueform.cleaned_data['price']
+			venue.facilities = editvenueform.cleaned_data['facilities']
+			venue.opening_hours = editvenueform.cleaned_data['opening_hours']
+			venue.save()
+			# and redirect to the venue page
+			return redirect('/venue/' + str(venue.pk))
 	# otherwise we didn't get a post
 	else:
 		# create a form initialised from the record
 		editvenueform = VenueForm(
 										{
-											'name' : name,
-											'venue_type' : venue_type.pk,
-											'building_name_or_number' : building_name_or_number,
-											'street' : street,
-											'post_code' : post_code,
-											'contact_name' : contact_name,
-											'phone' : phone,
-											'mobile_phone' : mobile_phone,
-											'email_address' : email_address,
-											'website' : website,
-											'price' : price,
-											'facilities' : facilities,
-											'opening_hours' : opening_hours
+											'name' : venue.name,
+											'venue_type' : venue.venue_type.pk,
+											'building_name_or_number' : venue.building_name_or_number,
+											'street' : venue.street.pk,
+											'street_name' : '',
+											'post_code' : '',
+											'contact_name' : venue.contact_name,
+											'phone' : venue.phone,
+											'mobile_phone' : venue.mobile_phone,
+											'email_address' : venue.email_address,
+											'website' : venue.website,
+											'price' : venue.price,
+											'facilities' : venue.facilities,
+											'opening_hours' : venue.opening_hours
 										},
 										venue_id = venue.pk
 									)
 	# set the context from the person based on person id
 	context = build_context({
 				'editvenueform' : editvenueform,
-				'search_results' : search_results,
-				'search_number' : search_number,
-				'page_list' : page_list,
-				'this_page' : page,
-				'venue' : venue,
-				'name' : name,
-				'venue_type' : venue_type,
-				'building_name_or_number' : building_name_or_number,
-				'street' : street,
-				'post_code' : post_code,
-				'contact_name' : contact_name,
-				'phone' : phone,
-				'mobile_phone' : mobile_phone,
-				'email_address' : email_address,
-				'website' : website,
-				'price' : price,
-				'facilities' : facilities,
-				'opening_hours' : opening_hours
+				'venue' : venue
 				})
 	# return the response
 	return HttpResponse(edit_venue_template.render(context=context, request=request))

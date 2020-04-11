@@ -6286,6 +6286,7 @@ class AddVenueViewTest(TestCase):
 											'name' : 'test venue name',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
+											'street_name' : '',
 											'street' : '',
 											'post_code' : '',
 											'contact_name' : 'test contact name',
@@ -6296,14 +6297,13 @@ class AddVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
+											'action' : 'Search',
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code,200)
 		# check the results
-		self.assertContains(response,'Either post code or street must be entered')
+		self.assertContains(response,'Either post code or street name must be entered')
 
 	def test_venue_search_with_matching_name(self):
 		# log the user in
@@ -6315,6 +6315,7 @@ class AddVenueViewTest(TestCase):
 											'name' : 'test_venue',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
+											'street_name' : '',
 											'street' : '',
 											'post_code' : 'TV10',
 											'contact_name' : 'test contact name',
@@ -6325,8 +6326,7 @@ class AddVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
+											'action' : 'Search',
 											}
 									)
 		# check the response
@@ -6334,7 +6334,7 @@ class AddVenueViewTest(TestCase):
 		# check the results
 		self.assertContains(response,'Venue with this name already exists')
 
-	def test_venue_search_multiple_pages(self):
+	def test_venue_search_with_results(self):
 		# create test streets
 		set_up_test_streets('test_street_','TV10',50)
 		# log the user in
@@ -6346,7 +6346,8 @@ class AddVenueViewTest(TestCase):
 											'name' : 'test venue name',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
-											'street' : 'test_street',
+											'street_name' : 'test_street',
+											'street' : '',
 											'post_code' : '',
 											'contact_name' : 'test contact name',
 											'phone' : '12345',
@@ -6356,51 +6357,13 @@ class AddVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
+											'action' : 'Search',
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code,200)
 		# check the results
-		self.assertEqual(response.context['search_number'],50)
-		self.assertEqual(len(response.context['search_results']),25)
-		self.assertEqual(len(response.context['page_list']),2)
-		self.assertContains(response,'50 found')
-
-	def test_venue_search_multiple_pages_pagination(self):
-		# create test streets
-		set_up_test_streets('test_street_','TV10',45)
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('addvenue'),
-									data = { 
-											'name' : 'test venue name',
-											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
-											'building_name_or_number' : '123',
-											'street' : 'test_street',
-											'post_code' : '',
-											'contact_name' : 'test contact name',
-											'phone' : '12345',
-											'mobile_phone' : '67890',
-											'email_address' : 'test@test.com',
-											'website' : 'website.com',
-											'price' : 'test price',
-											'facilities' : 'test facilities',
-											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '2'
-											}
-									)
-		# check the response
-		self.assertEqual(response.status_code,200)
-		# check the results
-		self.assertEqual(response.context['search_number'],45)
-		self.assertEqual(len(response.context['search_results']),20)
-		self.assertEqual(len(response.context['page_list']),2)
-		self.assertContains(response,'45 found')
+		self.assertEqual(len(response.context['addvenueform'].fields['street'].choices),50)
 
 	def test_venue_create(self):
 		# log the user in
@@ -6412,6 +6375,7 @@ class AddVenueViewTest(TestCase):
 											'name' : 'test venue name',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
+											'street_name' : 'venue_street0',
 											'street' : str(Street.objects.get(name='venue_street0').pk),
 											'post_code' : '',
 											'contact_name' : 'test contact name',
@@ -6422,8 +6386,7 @@ class AddVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'create',
-											'page' : '1'
+											'action' : 'Create',
 											}
 									)
 		# check the response
@@ -6486,6 +6449,7 @@ class EditVenueViewTest(TestCase):
 											'name' : 'test venue name',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
+											'street_name' : '',
 											'street' : '',
 											'post_code' : '',
 											'contact_name' : 'test contact name',
@@ -6496,14 +6460,13 @@ class EditVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
+											'action' : 'Search',
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code,200)
 		# check the results
-		self.assertContains(response,'Either post code or street must be entered')
+		self.assertContains(response,'Either post code or street name must be entered')
 
 	def test_venue_search_with_matching_name_to_self(self):
 		# create test streets
@@ -6517,7 +6480,8 @@ class EditVenueViewTest(TestCase):
 											'name' : 'test_venue',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
-											'street' : 'test_street',
+											'street_name' : 'test_street',
+											'street' : '',
 											'post_code' : '',
 											'contact_name' : 'test contact name',
 											'phone' : '12345',
@@ -6527,16 +6491,13 @@ class EditVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
+											'action' : 'Search',
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code,200)
 		# check the results
-		self.assertEqual(response.context['search_number'],50)
-		self.assertEqual(len(response.context['search_results']),25)
-		self.assertEqual(len(response.context['page_list']),2)
+		self.assertEqual(len(response.context['editvenueform'].fields['street'].choices),50)
 
 	def test_venue_search_with_matching_name_to_other(self):
 		# create a venue
@@ -6555,6 +6516,7 @@ class EditVenueViewTest(TestCase):
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
 											'street' : '',
+											'street_name' : '',
 											'post_code' : 'TV10',
 											'contact_name' : 'test contact name',
 											'phone' : '12345',
@@ -6564,80 +6526,13 @@ class EditVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
+											'action' : 'Search',
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code,200)
 		# check the results
 		self.assertContains(response,'Venue with this name already exists')
-
-	def test_venue_search_multiple_pages(self):
-		# create test streets
-		set_up_test_streets('test_street_','TV10',50)
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
-									data = { 
-											'name' : 'test venue name',
-											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
-											'building_name_or_number' : '123',
-											'street' : 'test_street',
-											'post_code' : '',
-											'contact_name' : 'test contact name',
-											'phone' : '12345',
-											'mobile_phone' : '67890',
-											'email_address' : 'test@test.com',
-											'website' : 'website.com',
-											'price' : 'test price',
-											'facilities' : 'test facilities',
-											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '1'
-											}
-									)
-		# check the response
-		self.assertEqual(response.status_code,200)
-		# check the results
-		self.assertEqual(response.context['search_number'],50)
-		self.assertEqual(len(response.context['search_results']),25)
-		self.assertEqual(len(response.context['page_list']),2)
-
-	def test_venue_search_multiple_pages_pagination(self):
-		# create test streets
-		set_up_test_streets('test_street_','TV10',45)
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('edit_venue',args=[Venue.objects.get(name='test_venue').pk]),
-									data = { 
-											'name' : 'test venue name',
-											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
-											'building_name_or_number' : '123',
-											'street' : 'test_street',
-											'post_code' : '',
-											'contact_name' : 'test contact name',
-											'phone' : '12345',
-											'mobile_phone' : '67890',
-											'email_address' : 'test@test.com',
-											'website' : 'website.com',
-											'price' : 'test price',
-											'facilities' : 'test facilities',
-											'opening_hours' : 'test opening hours',
-											'action' : 'search',
-											'page' : '2'
-											}
-									)
-		# check the response
-		self.assertEqual(response.status_code,200)
-		# check the results
-		self.assertEqual(response.context['search_number'],45)
-		self.assertEqual(len(response.context['search_results']),20)
-		self.assertEqual(len(response.context['page_list']),2)
 
 	def test_venue_update_address(self):
 		# log the user in
@@ -6649,6 +6544,7 @@ class EditVenueViewTest(TestCase):
 											'name' : 'test venue name',
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
+											'street_name' : 'venue_street0',
 											'street' : str(Street.objects.get(name='venue_street0').pk),
 											'post_code' : '',
 											'contact_name' : 'test contact name',
@@ -6659,8 +6555,7 @@ class EditVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'update_address',
-											'page' : '1'
+											'action' : 'Update',
 											}
 									)
 		# check the response
@@ -6690,6 +6585,7 @@ class EditVenueViewTest(TestCase):
 											'venue_type' : str(Venue_Type.objects.get(name='test_venue_type').pk),
 											'building_name_or_number' : '123',
 											'street' : str(Street.objects.get(name='venue_street0').pk),
+											'street_name' : 'venue_street0',
 											'post_code' : '',
 											'contact_name' : 'test contact name',
 											'phone' : '12345',
@@ -6699,8 +6595,7 @@ class EditVenueViewTest(TestCase):
 											'price' : 'test price',
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
-											'action' : 'update',
-											'page' : '1'
+											'action' : 'Update',
 											}
 									)
 		# check the response

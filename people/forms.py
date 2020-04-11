@@ -3,11 +3,12 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue
+							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column, Hidden
+from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field
+from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
 
 def role_type_choices(role_types):
@@ -23,21 +24,16 @@ def role_type_choices(role_types):
 def build_choices(choice_field='',choice_queryset=False,choice_class=False,default=False,default_label=''):
 	# create a blank list
 	choice_list = []
-	# check whether we have a default
+	# set the default if we have one
 	if default:
-		# add a default
 		choice_list.append((0,default_label))
-	# check whether we have a queryset
+	# build the choices from a query set, or from all objects in a class
 	if choice_queryset:
-		# set the choices
 		choices = choice_queryset.order_by(choice_field)
-	# otherwise, use the supplied class
 	else:
-		# set the choices
 		choices = choice_class.objects.all().order_by(choice_field)
-	# go through the choices, based on the supplied class
+	# build the list for use in the form
 	for choice in choices:
-		# append a list of value and display value to the list
 		choice_list.append((choice.pk, getattr(choice,choice_field)))
 	# return the list
 	return choice_list
@@ -790,11 +786,11 @@ class VenueForm(forms.Form):
 									label="Venue type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	building_name_or_number = forms.CharField(
-									label="Building name or number",
+									label="Building name or no.",
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	street = forms.CharField(
-									label="Street",
+	street_name = forms.CharField(
+									label="Street Name",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
@@ -803,6 +799,10 @@ class VenueForm(forms.Form):
 									max_length=10,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	street = forms.ChoiceField(
+									label="Street",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	contact_name = forms.CharField(
 									label="Contact Name",
 									max_length=50,
@@ -846,13 +846,32 @@ class VenueForm(forms.Form):
 	# over-ride the __init__ method to define the form layout
 	def __init__(self, *args, **kwargs):
 		# pull the venue id out of the parameters
-		self.venue_id = kwargs.pop('venue_id') if 'venue_id' in kwargs.keys() else False
+		self.venue_id = int(kwargs.pop('venue_id')) if 'venue_id' in kwargs.keys() else False
 		# call the built in constructor
 		super(VenueForm, self).__init__(*args, **kwargs)
 		# build choices
 		self.fields['venue_type'].choices = build_choices(choice_class=Venue_Type,choice_field='name')
+		# if this is a submission, attempt to build a list of streets and set the choices
+		if self.is_bound and (self.data['street_name'] or self.data['post_code']):
+			streets = Street.search(
+									name__icontains=self.data['street_name'],
+									post_code__post_code__icontains=self.data['post_code']
+									)
+			# build the choices if we got results, set a default if we didn't
+			if streets:
+				choices = []
+				for street in streets:
+					choices.append((street.pk,street.name + ' (' + street.post_code.post_code + ')'))
+				self.fields['street'].choices = choices
+			else:
+				self.fields['street'].choices = [('','No streets found')]
+		# otherwise set the choices to the current street if we already have a venue and no street name or post code
+		elif self.venue_id:
+			venue = Venue.objects.get(pk=self.venue_id)
+			self.fields['street'].choices = \
+				[(venue.street.pk,venue.street.name + ' (' + venue.street.post_code.post_code + ')')]
 		# define the crispy form
-		submit_text = 'Update' if self.venue_id else 'Search'
+		submit_text = 'Update' if self.venue_id else 'Create'
 		self.helper = FormHelper()
 		self.helper.layout = Layout(
 									Row(
@@ -860,9 +879,19 @@ class VenueForm(forms.Form):
 										Column('venue_type',css_class='form-group col-md-6 mbt-0'),	
 										),
 									Row(
-										Column('building_name_or_number',css_class='form-group col-md-4 mbt-0'),
-										Column('street',css_class='form-group col-md-4 mbt-0'),
-										Column('post_code',css_class='form-group col-md-4 mbt-0'),
+										Column('building_name_or_number',css_class='form-group col-md-2 mbt-0'),
+										Column('street_name',css_class='form-group col-md-2 mbt-0'),
+										Column('post_code',css_class='form-group col-md-2 mbt-0'),
+										Column('street',css_class='form-group col-md-5 mbt-0'),
+										Column(FormActions(ButtonHolder(
+																		Submit(
+																				'action',
+																				'Search',
+																				),
+																		css_class='form-group col-md-1 mb-0',
+																		)
+															)
+												),
 										),
 									Row(
 										Column('contact_name',css_class='form-group col-md-4 mbt-0'),
@@ -876,10 +905,10 @@ class VenueForm(forms.Form):
 										Column('facilities',css_class='form-group col-md-4 mbt-0'),
 										Column('opening_hours',css_class='form-group col-md-4 mbt-0'),	
 										),
-									Hidden('action','search'),
 									Hidden('page','1'),
 									Row(
-										Column(Submit('submit', submit_text),css_class='col-md-12 mb-0'))
+										Column(Submit('action', submit_text),css_class='col-md-12 mb-0')
+										),
 									)	
 	def is_valid(self):
 		# the validation function
@@ -890,13 +919,19 @@ class VenueForm(forms.Form):
 			return valid
 		# now perform the additional checks
 		# start by checking whether we have either a post code or a street
-		if not self.cleaned_data['post_code'] and not self.cleaned_data['street']:
-			self.add_error(None,'Either post code or street must be entered.')
+		if self.data['action'] == 'Search' \
+			and not self.cleaned_data['post_code'] \
+			and not self.cleaned_data['street_name'] :
+			self.add_error('street_name','Either post code or street name must be entered.')
+			valid = False
+		# and check whether we have a street if we have been asked to do a create
+		if self.data['action'] in ('Create','Update') and not self.cleaned_data['street']:
+			self.add_error('street','Street must be selected.')
 			valid = False
 		# and check whether we already have a venue with this name
 		venue = Venue.try_to_get(name=self.cleaned_data['name'])
 		if venue and (not self.venue_id or (self.venue_id and venue.pk != self.venue_id)):
-			self.add_error(None,'Venue with this name already exists.')
+			self.add_error('name','Venue with this name already exists.')
 			valid = False
 		# return the result
 		return valid

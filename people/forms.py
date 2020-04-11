@@ -856,7 +856,7 @@ class VenueForm(forms.Form):
 			streets = Street.search(
 									name__icontains=self.data['street_name'],
 									post_code__post_code__icontains=self.data['post_code']
-									)
+									).order_by('name')
 			# build the choices if we got results, set a default if we didn't
 			if streets:
 				choices = []

@@ -48,7 +48,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'people.apps.PeopleConfig',
-    'crispy_forms'
+    'crispy_forms',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_hotp',
+    'django_otp.plugins.otp_static',
 ]
 
 MIDDLEWARE = [
@@ -57,6 +61,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -82,6 +87,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'betterstart.wsgi.application'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+OTP_TOTP_ISSUER = os.getenv('BETTERSTART_OTP_ISSUER','Betterstart OTP Default')
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
@@ -139,7 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/London'
 
 USE_I18N = True
 

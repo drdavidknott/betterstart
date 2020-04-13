@@ -15,6 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django_otp.admin import OTPAdminSite
+import os
+
+# require OTP for the admin site depending on the environment variable
+otp_admin = os.getenv('BETTERSTART_OTP_ADMIN','False')
+if otp_admin == 'True':
+    admin.site.__class__ = OTPAdminSite
 
 urlpatterns = [
     path('people/', include('people.urls')),

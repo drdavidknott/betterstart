@@ -4,10 +4,13 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note, \
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
-							Venue, Venue_Type
+							Venue, Venue_Type, Site
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
+from django_otp.oath import totp
 
 def set_up_people_base_data():
 	# set up base data needed to do tests for people
@@ -201,6 +204,161 @@ def set_up_test_options(name_root,question,number=1):
 											 option_label = name_root + str(n),
 											 question = question
 											)
+
+class LoginViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = User.objects.create_user(
+										username='test@test.com',
+										password='testword'
+										)
+		# set up a TOTP device and a static device
+		totp_device = TOTPDevice.objects.create(
+													user=user,
+													name='test_totp'
+													)
+		static_device = StaticDevice.objects.create(
+													user=user,
+													name='test_static'
+													)
+		static_token = StaticToken.objects.create(
+													device=static_device,
+													token='123456'
+													)
+		set_up_address_base_data()
+		set_up_venue_base_data()
+
+	def test_login_invalid_user_name_no_otp(self):
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'invalid@invalid.com',
+											'password' : 'testword'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Email address or password not recognised')
+
+	def test_login_invalid_password_no_otp(self):
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'invalid'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Email address or password not recognised')
+
+	def test_login_success_no_otp(self):
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword'
+											}
+									)
+		# check the response
+		self.assertRedirects(response, '/')
+		self.assertEqual(response.status_code, 302)
+
+	def test_login_invalid_user_name_with_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True
+							)
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'invalid@invalid.com',
+											'password' : 'testword',
+											'token' : '123456'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Email address or password not recognised')
+
+	def test_login_invalid_password_with_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True
+							)
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'invalid',
+											'token' : '123456'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Email address or password not recognised')
+
+	def test_login_invalid_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True
+							)
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword',
+											'token' : '123456'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Invalid token')
+
+	def test_login_valid_totp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True
+							)
+		totp_device = TOTPDevice.objects.get(name='test_totp')
+		token = totp(totp_device.bin_key)
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword',
+											'token' : str(token)
+											}
+									)
+		# check the response
+		self.assertRedirects(response, '/')
+		self.assertEqual(response.status_code, 302)
+
+	def test_login_emergency_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True
+							)
+		# attempt to get the event page
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword',
+											'token' : 'EMERGENCY123456'
+											}
+									)
+		# check the response
+		self.assertRedirects(response, '/')
+		self.assertEqual(response.status_code, 302)
 
 class PeopleViewTest(TestCase):
 	@classmethod

@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street
+							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -62,24 +62,46 @@ class LoginForm(forms.Form):
 										label="Password",
 										max_length=30,
 										widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
+	token = forms.CharField(
+										label="Token",
+										max_length=30,
+										required=False,
+										widget=forms.TextInput(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
 		super(LoginForm, self).__init__(*args, **kwargs)
 		# define the crispy form helper
 		self.helper = FormHelper()
-		# and define the layout
-		self.helper.layout = Layout(
-									Row(
-										Column('email_address',css_class='form-group col-xs-12 mbt-0'),	
-										),
-									Row(
-										Column('password',css_class='form-group col-xs-12 mbt-0'),	
-										),
-									Row(
-										Column(Submit('submit', 'Login'),css_class='col-xs-12 mb-0')
+		# and define the layout, depending on whether the site required otp or not
+		site = Site.objects.all().first()
+		if site and site.otp_required:
+			self.helper.layout = Layout(
+										Row(
+											Column('email_address',css_class='form-group col-xs-12 mbt-0'),	
+											),
+										Row(
+											Column('password',css_class='form-group col-xs-12 mbt-0'),	
+											),
+										Row(
+											Column('token',css_class='form-group col-xs-12 mbt-0'),	
+											),
+										Row(
+											Column(Submit('submit', 'Login'),css_class='col-xs-12 mb-0')
+											)
 										)
-									)
+		else:
+			self.helper.layout = Layout(
+										Row(
+											Column('email_address',css_class='form-group col-xs-12 mbt-0'),	
+											),
+										Row(
+											Column('password',css_class='form-group col-xs-12 mbt-0'),	
+											),
+										Row(
+											Column(Submit('submit', 'Login'),css_class='col-xs-12 mb-0')
+											)
+										)
 
 class UploadDataForm(forms.Form):
 	# Define the choices for file type

@@ -1437,6 +1437,7 @@ class Site(DataAccessMixin,models.Model):
 	messages = models.BooleanField(default=False)
 	dob_offset = models.IntegerField(default=0)
 	dashboard = models.ForeignKey(Dashboard, null=True, blank=True, on_delete=models.SET_NULL)
+	otp_required = models.BooleanField(default=False)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name

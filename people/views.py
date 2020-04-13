@@ -33,6 +33,8 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler
 import matplotlib.pyplot as plt, mpld3
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from django_otp.plugins.otp_static.models import StaticDevice
 
 @login_required
 def index(request):
@@ -1625,6 +1627,29 @@ def split_names(names):
 	# return the results
 	return first_name, last_name
 
+def verify_token(user,token):
+	# function to check whether a token is valid for a user, using the django OTP library
+	# initialise variables
+	message = False
+	verified = False
+	# if the token contains the phrase 'EMERGENCY', use a static token, after stripping out the emergency text
+	if 'EMERGENCY' in token:
+		device_class = StaticDevice
+		token = token.replace('EMERGENCY','')
+	else:
+		device_class = TOTPDevice
+	# do the verification
+	try:
+		device = device_class.objects.get(user=user)
+		if device.verify_token(token):
+			verified = True
+		else:
+			message = 'Invalid token.'
+	except (device_class.DoesNotExist):
+		message = 'User does not have registered device.'
+	# return the results
+	return verified, message
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -1653,13 +1678,21 @@ def log_user_in(request):
 									)
 				# login the user if successful
 				if user is not None:
-					# log the user in
-					login(request, user)
-					# set the login flag
-					successful_login = True
+					# see whether we need an otp
+					site = Site.objects.all().first()
+					if site and site.otp_required:
+						# check the token
+						successful_login, message = verify_token(user,login_form.cleaned_data['token'])
+						if successful_login:
+							login(request,user)
+						else:
+							login_form.add_error(None,message)
+					else:
+						login(request,user)
+						successful_login = True
 				else:
 					# set an error for the login failure
-					messages.error(request, 'Email address or password not recognised.')
+					login_form.add_error(None, 'Email address or password not recognised.')
 		else:
 			# this is a first time submission, so create an empty form
 			login_form = LoginForm()
@@ -1774,7 +1807,7 @@ def people(request):
 				'include_people' : include_people,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people,
-				'search_attempted' : search_attempted
+				'search_attempted' : search_attempted,
 				})
 	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))

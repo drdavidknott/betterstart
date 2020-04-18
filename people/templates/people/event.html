@@ -185,7 +185,32 @@
 						{% endfor %}
 					</tbody>
 				</table>
+
+				{% if page_list %}
+					<div class="row">
+				 		<div class="col-xs-12">
+				 			<h4>
+					 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
+					 			More results
+				 			</h4>
+						</div>
+					</div>
+					<div class="form-row">
+						<div class="col-xs-12">
+							{% for page in page_list %}
+								<a class="btn btn-sm btn-primary person-page-button"
+									{% if page.number == this_page %}
+										disabled
+									{% endif %}
+									href="{% url 'event' event.pk page.number %}">
+									{{ page }}
+								</a>
+							{% endfor %}
+						</div>
+					</div>
+				{% endif %}
 			</div>
+
 		{% else %}
 			<div class="row">
 				No registrations

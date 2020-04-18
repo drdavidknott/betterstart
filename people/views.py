@@ -2663,7 +2663,10 @@ def addevent(request):
 	return HttpResponse(addevent_template.render(context=context, request=request))
 
 @login_required
-def event(request, event_id=0):
+def event(request, event_id=0, page=1):
+	# initialise variables
+	results_per_page = 25
+	page = int(page)
 	# load the template
 	event_template = loader.get_template('people/event.html')
 	# get the event
@@ -2673,10 +2676,24 @@ def event(request, event_id=0):
 		return make_banner(request, 'Event does not exist.')
 	# get the registrations for the event
 	registrations = event.event_registration_set.all().order_by('person__last_name','person__first_name')
+	# do the pagination
+	for registration in registrations:
+		registration.last_name = registration.person.last_name
+	number_of_registrations = len(registrations)
+	page_list = build_page_list(
+								objects=registrations,
+								page_length=results_per_page,
+								attribute='last_name',
+								length=3
+								)
+	previous_page = page - 1
+	registrations= registrations[previous_page*results_per_page:page*results_per_page]
 	# set the context
 	context = build_context({
 				'event' : event,
-				'registrations' : registrations
+				'registrations' : registrations,
+				'page_list' : page_list,
+				'this_page' : page
 				})
 	# return the response
 	return HttpResponse(event_template.render(context=context, request=request))

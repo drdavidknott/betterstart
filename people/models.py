@@ -556,7 +556,8 @@ class Person(DataAccessMixin,models.Model):
 					# we have a name, so search on name
 					results = results.filter(first_name__icontains=name) \
 								| results.filter(last_name__icontains=name) \
-								| results.filter(other_names__icontains=name)
+								| results.filter(other_names__icontains=name) \
+								| results.filter(email_address__icontains=name)
 
 		# if we have any terms in keywords, call the function to search by keywords
 		if keywords:

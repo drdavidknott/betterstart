@@ -22,6 +22,7 @@ urlpatterns = [
     url(r'^ward/(?P<id>[0-9]+)$', views.people_query, name='ward'),
     url(r'^trained_role/(?P<id>[\w]+)$', views.people_query, name='trained_role'),
     url(r'^event/(?P<event_id>[0-9]+)$', views.event, name='event'),
+    url(r'^event/(?P<event_id>[0-9]+)/(?P<page>[0-9]+)$', views.event, name='event'),
     url(r'^event_type/(?P<event_group>[0-9]+)$', views.event_group, name='event_type'),
     url(r'^event_category/(?P<event_group>[0-9]+)$', views.event_group, name='event_category'),
     url(r'^event_ward/(?P<event_group>[0-9]+)$', views.event_group, name='event_ward'),

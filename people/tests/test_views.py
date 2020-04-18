@@ -1069,6 +1069,37 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
 
+	def test_search_by_email_address(self):
+		# set different last names
+		last_person = Person.objects.filter(first_name__startswith='Test_Role_1').last()
+		# update the membership number for the last person
+		last_person.email_address = 'test_email@mail.com'
+		last_person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'search',
+											'names' : 'email',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),1)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],1)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
 	def test_search_by_multiple_terms_first_name_last_name(self):
 		# set different last names
 		people_to_include = Person.objects.filter(first_name__startswith='Test_Role_1')
@@ -3599,6 +3630,20 @@ class EventViewTest(TestCase):
 														event_category = test_event_category)
 		# Create a test event
 		set_up_test_events('Test_Event_Type_1_', test_event_type_1,1)
+		test_event = Event.objects.first()
+		# create and register test people
+		set_up_people_base_data()
+		set_up_test_people('test_person_',number=55)
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		for person in Person.objects.all():
+			Event_Registration.objects.create(
+				person = person,
+				event = test_event,
+				role_type = test_role_1,
+				participated = True,
+				registered = True,
+				apologies = False
+				)
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -3613,6 +3658,39 @@ class EventViewTest(TestCase):
 		response = self.client.get(reverse('event',args=[1]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
+
+	def test_pagination_default_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get('/event/1')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# and the contents
+		self.assertEqual(len(response.context['registrations']),25)
+		self.assertEqual(len(response.context['page_list']),3)
+
+	def test_pagination_first_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get('/event/1/1')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# and the contents
+		self.assertEqual(len(response.context['registrations']),25)
+		self.assertEqual(len(response.context['page_list']),3)
+
+	def test_pagination_last_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get('/event/1/3')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# and the contents
+		self.assertEqual(len(response.context['registrations']),5)
+		self.assertEqual(len(response.context['page_list']),3)
 
 class DashboardViewTest(TestCase):
 	@classmethod

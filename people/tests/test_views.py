@@ -365,6 +365,7 @@ class PeopleViewTest(TestCase):
 	def setUpTestData(cls):
 		# create a test user
 		user = set_up_test_user()
+		superuser = set_up_test_superuser()
 		# set up base data: first the ethnicity
 		test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
 		# and the capture type
@@ -428,7 +429,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : '',
 											'role_type' : '0',
@@ -455,7 +456,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : '',
 											'role_type' : '0',
@@ -490,7 +491,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -525,7 +526,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -560,7 +561,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -595,7 +596,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -630,7 +631,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -665,7 +666,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -694,7 +695,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(parent_role_type.pk),
 											'ABSS_type' : '0',
@@ -728,7 +729,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'in project',
 											'role_type' : '0',
@@ -763,7 +764,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'in project',
 											'role_type' : '0',
@@ -798,7 +799,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -834,7 +835,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -864,7 +865,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'parent',
 											'role_type' : '0',
@@ -891,7 +892,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -910,6 +911,51 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_download_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download',
+											'names' : 'Test_Role_1',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the error message
+		self.assertContains(response,'You do not have permission to download files')
+
+	def test_download_is_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download',
+											'names' : 'Test_Role_1',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the error message
+		self.assertContains(response,'Test_Role_1_0,Test_Role_1_0,,test@test.com,,,01/01/2000,Gender,False,,test role 1,')
+		self.assertContains(response,'Test_Role_1_49,Test_Role_1_49,,test@test.com,,,01/01/2000,Gender,False,,test role 1,')
+
 	def test_search_by_first_name_with_non_matching_case(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -917,7 +963,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'test_role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -951,7 +997,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'name_search',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -985,7 +1031,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'NAME_SEARCH',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1019,7 +1065,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'name_search',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1050,7 +1096,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '999',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1081,7 +1127,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'email',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1116,7 +1162,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'first last',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1151,7 +1197,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'first other',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1194,7 +1240,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'first other',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1220,7 +1266,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Short',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1248,7 +1294,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Different',
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
@@ -1284,7 +1330,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Different difflast',
 											'role_type' : str(test_role_type_1.pk),
 											'ABSS_type' : '0',
@@ -1312,7 +1358,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Different',
 											'keywords' : 'test role 1',
 											'role_type' : '0',
@@ -1349,7 +1395,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Different difflast',
 											'keywords' : 'test role 1',
 											'role_type' : '0',
@@ -1376,7 +1422,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'No_results',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1404,7 +1450,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(test_role_type_4.pk),
 											'ABSS_type' : '0',
@@ -1432,7 +1478,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Test_Role_1_',
 											'role_type' : str(test_role_type_3.pk),
 											'ABSS_type' : '0',
@@ -1460,7 +1506,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(test_role_type_5.pk),
 											'ABSS_type' : '0',
@@ -1486,7 +1532,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'Pagination',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1514,7 +1560,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -1542,7 +1588,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'second_test_ABSS_type',
 											'role_type' : '0',
@@ -1572,7 +1618,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -1601,7 +1647,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -1631,7 +1677,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -1660,7 +1706,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'keywords' : 'second_test_ABSS_type',
 											'role_type' : '0',
@@ -1690,7 +1736,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'test role 2 second_test_ABSS_type',
 											'role_type' : '0',
@@ -1721,7 +1767,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'keywords' : 'test role 2 second_test_ABSS_type',
 											'role_type' : '0',
@@ -1750,7 +1796,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
@@ -1778,7 +1824,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1807,7 +1853,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -1836,7 +1882,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
@@ -1866,7 +1912,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
@@ -1897,7 +1943,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -1925,7 +1971,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'child',
 											'role_type' : '0',
@@ -1955,7 +2001,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'keywords' : 'child',
 											'role_type' : '0',
@@ -1985,7 +2031,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'test role 2 child',
 											'role_type' : '0',
@@ -2016,7 +2062,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'keywords' : 'test role 2 child',
 											'role_type' : '0',
@@ -2048,7 +2094,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'keywords' : 'test role 2 second_test_ABSS_type child',
 											'role_type' : '0',
@@ -2077,7 +2123,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2115,7 +2161,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2153,7 +2199,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'test role 1 adult',
 											'role_type' : '0',
@@ -2193,7 +2239,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2232,7 +2278,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2271,7 +2317,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = {
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
@@ -2311,7 +2357,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
@@ -2352,7 +2398,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -2384,7 +2430,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2422,7 +2468,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2465,7 +2511,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2504,7 +2550,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2543,7 +2589,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2582,7 +2628,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
@@ -2622,7 +2668,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : '0',
@@ -2663,7 +2709,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -2695,7 +2741,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2737,7 +2783,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2779,7 +2825,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'Test ward',
 											'role_type' : '0',
@@ -2822,7 +2868,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -2864,7 +2910,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'keyword',
 											'role_type' : '0',
@@ -2898,7 +2944,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'keyword',
 											'role_type' : '0',
@@ -2925,7 +2971,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'invalid',
 											'role_type' : '0',
@@ -2962,7 +3008,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'names' : '',
 											'keywords' : 'test_ethnicity_2',
 											'role_type' : '0',

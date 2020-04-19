@@ -284,15 +284,13 @@ class File_Handler():
 		self.fields = []
 		self.file_class = ''
 		self.upload = True
-		# check whether we have received a file class
+		self.objects = None
+		# set the file class if we have received one
 		if 'file_class' in kwargs.keys():
-			# set the file class
 			self.file_class = kwargs['file_class']
-		# and do the same for a field
+		# add a field if we have received a field name
 		if 'field_name' in kwargs.keys():
-			# get the simple load field
 			field_name = kwargs['field_name']
-			# create a file field objects
 			file_field = File_Field(
 									name=field_name,
 									mandatory=True,
@@ -300,12 +298,12 @@ class File_Handler():
 									corresponding_field=field_name,
 									corresponding_must_not_exist=True,
 									)
-			# set the field
 			setattr(self,field_name,file_field)
-			# and append the name to the fields list
 			self.fields.append(field_name)
-			# and set it to the label field
 			self.label_field = field_name
+		# and the objects if we have received them
+		if 'objects' in kwargs.keys():
+			self.objects = kwargs['objects']
 
 	# process an uploaded file
 	def handle_uploaded_file(self, file):
@@ -336,10 +334,11 @@ class File_Handler():
 	def handle_download(self):
 		# define empty records
 		self.download_records = []
-		# get the objects
-		objects = self.file_class.objects.all()
+		# get the objects if we've not already been passed them
+		if not self.objects:
+			self.objects = self.file_class.objects.all()
 		# go through the objects
-		for this_object in objects:
+		for this_object in self.objects:
 			# set the fields
 			self.set_download_fields(this_object)
 			# now append the record
@@ -904,7 +903,7 @@ class Relationships_File_Handler(File_Handler):
 		self.to_last_name = File_Field(
 										name='to_last_name',
 										mandatory=True,
-										corresponding_field='first_name',
+										corresponding_field='last_name',
 										use_corresponding_for_download=True,
 										corresponding_relationship_field='relationship_to'
 										)

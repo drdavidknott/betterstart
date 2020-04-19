@@ -470,13 +470,27 @@ class PersonSearchForm(forms.Form):
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
+		# initialise variables
+		user = False
+		# pull the user out of the parameters if provided
+		if 'user' in kwargs.keys():
+			user = kwargs.pop('user')
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
-		# define the crispy form helper
+		# build the crispy form
 		self.helper = FormHelper()
-		# and the action
 		self.helper.form_action = reverse('listpeople')
-		# and define the layout
+		# define the row containing buttons, depending on whether the user is allowed to download or not
+		if user and user.is_superuser:
+			button_row = FormActions(
+										Submit('action', 'Search'),
+										Submit('action', 'Download')
+									)
+		else:
+			button_row = FormActions(
+										Submit('action', 'Search')
+									)
+		# define the layout
 		self.helper.layout = Layout(
 									Row(
 										Column('names',css_class='form-group col-md-6 mbt-0'),
@@ -490,10 +504,8 @@ class PersonSearchForm(forms.Form):
 										Column('ABSS_type',css_class='form-group col-md-2 mbt-0'),
 										Column('include_people',css_class='form-group col-md-2 mbt-0'),
 										),
-									Hidden('action','search'),
 									Hidden('page','1'),
-									Row(
-										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									button_row,
 									)
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
@@ -513,14 +525,12 @@ class PersonSearchForm(forms.Form):
 															choice_field='ward_name',
 															default=True,
 															default_label='Any')
-		# build the choices for the trained roles, starting with a default entry
+		# build the choices for the trained roles, starting with a default entry, then adding trained and active
+		# options for each of the trained roles
 		trained_role_choices = [('none','N/A')]
-		# now go through the trained role types
 		for trained_role in Role_Type.objects.filter(trained=True):
-			# add the two different entries to the list
 			trained_role_choices.append(('trained_'+str(trained_role.pk),'Trained ' + trained_role.role_type_name))
 			trained_role_choices.append(('active_'+str(trained_role.pk),'Active ' + trained_role.role_type_name))
-		# now set the list
 		self.fields['trained_role'].choices = trained_role_choices
 
 class PersonNameSearchForm(forms.Form):

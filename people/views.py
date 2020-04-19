@@ -1650,6 +1650,37 @@ def verify_token(user,token):
 	# return the results
 	return verified, message
 
+def build_download_file(file_type,objects=None):
+	# takes a class name and optional queryset and returns a file download response
+	# initialise variables
+	file_handlers = {
+						'People' : People_File_Handler,
+						'Relationships' : Relationships_File_Handler,
+						'Events' : Events_File_Handler,
+						'Registrations' : Registrations_File_Handler,
+						'Questions' : Questions_File_Handler,
+						'Options' : Options_File_Handler,
+						'Answers' : Answers_File_Handler,
+						'Answer Notes' : Answer_Notes_File_Handler,
+						'Activities' : Activities_File_Handler,
+						'Event Summary' : Event_Summary_File_Handler,
+					}
+	# create the file handler
+	file_handler = file_handlers[file_type](objects=objects)
+	# build the download records
+	file_handler.handle_download()
+	records = file_handler.download_records
+	# create the http response
+	response = HttpResponse(content_type='text/csv')
+	response['Content-Disposition'] = 'attachment; filename="' + file_type + '.csv"'
+	# use the csv writer to write the keys and then the records to the response
+	writer = csv.writer(response)
+	writer.writerow(file_handler.fields)
+	for record in records:
+		writer.writerow(record)
+	# return the result
+	return response
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -1743,14 +1774,12 @@ def people(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(request.POST)
-		# check what type of submission we got
-		if request.POST['action'] == 'search':
-			# set the flag to show that a search was attempted
-			search_attempted = True
-			# validate the form
-			personsearchform.is_valid()
-			# get the names
+		personsearchform = PersonSearchForm(request.POST,user=request.user)
+		# set the flag to show that a search was attempted
+		search_attempted = True
+		# validate the form
+		if personsearchform.is_valid():
+			# get the fields
 			names = personsearchform.cleaned_data['names']
 			keywords = personsearchform.cleaned_data['keywords']
 			role_type = personsearchform.cleaned_data['role_type']
@@ -1770,28 +1799,32 @@ def people(request):
 									street__post_code__ward_id=ward,
 									include_people=include_people
 									).order_by('last_name','first_name')
-			# figure out how many people we got
-			number_of_people = len(people)
-			# get the page number
-			this_page = int(request.POST['page'])
-			# figure out how many pages we have
-			page_list = build_page_list(
-										objects=people,
-										page_length=results_per_page,
-										attribute='last_name',
-										length=3
-										)
-			# set the previous page
-			previous_page = this_page - 1
-			# sort and truncate the list of people
-			people = people[previous_page*results_per_page:this_page*results_per_page]
-	# otherwise set a bank form
+			# if we got a request for a search, do the pagination
+			if personsearchform.cleaned_data['action'] == 'Search':
+				number_of_people = len(people)
+				this_page = int(request.POST['page'])
+				page_list = build_page_list(
+											objects=people,
+											page_length=results_per_page,
+											attribute='last_name',
+											length=3
+											)
+				previous_page = this_page - 1
+				people = people[previous_page*results_per_page:this_page*results_per_page]
+			# otherwise check whether we got a request for a download
+			elif personsearchform.cleaned_data['action'] == 'Download':
+				# only superusers are allowed to perform downloads
+				if not request.user.is_superuser:
+					personsearchform.add_error(None, 'You do not have permission to download files.')
+				else:
+					# get a file response using the search results and return it
+					response = build_download_file('People',objects=people)
+					return response
+	# otherwise set a blank form
 	else:
-		# create the blank form
 		personsearchform = PersonSearchForm()
-	# get the template
+	# build and return the response
 	people_template = loader.get_template('people/people.html')
-	# set the context
 	context = build_context({
 				'personsearchform' : personsearchform,
 				'people' : people,
@@ -1809,7 +1842,6 @@ def people(request):
 				'number_of_people' : number_of_people,
 				'search_attempted' : search_attempted,
 				})
-	# return the HttpResponse
 	return HttpResponse(people_template.render(context=context, request=request))
 
 @login_required
@@ -1829,7 +1861,7 @@ def people_query(request, id):
 	# copy the request
 	copy_POST = request.POST.copy()
 	# set search terms for a people search
-	copy_POST['action'] = 'search'
+	copy_POST['action'] = 'Search'
 	copy_POST['role_type'] = form_values['role_type']
 	copy_POST['names'] = ''
 	copy_POST['ABSS_type'] = form_values['ABSS_type']
@@ -3285,61 +3317,23 @@ def uploaddata(request):
 @login_required
 @user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
 def downloaddata(request):
-	# define the records that need more complex file handlers
-	file_handlers = {
-						'People' : People_File_Handler,
-						'Relationships' : Relationships_File_Handler,
-						'Events' : Events_File_Handler,
-						'Registrations' : Registrations_File_Handler,
-						'Questions' : Questions_File_Handler,
-						'Options' : Options_File_Handler,
-						'Answers' : Answers_File_Handler,
-						'Answer Notes' : Answer_Notes_File_Handler,
-						'Activities' : Activities_File_Handler,
-						'Event Summary' : Event_Summary_File_Handler,
-					}
-	# see whether we got a post or not
+	# handle a request to download a file, depending on the file type requests
+	# if we got a post, validate the form and create the file response, 
 	if request.method == 'POST':
-		# create a form from the POST to retain data and trigger validation
 		downloaddataform = DownloadDataForm(request.POST)
-		# check whether the form is valid
 		if downloaddataform.is_valid():
-			# get the file type
-			file_type = downloaddataform.cleaned_data['file_type']
-			# get the file handler
-			file_handler = file_handlers[file_type]()
-			# and the keys
-			fields = file_handler.fields
-			# handle the download
-			file_handler.handle_download()
-			# get the records
-			records = file_handler.download_records
-			# create the response
-			response = HttpResponse(content_type='text/csv')
-			# set the content details
-			response['Content-Disposition'] = 'attachment; filename="' + file_type + '.csv"'
-			# now create the writer
-			writer = csv.writer(response)
-			# write the keys
-			writer.writerow(fields)
-			# and go through the records
-			for record in records:
-				# write the record
-				writer.writerow(record)
-			# return the response
+			response = build_download_file(downloaddataform.cleaned_data['file_type'])
 			return response
-	# otherwise create a fresh form
+	# otherwise create and return a blank form and page
 	else:
-		# create the fresh form
 		downloaddataform = DownloadDataForm()
-	# get the template
-	download_data_template = loader.get_template('people/download_data.html')
-	# set the context
-	context = build_context({
-				'downloaddataform' : downloaddataform,
-				})
-	# return the HttpResponse
-	return HttpResponse(download_data_template.render(context=context, request=request))
+		download_data_template = loader.get_template('people/download_data.html')
+		context = build_context({
+					'downloaddataform' : downloaddataform,
+					})
+		response = HttpResponse(download_data_template.render(context=context, request=request))
+	# return the result
+	return response
 
 @login_required
 def activities(request,person_id=0):

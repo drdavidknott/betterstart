@@ -108,7 +108,7 @@
 			<div class="col-xs-12">
 				<form action ="{% url 'events' %}" method="post">
 					{% csrf_token %}
-					<input type="hidden" name="action" value="search">
+					<input type="hidden" name="action" value="Search">
 					<input type="hidden" name="name" value="{{ name }}">
 					<input type="hidden" name="event_category" value="{{ event_category }}">
 					<input type="hidden" name="event_type" value="{{ event_type }}">

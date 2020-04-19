@@ -2762,7 +2762,7 @@ def event_group(request, event_group='0'):
 	# copy the request
 	copy_POST = request.POST.copy()
 	# set search terms for an event search
-	copy_POST['action'] = 'search'
+	copy_POST['action'] = 'Search'
 	copy_POST['event_type'] = event_type
 	copy_POST['event_category'] = event_category
 	copy_POST['ward'] = ward
@@ -2803,51 +2803,54 @@ def events(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		eventsearchform = EventSearchForm(request.POST)
-		# check what type of submission we got
-		if request.POST['action'] == 'search':
-			# set the flag to show that a search was attempted
-			search_attempted = True
-			# validate the form
-			if eventsearchform.is_valid():
-				# get the values
-				name = eventsearchform.cleaned_data['name']
-				date_from = eventsearchform.cleaned_data['date_from']
-				date_to = eventsearchform.cleaned_data['date_to']
-				event_type = eventsearchform.cleaned_data['event_type']
-				event_category = eventsearchform.cleaned_data['event_category']
-				ward = eventsearchform.cleaned_data['ward']
-				venue = eventsearchform.cleaned_data['venue']
-				# conduct a search
-				events = Event.search(
-										name__icontains=name,
-										date__gte=date_from,
-										date__lte=date_to,
-										event_type_id=int(event_type),
-										event_type__event_category_id=int(event_category),
-										ward=int(ward),
-										venue=int(venue)
-										).order_by('-date')
-				# set the number of results
+		eventsearchform = EventSearchForm(request.POST,user=request.user)
+		# set the flag to show that a search was attempted
+		search_attempted = True
+		# validate the form
+		if eventsearchform.is_valid():
+			# get the values
+			name = eventsearchform.cleaned_data['name']
+			date_from = eventsearchform.cleaned_data['date_from']
+			date_to = eventsearchform.cleaned_data['date_to']
+			event_type = eventsearchform.cleaned_data['event_type']
+			event_category = eventsearchform.cleaned_data['event_category']
+			ward = eventsearchform.cleaned_data['ward']
+			venue = eventsearchform.cleaned_data['venue']
+			# conduct a search
+			events = Event.search(
+									name__icontains=name,
+									date__gte=date_from,
+									date__lte=date_to,
+									event_type_id=int(event_type),
+									event_type__event_category_id=int(event_category),
+									ward=int(ward),
+									venue=int(venue)
+									).order_by('-date')
+			# if we got a request for a search, do the pagination and add counts to events for display
+			if eventsearchform.cleaned_data['action'] == 'Search':
 				number_of_events = len(events)
-				# get the page number
 				page = int(request.POST['page'])
-				# figure out how many pages we have
 				page_list = build_page_list(
 										objects=events,
 										page_length=results_per_page,
 										attribute='date',
 										)
-				# set the previous page
 				previous_page = page - 1
-				# sort and truncate the list of events
 				events = events[previous_page*results_per_page:page*results_per_page]
-				# add the counts to the events
 				events = add_counts_to_events(events)
-			# otherwise we have incorrect dates
-			else:
-				# set a search error
-				search_error = 'Dates must be entered in DD/MM/YYYY format.'
+			# otherwise check whether we got a request for a download
+			elif eventsearchform.cleaned_data['action'] == 'Download':
+				# only superusers are allowed to perform downloads
+				if not request.user.is_superuser:
+					eventsearchform.add_error(None, 'You do not have permission to download files.')
+				else:
+					# get a file response using the search results and return it
+					response = build_download_file('Events',objects=events)
+					return response
+		# otherwise we have incorrect dates
+		else:
+			# set a search error
+			search_error = 'Dates must be entered in DD/MM/YYYY format.'
 	# otherwise set a bank form
 	else:
 		# create the blank form

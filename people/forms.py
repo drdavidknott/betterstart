@@ -1394,8 +1394,16 @@ class EventSearchForm(forms.Form):
 																	'autocomplete' : 'off'
 																	}),
 									input_formats=['%d/%m/%Y'])
+	action = forms.CharField(
+									initial='action',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
+		# initialise variables
+		user = False
+		# pull the user out of the parameters if provided
+		if 'user' in kwargs.keys():
+			user = kwargs.pop('user')
 		# call the built in constructor
 		super(EventSearchForm, self).__init__(*args, **kwargs)
 		# set the choices
@@ -1423,10 +1431,19 @@ class EventSearchForm(forms.Form):
 													default=True,
 													default_label='Any'
 													)
-		# define the crispy form helper
+		# build the crispy form
 		self.helper = FormHelper()
-		# and the action
 		self.helper.form_action = reverse('events')
+		# define the row containing buttons, depending on whether the user is allowed to download or not
+		if user and user.is_superuser:
+			button_row = FormActions(
+										Submit('action', 'Search'),
+										Submit('action', 'Download')
+									)
+		else:
+			button_row = FormActions(
+										Submit('action', 'Search')
+									)
 		# and define the layout
 		self.helper.layout = Layout(
 									Row(
@@ -1440,10 +1457,8 @@ class EventSearchForm(forms.Form):
 										Column('date_from',css_class='form-group col-md-2 mbt-0'),
 										Column('date_to',css_class='form-group col-md-2 mbt-0'),
 										),
-									Hidden('action','search'),
 									Hidden('page','1'),
-									Row(
-										Column(Submit('submit', 'Search'),css_class='col-md-12 mb-0'))
+									button_row,
 									)
 
 class ActivityForm(forms.Form):

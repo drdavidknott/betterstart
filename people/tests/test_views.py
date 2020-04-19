@@ -3166,8 +3166,9 @@ class PeopleQueryTest(TestCase):
 class EventsViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
-		# create a test user
+		# create a test user and superuser
 		user = set_up_test_user()
+		superuser = set_up_test_superuser()
 		# set up address base data
 		set_up_address_base_data()
 		# create an event category
@@ -3251,7 +3252,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '',
@@ -3278,7 +3279,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '',
@@ -3305,7 +3306,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
@@ -3332,7 +3333,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
@@ -3359,7 +3360,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
@@ -3386,7 +3387,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '',
@@ -3413,7 +3414,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '',
@@ -3440,7 +3441,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '20/01/2019',
@@ -3467,7 +3468,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '20/01/2019',
@@ -3496,7 +3497,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '20/02/2019',
@@ -3525,7 +3526,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '',
@@ -3554,7 +3555,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '20/01/2019',
 											'date_to' : '',
@@ -3581,7 +3582,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '',
@@ -3615,7 +3616,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : '',
 											'date_from' : '',
 											'date_to' : '',
@@ -3642,7 +3643,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'search',
+											'action' : 'Search',
 											'name' : 'Test_Event_Type_1_',
 											'date_from' : '',
 											'date_to' : '',
@@ -3661,6 +3662,53 @@ class EventsViewTest(TestCase):
 		self.assertEqual(len(response.context['events']),25)
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_download_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'Download',
+											'name' : 'Test_Event_Type_1_',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : '0',
+											'venue' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the error message
+		self.assertContains(response,'You do not have permission to download files')
+
+	def test_download_is_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'Download',
+											'name' : 'Test_Event_Type_1_',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : '0',
+											'venue' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the error message
+		self.assertContains(response,'Test_Event_Type_1_0,Test event description,test_event_type_1,')
+		self.assertContains(response,'Test_Event_Type_1_49,Test event description,test_event_type_1,')
 
 class EventViewTest(TestCase):
 	@classmethod

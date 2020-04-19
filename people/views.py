@@ -31,7 +31,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							People_File_Handler, Relationships_File_Handler, Events_File_Handler, \
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
-							Event_Summary_File_Handler
+							Event_Summary_File_Handler, Events_And_Registrations_File_Handler
 import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
@@ -1664,6 +1664,7 @@ def build_download_file(file_type,objects=None):
 						'Answer Notes' : Answer_Notes_File_Handler,
 						'Activities' : Activities_File_Handler,
 						'Event Summary' : Event_Summary_File_Handler,
+						'Events and Registrations' : Events_And_Registrations_File_Handler
 					}
 	# create the file handler
 	file_handler = file_handlers[file_type](objects=objects)
@@ -2816,6 +2817,7 @@ def events(request):
 			event_category = eventsearchform.cleaned_data['event_category']
 			ward = eventsearchform.cleaned_data['ward']
 			venue = eventsearchform.cleaned_data['venue']
+			action = eventsearchform.cleaned_data['action']
 			# conduct a search
 			events = Event.search(
 									name__icontains=name,
@@ -2839,13 +2841,18 @@ def events(request):
 				events = events[previous_page*results_per_page:page*results_per_page]
 				events = add_counts_to_events(events)
 			# otherwise check whether we got a request for a download
-			elif eventsearchform.cleaned_data['action'] == 'Download':
+			elif 'Download' in action:
 				# only superusers are allowed to perform downloads
 				if not request.user.is_superuser:
 					eventsearchform.add_error(None, 'You do not have permission to download files.')
 				else:
-					# get a file response using the search results and return it
-					response = build_download_file('Events',objects=events)
+					if action == 'Download Events':
+						# get a file response using the search results and return it
+						response = build_download_file('Events',objects=events)
+					elif action == 'Download Registrations':
+						# create a new query set of registrations, and build a file from it
+						registrations = Event_Registration.objects.filter(event__in=events)
+						response = build_download_file('Events and Registrations',objects=registrations)
 					return response
 		# otherwise we have incorrect dates
 		else:

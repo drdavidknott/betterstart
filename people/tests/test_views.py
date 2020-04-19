@@ -3670,7 +3670,7 @@ class EventsViewTest(TestCase):
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'Download',
+											'action' : 'Download Events',
 											'name' : 'Test_Event_Type_1_',
 											'date_from' : '',
 											'date_to' : '',
@@ -3686,14 +3686,14 @@ class EventsViewTest(TestCase):
 		# check that we got the error message
 		self.assertContains(response,'You do not have permission to download files')
 
-	def test_download_is_superuser(self):
+	def test_download_events_is_superuser(self):
 		# log the user in
 		self.client.login(username='testsuper', password='superword')
 		# attempt to get the events page
 		response = self.client.post(
 									reverse('events'),
 									data = { 
-											'action' : 'Download',
+											'action' : 'Download Events',
 											'name' : 'Test_Event_Type_1_',
 											'date_from' : '',
 											'date_to' : '',
@@ -3709,6 +3709,41 @@ class EventsViewTest(TestCase):
 		# check that we got the error message
 		self.assertContains(response,'Test_Event_Type_1_0,Test event description,test_event_type_1,')
 		self.assertContains(response,'Test_Event_Type_1_49,Test event description,test_event_type_1,')
+
+	def test_download_registrations_is_superuser(self):
+		# set up test data
+		set_up_people_base_data()
+		set_up_test_people('test_reg_',number=1)
+		Event_Registration.objects.create(
+											person = Person.objects.first(),
+											event = Event.objects.get(name='Test_Event_Type_1_0'),
+											role_type = Role_Type.objects.get(role_type_name='test_role_type'),
+											registered = True,
+											apologies = False,
+											participated = True
+											)
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'Download Registrations',
+											'name' : 'Test_Event_Type_1_',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : '0',
+											'venue' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the error message
+		self.assertContains(response,'Test_Event_Type_1_0,Test event description,test_event_type_1,')
+		self.assertContains(response,'test_reg_0,test_reg_0,Adult,True,False,True,test_role_type')
 
 class EventViewTest(TestCase):
 	@classmethod

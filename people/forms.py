@@ -1438,7 +1438,8 @@ class EventSearchForm(forms.Form):
 		if user and user.is_superuser:
 			button_row = FormActions(
 										Submit('action', 'Search'),
-										Submit('action', 'Download')
+										Submit('action', 'Download Events'),
+										Submit('action', 'Download Registrations'),
 									)
 		else:
 			button_row = FormActions(

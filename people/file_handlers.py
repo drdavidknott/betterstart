@@ -6,7 +6,7 @@ import csv, datetime
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type
+					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue
 
 class File_Field():
 	# this class defines a field witin a file
@@ -350,11 +350,8 @@ class File_Handler():
 	def set_download_fields(self,this_object):
 		# go through the fields
 		for field_name in self.fields:
-			# get the field
+			# get the field and set the value
 			field = getattr(self,field_name)
-			# set the download value if it is set from object
-			# if field.set_download_from_object:
-			# set the value
 			field.set_download_value(this_object)
 
 	# build a download record
@@ -1273,6 +1270,140 @@ class Registrations_File_Handler(File_Handler):
 		return str(record['first_name']) + ' ' + str(record['last_name']) \
 							+ ' (' + str(record['age_status']) + ')' \
 							+ ' at ' + str(record['event_name'])
+
+class Events_And_Registrations_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Events_And_Registrations_File_Handler, self).__init__(*args, **kwargs)
+		# set the flag to show that this file cannot be uploaded
+		self.upload = False
+		# set the class
+		self.file_class = Event_Registration
+		# set the file fields
+		self.event_name = File_Field(
+									name='event_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='event',
+									corresponding_field='name'
+									)
+		self.event_date = File_Datetime_Field(
+												name='event_date',
+												datetime_format='%d/%m/%Y',
+												corresponding_field='date',
+												use_corresponding_for_download=True,
+												corresponding_relationship_field='event'
+												)
+		self.event_description = File_Field(
+											name='event_description',
+											use_corresponding_for_download=True,
+											corresponding_relationship_field='event',
+											corresponding_field='description'
+											)
+		self.event_type = File_Field(
+										name='event_type',
+										set_download_from_object=False
+										)
+		self.event_start_time = File_Datetime_Field(
+													name='start_time',
+													datetime_format='%H:%M',
+													use_corresponding_for_download=True,
+													corresponding_relationship_field='event',
+													corresponding_field='start_time'
+													)
+		self.event_end_time = File_Datetime_Field(
+													name='end_time',
+													datetime_format='%H:%M',
+													use_corresponding_for_download=True,
+													corresponding_relationship_field='event',
+													corresponding_field='end_time'
+													)
+		self.event_location = File_Field(
+											name='location',
+											use_corresponding_for_download=True,
+											corresponding_relationship_field='event',
+											corresponding_field='location'
+										)
+
+		self.event_ward = File_Field(
+										name='event_ward',
+										set_download_from_object=False
+										)
+		self.event_areas = File_Field(
+										name='areas',
+										set_download_from_object=False
+										)
+		self.event_venue = File_Field(
+										name='event_venue',
+										set_download_from_object=False
+										)
+		self.first_name = File_Field(
+										name='first_name',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
+		self.age_status = File_Field(
+									name='age_status',
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									set_download_from_object=False
+									)
+		self.registered = File_Boolean_Field(name='registered',mandatory=True)
+		self.participated = File_Boolean_Field(name='participated',mandatory=True)
+		self.apologies = File_Boolean_Field(name='apologies',mandatory=True)
+		self.role_type = File_Field(
+										name='role_type',
+										mandatory=True,
+										corresponding_model=Role_Type,
+										corresponding_field='role_type_name',
+										corresponding_must_exist=True,
+										use_corresponding_for_download=True
+										)
+
+		# and a list of the fields
+		self.fields = [
+						'event_name',
+						'event_description',
+						'event_type',
+						'event_date',
+						'event_start_time',
+						'event_end_time',
+						'event_location',
+						'event_ward',
+						'event_areas',
+						'event_venue',
+						'first_name',
+						'last_name',
+						'age_status',
+						'registered',
+						'apologies',
+						'participated',
+						'role_type'
+						]
+
+	def set_download_fields(self,registration):
+		# call the built in field setter
+		super(Events_And_Registrations_File_Handler, self).set_download_fields(registration)
+		# set the special fields
+		self.age_status.value = registration.person.age_status.status
+		self.event_type.value = registration.event.event_type.name
+		self.event_ward.value = registration.event.ward.ward_name if registration.event.ward else ''
+		self.event_venue.value = registration.event.venue.name if registration.event.venue else ''
+		# set the areas
+		areas = ''
+		for area in registration.event.areas.all():
+			if len(areas):
+				areas += ','
+			areas += area.area_name
+		self.event_areas.value = areas
 
 class Questions_File_Handler(File_Handler):
 

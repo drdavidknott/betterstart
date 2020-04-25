@@ -1443,4 +1443,36 @@ class Site(DataAccessMixin,models.Model):
 	def __str__(self):
 		return self.name
 
+# Terms_And_Conditions model: used to store terms and conditions, bounded by dates
+class Terms_And_Conditions(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	start_date = models.DateField()
+	end_date = models.DateField(null=True, blank=True)
+	notes = models.TextField(max_length=1000, default='', blank=True)
+
+# Invitation_Step_Type model: contains the steps to be followed for an invitation
+class Invitation_Step_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=16)
+	order = models.IntegerField(default=0)
+	active = models.BooleanField(default=True)
+
+# Invitation model: contains the code to access an invitation, and links to the steps
+class Invitation(DataAccessMixin,models.Model):
+	code = models.CharField(max_length=16)
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	completed = models.BooleanField(default=False)
+	notes = models.TextField(max_length=1000, default='', blank=True)
+	invitation_steps = models.ManyToManyField(Invitation_Step_Type, through='Invitation_Step')
+
+	# class method to generate a code
+	@classmethod
+	def generate_code(cls,*args,**kwargs):
+		# return an randomly generated 16 character string of letters and digits
+		return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+# Invitation_Step model: contains the steps that have been followed 
+class Invitation_Step(DataAccessMixin,models.Model):
+	invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
+	invitation_step_type = models.ForeignKey(Invitation_Step_Type, on_delete=models.CASCADE)
+	datetime_created = models.DateTimeField(auto_now_add=True)
 

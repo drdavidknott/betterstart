@@ -5,6 +5,7 @@ from datetime import datetime, date, timedelta
 from django.db.models import Sum
 from .utilities import get_period_dates
 import collections
+import random, string
 
 # function to derive a class from a string
 def class_from_str(class_str):

@@ -75,9 +75,12 @@ def build_page_list(objects, page_length, attribute, length=False, separator='to
 	# return the result
 	return page_list
 
-def make_banner(request, banner_text):
+def make_banner(request, banner_text, public=False):
 	# load the banner template
-	banner_template = loader.get_template('people/banner.html')
+	if public:
+		banner_template = loader.get_template('people/public_banner.html')
+	else:
+		banner_template = loader.get_template('people/banner.html')
 	# set the context
 	context = {"banner" : banner_text }
 	# set the banner

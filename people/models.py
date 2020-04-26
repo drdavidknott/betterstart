@@ -482,6 +482,9 @@ class Person(DataAccessMixin,models.Model):
 			hours_desc = ' no activities'
 		# return the string
 		return hours_desc
+	# and an indication of whether there is an open invitation
+	def has_open_invitation(self):
+		return Invitation.try_to_get(person=self,datetime_completed__isnull=True)
 	# and a class method to get a person by names and age status
 	@classmethod
 	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):
@@ -1440,6 +1443,7 @@ class Site(DataAccessMixin,models.Model):
 	dob_offset = models.IntegerField(default=0)
 	dashboard = models.ForeignKey(Dashboard, null=True, blank=True, on_delete=models.SET_NULL)
 	otp_required = models.BooleanField(default=False)
+	invitations_active = models.BooleanField(default=False)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
@@ -1450,20 +1454,41 @@ class Terms_And_Conditions(DataAccessMixin,models.Model):
 	start_date = models.DateField()
 	end_date = models.DateField(null=True, blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
+	def __str__(self):
+		return self.name
+
+	class Meta:
+		verbose_name_plural = 'terms and conditions'
 
 # Invitation_Step_Type model: contains the steps to be followed for an invitation
 class Invitation_Step_Type(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=16)
+	name = models.CharField(max_length=50)
+	display_name = models.CharField(max_length=50, default='')
 	order = models.IntegerField(default=0)
 	active = models.BooleanField(default=True)
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.display_name
+
+	class Meta:
+		verbose_name_plural = 'invitation step types'
+		ordering = ('order',)
 
 # Invitation model: contains the code to access an invitation, and links to the steps
 class Invitation(DataAccessMixin,models.Model):
 	code = models.CharField(max_length=16)
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
-	completed = models.BooleanField(default=False)
+	datetime_created = models.DateTimeField(auto_now_add=True)
+	datetime_completed = models.DateTimeField(null=True, blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	invitation_steps = models.ManyToManyField(Invitation_Step_Type, through='Invitation_Step')
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		completed = 'completed' if self.datetime_completed is not None else 'not completed'
+		return self.person.full_name() + ' invited with code ' + self.code + ' (' + completed + ')'
+ 
+	class Meta:
+		verbose_name_plural = 'invitations'
 
 	# class method to generate a code
 	@classmethod
@@ -1476,4 +1501,13 @@ class Invitation_Step(DataAccessMixin,models.Model):
 	invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
 	invitation_step_type = models.ForeignKey(Invitation_Step_Type, on_delete=models.CASCADE)
 	datetime_created = models.DateTimeField(auto_now_add=True)
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.invitation_step_type.display_name + ' for ' + \
+		self.invitation.person.full_name() + ' on ' \
+		+ self.datetime_created.strftime('%b %d %Y')
+
+	class Meta:
+		verbose_name_plural = 'invitation steps'
+		ordering = ('-datetime_created','invitation_step_type__order',)
 

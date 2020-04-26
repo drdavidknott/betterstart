@@ -1,0 +1,100 @@
+{% extends "people/public_base.html" %}
+
+{% load crispy_forms_tags %}
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-user"></span>
+ 				{{ invitation.person.full_name }}
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div>
+ 		<div class='col-xs-12'>
+	 		{% for completed_invitation_step in completed_invitation_steps %}
+	 			<div>
+	 				<span class="glyphicon glyphicon-ok-sign"></span>
+	 				{{ completed_invitation_step.invitation_step_type.display_name }}
+	 				completed on {{ completed_invitation_step.datetime_created|date:"M d Y" }}
+	 			</div>
+	 		{% endfor %}
+	 		{% for invitation_step_type in invitation_step_types %}
+	 			<div>
+					<span class="glyphicon glyphicon-remove-circle"></span>
+					{{ invitation_step_type.display_name }}
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	{% if invitation_complete %}
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<h4>
+	 				<p>You have finished.</p>
+	 				<p>Thank you for providing your information!</p>
+	 			</h4>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+	{% if invitation_step_type %}
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<h4>
+	 				<span class="glyphicon glyphicon-question-sign"></span>
+	 				{{ invitation_step_type.display_name }}
+	 			</h4>
+		 	</div>
+		</div>
+
+		{% if invitation_handler.display_text %}
+			<div class="row">
+	 			<div class="col-xs-12">
+					{{ invitation_handler.display_text }}
+				</div>
+			</div>
+		{% endif %}
+
+		<div class="row">
+	 		<div class="col-xs-12">
+				{% crispy invitation_handler.form %}
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+
+{% endblock %}
+

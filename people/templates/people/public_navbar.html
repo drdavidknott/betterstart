@@ -1,0 +1,52 @@
+{% load static %}
+
+<!-- script to deal with search button and modal -->
+<script type="text/javascript">
+$(document).ready(function() {
+	$(".search-trigger").click(function() {
+		$('#searchModal').modal('show');
+	});
+	$("#search_form_submit_button").click(function() {
+		$("#search_form_submit").click();
+	})
+});
+</script>
+
+<style>
+.betterstart-navbar {
+	background-color: #{{ navbar_background }};
+}
+{% if navbar_text %}
+.nav.navbar-nav.navbar-right li a {
+    color: #{{ navbar_text }};
+}
+.nav.navbar-nav.navbar-left li a  {
+    color: #{{ navbar_text }};
+}
+.navbar-default .navbar-brand {
+    color: #{{ navbar_text }};
+}
+{% endif %}
+</style>
+
+<!-- Navbar -->
+<nav class="navbar navbar-default">
+  <div class="container-fluid betterstart-navbar">
+    <!-- Brand and toggle -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+      		data-target="#navbar-collapse" aria-expanded="false">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="{% url 'index' %}">{{ site_name }}</a>
+    </div>
+    <!-- And navigation links -->
+    <div class="collapse navbar-collapse" id="navbar-collapse">
+    	<ul class="nav navbar-nav navbar-right">
+	    </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+

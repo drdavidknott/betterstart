@@ -4,7 +4,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
-					Venue_Type, Venue
+					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type
 import os
 import csv
 import copy
@@ -32,6 +32,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler, Events_And_Registrations_File_Handler
+from .invitation_handlers import Terms_And_Conditions_Invitation_Handler
 import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
@@ -1429,6 +1430,18 @@ def build_default_dashboard():
 	# return the dashboard
 	return dashboard
 
+def generate_invitation(person):
+	# generate an invitation which can be used for a parent to enter their own details if one doesn't already exist
+	# don't generate an invitation if one already exists
+	invitation = Invitation.try_to_get(person=person,datetime_completed__isnull=True)
+	if not invitation:
+		invitation = Invitation.objects.create(
+												person=person,
+												code=Invitation.generate_code(),
+												)
+	# return the result
+	return invitation
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -1489,6 +1502,7 @@ def build_context(context_dict):
 	navbar_text = ''
 	show_messages = True
 	dob_offset = 0
+	this_site = False
 	# attempt to get the site
 	site = Site.objects.all().first()
 	# if we have a site, set the details
@@ -1499,11 +1513,13 @@ def build_context(context_dict):
 		navbar_text = site.navbar_text
 		show_messages = site.messages
 		dob_offset = site.dob_offset
+		this_site = site
 	# now set the dictionary
 	context_dict['site_name'] = site_name
 	context_dict['navbar_background'] = navbar_background
 	context_dict['navbar_text'] = navbar_text
 	context_dict['show_messages'] = show_messages
+	context_dict['site'] = this_site
 	# check whether we have a default date
 	if not context_dict.get('default_date', False):
 		# set the default date to the default
@@ -2015,18 +2031,28 @@ def addperson(request):
 
 @login_required
 def person(request, person_id=0):
+	# initialise variables
+	completed_invitation_steps=False
+	invitation_step_types=False
+	invitation_url = False
 	# load the template
 	person_template = loader.get_template('people/person.html')
-	# get the person
+	# tey to get the person
 	person = Person.try_to_get(pk=person_id)
-	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
-	# get the relationships for the person
+	# get additional info for the page
 	relationships_to = get_relationships_to(person)
-	# get the questions and the answer flag
 	questions, answer_flag = get_questions_and_answers(person)
-	# set the context from the person based on person id
+	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False)
+	# get invitation data if an uncompleted invitation exists
+	invitation = Invitation.try_to_get(person=person,datetime_completed__isnull=True)
+	if invitation:
+		completed_invitation_steps=Invitation_Step.objects.filter(invitation=invitation)
+		invitation_step_types=Invitation_Step_Type.objects.filter(active=True).exclude(invitation=invitation)
+		# get the absolute url for the invitation
+		invitation_url = request.build_absolute_uri(reverse('invitation',args=[invitation.code]))
+	# set the context
 	context = build_context({
 				'person' : person,
 				'relationships_to' : relationships_to,
@@ -2034,10 +2060,62 @@ def person(request, person_id=0):
 				'activities' : person.activity_set.order_by('-date'),
 				'questions' : questions,
 				'answer_flag' : answer_flag,
-				'role_history' : person.role_history_set.all()
+				'role_history' : person.role_history_set.all(),
+				'invitation' : invitation,
+				'completed_invitation_steps' : completed_invitation_steps,
+				'invitation_step_types': invitation_step_types,
+				'invitation_url' : invitation_url,
+				'completed_invitations' : completed_invitations
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
+
+def invitation(request, code):
+	# initialise variables
+	invitation_complete = False
+	# build a dictionary to hold the classes for the invitation handlers
+	invitation_step_dict = {
+								'terms_and_conditions' : Terms_And_Conditions_Invitation_Handler,
+							}
+	# try to get the invitation, returning a banner if it doesn't exist, or has been completed
+	invitation = Invitation.try_to_get(code=code)
+	if not invitation:
+		return make_banner(request, 'Invitation code is not valid',public=True)
+	if invitation.datetime_completed is not None:
+		return make_banner(request, 'Invitation has been completed',public=True)
+	# get the steps
+	completed_invitation_steps=Invitation_Step.objects.filter(invitation=invitation)
+	invitation_step_types=Invitation_Step_Type.objects.filter(active=True).exclude(invitation=invitation)
+	# figure out which step we are supposed to be processing next
+	invitation_step_type = invitation_step_types.first()
+	# create the inviation handler and use it to process the request
+	invitation_handler = invitation_step_dict[invitation_step_type.name](invitation,invitation_step_type)
+	invitation_handler.handle_request(request)
+	# if the step is now complete, get the next step and set up the form
+	if invitation_handler.step_complete:
+		invitation_step_types=Invitation_Step_Type.objects.filter(active=True).exclude(invitation=invitation)
+		if invitation_step_types.exists():
+			invitation_step_type = invitation_step_types.first()
+			invitation_handler.handle_request()
+		else:
+			# we have no more steps, so mark the implementation complete
+			invitation.datetime_completed = datetime.datetime.now()
+			invitation.save()
+			invitation_complete = True
+			invitation_step_type = False
+	# load the template
+	invitation_template = loader.get_template(invitation_handler.template)
+	# set the context
+	context = build_context({
+				'invitation' : invitation,
+				'invitation_handler' : invitation_handler,
+				'completed_invitation_steps' : completed_invitation_steps,
+				'invitation_step_types': invitation_step_types,
+				'invitation_step_type' : invitation_step_type,
+				'invitation_complete' : invitation_complete,
+				})
+	# return the response
+	return HttpResponse(invitation_template.render(context=context, request=request))
 
 @login_required
 def profile(request, person_id=0):
@@ -2048,11 +2126,9 @@ def profile(request, person_id=0):
 	# if there isn't a person, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
-	# check whether this is a post
+	# when the form is POSTed, validate it, then update the person
 	if request.method == 'POST':
-		# create a form
 		profileform = ProfileForm(request.POST)
-		# check whether the entry is valid
 		if profileform.is_valid():
 			# update the person
 			person = update_person(
@@ -2079,18 +2155,18 @@ def profile(request, person_id=0):
 								notes = profileform.cleaned_data['notes'],
 								membership_number = profileform.cleaned_data['membership_number']
 									)
-			# clear out the existing trained roles
+			# process trained roles by deleting and then recreating
 			person.trained_role_set.all().delete()
-			# process the trained role entries by going through the keys
 			for field_name in profileform.cleaned_data.keys():
-				# check the field
 				if 'trained_role_' in field_name:
-					# build the trained role
 					build_trained_role(
 										person=person,
 										role_type_id=int(extract_id(field_name)),
 										trained_status=profileform.cleaned_data[field_name]
 										)
+			# generate an invitation if we have been asked
+			if 'Generate' in request.POST['action']:
+				generate_invitation(person)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
 	else:

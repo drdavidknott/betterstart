@@ -4252,6 +4252,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4316,6 +4317,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4387,6 +4389,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4451,6 +4454,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4514,6 +4518,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '1',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4548,6 +4553,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '1',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4582,6 +4588,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2016',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4625,6 +4632,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4701,6 +4709,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4777,6 +4786,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response
@@ -4851,6 +4861,7 @@ class ProfileViewTest(TestCase):
 											'ABSS_start_date' : '01/01/2010',
 											'ABSS_end_date' : '01/01/2015',
 											'membership_number' : '0',
+											'action' : 'Submit'
 											}
 									)
 		# check the response

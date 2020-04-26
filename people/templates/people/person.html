@@ -17,6 +17,46 @@
 	 	</div>
 	 </div>
 
+	 {% if invitation %}
+
+		 <div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		 </div>
+
+		<div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<span class="glyphicon glyphicon-question-sign"></span>
+	 		</div>
+	 		<div class='col-xs-11'>
+	 			<div class="row">
+		 			Invitation created on {{ invitation.datetime_created|date:"M d Y" }}
+		 		</div>
+		 		<div class="row">
+		 			<strong>Link: </strong>
+	 				<a href="{% url 'invitation' invitation.code %}">
+	 					{{ invitation_url }}
+	 				</a>
+		 		</div>
+		 		{% for completed_invitation_step in completed_invitation_steps %}
+		 			<div class="row">
+		 				<span class="glyphicon glyphicon-ok-sign"></span>
+		 				{{ completed_invitation_step.invitation_step_type.display_name }}
+		 				completed on {{ completed_invitation_step.datetime_created|date:"M d Y" }}
+		 			</div>
+		 		{% endfor %}
+		 		{% for invitation_step_type in invitation_step_types %}
+					<div class="row">
+						<span class="glyphicon glyphicon-remove-circle"></span>
+						{{ invitation_step_type.display_name }}
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+
+	{% endif %}
+
 	 <div class="row">
 		<div class="col-xs-12">
  			<hr>
@@ -242,6 +282,38 @@
 			</div>
 		</div>
 	 </div>
+
+	 {% for completed_invitation in completed_invitations %}
+
+		 <div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		 </div>
+
+		<div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<span class="glyphicon glyphicon-question-sign"></span>
+	 		</div>
+	 		<div class='col-xs-11'>
+	 			<div class="row">
+		 			<div>Invitation created on {{ completed_invitation.datetime_created|date:"M d Y" }}</div>
+		 			<div>Invitation completed on {{ completed_invitation.datetime_completed|date:"M d Y" }}</div>
+		 		</div>
+		 		<div class="row">
+		 			Code: {{ completed_invitation.code }}
+		 		</div>
+		 		{% for completed_invitation_step in completed_invitation.invitation_step_set.all %}
+		 			<div class="row">
+		 				<span class="glyphicon glyphicon-ok-sign"></span>
+		 				{{ completed_invitation_step.invitation_step_type.display_name }}
+		 				completed on {{ completed_invitation_step.datetime_created|date:"M d Y" }}
+		 			</div>
+		 		{% endfor %}
+			</div>
+		</div>
+
+	{% endfor %}
 
 	<div class="row">
 		<div class="col-xs-12">

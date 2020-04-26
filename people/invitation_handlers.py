@@ -484,7 +484,7 @@ class Questions_Invitation_Handler(Invitation_Handler):
 			field_name = 'question_' + str(question.pk)
 			notes_name = 'notes_' + str(question.pk)
 			option_id = self.form.cleaned_data[field_name]
-			notes = self.form.cleaned_data[notes_name]
+			notes = self.form.cleaned_data[notes_name] if question.notes else False
 			person = self.invitation.person
 			# if we have a value, create or update the answer
 			if option_id != '0':

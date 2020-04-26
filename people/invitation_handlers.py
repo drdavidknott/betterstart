@@ -51,7 +51,6 @@ class PersonalDetailsForm(forms.Form):
 	email_address = forms.CharField(
 									label="Email",
 									max_length=50,
-									required = False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	home_phone = forms.CharField(
 									label="Home phone number",
@@ -61,7 +60,6 @@ class PersonalDetailsForm(forms.Form):
 	mobile_phone = forms.CharField(
 									label="Mobile phone number",
 									max_length=50,
-									required = False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	emergency_contact_details = forms.CharField(
 									label="Emergency contact details",
@@ -81,11 +79,9 @@ class PersonalDetailsForm(forms.Form):
         							input_formats=('%d/%m/%Y',))
 	ethnicity = forms.ChoiceField(
 									label="Ethnicity",
-									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	gender = forms.ChoiceField(
 									label="Gender",
-									required=False,
 									choices=gender_choices,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	pregnant = forms.BooleanField(

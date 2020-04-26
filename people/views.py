@@ -2098,9 +2098,7 @@ def invitation(request, code):
 	if invitation_handler.step_complete:
 		incomplete_steps = invitation.incomplete_steps()
 		if incomplete_steps.exists():
-			next_step = invitation.incomplete_steps().first()
-			invitation_handler = invitation_step_dict[next_step.name](invitation,next_step)
-			invitation_handler.handle_request()
+			return redirect('/invitation/' + invitation.code)
 		else:
 			# we have no more steps, so mark the implementation complete
 			invitation.datetime_completed = datetime.datetime.now()

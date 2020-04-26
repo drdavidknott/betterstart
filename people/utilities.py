@@ -150,6 +150,26 @@ def get_period_dates(period):
 	# return the results
 	return period_start, period_end
 
+def build_choices(choice_field='',choice_queryset=False,choice_class=False,default=False,default_label=''):
+	# create a blank list
+	choice_list = []
+	# set the default if we have one
+	if default:
+		choice_list.append((0,default_label))
+	# build the choices from a query set, or from all objects in a class
+	if choice_queryset:
+		choices = choice_queryset.order_by(choice_field)
+	else:
+		choices = choice_class.objects.all().order_by(choice_field)
+	# build the list for use in the form
+	for choice in choices:
+		choice_list.append((choice.pk, getattr(choice,choice_field)))
+	# return the list
+	return choice_list
+
+def replace_if_value(old_value,new_value):
+	# replaces the old value with the new value, if there is data in the new value
+	return new_value if new_value not in ('',False,None,0) else old_value
 
 class Page:
 	# the class contains details of a page

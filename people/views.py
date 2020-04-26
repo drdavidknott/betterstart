@@ -32,7 +32,9 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler, Events_And_Registrations_File_Handler
-from .invitation_handlers import Terms_And_Conditions_Invitation_Handler
+from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
+									Address_Invitation_Handler, Children_Invitation_Handler, \
+									Questions_Invitation_Handler
 import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
@@ -2076,6 +2078,10 @@ def invitation(request, code):
 	# build a dictionary to hold the classes for the invitation handlers
 	invitation_step_dict = {
 								'terms_and_conditions' : Terms_And_Conditions_Invitation_Handler,
+								'personal_details' : Personal_Details_Invitation_Handler,
+								'address' : Address_Invitation_Handler,
+								'children' : Children_Invitation_Handler,
+								'questions' : Questions_Invitation_Handler,
 							}
 	# try to get the invitation, returning a banner if it doesn't exist, or has been completed
 	invitation = Invitation.try_to_get(code=code)
@@ -2083,35 +2089,31 @@ def invitation(request, code):
 		return make_banner(request, 'Invitation code is not valid',public=True)
 	if invitation.datetime_completed is not None:
 		return make_banner(request, 'Invitation has been completed',public=True)
-	# get the steps
-	completed_invitation_steps=Invitation_Step.objects.filter(invitation=invitation)
-	invitation_step_types=Invitation_Step_Type.objects.filter(active=True).exclude(invitation=invitation)
 	# figure out which step we are supposed to be processing next
-	invitation_step_type = invitation_step_types.first()
+	next_step = invitation.incomplete_steps().first()
 	# create the inviation handler and use it to process the request
-	invitation_handler = invitation_step_dict[invitation_step_type.name](invitation,invitation_step_type)
+	invitation_handler = invitation_step_dict[next_step.name](invitation,next_step)
 	invitation_handler.handle_request(request)
 	# if the step is now complete, get the next step and set up the form
 	if invitation_handler.step_complete:
-		invitation_step_types=Invitation_Step_Type.objects.filter(active=True).exclude(invitation=invitation)
-		if invitation_step_types.exists():
-			invitation_step_type = invitation_step_types.first()
+		incomplete_steps = invitation.incomplete_steps()
+		if incomplete_steps.exists():
+			next_step = invitation.incomplete_steps().first()
+			invitation_handler = invitation_step_dict[next_step.name](invitation,next_step)
 			invitation_handler.handle_request()
 		else:
 			# we have no more steps, so mark the implementation complete
 			invitation.datetime_completed = datetime.datetime.now()
 			invitation.save()
 			invitation_complete = True
-			invitation_step_type = False
+			next_step = False
 	# load the template
 	invitation_template = loader.get_template(invitation_handler.template)
 	# set the context
 	context = build_context({
 				'invitation' : invitation,
 				'invitation_handler' : invitation_handler,
-				'completed_invitation_steps' : completed_invitation_steps,
-				'invitation_step_types': invitation_step_types,
-				'invitation_step_type' : invitation_step_type,
+				'invitation_step_type' : next_step,
 				'invitation_complete' : invitation_complete,
 				})
 	# return the response

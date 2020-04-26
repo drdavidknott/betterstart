@@ -1527,28 +1527,28 @@ class AnswerQuestionsForm(forms.Form):
 			for option in question.options:
 				# set the value
 				option_list.append((option.pk,option.option_label))
+			# create the field
+			self.fields[field_name]= forms.ChoiceField(
+														label=question.question_text,
+														widget=forms.Select(attrs={'class' : 'form-control'}),
+														choices=option_list,
+														initial=question.answer
+														)
+			# if the question has notes, also create a notes field
+			if question.notes:
 				# create the field
-				self.fields[field_name]= forms.ChoiceField(
-															label=question.question_text,
-															widget=forms.Select(attrs={'class' : 'form-control'}),
-															choices=option_list,
-															initial=question.answer
-															)
-				# if the question has notes, also create a notes field
-				if question.notes:
-					# create the field
-					self.fields[notes_name]= forms.CharField(
-											label=question.notes_label,
-											max_length=50,
-											widget=forms.TextInput(attrs={'class' : 'form-control',}),
-											required=False,
-											initial=question.note
-											)
-				# otherwise create a spacer field
-				else:
-					self.fields[spacer_name]= forms.CharField(
-											label='spacer',
-											max_length=50,
-											widget=forms.HiddenInput(attrs={'class' : 'form-control',}),
-											initial='spacer'
-											)
+				self.fields[notes_name]= forms.CharField(
+										label=question.notes_label,
+										max_length=50,
+										widget=forms.TextInput(attrs={'class' : 'form-control',}),
+										required=False,
+										initial=question.note
+										)
+			# otherwise create a spacer field
+			else:
+				self.fields[spacer_name]= forms.CharField(
+										label='spacer',
+										max_length=50,
+										widget=forms.HiddenInput(attrs={'class' : 'form-control',}),
+										initial='spacer'
+										)

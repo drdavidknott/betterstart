@@ -39,17 +39,17 @@
 	 					{{ invitation_url }}
 	 				</a>
 		 		</div>
-		 		{% for completed_invitation_step in completed_invitation_steps %}
+		 		{% for completed_step in invitation.completed_steps %}
 		 			<div class="row">
 		 				<span class="glyphicon glyphicon-ok-sign"></span>
-		 				{{ completed_invitation_step.invitation_step_type.display_name }}
-		 				completed on {{ completed_invitation_step.datetime_created|date:"M d Y" }}
+		 				{{ completed_step.invitation_step_type.display_name }}
+		 				completed on {{ completed_step.datetime_created|date:"M d Y" }}
 		 			</div>
 		 		{% endfor %}
-		 		{% for invitation_step_type in invitation_step_types %}
+		 		{% for incomplete_step in invitation.incomplete_steps %}
 					<div class="row">
 						<span class="glyphicon glyphicon-remove-circle"></span>
-						{{ invitation_step_type.display_name }}
+						{{ incomplete_step.display_name }}
 					</div>
 				{% endfor %}
 			</div>
@@ -297,11 +297,10 @@
 	 		</div>
 	 		<div class='col-xs-11'>
 	 			<div class="row">
-		 			<div>Invitation created on {{ completed_invitation.datetime_created|date:"M d Y" }}</div>
-		 			<div>Invitation completed on {{ completed_invitation.datetime_completed|date:"M d Y" }}</div>
-		 		</div>
-		 		<div class="row">
-		 			Code: {{ completed_invitation.code }}
+		 			<div>
+		 				Invitation created on {{ completed_invitation.datetime_created|date:"M d Y" }}
+		 				and completed on {{ completed_invitation.datetime_completed|date:"M d Y" }}
+		 			</div>
 		 		</div>
 		 		{% for completed_invitation_step in completed_invitation.invitation_step_set.all %}
 		 			<div class="row">

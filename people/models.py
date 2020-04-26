@@ -292,6 +292,7 @@ class Question(DataAccessMixin,models.Model):
 	question_text = models.CharField(max_length=150)
 	notes = models.BooleanField(default=False)
 	notes_label = models.CharField(max_length=30, default='Notes')
+	use_for_invitations = models.BooleanField(default=False)
 	# define the function that will return the question text as the object reference
 	def __str__(self):
 		return self.question_text
@@ -1462,7 +1463,14 @@ class Terms_And_Conditions(DataAccessMixin,models.Model):
 
 # Invitation_Step_Type model: contains the steps to be followed for an invitation
 class Invitation_Step_Type(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name_choices = [
+					('terms_and_conditions','Terms and Conditions'),
+					('personal_details','Personal Details'),
+					('address','Address'),
+					('children','Children'),
+					('questions','Questions')
+					]
+	name = models.CharField(max_length=50, choices=name_choices)
 	display_name = models.CharField(max_length=50, default='')
 	order = models.IntegerField(default=0)
 	active = models.BooleanField(default=True)
@@ -1496,6 +1504,20 @@ class Invitation(DataAccessMixin,models.Model):
 		# return an randomly generated 16 character string of letters and digits
 		return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
+	# method to get incomplete steps
+	def incomplete_steps(self):
+		# get steps which are active and which do not exist for this invitation
+		incomplete_steps = Invitation_Step_Type.objects.filter(active=True).exclude(invitation=self)
+		# if we have no questions, exclude the question step
+		if not Question.objects.filter(use_for_invitations=True).exists():
+			incomplete_steps = incomplete_steps.exclude(name='questions')
+		# return the result
+		return incomplete_steps
+
+	# method to get complete steps
+	def complete_steps(self):
+		return Invitation_Step_Type.objects.filter(invitation=self)
+
 # Invitation_Step model: contains the steps that have been followed 
 class Invitation_Step(DataAccessMixin,models.Model):
 	invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
@@ -1509,5 +1531,5 @@ class Invitation_Step(DataAccessMixin,models.Model):
 
 	class Meta:
 		verbose_name_plural = 'invitation steps'
-		ordering = ('-datetime_created','invitation_step_type__order',)
+		ordering = ('invitation_step_type__order',)
 

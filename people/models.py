@@ -350,6 +350,7 @@ class Person(DataAccessMixin,models.Model):
 	datetime_created = models.DateTimeField(auto_now_add=True)
 	datetime_updated = models.DateTimeField(auto_now=True)
 	membership_number = models.IntegerField(default=0)
+
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		# set the name
@@ -360,6 +361,7 @@ class Person(DataAccessMixin,models.Model):
 			name += ', also known as ' + self.other_names
 		# return the name
 		return name
+
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'people'
@@ -377,6 +379,7 @@ class Person(DataAccessMixin,models.Model):
 			desc += ', born on ' + self.date_of_birth.strftime('%b %d %Y')
 		# return the value
 		return desc
+
 	# and a function to return a description of membership in the project
 	def project_description(self):
 		# create a description
@@ -391,6 +394,7 @@ class Person(DataAccessMixin,models.Model):
 			desc += ', left project on ' + self.ABSS_end_date.strftime('%b %d %Y')
 		# return the value
 		return desc
+
 	# and a function to return a pregnancy description
 	def pregnancy_description(self):
 		# create a description
@@ -405,18 +409,17 @@ class Person(DataAccessMixin,models.Model):
 				desc += ', due on ' + self.due_date.strftime('%b %d %Y')
 		# return the value
 		return desc
-	# and a set of stats funcions
+
+	# and a set of stats funcions, starting with registrations
 	def registered_count(self):
-		# return the count of events the person has registered for
 		return self.event_registration_set.filter(registered=True).count()
 	# count the apologies
 	def apologies_count(self):
-		# return the count of events the person has apologised for
 		return self.event_registration_set.filter(apologies=True).count()
 	# and the participations
 	def participated_count(self):
-		# return the count of events the person has participated in
 		return self.event_registration_set.filter(participated=True).count()
+
 	# and the hours participated
 	def participated_time(self):
 		# set the total seconds
@@ -449,6 +452,7 @@ class Person(DataAccessMixin,models.Model):
 			time_desc = 'no participation'
 		# return the result
 		return time_desc
+
 	# and the hours per activity type
 	def activity_types_with_hours(self):
 		# get the activity types
@@ -465,6 +469,7 @@ class Person(DataAccessMixin,models.Model):
 				activity_type.hours += activity.hours
 		# return the results
 		return activity_types
+
 	# and the total activity hours
 	def activity_hours(self):
 		# set the hours to zero
@@ -483,9 +488,15 @@ class Person(DataAccessMixin,models.Model):
 			hours_desc = ' no activities'
 		# return the string
 		return hours_desc
+
 	# and an indication of whether there is an open invitation
 	def has_open_invitation(self):
 		return Invitation.try_to_get(person=self,datetime_completed__isnull=True)
+
+	# and an indication of whether there is an unvalidated invitation
+	def has_unvalidated_invitation(self):
+		return Invitation.objects.filter(person=self,datetime_completed__isnull=False,validated=False).exists()
+
 	# and a class method to get a person by names and age status
 	@classmethod
 	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):
@@ -1490,7 +1501,8 @@ class Invitation(DataAccessMixin,models.Model):
 	datetime_completed = models.DateTimeField(null=True, blank=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	invitation_steps = models.ManyToManyField(Invitation_Step_Type, through='Invitation_Step')
-	# define the function that will return the SITE name as the object reference
+	validated = models.BooleanField(default=False)
+	# define the function that will return the string for the object
 	def __str__(self):
 		completed = 'completed' if self.datetime_completed is not None else 'not completed'
 		return self.person.full_name() + ' invited with code ' + self.code + ' (' + completed + ')'

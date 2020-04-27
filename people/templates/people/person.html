@@ -57,6 +57,42 @@
 
 	{% endif %}
 
+	{% for unvalidated_invitation in unvalidated_invitations %}
+
+		 <div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		 </div>
+
+		<div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<a href="{% url 'profile' person.pk %}">
+	 				<span class="glyphicon glyphicon-question-sign"></span>
+	 			</a>
+	 		</div>
+	 		<div class='col-xs-11'>
+	 			<div class="row">
+	 				<div>
+	 					<strong>Not Validated</strong>
+	 				</div>
+		 			<div>
+		 				Invitation created on {{ unvalidated_invitation.datetime_created|date:"M d Y" }}
+		 				and completed on {{ unvalidated_invitation.datetime_completed|date:"M d Y" }}
+		 			</div>
+		 		</div>
+		 		{% for completed_invitation_step in unvalidated_invitation.invitation_step_set.all %}
+		 			<div class="row">
+		 				<span class="glyphicon glyphicon-ok-sign"></span>
+		 				{{ completed_invitation_step.invitation_step_type.display_name }}
+		 				completed on {{ completed_invitation_step.datetime_created|date:"M d Y" }}
+		 			</div>
+		 		{% endfor %}
+			</div>
+		</div>
+
+	{% endfor %}
+
 	 <div class="row">
 		<div class="col-xs-12">
  			<hr>
@@ -283,7 +319,7 @@
 		</div>
 	 </div>
 
-	 {% for completed_invitation in completed_invitations %}
+	{% for completed_invitation in completed_invitations %}
 
 		 <div class="row">
 			<div class="col-xs-12">

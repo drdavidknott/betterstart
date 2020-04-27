@@ -1444,6 +1444,13 @@ def generate_invitation(person):
 	# return the result
 	return invitation
 
+def validate_invitations(person):
+	# mark all inivations which have been completed but not validated as alid
+	invitations = Invitation.objects.filter(person=person,datetime_completed__isnull=False,validated=False)
+	for invitation in invitations:
+		invitation.validated = True
+		invitation.save()
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -2046,7 +2053,8 @@ def person(request, person_id=0):
 	# get additional info for the page
 	relationships_to = get_relationships_to(person)
 	questions, answer_flag = get_questions_and_answers(person)
-	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False)
+	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=True)
+	unvalidated_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=False)
 	# get invitation data if an uncompleted invitation exists
 	invitation = Invitation.try_to_get(person=person,datetime_completed__isnull=True)
 	if invitation:
@@ -2067,7 +2075,8 @@ def person(request, person_id=0):
 				'completed_invitation_steps' : completed_invitation_steps,
 				'invitation_step_types': invitation_step_types,
 				'invitation_url' : invitation_url,
-				'completed_invitations' : completed_invitations
+				'completed_invitations' : completed_invitations,
+				'unvalidated_invitations' : unvalidated_invitations
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -2167,6 +2176,9 @@ def profile(request, person_id=0):
 			# generate an invitation if we have been asked
 			if 'Generate' in request.POST['action']:
 				generate_invitation(person)
+			# validate invitations if we have been asked
+			if 'Validate' in request.POST['action']:
+				validate_invitations(person)
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
 	else:

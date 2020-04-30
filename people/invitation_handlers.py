@@ -6,7 +6,7 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import Invitation, Invitation_Step, Invitation_Step_Type, \
 							Person, Relationship, Relationship_Type, Street, Terms_And_Conditions, \
-							Ethnicity, Age_Status, Question, Answer, Option, Answer_Note
+							Ethnicity, Age_Status, Question, Answer, Option, Answer_Note, Site
 import datetime
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field, HTML
@@ -352,10 +352,17 @@ class Invitation_Handler():
 	template = 'people/invitation.html'
 
 	def __init__(self,invitation,invitation_step_type):
+		# set defaults
 		self.invitation = invitation
 		self.invitation_step_type = invitation_step_type
 		self.step_complete = False
 		self.display_text = False
+		self.default_date = datetime.date.today().strftime('%d/%m/%Y')
+		# set the default date of birth based on site level offset
+		site = Site.objects.all().first()
+		dob_offset = site.dob_offset if site else 0
+		today = datetime.date.today()
+		self.default_date_of_birth = today.replace(year=today.year-dob_offset).strftime('%d/%m/%Y')
 	
 	def handle_request(self,request=False):
 		# initialise variables
@@ -437,11 +444,19 @@ class Address_Invitation_Handler(Invitation_Handler):
 class Children_Invitation_Handler(Invitation_Handler):
 	form_class = ChildrenForm
 
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(Children_Invitation_Handler, self).__init__(*args, **kwargs)
+		# set the default date of birth for the form, based on maximum age for Child under four
+		child_under_four = Age_Status.objects.get(status='Child under four')
+		today = datetime.date.today()
+		self.default_date_of_birth = today.replace(year=today.year-child_under_four.maximum_age).strftime('%d/%m/%Y')
+
 	def handle_step_updates(self):
 		# get records and set values to use in the update
 		person = self.invitation.person
 		child_over_four = Age_Status.objects.get(status='Child over four')
-		child_under_four = Age_Status.objects.get(status='Child over four')
+		child_under_four = Age_Status.objects.get(status='Child under four')
 		carer_relationship = Relationship_Type.objects.get(relationship_type__iexact='Other carer')
 		today = datetime.date.today()
 		# go through the fields

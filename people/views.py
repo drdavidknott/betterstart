@@ -2122,6 +2122,8 @@ def invitation(request, code):
 				'invitation_handler' : invitation_handler,
 				'invitation_step_type' : next_step,
 				'invitation_complete' : invitation_complete,
+				'default_date' : invitation_handler.default_date,
+				'default_date_of_birth' : invitation_handler.default_date_of_birth,
 				})
 	# return the response
 	return HttpResponse(invitation_template.render(context=context, request=request))

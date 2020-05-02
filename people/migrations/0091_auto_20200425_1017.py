@@ -39,6 +39,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invitation',
             name='datetime_created',
-            field=models.DateTimeField(default=datetime.datetime.now),
+            field=models.DateTimeField(auto_now_add=True),
         ),
     ]

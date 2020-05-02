@@ -4,13 +4,15 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Age_Status, Area, Ward, Post_Code, Street, Question, Answer, Option, Answer_Note, \
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
-							Venue, Venue_Type, Site
+							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
+							Terms_And_Conditions
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from django_otp.oath import totp
+from django.utils import timezone
 
 def set_up_people_base_data():
 	# set up base data needed to do tests for people
@@ -43,9 +45,11 @@ def set_up_people_base_data():
 	# create a test age status
 	test_age_status = Age_Status.objects.create(status='Adult',default_role_type=test_role)
 	# create a second test age status
-	test_age_status_2 = Age_Status.objects.create(status='Child under four',default_role_type=test_role)
+	test_age_status_2 = Age_Status.objects.create(status='Child under four',default_role_type=test_role,maximum_age=4)
 	# and a third test age status
 	test_age_status_3 = Age_Status.objects.create(status='Default role age status',default_role_type=age_test_role,default_role_type_only=True)
+	# and a child over foud
+	child_over_four = Age_Status.objects.create(status='Child over four',default_role_type=age_test_role,default_role_type_only=True,maximum_age=18)
 	# allow the role type of each age status
 	test_age_status.role_types.add(test_role)
 	test_age_status.role_types.add(second_test_role)
@@ -186,14 +190,15 @@ def set_up_test_events(name_root,event_type,number,date='2019-01-01',ward=None):
 											location = 'Test location'
 											)
 
-def set_up_test_questions(name_root,number=1,notes=False,notes_label=''):
+def set_up_test_questions(name_root,number=1,notes=False,notes_label='',use_for_invitations=False):
 	# set up the number of test questions asked for
 	for n in range(number):
 		# create a question
 		test_question = Question.objects.create(
 											 question_text = name_root + str(n),
 											 notes = notes,
-											 notes_label = notes_label
+											 notes_label = notes_label,
+											 use_for_invitations = use_for_invitations
 											)
 
 def set_up_test_options(name_root,question,number=1):
@@ -4289,70 +4294,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
 		self.assertEqual(test_person.membership_number,0)
 
-	def test_update_profile_blank_middle_name(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# create a person
-		set_up_test_people('Person_','test_role_type',1)
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
-									data = { 
-											'first_name' : 'updated_first_name',
-											'middle_names' : '',
-											'last_name' : 'updated_last_name',
-											'email_address' : 'updated_email_address@test.com',
-											'home_phone' : '123456',
-											'mobile_phone' : '678901',
-											'date_of_birth' : '01/01/2001',
-											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
-											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
-											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
-											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
-											'notes' : 'updated notes',
-											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
-											'membership_number' : '0',
-											'action' : 'Submit'
-											}
-									)
-		# check the response
-		self.assertEqual(response.status_code, 302)
-		# get the record
-		test_person = Person.objects.get(first_name='updated_first_name')
-		# check the record contents
-		self.assertEqual(test_person.first_name,'updated_first_name')
-		self.assertEqual(test_person.middle_names,'')
-		self.assertEqual(test_person.last_name,'updated_last_name')
-		self.assertEqual(test_person.default_role.role_type_name,'second_test_role_type')
-		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
-		self.assertEqual(test_person.home_phone,'123456')
-		self.assertEqual(test_person.mobile_phone,'678901')
-		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
-		self.assertEqual(test_person.gender,'Male')
-		self.assertEqual(test_person.notes,'updated notes')
-		self.assertEqual(test_person.relationships.all().exists(),False)
-		self.assertEqual(test_person.children_centres.all().exists(),False)
-		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
-		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
-		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
-		self.assertEqual(test_person.families.all().exists(),False)
-		self.assertEqual(test_person.savs_id,None)
-		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
-		self.assertEqual(test_person.age_status.status,'Child under four')
-		self.assertEqual(test_person.house_name_or_number,'')
-		self.assertEqual(test_person.street,None)
-		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
-		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2010')
-		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2015')
-		self.assertEqual(test_person.membership_number,0)
-
 	def test_update_profile_blank_other_names_prior_names(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -4383,7 +4324,7 @@ class ProfileViewTest(TestCase):
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
-											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
 											'ABSS_start_date' : '01/01/2010',
@@ -4418,7 +4359,7 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
 		self.assertEqual(test_person.ABSS_type.name,'second_test_ABSS_type')
-		self.assertEqual(test_person.age_status.status,'Child under four')
+		self.assertEqual(test_person.age_status.status,'Adult')
 		self.assertEqual(test_person.house_name_or_number,'')
 		self.assertEqual(test_person.street,None)
 		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
@@ -7290,6 +7231,636 @@ class VenuesViewTest(TestCase):
 		self.assertEqual(len(response.context['venues']),25)
 		self.assertEqual(len(response.context['page_list']),2)
 		self.assertContains(response,'50 found')
+
+class InvitationViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC',number=50)
+		set_up_test_post_codes('XYZ',number=75)
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0',number=50)
+		set_up_test_streets('ABC streets 2','ABC0',number=60)
+		set_up_test_streets('XYZ streets','XYZ0',number=35)
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('invitation_test',number=1)
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		# and invitation steps
+		invitation_step_types = {
+									'terms_and_conditions' : 'Terms and Conditions',
+									'personal_details' : 'Personal Details',
+									'address' : 'Address',
+									'children' : 'Children',
+									'questions' : 'Questions',
+								}
+		order = 10
+		for invitation_step_type in invitation_step_types.keys():
+			Invitation_Step_Type.objects.create(
+												name=invitation_step_type,
+												display_name=invitation_step_types[invitation_step_type],
+												order=order,
+												active=True
+												)
+			order += 10
+		# and terms and conditions
+		Terms_And_Conditions.objects.create(
+											name='test_t_and_c',
+											start_date=datetime.date.today(),
+											notes='test terms and conditions'
+											)
+		# and questions
+		set_up_test_questions('q_no_notes',use_for_invitations=True)
+		q_no_notes = Question.objects.get(question_text='q_no_notes0')
+		set_up_test_options('q_no_notes_option_',question=q_no_notes,number=2)
+		set_up_test_questions('q_with_notes',notes=True,use_for_invitations=True)
+		q_with_notes = Question.objects.get(question_text='q_with_notes0')
+		set_up_test_options('q_with_notes_option_',question=q_with_notes,number=2)
+		# and an invitation
+		Invitation.objects.create(
+									code = '123456',
+									person = test_person,
+									)
+
+	def test_invalid_code(self):
+		# get the response
+		response = self.client.get('/invitation/56789')
+		# check the response
+		self.assertContains(response,'Invitation code is not valid')
+
+	def test_completed(self):
+		# complete the invitation
+		invitation = Invitation.objects.get(code='123456')
+		invitation.datetime_completed = timezone.now()
+		invitation.save()
+		# get the response
+		response = self.client.get('/invitation/123456')
+		# check the response
+		self.assertContains(response,'Invitation has been completed')
+
+	def test_terms_and_conditions(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to complete the step
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'accept_conditions' : 'on'
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created
+		invitation_step_type = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=invitation_step_type)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Personal Details')
+
+	def test_personal_details_future_dob(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# set future date of birth
+		today = datetime.datetime.today()
+		future_dob = today.replace(year=today.year+1)
+		# mark the previous steps complete
+		Invitation_Step.objects.create(
+										invitation_step_type=t_and_cs,
+										invitation=invitation
+										)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to complete the step
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'email_address' : 'testing@test.com',
+											'home_phone' : '12345678',
+											'mobile_phone' : '78901234',
+											'emergency_contact_details' : 'EMERGENCY',
+											'date_of_birth' : future_dob.strftime('%d/%m/%Y'),
+											'gender' : 'Female',
+											'pregnant' : True,
+											'due_date' : '01/01/2021',
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Must not be in the future')
+
+	def test_personal_details(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		Invitation_Step.objects.create(
+										invitation_step_type=t_and_cs,
+										invitation=invitation
+										)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to complete the step
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'email_address' : 'testing@test.com',
+											'home_phone' : '12345678',
+											'mobile_phone' : '78901234',
+											'emergency_contact_details' : 'EMERGENCY',
+											'date_of_birth' : '01/01/2003',
+											'gender' : 'Female',
+											'pregnant' : True,
+											'due_date' : '01/01/2021',
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=personal_details)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Address')
+		# check the updated person
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		self.assertEqual(test_person.email_address,'testing@test.com')
+		self.assertEqual(test_person.home_phone,'12345678')
+		self.assertEqual(test_person.mobile_phone,'78901234')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2003')
+		self.assertEqual(test_person.gender,'Female')
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2021')
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.emergency_contact_details,'EMERGENCY')
+
+	def test_personal_details_dont_overwrite_values(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		Invitation_Step.objects.create(
+										invitation_step_type=t_and_cs,
+										invitation=invitation
+										)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to complete the step
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'email_address' : 'testing@test.com',
+											'home_phone' : '',
+											'mobile_phone' : '78901234',
+											'emergency_contact_details' : '',
+											'date_of_birth' : '',
+											'gender' : 'Female',
+											'pregnant' : True,
+											'due_date' : '',
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=personal_details)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Address')
+		# check the updated person
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		self.assertEqual(test_person.email_address,'testing@test.com')
+		self.assertEqual(test_person.home_phone,'')
+		self.assertEqual(test_person.mobile_phone,'78901234')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2000')
+		self.assertEqual(test_person.gender,'Female')
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date,None)
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.emergency_contact_details,'')
+
+	def test_address_search_mandatory_fields_missing(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'action' : 'Search',
+											'house_name_or_number' : '55',
+											'street_name' : '',
+											'post_code' : '',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Either post code or street name must be entered.')
+
+	def test_address_search_street_name_with_results(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'action' : 'Search',
+											'house_name_or_number' : '55',
+											'street_name' : 'ABC',
+											'post_code' : '',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ABC streets 1')
+		self.assertContains(response,'ABC streets 2')
+		self.assertNotContains(response,'XYZ')
+
+	def test_address_search_post_code_with_results(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'action' : 'Search',
+											'house_name_or_number' : '55',
+											'street_name' : '',
+											'post_code' : 'ABC0',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ABC streets 1')
+		self.assertContains(response,'ABC streets 2')
+		self.assertNotContains(response,'XYZ')
+
+	def test_address_no_street(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'action' : 'Enter',
+											'house_name_or_number' : '55',
+											'street_name' : 'ABC',
+											'post_code' : '',
+											'street' : ''
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Street must be selected')
+
+	def test_address_no_street(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'action' : 'Enter',
+											'house_name_or_number' : '55',
+											'street_name' : 'ABC',
+											'post_code' : '',
+											'street' : ''
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Street must be selected')
+
+	def test_address(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'action' : 'Enter',
+											'house_name_or_number' : '55',
+											'street_name' : 'ABC',
+											'post_code' : '',
+											'street' : str(Street.objects.get(name='ABC streets 10').pk),
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=address)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Children')
+		# get the record
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		# check the record contents
+		self.assertEqual(test_person.house_name_or_number,'55')
+		self.assertEqual(test_person.street.pk,Street.objects.get(name='ABC streets 10').pk)
+
+	def test_children_incomplete_entry(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the invitation page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'first_name_0' : 'Test',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'All fields must be entered')
+
+	def test_children_too_old(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the invitation page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'first_name_0' : 'Test',
+											'last_name_0' : 'Child',
+											'date_of_birth_0' : '01/01/1960',
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Must be less than 18 years old')
+
+	def test_children_future_dob(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# set future date of birth
+		today = datetime.datetime.today()
+		future_dob = today.replace(year=today.year+1)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the invitation page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'first_name_0' : 'Test',
+											'last_name_0' : 'Child',
+											'date_of_birth_0' : future_dob.strftime('%d/%m/%Y')
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Must not be in the future')
+
+	def test_children(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# create test relationship types
+		Relationship_Type.objects.create(relationship_type='Other carer', relationship_counterpart='Cared for child')
+		Relationship_Type.objects.create(relationship_type='Cared for child', relationship_counterpart='Other carer')
+		# allow the relationship type for each age status
+		for age_status in Age_Status.objects.all():
+			for relationship_type in Relationship_Type.objects.all():
+				age_status.relationship_types.add(relationship_type)
+		# set a date older than child under four
+		age_status = Age_Status.objects.get(status='Child under four')
+		today = datetime.datetime.today()
+		over_four_age = today.replace(year=today.year-(age_status.maximum_age + 1))
+		under_four_age = today.replace(year=today.year-(age_status.maximum_age - 1))
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the invitation page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'first_name_0' : 'Test',
+											'last_name_0' : 'Underfour',
+											'date_of_birth_0' : under_four_age.strftime('%d/%m/%Y'),
+											'first_name_1' : 'Testing',
+											'last_name_1' : 'Overfour',
+											'date_of_birth_1' : over_four_age.strftime('%d/%m/%Y'),
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=children)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Questions')
+		# test the person under four
+		test_person = Person.objects.get(last_name__startswith='Under')
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.last_name,'Underfour')
+		self.assertEqual(test_person.date_of_birth,under_four_age.date())
+		self.assertEqual(test_person.age_status.status,'Child under four')
+		# test the person over four
+		test_person = Person.objects.get(last_name__startswith='Over')
+		self.assertEqual(test_person.first_name,'Testing')
+		self.assertEqual(test_person.last_name,'Overfour')
+		self.assertEqual(test_person.date_of_birth,over_four_age.date())
+		self.assertEqual(test_person.age_status.status,'Child over four')
+
+	def test_questions_no_answers(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		questions = Invitation_Step_Type.objects.get(name='questions')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address,children):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'question_' + str(question_no_notes.pk): '0',
+											'question_' + str(question_with_notes.pk): '0',
+											'notes_' + str(question_with_notes.pk): ''
+											}
+									)
+		# check that we got a response with a finished message (rather than a redirect)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'You have finished')
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=questions)
+		# check that the invitation is complete
+		invitation = Invitation.objects.get(person=test_person)
+		self.assertNotEqual(invitation.datetime_completed,None)
+		# check that we don't have any answers
+		self.assertEqual(Answer.objects.all().exists(),False)
+
+	def test_questions(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		questions = Invitation_Step_Type.objects.get(name='questions')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address,children):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# get the questions
+		question_no_notes = Question.objects.get(question_text='q_no_notes0')
+		question_with_notes = Question.objects.get(question_text='q_with_notes0')
+		# get options
+		option_no_notes = Option.objects.get(option_label='q_no_notes_option_0')
+		option_with_notes = Option.objects.get(option_label='q_with_notes_option_0')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
+											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
+											'notes_' + str(question_with_notes.pk): 'test_notes'
+											}
+									)
+		# check that we got a response with a finished message (rather than a redirect)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'You have finished')
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=questions)
+		# check that the invitation is complete
+		invitation = Invitation.objects.get(person=test_person)
+		self.assertNotEqual(invitation.datetime_completed,None)
+		# check the answers and the notes
+		self.assertTrue(Answer.objects.filter(person=test_person,question=question_no_notes,option=option_no_notes).exists())
+		self.assertTrue(Answer.objects.filter(person=test_person,question=question_with_notes,option=option_with_notes).exists())
+		answer_note = Answer_Note.objects.get(person=test_person,question=question_with_notes)
+		self.assertEqual(answer_note.notes,'test_notes')
 
 class AddressViewTest(TestCase):
 	@classmethod

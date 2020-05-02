@@ -128,6 +128,20 @@ class PersonalDetailsForm(forms.Form):
 										),
 									)
 
+	# override the validation to provide additional checks	
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(PersonalDetailsForm, self).is_valid()
+		# check the date of birth
+		today = datetime.date.today()
+		date_of_birth = self.cleaned_data['date_of_birth']
+		if (date_of_birth != None) and (date_of_birth > today):
+			self.add_error('date_of_birth','Must not be in the future.')
+			valid = False
+		# return the result
+		return valid
+
 class AddressForm(forms.Form):
 	# Define the fields that we need in the form to capture initial venue details and search for address
 	house_name_or_number = forms.CharField(
@@ -293,6 +307,9 @@ class ChildrenForm(forms.Form):
 			today = datetime.date.today()
 			if (date_of_birth != None) and (date_of_birth < today.replace(year=today.year-maximum_age)):
 				self.add_error('date_of_birth_' + str(i),'Must be less than ' + str(maximum_age) + ' years old.')
+				valid = False
+			if (date_of_birth != None) and (date_of_birth > today):
+				self.add_error('date_of_birth_' + str(i),'Must not be in the future.')
 				valid = False
 		# return the result
 		return valid
@@ -504,8 +521,6 @@ class Questions_Invitation_Handler(Invitation_Handler):
 			# if we have a value, create or update the answer
 			if option_id != '0':
 				option = Option.try_to_get(pk=int(option_id))
-				print(option_id)
-				print(option)
 				answer = Answer.try_to_get(
 											person=person,
 											question=question

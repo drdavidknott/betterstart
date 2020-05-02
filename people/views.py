@@ -38,6 +38,7 @@ from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Person
 import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
+from django.utils import timezone
 
 @login_required
 def index(request):
@@ -2110,7 +2111,7 @@ def invitation(request, code):
 			return redirect('/invitation/' + invitation.code)
 		else:
 			# we have no more steps, so mark the implementation complete
-			invitation.datetime_completed = datetime.datetime.now()
+			invitation.datetime_completed = timezone.now()
 			invitation.save()
 			invitation_complete = True
 			next_step = False

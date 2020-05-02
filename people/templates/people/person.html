@@ -39,7 +39,7 @@
 	 					{{ invitation_url }}
 	 				</a>
 		 		</div>
-		 		{% for completed_step in invitation.completed_steps %}
+		 		{% for completed_step in invitation.invitation_step_set.all %}
 		 			<div class="row">
 		 				<span class="glyphicon glyphicon-ok-sign"></span>
 		 				{{ completed_step.invitation_step_type.display_name }}

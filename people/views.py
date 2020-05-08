@@ -2838,6 +2838,8 @@ def event_group(request, event_group='0'):
 		event_category = event_group
 	elif 'ward' in path:
 		ward = event_group
+	elif 'venue' in path:
+		venue = event_group
 	# get the dashboard dates
 	dashboard_dates = get_dashboard_dates()
 	# set blank dates

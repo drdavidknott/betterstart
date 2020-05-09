@@ -74,22 +74,18 @@ class File_Field():
 	def validate_upload_value(self):
 		# check whether we have a value for a mandatory field
 		if self.mandatory and self.value == '':
-			# set the error
 			self.errors.append(' not created: mandatory field ' + self.name + ' not provided')
 		# check whether the field is greater than max_length
 		if self.max_length and self.value and len(self.value) > self.max_length:
-			# set the error
 			self.errors.append(
 								' not created: ' + 
 								str(self.name) + ' ' + str(self.value) +
 								' is longer than maximum length of ' + str(self.max_length))
 		# if we have a corresponding record, attempt to get it
 		if self.corresponding_model:
-			# set the value
 			self.corresponding_exists()
 		# check whether we have a corresponding record that should not exist
 		if self.value and self.corresponding_must_not_exist and self.exists:
-			# set the error
 			self.errors.append(
 								' not created: ' + 
 								str(self.corresponding_model.__name__) + ' ' +
@@ -97,7 +93,6 @@ class File_Field():
 								' already exists.')
 		# check whether we have a corresponding record that should exist
 		if self.value and self.corresponding_must_exist and not self.exists:
-			# set the error
 			self.errors.append(
 								' not created: ' + 
 								str(self.corresponding_model.__name__) + ' ' +
@@ -137,19 +132,14 @@ class File_Field():
 			filter_dict = { self.corresponding_field : self.value }
 			# attempt to get the record
 			try:
-				# try the read
 				self.value = self.corresponding_model.objects.get(**filter_dict)
-				# set the success flag
 				exists = True
 			# deal with the exception
 			except (self.corresponding_model.DoesNotExist):
-				# set the flag
 				exists = False
 		# otherwise set the values
 		else:
-			# set the exists flag
 			exists = False
-			# and the value
 			self.value = None
 		# set the value
 		self.exists = exists
@@ -406,9 +396,7 @@ class File_Handler():
 			file_field.validate_upload_value()
 			# if there are errors, append them to the file errors
 			if file_field.errors: 
-				# add the errors
 				self.add_record_results(record,file_field.errors)
-				# set the value
 				success = False
 		# return the result
 		return success
@@ -1214,6 +1202,79 @@ class Venues_File_Handler(File_Handler):
 	def label(self,record):
 		# return the label
 		return record['name']
+
+class Venues_For_Events_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Venues_For_Events_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Event
+		# set the file fields
+		self.event_name = File_Field(
+									name='event_name',
+									mandatory=True,
+									corresponding_relationship_field='event',
+									corresponding_field='name',
+									use_corresponding_for_download=True,
+									)
+		self.event_date = File_Datetime_Field(
+												name='event_date',
+												datetime_format='%d/%m/%Y',
+												mandatory=True,
+												corresponding_field='date',
+												corresponding_relationship_field='event',
+												use_corresponding_for_download=True,
+												)
+		self.venue_name = File_Field(
+										name='venue_name',
+										mandatory=True,
+										corresponding_model=Venue,
+										corresponding_field='name',
+										corresponding_must_exist=True,
+										use_corresponding_for_download=True,
+										)
+
+		# and a list of the fields
+		self.fields = [
+						'event_name',
+						'event_date',
+						'venue_name'
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether a matching event exists
+		if self.event_date.valid:
+			event,message = Event.try_to_get_just_one(
+														name = self.event_name.value,
+														date = self.event_date.value
+														)
+			# deal with the exception if we couldn't find an event
+			if not event:
+				self.add_record_results(record,[' not created: ' + message])
+				valid = False
+		# return the result
+		return valid
+
+	def create_record(self,record):
+		# get the records
+		event = Event.objects.get(
+									name = self.event_name.value,
+									date = self.event_date.value
+									)
+		# update the event
+		event.venue = self.venue_name.value
+		event.save()
+		# set a message
+		self.add_record_results(record,[' updated.'])
+		# return the updated record
+		return event
+
+	def label(self,record):
+		# return the label
+		return str(record['event_name']) + ' on ' + str(record['event_date']) + ' at ' + str(record['venue_name'])
 
 class Registrations_File_Handler(File_Handler):
 

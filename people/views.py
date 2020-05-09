@@ -32,7 +32,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler, Events_And_Registrations_File_Handler, \
-							Venues_File_Handler
+							Venues_File_Handler, Venues_For_Events_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
 									Questions_Invitation_Handler
@@ -3379,6 +3379,7 @@ def uploaddata(request):
 						'Answer Notes' : Answer_Notes_File_Handler,
 						'Activities' : Activities_File_Handler,
 						'Venues' : Venues_File_Handler,
+						'Venues for Events' : Venues_For_Events_File_Handler
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':

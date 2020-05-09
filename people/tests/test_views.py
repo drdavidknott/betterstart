@@ -8747,7 +8747,8 @@ class UploadDataViewTest(TestCase):
 							'Answer Notes',
 							'Activity Types',
 							'Venue Types',
-							'Venues'
+							'Venues',
+							'Venues for Events'
 							]:
 			# open the file
 			invalid_file = open('people/tests/data/invalid.csv')
@@ -11476,6 +11477,107 @@ class UploadDownloadVenuesDataViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'Test Venue,test_venue_type,123,venue_street0,TV10,contact,phone,mobile,test@test.com,website,price,facilities,opening_hours')
 		self.assertContains(response,'Test Venue 2,test_venue_type,456,venue_street0,TV10,contact2,phone2,mobile2,test@test.com2,website2,price2,facilities2,opening_hours2')
+
+class UploadVenuesForEventsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up test data
+		set_up_event_base_data()
+		set_up_address_base_data()
+		set_up_venue_base_data()
+		set_up_test_events(
+							'test_event_',
+							number=2,
+							event_type=Event_Type.objects.get(name='test_event_type'),
+							date='2019-01-01'
+							)
+		Venue.objects.create(
+								name = 'test_venue_2',
+								building_name_or_number = '123',
+								venue_type = Venue_Type.objects.get(name='test_venue_type'),
+								street = Street.objects.get(name='venue_street0')
+								)
+
+	def test_upload_venues_for_events_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues_for_events_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues for Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' on 01/01/2019 at missing event name not created: mandatory field event_name not provided')
+		self.assertContains(response,'missing date on  at test_venue not created: mandatory field event_date not provided')
+		self.assertContains(response,'missing venue name on 01/01/2019 at  not created: mandatory field venue_name not provided')
+
+	def test_upload_venues_for_events_invalid_dates(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues_for_events_invalid_dates.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues for Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check the message
+		self.assertContains(response,'test_event_0 on 01/01/20xx at test_venue not created: event_date 01/01/20xx is invalid date or time')
+
+	def test_upload_venues_data_missing_corresponding_records(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues_for_events_missing_corresponding_records.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues for Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got a does not exist
+		self.assertContains(response,'invalid on 01/01/2019 at test_venue not created: matching Event record does not exist')
+		self.assertContains(response,'test_event_0 on 01/01/2020 at test_venue not created: matching Event record does not exist')
+		self.assertContains(response,'test_event_0 on 01/01/2019 at invalid not created: Venue invalid does not exist')
+
+	def test_upload_venues_for_events(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues_for_events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues for Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# test the events
+		event = Event.objects.get(name='test_event_0')
+		self.assertEqual(event.venue,Venue.objects.get(name='test_venue'))
+		event = Event.objects.get(name='test_event_1')
+		self.assertEqual(event.venue,Venue.objects.get(name='test_venue_2'))
 
 class DownloadPeopleDataViewTest(TestCase):
 	@classmethod

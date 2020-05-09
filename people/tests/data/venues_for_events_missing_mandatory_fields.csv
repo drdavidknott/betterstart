@@ -1,0 +1,4 @@
+event_name,event_date,venue_name
+,01/01/2019,missing event name
+missing date,,test_venue
+missing venue name,01/01/2019,

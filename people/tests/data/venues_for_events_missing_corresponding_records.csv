@@ -1,0 +1,4 @@
+event_name,event_date,venue_name
+invalid,01/01/2019,test_venue
+test_event_0,01/01/2020,test_venue
+test_event_0,01/01/2019,invalid

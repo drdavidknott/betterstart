@@ -150,7 +150,8 @@ class DownloadDataForm(forms.Form):
 							('Options','Options'),
 							('Answers','Answers'),
 							('Answer Notes','Answer Notes'),
-							('Activities','Activities')
+							('Activities','Activities'),
+							('Venues','Venues')
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

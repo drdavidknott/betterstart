@@ -1,6 +1,6 @@
-name,description,event_type,date,start_time,end_time,location,ward,areas
-,test event,test_event_type,01/01/2018,10:00,11:00,Coffee shop,Test ward,"Test area 2"
-No description,,test_event_type,01/01/2018,10:00,11:00,Coffee shop,Test ward,"Test area 2"
-No date,test description,test_event_type,,10:00,11:00,Coffee shop,Test ward,"Test area 2"
-No start time,test description,test_event_type,01/01/2018,,11:00,Coffee shop,Test ward,"Test area 2"
-No end time,test description,test_event_type,01/01/2018,10:00,,Coffee shop,Test ward,"Test area 2"
+name,description,event_type,date,start_time,end_time,location,venue,ward,areas
+,test event,test_event_type,01/01/2018,10:00,11:00,Coffee shop,test_venue,Test ward,"Test area 2"
+No description,,test_event_type,01/01/2018,10:00,11:00,Coffee shop,test_venue,Test ward,"Test area 2"
+No date,test description,test_event_type,,10:00,11:00,Coffee shop,test_venue,Test ward,"Test area 2"
+No start time,test description,test_event_type,01/01/2018,,11:00,Coffee shop,test_venue,Test ward,"Test area 2"
+No end time,test description,test_event_type,01/01/2018,10:00,,Coffee shop,test_venue,Test ward,"Test area 2"

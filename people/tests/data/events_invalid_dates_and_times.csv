@@ -1,4 +1,4 @@
-name,description,event_type,date,start_time,end_time,location,ward,areas
-Invalid date,test event,test_event_type,01/01/201xx,10:00,11:00,Coffee shop,Test ward,"Test area"
-Invalid start time,test event,test_event_type,01/01/2018,10:xx,11:00,Coffee shop,Test ward,"Test area"
-Invalid end time,test event,test_event_type,01/01/2018,10:00,11:xx,Coffee shop,Test ward,"Test area"
+name,description,event_type,date,start_time,end_time,location,venue,ward,areas
+Invalid date,test event,test_event_type,01/01/201xx,10:00,11:00,Coffee shop,test_venue,Test ward,"Test area"
+Invalid start time,test event,test_event_type,01/01/2018,10:xx,11:00,Coffee shop,test_venue,Test ward,"Test area"
+Invalid end time,test event,test_event_type,01/01/2018,10:00,11:xx,Coffee shop,test_venue,Test ward,"Test area"

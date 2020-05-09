@@ -1031,6 +1031,13 @@ class Events_File_Handler(File_Handler):
 											mandatory=True
 											)
 		self.location = File_Field(name='location',max_length=100)
+		self.venue = File_Field(
+									name='venue',
+									corresponding_model=Venue,
+									corresponding_field='name',
+									corresponding_must_exist=True,
+									use_corresponding_for_download=True
+									)
 		self.ward = File_Field(
 								name='ward',
 								corresponding_model=Ward,
@@ -1054,6 +1061,7 @@ class Events_File_Handler(File_Handler):
 						'start_time',
 						'end_time',
 						'location',
+						'venue',
 						'ward',
 						'areas',
 						]

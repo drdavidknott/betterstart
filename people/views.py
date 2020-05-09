@@ -1691,7 +1691,8 @@ def build_download_file(file_type,objects=None):
 						'Answer Notes' : Answer_Notes_File_Handler,
 						'Activities' : Activities_File_Handler,
 						'Event Summary' : Event_Summary_File_Handler,
-						'Events and Registrations' : Events_And_Registrations_File_Handler
+						'Events and Registrations' : Events_And_Registrations_File_Handler,
+						'Venues' : Venues_File_Handler,
 					}
 	# create the file handler
 	file_handler = file_handlers[file_type](objects=objects)

@@ -10753,6 +10753,7 @@ class UploadEventsDataViewTest(TestCase):
 		set_up_event_base_data()
 		# and other base data
 		set_up_address_base_data()
+		set_up_venue_base_data()
 
 	def test_upload_events_data_missing_mandatory_fields(self):
 		# log the user in as a superuser
@@ -10797,6 +10798,7 @@ class UploadEventsDataViewTest(TestCase):
 		self.assertContains(response,'Missing event type not created: Event_Type missing_test_event_type does not exist')
 		self.assertContains(response,'Missing ward not created: Ward Missing test ward does not exist')
 		self.assertContains(response,'Missing area not created: area Missing test area 2 does not exist')
+		self.assertContains(response,'Missing venue not created: Venue missing_venue does not exist')
 		# check that no records have been created
 		self.assertFalse(Event.objects.all().exists())
 
@@ -10846,6 +10848,7 @@ class UploadEventsDataViewTest(TestCase):
 		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
 		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
 		self.assertEqual(event.ward.ward_name,'Test ward 2')
 		# check that the area connections exist
 		self.assertTrue(event.areas.filter(area_name='Test area'))
@@ -10877,6 +10880,7 @@ class UploadEventsDataViewTest(TestCase):
 		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
 		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
 		self.assertEqual(event.ward.ward_name,'Test ward 2')
 		# check that the area connections exist
 		self.assertTrue(event.areas.filter(area_name='Test area'))
@@ -11268,7 +11272,7 @@ class UploadRegistrationsDataViewTest(TestCase):
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)
 
-class UploadVenuesDataViewTest(TestCase):
+class UploadDownloadVenuesDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
 		# create a test user
@@ -11441,6 +11445,38 @@ class UploadVenuesDataViewTest(TestCase):
 		# check that no additional people have been created
 		self.assertEqual(Venue.objects.all().count(),2)
 
+	def test_download_venues(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first venue
+		test_venue = Venue.objects.get(name='Test Venue')
+		# check that we have two people
+		self.assertEqual(Venue.objects.all().count(),2)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Test Venue,test_venue_type,123,venue_street0,TV10,contact,phone,mobile,test@test.com,website,price,facilities,opening_hours')
+		self.assertContains(response,'Test Venue 2,test_venue_type,456,venue_street0,TV10,contact2,phone2,mobile2,test@test.com2,website2,price2,facilities2,opening_hours2')
+
 class DownloadPeopleDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -11530,8 +11566,9 @@ class DownloadEventsDataViewTest(TestCase):
 							event_type=Event_Type.objects.get(name='test_event_type'),
 							date='2019-01-01'
 							)
-		# and address data
+		# and other data
 		set_up_address_base_data()
+		set_up_venue_base_data()
 		# and an extra area
 		area_3 = Area.objects.create(area_name='Test area 3',use_for_events=True)
 		# get the second event
@@ -11540,11 +11577,13 @@ class DownloadEventsDataViewTest(TestCase):
 		event.location = 'test location'
 		event.description = 'test description'
 		event.ward = Ward.objects.get(ward_name='Test ward')
+		event.venue = Venue.objects.get(name='test_venue')
 		# save the event
 		event.save()
 		# and add an area
 		event.areas.add(Area.objects.get(area_name='Test area 2'))
 		event.areas.add(area_3)
+
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -11581,8 +11620,8 @@ class DownloadEventsDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_event_0,Test event description,test_event_type,01/01/2019,10:00,11:00,Test location,,')
-		self.assertContains(response,'test_event_1,test description,test_event_type,01/01/2019,10:00,11:00,test location,Test ward,"Test area 2,Test area 3"')
+		self.assertContains(response,'test_event_0,Test event description,test_event_type,01/01/2019,10:00,11:00,Test location,,,')
+		self.assertContains(response,'test_event_1,test description,test_event_type,01/01/2019,10:00,11:00,test location,test_venue,Test ward,"Test area 2,Test area 3"')
 
 class DownloadRelationshipsDataViewTest(TestCase):
 	@classmethod

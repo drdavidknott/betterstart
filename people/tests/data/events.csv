@@ -1,2 +1,2 @@
-name,description,event_type,date,start_time,end_time,location,ward,areas
-test event,test event description,test_event_type,01/01/2018,10:00,11:00,Test location,Test ward 2,"Test area"
+name,description,event_type,date,start_time,end_time,location,venue,ward,areas
+test event,test event description,test_event_type,01/01/2018,10:00,11:00,Test location,test_venue,Test ward 2,"Test area"

@@ -6,7 +6,7 @@ import csv, datetime
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue
+					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue, Venue_Type
 
 class File_Field():
 	# this class defines a field witin a file
@@ -317,13 +317,11 @@ class File_Handler():
 			if self.file_format_valid(records.fieldnames.copy()):
 				# go through the records
 				for record in records:
-					# do the simple validation
+					# do the validation
 					fields_valid = self.fields_valid(record)
-					# and the complex validation
 					complex_valid = self.complex_validation_valid(record)
-					# validate the record
+					# create the record if all is valid
 					if (fields_valid and complex_valid):
-						# create the record
 						self.create_record(record)
 			# print(self.results)
 		else:
@@ -424,15 +422,12 @@ class File_Handler():
 		field_dict = {}
 		# go through the fields
 		for field in self.fields:
-			# get the object
 			file_field = getattr(self,field)
-			# check whether the file field is to be include in record creation
+			# set the field if it is to be included in record creation
 			if file_field.include_in_create:
-				# set the value from the field
 				field_dict[file_field.name] = file_field.value
-		# create the record object
+		# create the record
 		new_record = self.file_class(**field_dict)
-		# save the record
 		new_record.save()
 		# set a message
 		self.add_record_results(record,[' created.'])
@@ -1107,6 +1102,106 @@ class Events_File_Handler(File_Handler):
 	def set_download_fields(self,event):
 		# call the built in field setter
 		super(Events_File_Handler, self).set_download_fields(event)
+
+	def label(self,record):
+		# return the label
+		return record['name']
+
+class Venues_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Venues_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Venue
+		# set the file fields
+		self.name = File_Field(
+								name='name',
+								mandatory=True,
+								max_length=50,
+								corresponding_model=Venue,
+								corresponding_field='name',
+								corresponding_must_not_exist=True,
+								)
+		self.venue_type = File_Field(
+									name='venue_type',
+									mandatory=True,
+									corresponding_model=Venue_Type,
+									corresponding_field='name',
+									corresponding_must_exist=True,
+									use_corresponding_for_download=True
+									)
+		self.building_name_or_number = File_Field(
+													name='building_name_or_number',
+													mandatory=True,
+													max_length=50
+													)
+		self.street = File_Field(
+									name='street',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_field='name',
+									)
+		self.post_code = File_Field(
+									name='post_code',
+									mandatory=True,
+									corresponding_model=Post_Code,
+									corresponding_field='post_code',
+									corresponding_must_exist=True,
+									include_in_create=False,
+									set_download_from_object=False
+									)
+		self.contact_name = File_Field(name='contact_name',max_length=50)
+		self.email_address = File_Field(name='email_address',max_length=50)
+		self.phone = File_Field(name='phone',max_length=50)
+		self.mobile_phone = File_Field(name='mobile_phone',max_length=50)
+		self.website = File_Field(name='website',max_length=50)
+		self.price = File_Field(name='price',max_length=50)
+		self.facilities = File_Field(name='facilities',max_length=50)
+		self.opening_hours = File_Field(name='opening_hours',max_length=50)
+
+		# and a list of the fields
+		self.fields = [
+						'name',
+						'venue_type',
+						'building_name_or_number',
+						'street',
+						'post_code',
+						'contact_name',
+						'phone',
+						'mobile_phone',
+						'email_address',
+						'website',
+						'price',
+						'facilities',
+						'opening_hours',
+						]
+
+	def complex_validation_valid(self,record):
+		# set the value
+		valid = True
+		# check whether we have all address details
+		if (self.post_code.value and self.street.value and self.building_name_or_number.value):
+			# check whether the combination of street and post code is valid
+			if self.post_code.exists:
+				street = Street.try_to_get(
+											name = self.street.value,
+											post_code = self.post_code.value
+											)
+				if not street:
+					self.add_record_results(record,[' not created: Street ' + self.street.value + ' does not exist.'])
+					valid = False
+				# otherwise set the street value
+				else:
+					self.street.value = street
+		# return the result
+		return valid
+
+	def set_download_fields(self,venue):
+		# call the built in field setter
+		super(Venues_File_Handler, self).set_download_fields(venue)
+		# set the post_code
+		self.post_code.value = venue.street.post_code.post_code
 
 	def label(self,record):
 		# return the label

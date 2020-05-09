@@ -8745,7 +8745,9 @@ class UploadDataViewTest(TestCase):
 							'Options',
 							'Answers',
 							'Answer Notes',
-							'Activity Types'
+							'Activity Types',
+							'Venue Types',
+							'Venues'
 							]:
 			# open the file
 			invalid_file = open('people/tests/data/invalid.csv')
@@ -8902,6 +8904,62 @@ class UploadDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional event categories have been created
 		self.assertEqual(Activity_Type.objects.all().count(),2)
+
+	def test_upload_venue_types(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venue_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venue Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test recirds that should have been loaded
+		test_venue_type_1 = Venue_Type.objects.get(name='test venue type 1')
+		test_venue_type_2 = Venue_Type.objects.get(name='test venue type 2')
+
+	def test_upload_venue_types_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venue_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venue Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test records that should have been loaded
+		test_venue_type_1 = Venue_Type.objects.get(name='test venue type 1')
+		test_venue_type_2 = Venue_Type.objects.get(name='test venue type 2')
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/venue_types.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venue Types',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional event categories have been created
+		self.assertEqual(Venue_Type.objects.all().count(),2)
 
 	def test_upload_areas(self):
 		# log the user in as a superuser
@@ -11209,6 +11267,179 @@ class UploadRegistrationsDataViewTest(TestCase):
 		self.assertEqual(registration_child_0.participated,False)
 		# check the count
 		self.assertEqual(Event_Registration.objects.all().count(),3)
+
+class UploadVenuesDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for venues
+		set_up_event_base_data()
+		set_up_address_base_data()
+		set_up_venue_base_data()
+		# get rid of the test venue
+		test_venue = Venue.objects.get(name='test_venue')
+		test_venue.delete()
+
+	def test_upload_venues_data_missing_mandatory_fields(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues_missing_mandatory_fields.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,' not created: mandatory field name not provided')
+		self.assertContains(response,'Missing venue type not created: mandatory field venue_type not provided')
+		self.assertContains(response,'Missing building name or number not created: mandatory field building_name_or_number not provided')
+		self.assertContains(response,'Missing street not created: mandatory field street not provided')
+		self.assertContains(response,'Missing post code not created: mandatory field post_code not provided')
+		# check that no records have been created
+		self.assertFalse(Venue.objects.all().exists())
+
+	def test_upload_venues_data_missing_corresponding_records(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues_missing_corresponding_records.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got a does not exist
+		self.assertContains(response,'Missing venue type not created: Venue_Type invalid does not exist')
+		self.assertContains(response,'Missing street not created: Street invalid does not exist')
+		self.assertContains(response,'Missing post code not created: Post_Code invalid does not exist')
+		# check that no records have been created
+		self.assertFalse(Venue.objects.all().exists())
+
+	def test_upload_venues(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first venue
+		test_venue = Venue.objects.get(name='Test Venue')
+		# check the fields
+		self.assertEqual(test_venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(test_venue.building_name_or_number,'123')
+		self.assertEqual(test_venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(test_venue.street.post_code,Post_Code.objects.get(post_code='TV10'))
+		self.assertEqual(test_venue.contact_name,'contact')
+		self.assertEqual(test_venue.phone,'phone')
+		self.assertEqual(test_venue.mobile_phone,'mobile')
+		self.assertEqual(test_venue.email_address,'test@test.com')
+		self.assertEqual(test_venue.website,'website')
+		self.assertEqual(test_venue.price,'price')
+		self.assertEqual(test_venue.facilities,'facilities')
+		self.assertEqual(test_venue.opening_hours,'opening_hours')
+		# get the second venue
+		test_venue = Venue.objects.get(name='Test Venue 2')
+		# check the fields
+		self.assertEqual(test_venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(test_venue.building_name_or_number,'456')
+		self.assertEqual(test_venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(test_venue.street.post_code,Post_Code.objects.get(post_code='TV10'))
+		self.assertEqual(test_venue.contact_name,'contact2')
+		self.assertEqual(test_venue.phone,'phone2')
+		self.assertEqual(test_venue.mobile_phone,'mobile2')
+		self.assertEqual(test_venue.email_address,'test@test.com2')
+		self.assertEqual(test_venue.website,'website2')
+		self.assertEqual(test_venue.price,'price2')
+		self.assertEqual(test_venue.facilities,'facilities2')
+		self.assertEqual(test_venue.opening_hours,'opening_hours2')
+		# check that we have two people
+		self.assertEqual(Venue.objects.all().count(),2)
+
+	def test_upload_venues_already_exists(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/venues.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first venue
+		test_venue = Venue.objects.get(name='Test Venue')
+		# check the fields
+		self.assertEqual(test_venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(test_venue.building_name_or_number,'123')
+		self.assertEqual(test_venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(test_venue.street.post_code,Post_Code.objects.get(post_code='TV10'))
+		self.assertEqual(test_venue.contact_name,'contact')
+		self.assertEqual(test_venue.phone,'phone')
+		self.assertEqual(test_venue.mobile_phone,'mobile')
+		self.assertEqual(test_venue.email_address,'test@test.com')
+		self.assertEqual(test_venue.website,'website')
+		self.assertEqual(test_venue.price,'price')
+		self.assertEqual(test_venue.facilities,'facilities')
+		self.assertEqual(test_venue.opening_hours,'opening_hours')
+		# get the second venue
+		test_venue = Venue.objects.get(name='Test Venue 2')
+		# check the fields
+		self.assertEqual(test_venue.venue_type,Venue_Type.objects.get(name='test_venue_type'))
+		self.assertEqual(test_venue.building_name_or_number,'456')
+		self.assertEqual(test_venue.street,Street.objects.get(name='venue_street0'))
+		self.assertEqual(test_venue.street.post_code,Post_Code.objects.get(post_code='TV10'))
+		self.assertEqual(test_venue.contact_name,'contact2')
+		self.assertEqual(test_venue.phone,'phone2')
+		self.assertEqual(test_venue.mobile_phone,'mobile2')
+		self.assertEqual(test_venue.email_address,'test@test.com2')
+		self.assertEqual(test_venue.website,'website2')
+		self.assertEqual(test_venue.price,'price2')
+		self.assertEqual(test_venue.facilities,'facilities2')
+		self.assertEqual(test_venue.opening_hours,'opening_hours2')
+		# check that we have two people
+		self.assertEqual(Venue.objects.all().count(),2)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/venues.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Venues',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional people have been created
+		self.assertEqual(Venue.objects.all().count(),2)
 
 class DownloadPeopleDataViewTest(TestCase):
 	@classmethod

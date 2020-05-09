@@ -126,7 +126,9 @@ class UploadDataForm(forms.Form):
 							('Answers','Answers'),
 							('Answer Notes','Answer Notes'),
 							('Activity Types','Activity Types'),
-							('Activities','Activities')
+							('Activities','Activities'),
+							('Venue Types','Venue Types'),
+							('Venues','Venues')
 						)
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

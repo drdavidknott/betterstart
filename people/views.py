@@ -31,7 +31,8 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							People_File_Handler, Relationships_File_Handler, Events_File_Handler, \
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
-							Event_Summary_File_Handler, Events_And_Registrations_File_Handler
+							Event_Summary_File_Handler, Events_And_Registrations_File_Handler, \
+							Venues_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
 									Questions_Invitation_Handler
@@ -3356,6 +3357,7 @@ def uploaddata(request):
 							'Ethnicities' : {'file_class' : Ethnicity, 'field_name' : 'description'},
 							'ABSS Types' : {'file_class' : ABSS_Type, 'field_name' : 'name'},
 							'Activity Types' : {'file_class' : Activity_Type, 'field_name' : 'name'},
+							'Venue Types' : {'file_class' : Venue_Type, 'field_name' : 'name'},
 							}
 	# define the records that need more complex file handlers
 	file_handlers = {
@@ -3375,6 +3377,7 @@ def uploaddata(request):
 						'Answers' : Answers_File_Handler,
 						'Answer Notes' : Answer_Notes_File_Handler,
 						'Activities' : Activities_File_Handler,
+						'Venues' : Venues_File_Handler,
 					}
 	# see whether we got a post or not
 	if request.method == 'POST':

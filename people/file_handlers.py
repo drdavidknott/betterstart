@@ -272,6 +272,7 @@ class File_Handler():
 		# set default attributes
 		self.results = []
 		self.fields = []
+		self.additional_download_fields = []
 		self.file_class = ''
 		self.upload = True
 		self.objects = None
@@ -336,9 +337,8 @@ class File_Handler():
 
 	# set the download fields
 	def set_download_fields(self,this_object):
-		# go through the fields
-		for field_name in self.fields:
-			# get the field and set the value
+		# go through the fields, getting and setting the value
+		for field_name in self.fields + self.additional_download_fields:
 			field = getattr(self,field_name)
 			field.set_download_value(this_object)
 
@@ -346,11 +346,9 @@ class File_Handler():
 	def get_download_record(self):
 		# set the empty list
 		field_list = []
-		# go through the fields
-		for field_name in self.fields:
-			# get the field
+		# go through the fields, adding the values to the list
+		for field_name in self.fields + self.additional_download_fields:
 			field = getattr(self,field_name)
-			# append the field
 			field_list.append(field.value)
 		# return the result
 		return field_list
@@ -708,6 +706,10 @@ class People_File_Handler(File_Handler):
 									include_in_create=False,
 									set_download_from_object=False
 									)
+		self.ward = File_Field(
+								name='ward',
+								set_download_from_object=False,
+								)
 		self.notes = File_Field(name='notes')
 		self.ABSS_start_date = File_Datetime_Field(name='ABSS_start_date',datetime_format='%d/%m/%Y')
 		self.ABSS_end_date = File_Datetime_Field(name='ABSS_end_date',datetime_format='%d/%m/%Y')
@@ -736,6 +738,10 @@ class People_File_Handler(File_Handler):
 						'ABSS_end_date',
 						'emergency_contact_details'
 						]
+		# and additional download fields
+		self.additional_download_fields = [
+											'ward',
+											]
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -832,16 +838,9 @@ class People_File_Handler(File_Handler):
 	def set_download_fields(self,person):
 		# call the built in field setter
 		super(People_File_Handler, self).set_download_fields(person)
-		# get the post_code
-		if person.street:
-			# set the post_code
-			post_code = person.street.post_code.post_code
-		# otherwise set a blank
-		else:
-			# set the blanks
-			post_code = ''
-		# set the post code
-		self.post_code.value = post_code
+		# set the post code and ward if we have a street
+		self.post_code.value = person.street.post_code.post_code if person.street else ''
+		self.ward.value = person.street.post_code.ward.ward_name if person.street else ''
 
 class Relationships_File_Handler(File_Handler):
 

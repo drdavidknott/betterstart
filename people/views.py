@@ -1704,7 +1704,7 @@ def build_download_file(file_type,objects=None):
 	response['Content-Disposition'] = 'attachment; filename="' + file_type + '.csv"'
 	# use the csv writer to write the keys and then the records to the response
 	writer = csv.writer(response)
-	writer.writerow(file_handler.fields)
+	writer.writerow(file_handler.fields + file_handler.additional_download_fields)
 	for record in records:
 		writer.writerow(record)
 	# return the result

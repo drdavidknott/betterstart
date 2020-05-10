@@ -11648,11 +11648,11 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,,')
 		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
 		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
 
 class DownloadEventsDataViewTest(TestCase):
 	@classmethod

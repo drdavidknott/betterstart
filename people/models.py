@@ -1502,6 +1502,7 @@ class Invitation(DataAccessMixin,models.Model):
 	notes = models.TextField(max_length=1000, default='', blank=True)
 	invitation_steps = models.ManyToManyField(Invitation_Step_Type, through='Invitation_Step')
 	validated = models.BooleanField(default=False)
+	invalid  = models.BooleanField(default=False)
 	# define the function that will return the string for the object
 	def __str__(self):
 		completed = 'completed' if self.datetime_completed is not None else 'not completed'

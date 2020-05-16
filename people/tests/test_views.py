@@ -117,7 +117,11 @@ def set_up_event_base_data():
 
 def set_up_relationship_base_data():
 	# create test relationship type records
-	Relationship_Type.objects.create(relationship_type='parent', relationship_counterpart='child')
+	Relationship_Type.objects.create(
+										relationship_type='parent',
+										relationship_counterpart='child',
+										use_for_invitations=True,
+										)
 	Relationship_Type.objects.create(relationship_type='child', relationship_counterpart='parent')
 	Relationship_Type.objects.create(relationship_type='from', relationship_counterpart='to')
 	Relationship_Type.objects.create(relationship_type='to', relationship_counterpart='from')
@@ -7251,6 +7255,12 @@ class InvitationViewTest(TestCase):
 		# and a test person
 		set_up_test_people('invitation_test',number=1)
 		test_person = Person.objects.get(first_name__startswith='invitation')
+		# and terms and conditions
+		tandcs = Terms_And_Conditions.objects.create(
+														name='test_t_and_c',
+														start_date=datetime.date.today(),
+														notes='test terms and conditions'
+														)
 		# and invitation steps
 		invitation_step_types = {
 									'terms_and_conditions' : 'Terms and Conditions',
@@ -7261,19 +7271,22 @@ class InvitationViewTest(TestCase):
 								}
 		order = 10
 		for invitation_step_type in invitation_step_types.keys():
+			terms = tandcs if invitation_step_type == 'terms_and_conditions' else None
 			Invitation_Step_Type.objects.create(
 												name=invitation_step_type,
 												display_name=invitation_step_types[invitation_step_type],
 												order=order,
-												active=True
+												active=True,
+												terms_and_conditions=terms,
 												)
 			order += 10
-		# and terms and conditions
-		Terms_And_Conditions.objects.create(
-											name='test_t_and_c',
-											start_date=datetime.date.today(),
-											notes='test terms and conditions'
+		# create test relationship types
+		Relationship_Type.objects.create(
+											relationship_type='Other carer',
+											relationship_counterpart='Cared for child',
+											use_for_invitations=True
 											)
+		Relationship_Type.objects.create(relationship_type='Cared for child', relationship_counterpart='Other carer')
 		# and questions
 		set_up_test_questions('q_no_notes',use_for_invitations=True)
 		q_no_notes = Question.objects.get(question_text='q_no_notes0')
@@ -7344,6 +7357,8 @@ class InvitationViewTest(TestCase):
 		response = self.client.post(
 									reverse('invitation',args=['123456']),
 									data = { 
+											'first_name' : 'first',
+											'last_name' : 'last',
 											'email_address' : 'testing@test.com',
 											'home_phone' : '12345678',
 											'mobile_phone' : '78901234',
@@ -7352,7 +7367,6 @@ class InvitationViewTest(TestCase):
 											'gender' : 'Female',
 											'pregnant' : True,
 											'due_date' : '01/01/2021',
-											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											}
 									)
 		# check that we got a valid response
@@ -7377,6 +7391,8 @@ class InvitationViewTest(TestCase):
 		response = self.client.post(
 									reverse('invitation',args=['123456']),
 									data = { 
+											'first_name' : 'first',
+											'last_name' : 'last',
 											'email_address' : 'testing@test.com',
 											'home_phone' : '12345678',
 											'mobile_phone' : '78901234',
@@ -7385,7 +7401,6 @@ class InvitationViewTest(TestCase):
 											'gender' : 'Female',
 											'pregnant' : True,
 											'due_date' : '01/01/2021',
-											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											}
 									)
 		# check that we got a valid response
@@ -7396,7 +7411,7 @@ class InvitationViewTest(TestCase):
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Address')
 		# check the updated person
-		test_person = Person.objects.get(first_name__startswith='invitation')
+		test_person = Person.objects.get(first_name__startswith='first')
 		self.assertEqual(test_person.email_address,'testing@test.com')
 		self.assertEqual(test_person.home_phone,'12345678')
 		self.assertEqual(test_person.mobile_phone,'78901234')
@@ -7404,7 +7419,6 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(test_person.gender,'Female')
 		self.assertEqual(test_person.pregnant,True)
 		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2021')
-		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.emergency_contact_details,'EMERGENCY')
 
 	def test_personal_details_dont_overwrite_values(self):
@@ -7424,6 +7438,8 @@ class InvitationViewTest(TestCase):
 		response = self.client.post(
 									reverse('invitation',args=['123456']),
 									data = { 
+											'first_name' : 'first',
+											'last_name' : 'last',
 											'email_address' : 'testing@test.com',
 											'home_phone' : '',
 											'mobile_phone' : '78901234',
@@ -7432,7 +7448,6 @@ class InvitationViewTest(TestCase):
 											'gender' : 'Female',
 											'pregnant' : True,
 											'due_date' : '',
-											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											}
 									)
 		# check that we got a valid response
@@ -7443,7 +7458,9 @@ class InvitationViewTest(TestCase):
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Address')
 		# check the updated person
-		test_person = Person.objects.get(first_name__startswith='invitation')
+		test_person = Person.objects.get(first_name__startswith='first')
+		self.assertEqual(test_person.first_name,'first')
+		self.assertEqual(test_person.last_name,'last')
 		self.assertEqual(test_person.email_address,'testing@test.com')
 		self.assertEqual(test_person.home_phone,'')
 		self.assertEqual(test_person.mobile_phone,'78901234')
@@ -7451,7 +7468,6 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(test_person.gender,'Female')
 		self.assertEqual(test_person.pregnant,True)
 		self.assertEqual(test_person.due_date,None)
-		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.emergency_contact_details,'')
 
 	def test_address_search_mandatory_fields_missing(self):
@@ -7663,6 +7679,32 @@ class InvitationViewTest(TestCase):
 		# check that we got an error in the page
 		self.assertContains(response,'All fields must be entered')
 
+	def test_children_incomplete_entry_relationship_type(self):
+		# get the test data
+		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		address = Invitation_Step_Type.objects.get(name='address')
+		children = Invitation_Step_Type.objects.get(name='children')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for invitation_step_type in (t_and_cs,personal_details,address):
+			Invitation_Step.objects.create(
+											invitation_step_type=invitation_step_type,
+											invitation=invitation
+											)
+		# attempt to get the invitation page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'All fields must be entered')
+
 	def test_children_too_old(self):
 		# get the test data
 		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
@@ -7684,6 +7726,8 @@ class InvitationViewTest(TestCase):
 											'first_name_0' : 'Test',
 											'last_name_0' : 'Child',
 											'date_of_birth_0' : '01/01/1960',
+											'gender_0' : 'Male',
+											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
 											}
 									)
 		# check that we got a response
@@ -7714,7 +7758,9 @@ class InvitationViewTest(TestCase):
 									data = { 
 											'first_name_0' : 'Test',
 											'last_name_0' : 'Child',
-											'date_of_birth_0' : future_dob.strftime('%d/%m/%Y')
+											'date_of_birth_0' : future_dob.strftime('%d/%m/%Y'),
+											'gender_0' : 'Male',
+											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
 											}
 									)
 		# check that we got a response
@@ -7730,9 +7776,6 @@ class InvitationViewTest(TestCase):
 		children = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
-		# create test relationship types
-		Relationship_Type.objects.create(relationship_type='Other carer', relationship_counterpart='Cared for child')
-		Relationship_Type.objects.create(relationship_type='Cared for child', relationship_counterpart='Other carer')
 		# allow the relationship type for each age status
 		for age_status in Age_Status.objects.all():
 			for relationship_type in Relationship_Type.objects.all():
@@ -7755,9 +7798,13 @@ class InvitationViewTest(TestCase):
 											'first_name_0' : 'Test',
 											'last_name_0' : 'Underfour',
 											'date_of_birth_0' : under_four_age.strftime('%d/%m/%Y'),
+											'gender_0' : 'Male',
+											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
 											'first_name_1' : 'Testing',
 											'last_name_1' : 'Overfour',
 											'date_of_birth_1' : over_four_age.strftime('%d/%m/%Y'),
+											'gender_1' : 'Female',
+											'relationship_type_1' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
 											}
 									)
 		# check that we got a response
@@ -7773,12 +7820,18 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(test_person.last_name,'Underfour')
 		self.assertEqual(test_person.date_of_birth,under_four_age.date())
 		self.assertEqual(test_person.age_status.status,'Child under four')
+		self.assertEqual(test_person.gender,'Male')
+		test_relationship = Relationship.objects.get(relationship_to=test_person)
+		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
 		# test the person over four
 		test_person = Person.objects.get(last_name__startswith='Over')
 		self.assertEqual(test_person.first_name,'Testing')
 		self.assertEqual(test_person.last_name,'Overfour')
 		self.assertEqual(test_person.date_of_birth,over_four_age.date())
 		self.assertEqual(test_person.age_status.status,'Child over four')
+		self.assertEqual(test_person.gender,'Female')
+		test_relationship = Relationship.objects.get(relationship_to=test_person)
+		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
 
 	def test_questions_no_answers(self):
 		# get the test data

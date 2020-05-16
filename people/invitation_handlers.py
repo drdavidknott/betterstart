@@ -48,6 +48,14 @@ class PersonalDetailsForm(forms.Form):
 							)
 	# and the choices for 
 	# Define the fields that we need in the form to capture the basics of the person's profile
+	first_name = forms.CharField(
+									label="First name",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	last_name = forms.CharField(
+									label="Last name",
+									max_length=50,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	email_address = forms.CharField(
 									label="Email",
 									max_length=50,
@@ -77,9 +85,6 @@ class PersonalDetailsForm(forms.Form):
 																	'autocomplete' : 'off',
 																	}),
         							input_formats=('%d/%m/%Y',))
-	ethnicity = forms.ChoiceField(
-									label="Ethnicity",
-									widget=forms.Select(attrs={'class' : 'form-control'}))
 	gender = forms.ChoiceField(
 									label="Gender",
 									choices=gender_choices,
@@ -98,18 +103,24 @@ class PersonalDetailsForm(forms.Form):
 																	}),
 									input_formats=('%d/%m/%Y',))
 	def __init__(self, *args, **kwargs):
-		# over-ride the __init__ method to set the choices
+		# pull out the person if we have been passed one
+		person = kwargs.pop('person') if 'person' in kwargs.keys() else False
 		# call the built in constructor
 		super(PersonalDetailsForm, self).__init__(*args, **kwargs)
-		# set the choice fields
-		self.fields['ethnicity'].choices = build_choices(choice_class=Ethnicity,choice_field='description')
+		# set the initial values for names if we have a person
+		if person:
+			self.fields['first_name'].initial = person.first_name
+			self.fields['last_name'].initial = person.last_name
 		# define the crispy form
 		self.helper = FormHelper()
 		self.helper.layout = Layout(
 									Row(
-										Column('date_of_birth',css_class='form-group col-md-4 mbt-0'),
-										Column('ethnicity',css_class='form-group col-md-4 mbt-0'),	
-										Column('gender',css_class='form-group col-md-4 mbt-0'),
+										Column('first_name',css_class='form-group col-md-6 mbt-0'),	
+										Column('last_name',css_class='form-group col-md-6 mbt-0'),
+										),
+									Row(
+										Column('date_of_birth',css_class='form-group col-md-6 mbt-0'),	
+										Column('gender',css_class='form-group col-md-6 mbt-0'),
 										),
 									Row(
 										Column('pregnant',css_class='form-group col-md-4 mbt-0'),
@@ -235,10 +246,24 @@ class AddressForm(forms.Form):
 		return cleaned_data
 
 class ChildrenForm(forms.Form):
+
 	def __init__(self, *args, **kwargs):
-		# over-ride the __init__ method to set the choices
 		# call the built in constructor
 		super(ChildrenForm, self).__init__(*args, **kwargs)
+		# set the choice fields
+		gender_choices = (
+							('','--------'),
+							('Male' , 'Male'),
+							('Female' , 'Female'),
+							)
+		relationship_types = Relationship_Type.objects.filter(use_for_invitations=True)
+		relationship_type_choices = build_choices(
+													choice_queryset=relationship_types,
+													choice_field='relationship_type',
+													default=True,
+													default_value='',
+													default_label='--------',
+													)
 		# build six sets of fields
 		for i in range(6):
 			str_i = str(i)
@@ -263,15 +288,27 @@ class ChildrenForm(forms.Form):
 																		}
 																					),
 						        							input_formats=('%d/%m/%Y',))
+			self.fields['gender_' + str_i] = forms.ChoiceField(
+																label="Gender",
+																choices=gender_choices,
+																required=False,
+																widget=forms.Select(attrs={'class' : 'form-control'}))
+			self.fields['relationship_type_' + str_i] = forms.ChoiceField(
+																label="Your relationship",
+																choices=relationship_type_choices,
+																required=False,
+																widget=forms.Select(attrs={'class' : 'form-control'}))
 		# build the crispy form
 		self.helper = FormHelper()
 		rows = []
 		for i in range(6):
 			str_i = str(i)
 			row = Row(
-						Column('first_name_' + str_i,css_class='form-group col-md-4 mbt-0'),
-						Column('last_name_' + str_i,css_class='form-group col-md-4 mbt-0'),
-						Column('date_of_birth_' + str_i,css_class='form-group col-md-4 mbt-0')
+						Column('first_name_' + str_i,css_class='form-group col-md-3 mbt-0'),
+						Column('last_name_' + str_i,css_class='form-group col-md-3 mbt-0'),
+						Column('date_of_birth_' + str_i,css_class='form-group col-md-2 mbt-0'),
+						Column('gender_' + str_i,css_class='form-group col-md-2 mbt-0'),
+						Column('relationship_type_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						)
 			rows.append(row)
 		row = Row(
@@ -296,9 +333,13 @@ class ChildrenForm(forms.Form):
 				if 'last_name_' + str(i) in self.cleaned_data else False
 			date_of_birth = self.cleaned_data['date_of_birth_' + str(i)] \
 				if 'date_of_birth_' + str(i) in self.cleaned_data else False
+			gender = self.cleaned_data['gender_' + str(i)] \
+				if 'gender_' + str(i) in self.cleaned_data else False
+			relationship_type = self.cleaned_data['relationship_type_' + str(i)] \
+				if 'relationship_type_' + str(i) in self.cleaned_data else False
 			# check that if we have any fields, we have all fields
-			if (first_name or last_name or date_of_birth) and \
-				not (first_name and last_name and date_of_birth) :
+			if (first_name or last_name or date_of_birth or gender or relationship_type) and \
+				not (first_name and last_name and date_of_birth and gender and relationship_type) :
 				self.add_error('first_name_' + str(i),'All fields must be entered')
 				valid = False
 			# check that children are not too old
@@ -418,20 +459,20 @@ class Terms_And_Conditions_Invitation_Handler(Invitation_Handler):
 		# call the built in constructor
 		super(Terms_And_Conditions_Invitation_Handler, self).__init__(*args, **kwargs)
 		# get the terms and conditions text and set it as display text
-		terms_and_conditions = Terms_And_Conditions.objects.get(
-																start_date__lte=datetime.date.today(),
-																end_date__isnull=True
-																)
-		self.display_text = terms_and_conditions.notes
+		self.display_text = self.invitation_step_type.terms_and_conditions.notes
 
 class Personal_Details_Invitation_Handler(Invitation_Handler):
 	form_class = PersonalDetailsForm
 
+	def initialise_form(self):
+		return self.form_class(person=self.invitation.person)
+
 	def handle_step_updates(self):
 		# get records to use in the update
 		person = self.invitation.person
-		ethnicity = Ethnicity.try_to_get(pk=self.form.cleaned_data['ethnicity'])
 		# update the record
+		person.first_name = self.form.cleaned_data['first_name']
+		person.last_name = self.form.cleaned_data['last_name']
 		person.email_address = replace_if_value(person.email_address,self.form.cleaned_data['email_address'])
 		person.home_phone = replace_if_value(person.home_phone,self.form.cleaned_data['home_phone'])
 		person.mobile_phone = replace_if_value(person.mobile_phone,self.form.cleaned_data['mobile_phone'])
@@ -443,7 +484,6 @@ class Personal_Details_Invitation_Handler(Invitation_Handler):
 		person.gender = replace_if_value(person.gender,self.form.cleaned_data['gender'])
 		person.pregnant = replace_if_value(person.pregnant,self.form.cleaned_data['pregnant'])
 		person.due_date = replace_if_value(person.due_date,self.form.cleaned_data['due_date'])
-		person.ethnicity = ethnicity
 		person.save()
 
 class Address_Invitation_Handler(Invitation_Handler):
@@ -474,37 +514,33 @@ class Children_Invitation_Handler(Invitation_Handler):
 		person = self.invitation.person
 		child_over_four = Age_Status.objects.get(status='Child over four')
 		child_under_four = Age_Status.objects.get(status='Child under four')
-		carer_relationship = Relationship_Type.objects.get(relationship_type__iexact='Other carer')
 		today = datetime.date.today()
 		# go through the fields
 		for i in range(6):
-			# get the form data
-			first_name = self.form.cleaned_data['first_name_' + str(i)] \
-				if 'first_name_' + str(i) in self.form.cleaned_data else False
-			last_name = self.form.cleaned_data['last_name_' + str(i)] \
-				if 'last_name_' + str(i) in self.form.cleaned_data else False
-			date_of_birth = self.form.cleaned_data['date_of_birth_' + str(i)] \
-				if 'date_of_birth_' + str(i) in self.form.cleaned_data else False
-			# if we have an entry, create the record
-			if first_name:
+			# check that we have the data to create the record
+			if self.form.cleaned_data['first_name_' + str(i)] != '':
 				# figure out the age
+				date_of_birth = self.form.cleaned_data['date_of_birth_' + str(i)]
 				if date_of_birth < today.replace(year=today.year-child_under_four.maximum_age):
 					age_status = child_over_four
 				else:
 					age_status = child_under_four
 				# create the person
 				child = Person.objects.create(
-												first_name = first_name,
-												last_name = last_name,
+												first_name = self.form.cleaned_data['first_name_' + str(i)],
+												last_name = self.form.cleaned_data['last_name_' + str(i)],
 												date_of_birth = date_of_birth,
 												age_status = age_status,
-												default_role = age_status.default_role_type
+												default_role = age_status.default_role_type,
+												gender = self.form.cleaned_data['gender_' + str(i)]
 												)
 				# and the relationship
+				relationship_type = Relationship_Type.objects.get(
+										pk=self.form.cleaned_data['relationship_type_' + str(i)])
 				Relationship.create_relationship(
 													person_from=person,
 													person_to=child,
-													relationship_type_from=carer_relationship
+													relationship_type_from=relationship_type
 													)
 
 class Questions_Invitation_Handler(Invitation_Handler):

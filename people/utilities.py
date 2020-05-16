@@ -150,12 +150,19 @@ def get_period_dates(period):
 	# return the results
 	return period_start, period_end
 
-def build_choices(choice_field='',choice_queryset=False,choice_class=False,default=False,default_label=''):
+def build_choices(
+					choice_field='',
+					choice_queryset=False,
+					choice_class=False,
+					default=False,
+					default_value=0,
+					default_label=''
+					):
 	# create a blank list
 	choice_list = []
 	# set the default if we have one
 	if default:
-		choice_list.append((0,default_label))
+		choice_list.append((default_value,default_label))
 	# build the choices from a query set, or from all objects in a class
 	if choice_queryset:
 		choices = choice_queryset.order_by(choice_field)

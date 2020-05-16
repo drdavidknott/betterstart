@@ -10,6 +10,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field
 from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
+from .utilities import build_choices
 
 def role_type_choices(role_types):
 	# set the choice field for role types
@@ -20,23 +21,6 @@ def role_type_choices(role_types):
 		role_type_list.append((role_type.pk, role_type.role_type_name))
 	# return the list
 	return role_type_list
-
-def build_choices(choice_field='',choice_queryset=False,choice_class=False,default=False,default_label=''):
-	# create a blank list
-	choice_list = []
-	# set the default if we have one
-	if default:
-		choice_list.append((0,default_label))
-	# build the choices from a query set, or from all objects in a class
-	if choice_queryset:
-		choices = choice_queryset.order_by(choice_field)
-	else:
-		choices = choice_class.objects.all().order_by(choice_field)
-	# build the list for use in the form
-	for choice in choices:
-		choice_list.append((choice.pk, getattr(choice,choice_field)))
-	# return the list
-	return choice_list
 
 def check_relationship_types(relationship_types,to_person):
 	# take a copy of the queryset

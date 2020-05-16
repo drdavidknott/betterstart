@@ -63,6 +63,7 @@ class Role_Type(DataAccessMixin,models.Model):
 class Relationship_Type(DataAccessMixin,models.Model):
 	relationship_type = models.CharField(max_length=50)
 	relationship_counterpart = models.CharField(max_length=50)
+	use_for_invitations  = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.relationship_type
@@ -1465,7 +1466,7 @@ class Terms_And_Conditions(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	start_date = models.DateField()
 	end_date = models.DateField(null=True, blank=True)
-	notes = models.TextField(max_length=1000, default='', blank=True)
+	notes = models.TextField(max_length=25000, default='', blank=True)
 	def __str__(self):
 		return self.name
 
@@ -1485,6 +1486,7 @@ class Invitation_Step_Type(DataAccessMixin,models.Model):
 	display_name = models.CharField(max_length=50, default='')
 	order = models.IntegerField(default=0)
 	active = models.BooleanField(default=True)
+	terms_and_conditions = models.ForeignKey(Terms_And_Conditions, null=True, blank=True, on_delete=models.CASCADE)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.display_name

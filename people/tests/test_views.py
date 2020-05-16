@@ -7263,6 +7263,7 @@ class InvitationViewTest(TestCase):
 														)
 		# and invitation steps
 		invitation_step_types = {
+									'introduction' : 'Introduction',
 									'terms_and_conditions' : 'Terms and Conditions',
 									'personal_details' : 'Personal Details',
 									'address' : 'Address',
@@ -7316,7 +7317,36 @@ class InvitationViewTest(TestCase):
 		# check the response
 		self.assertContains(response,'Invitation has been completed')
 
+	def test_introduction(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to complete the step
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = {}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created
+		invitation_step_type = Invitation_Step_Type.objects.get(name='introduction')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=invitation_step_type)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Terms and Conditions')
+
 	def test_terms_and_conditions(self):
+		# get the test data
+		this_step = Invitation_Step_Type.objects.get(name='terms_and_conditions')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+											invitation_step_type=prior_step,
+											invitation=invitation
+											)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to complete the step
@@ -7332,25 +7362,25 @@ class InvitationViewTest(TestCase):
 		invitation_step_type = Invitation_Step_Type.objects.get(name='terms_and_conditions')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=invitation_step_type)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Personal Details')
 
 	def test_personal_details_future_dob(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		this_step = Invitation_Step_Type.objects.get(name='personal_details')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# set future date of birth
 		today = datetime.datetime.today()
 		future_dob = today.replace(year=today.year+1)
 		# mark the previous steps complete
-		Invitation_Step.objects.create(
-										invitation_step_type=t_and_cs,
-										invitation=invitation
-										)
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+											invitation_step_type=prior_step,
+											invitation=invitation
+											)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to complete the step
@@ -7376,15 +7406,15 @@ class InvitationViewTest(TestCase):
 
 	def test_personal_details(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		this_step = Invitation_Step_Type.objects.get(name='personal_details')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		Invitation_Step.objects.create(
-										invitation_step_type=t_and_cs,
-										invitation=invitation
-										)
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+											invitation_step_type=prior_step,
+											invitation=invitation
+											)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to complete the step
@@ -7406,7 +7436,7 @@ class InvitationViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 302)
 		# check that the invitation step was created
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=personal_details)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Address')
@@ -7423,15 +7453,15 @@ class InvitationViewTest(TestCase):
 
 	def test_personal_details_dont_overwrite_values(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
+		this_step = Invitation_Step_Type.objects.get(name='personal_details')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		Invitation_Step.objects.create(
-										invitation_step_type=t_and_cs,
-										invitation=invitation
-										)
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+											invitation_step_type=prior_step,
+											invitation=invitation
+											)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to complete the step
@@ -7453,7 +7483,7 @@ class InvitationViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 302)
 		# check that the invitation step was created
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=personal_details)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Address')
@@ -7472,15 +7502,13 @@ class InvitationViewTest(TestCase):
 
 	def test_address_search_mandatory_fields_missing(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
+		this_step = Invitation_Step_Type.objects.get(name='address')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the events page
@@ -7500,15 +7528,13 @@ class InvitationViewTest(TestCase):
 
 	def test_address_search_street_name_with_results(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
+		this_step = Invitation_Step_Type.objects.get(name='address')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the events page
@@ -7530,15 +7556,13 @@ class InvitationViewTest(TestCase):
 
 	def test_address_search_post_code_with_results(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
+		this_step = Invitation_Step_Type.objects.get(name='address')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the events page
@@ -7560,15 +7584,13 @@ class InvitationViewTest(TestCase):
 
 	def test_address_no_street(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
+		this_step = Invitation_Step_Type.objects.get(name='address')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the events page
@@ -7589,15 +7611,13 @@ class InvitationViewTest(TestCase):
 
 	def test_address_no_street(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
+		this_step = Invitation_Step_Type.objects.get(name='address')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the events page
@@ -7618,15 +7638,13 @@ class InvitationViewTest(TestCase):
 
 	def test_address(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
+		this_step = Invitation_Step_Type.objects.get(name='address')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the events page
@@ -7643,7 +7661,7 @@ class InvitationViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 302)
 		# check that the invitation step was created
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=address)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Children')
@@ -7655,16 +7673,13 @@ class InvitationViewTest(TestCase):
 
 	def test_children_incomplete_entry(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
+		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the invitation page
@@ -7681,16 +7696,13 @@ class InvitationViewTest(TestCase):
 
 	def test_children_incomplete_entry_relationship_type(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
+		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the invitation page
@@ -7707,16 +7719,13 @@ class InvitationViewTest(TestCase):
 
 	def test_children_too_old(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
+		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the invitation page
@@ -7737,19 +7746,16 @@ class InvitationViewTest(TestCase):
 
 	def test_children_future_dob(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
+		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# set future date of birth
 		today = datetime.datetime.today()
 		future_dob = today.replace(year=today.year+1)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the invitation page
@@ -7770,10 +7776,7 @@ class InvitationViewTest(TestCase):
 
 	def test_children(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
+		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# allow the relationship type for each age status
@@ -7786,9 +7789,9 @@ class InvitationViewTest(TestCase):
 		over_four_age = today.replace(year=today.year-(age_status.maximum_age + 1))
 		under_four_age = today.replace(year=today.year-(age_status.maximum_age - 1))
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# attempt to get the invitation page
@@ -7810,7 +7813,7 @@ class InvitationViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 302)
 		# check that the invitation step was created
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=children)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Questions')
@@ -7835,17 +7838,13 @@ class InvitationViewTest(TestCase):
 
 	def test_questions_no_answers(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
-		questions = Invitation_Step_Type.objects.get(name='questions')
+		this_step = Invitation_Step_Type.objects.get(name='questions')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address,children):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# get the questions
@@ -7864,7 +7863,7 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'You have finished')
 		# check that the invitation step was created
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=questions)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that the invitation is complete
 		invitation = Invitation.objects.get(person=test_person)
 		self.assertNotEqual(invitation.datetime_completed,None)
@@ -7873,17 +7872,13 @@ class InvitationViewTest(TestCase):
 
 	def test_questions(self):
 		# get the test data
-		t_and_cs = Invitation_Step_Type.objects.get(name='terms_and_conditions')
-		personal_details = Invitation_Step_Type.objects.get(name='personal_details')
-		address = Invitation_Step_Type.objects.get(name='address')
-		children = Invitation_Step_Type.objects.get(name='children')
-		questions = Invitation_Step_Type.objects.get(name='questions')
+		this_step = Invitation_Step_Type.objects.get(name='questions')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		# mark the previous steps complete
-		for invitation_step_type in (t_and_cs,personal_details,address,children):
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
-											invitation_step_type=invitation_step_type,
+											invitation_step_type=prior_step,
 											invitation=invitation
 											)
 		# get the questions
@@ -7905,7 +7900,7 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'You have finished')
 		# check that the invitation step was created
-		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=questions)
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
 		# check that the invitation is complete
 		invitation = Invitation.objects.get(person=test_person)
 		self.assertNotEqual(invitation.datetime_completed,None)

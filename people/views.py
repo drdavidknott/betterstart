@@ -35,7 +35,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Venues_File_Handler, Venues_For_Events_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
-									Questions_Invitation_Handler
+									Questions_Invitation_Handler, Introduction_Invitation_Handler
 import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
@@ -2089,6 +2089,7 @@ def invitation(request, code):
 	invitation_complete = False
 	# build a dictionary to hold the classes for the invitation handlers
 	invitation_step_dict = {
+								'introduction' : Introduction_Invitation_Handler,
 								'terms_and_conditions' : Terms_And_Conditions_Invitation_Handler,
 								'personal_details' : Personal_Details_Invitation_Handler,
 								'address' : Address_Invitation_Handler,
@@ -2103,7 +2104,7 @@ def invitation(request, code):
 		return make_banner(request, 'Invitation has been completed',public=True)
 	# figure out which step we are supposed to be processing next
 	next_step = invitation.incomplete_steps().first()
-	# create the inviation handler and use it to process the request
+	# create the invitation handler and use it to process the request
 	invitation_handler = invitation_step_dict[next_step.name](invitation,next_step)
 	invitation_handler.handle_request(request)
 	# if the step is now complete, get the next step and set up the form

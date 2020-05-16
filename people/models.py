@@ -1457,6 +1457,7 @@ class Site(DataAccessMixin,models.Model):
 	dashboard = models.ForeignKey(Dashboard, null=True, blank=True, on_delete=models.SET_NULL)
 	otp_required = models.BooleanField(default=False)
 	invitations_active = models.BooleanField(default=False)
+	invitation_introduction = models.TextField(max_length=25000, default='', blank=True)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
@@ -1476,6 +1477,7 @@ class Terms_And_Conditions(DataAccessMixin,models.Model):
 # Invitation_Step_Type model: contains the steps to be followed for an invitation
 class Invitation_Step_Type(DataAccessMixin,models.Model):
 	name_choices = [
+					('introduction','Introduction'),
 					('terms_and_conditions','Terms and Conditions'),
 					('personal_details','Personal Details'),
 					('address','Address'),

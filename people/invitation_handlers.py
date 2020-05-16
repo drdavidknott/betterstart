@@ -14,6 +14,18 @@ from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
 from .utilities import build_choices, replace_if_value
 
+class IntroductionForm(forms.Form):
+	# this form has no fields: it simply presents the introduction
+	# over-ride the __init__ method
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(IntroductionForm, self).__init__(*args, **kwargs)
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(	
+									Submit('submit', 'Start')
+									)
+
 class TermsAndConditionsForm(forms.Form):
 	# Define the fields that we need in the form.
 	accept_conditions = forms.BooleanField(
@@ -460,6 +472,16 @@ class Terms_And_Conditions_Invitation_Handler(Invitation_Handler):
 		super(Terms_And_Conditions_Invitation_Handler, self).__init__(*args, **kwargs)
 		# get the terms and conditions text and set it as display text
 		self.display_text = self.invitation_step_type.terms_and_conditions.notes
+
+class Introduction_Invitation_Handler(Invitation_Handler):
+	form_class = IntroductionForm
+
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(Introduction_Invitation_Handler, self).__init__(*args, **kwargs)
+		# get the introduction text from the site and set it as display text
+		site = Site.objects.all().first()
+		self.display_text = site.invitation_introduction if site else ''
 
 class Personal_Details_Invitation_Handler(Invitation_Handler):
 	form_class = PersonalDetailsForm

@@ -6619,6 +6619,7 @@ class AddVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Search',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6648,6 +6649,7 @@ class AddVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Search',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6679,6 +6681,7 @@ class AddVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Search',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6708,6 +6711,7 @@ class AddVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Create',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6725,6 +6729,7 @@ class AddVenueViewTest(TestCase):
 		self.assertEqual(venue.price,'test price')
 		self.assertEqual(venue.facilities,'test facilities')
 		self.assertEqual(venue.opening_hours,'test opening hours')
+		self.assertEqual(venue.notes,'test notes')
 
 class EditVenueViewTest(TestCase):
 	@classmethod
@@ -6782,6 +6787,7 @@ class EditVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Search',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6813,6 +6819,7 @@ class EditVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Search',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6848,6 +6855,7 @@ class EditVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Search',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6877,6 +6885,7 @@ class EditVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Update',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6894,6 +6903,7 @@ class EditVenueViewTest(TestCase):
 		self.assertEqual(venue.price,'test price')
 		self.assertEqual(venue.facilities,'test facilities')
 		self.assertEqual(venue.opening_hours,'test opening hours')
+		self.assertEqual(venue.notes,'test notes')
 
 	def test_venue_update(self):
 		# log the user in
@@ -6917,6 +6927,7 @@ class EditVenueViewTest(TestCase):
 											'facilities' : 'test facilities',
 											'opening_hours' : 'test opening hours',
 											'action' : 'Update',
+											'notes' : 'test notes',
 											}
 									)
 		# check the response
@@ -6934,6 +6945,7 @@ class EditVenueViewTest(TestCase):
 		self.assertEqual(venue.price,'test price')
 		self.assertEqual(venue.facilities,'test facilities')
 		self.assertEqual(venue.opening_hours,'test opening hours')
+		self.assertEqual(venue.notes,'test notes')
 
 class VenuesViewTest(TestCase):
 	@classmethod
@@ -11410,6 +11422,7 @@ class UploadDownloadVenuesDataViewTest(TestCase):
 		self.assertEqual(test_venue.price,'price')
 		self.assertEqual(test_venue.facilities,'facilities')
 		self.assertEqual(test_venue.opening_hours,'opening_hours')
+		self.assertEqual(test_venue.notes,'notes')
 		# get the second venue
 		test_venue = Venue.objects.get(name='Test Venue 2')
 		# check the fields
@@ -11425,6 +11438,7 @@ class UploadDownloadVenuesDataViewTest(TestCase):
 		self.assertEqual(test_venue.price,'price2')
 		self.assertEqual(test_venue.facilities,'facilities2')
 		self.assertEqual(test_venue.opening_hours,'opening_hours2')
+		self.assertEqual(test_venue.notes,'notes2')
 		# check that we have two people
 		self.assertEqual(Venue.objects.all().count(),2)
 
@@ -11458,6 +11472,7 @@ class UploadDownloadVenuesDataViewTest(TestCase):
 		self.assertEqual(test_venue.price,'price')
 		self.assertEqual(test_venue.facilities,'facilities')
 		self.assertEqual(test_venue.opening_hours,'opening_hours')
+		self.assertEqual(test_venue.notes,'notes')
 		# get the second venue
 		test_venue = Venue.objects.get(name='Test Venue 2')
 		# check the fields
@@ -11473,6 +11488,7 @@ class UploadDownloadVenuesDataViewTest(TestCase):
 		self.assertEqual(test_venue.price,'price2')
 		self.assertEqual(test_venue.facilities,'facilities2')
 		self.assertEqual(test_venue.opening_hours,'opening_hours2')
+		self.assertEqual(test_venue.notes,'notes2')
 		# check that we have two people
 		self.assertEqual(Venue.objects.all().count(),2)
 		# close the file
@@ -11523,8 +11539,8 @@ class UploadDownloadVenuesDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'Test Venue,test_venue_type,123,venue_street0,TV10,contact,phone,mobile,test@test.com,website,price,facilities,opening_hours')
-		self.assertContains(response,'Test Venue 2,test_venue_type,456,venue_street0,TV10,contact2,phone2,mobile2,test@test.com2,website2,price2,facilities2,opening_hours2')
+		self.assertContains(response,'Test Venue,test_venue_type,123,venue_street0,TV10,contact,phone,mobile,test@test.com,website,price,facilities,opening_hours,notes')
+		self.assertContains(response,'Test Venue 2,test_venue_type,456,venue_street0,TV10,contact2,phone2,mobile2,test@test.com2,website2,price2,facilities2,opening_hours2,notes2')
 
 class UploadVenuesForEventsDataViewTest(TestCase):
 	@classmethod

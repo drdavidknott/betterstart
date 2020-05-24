@@ -199,6 +199,7 @@ class Venue(DataAccessMixin,models.Model):
 	price = models.CharField(max_length=50, default='', null=True)
 	facilities = models.CharField(max_length=50, default='', null=True)
 	opening_hours = models.CharField(max_length=50, default='', null=True)
+	notes = models.TextField(max_length=1000, default='', blank=True)
 
 	# define the function that will return the venue name as the object reference
 	def __str__(self):
@@ -294,12 +295,14 @@ class Question(DataAccessMixin,models.Model):
 	notes = models.BooleanField(default=False)
 	notes_label = models.CharField(max_length=30, default='Notes')
 	use_for_invitations = models.BooleanField(default=False)
+	order = models.IntegerField(default=0)
 	# define the function that will return the question text as the object reference
 	def __str__(self):
 		return self.question_text
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'questions'
+		ordering = ('order',)
 
 # Option model: represents the options which can be used to answer a question
 class Option(DataAccessMixin,models.Model):

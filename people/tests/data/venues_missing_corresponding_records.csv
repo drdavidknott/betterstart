@@ -1,4 +1,4 @@
-name,venue_type,building_name_or_number,street,post_code,contact_name,phone,mobile_phone,email_address,website,price,facilities,opening_hours
-Missing venue type,invalid,123,venue_street0,TV10,contact,phone,mobile,test@test.com,test.com,price,facilities,opening_hours
-Missing street,venue_type_1,123,invalid,TV10,contact,phone,mobile,test@test.com,test.com,price,facilities,opening_hours
-Missing post code,invalid,123,venue_street0,invalid,contact,phone,mobile,test@test.com,test.com,price,facilities,opening_hours
+name,venue_type,building_name_or_number,street,post_code,contact_name,phone,mobile_phone,email_address,website,price,facilities,opening_hours,notes
+Missing venue type,invalid,123,venue_street0,TV10,contact,phone,mobile,test@test.com,test.com,price,facilities,opening_hours,notes
+Missing street,venue_type_1,123,invalid,TV10,contact,phone,mobile,test@test.com,test.com,price,facilities,opening_hours,notes
+Missing post code,invalid,123,venue_street0,invalid,contact,phone,mobile,test@test.com,test.com,price,facilities,opening_hours,notes

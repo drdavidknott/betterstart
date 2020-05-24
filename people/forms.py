@@ -863,6 +863,12 @@ class VenueForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	notes = forms.CharField(
+									label="Notes",
+									required=False,
+									max_length=1500,
+									widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
+									)
 	# over-ride the __init__ method to define the form layout
 	def __init__(self, *args, **kwargs):
 		# pull the venue id out of the parameters
@@ -924,6 +930,9 @@ class VenueForm(forms.Form):
 										Column('price',css_class='form-group col-md-4 mbt-0'),
 										Column('facilities',css_class='form-group col-md-4 mbt-0'),
 										Column('opening_hours',css_class='form-group col-md-4 mbt-0'),	
+										),
+									Row(
+										Column('notes',css_class='form-group col-md-12 mbt-0'),	
 										),
 									Hidden('page','1'),
 									Row(

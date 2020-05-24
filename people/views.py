@@ -398,40 +398,31 @@ def get_questions_and_answers(person):
 	# set the flag to false to show whether we have answers for this person
 	answer_flag = False
 	# get the list of questions
-	questions = Question.objects.all().order_by('question_text')
+	questions = Question.objects.all().order_by('order')
 	# get the options for each question
 	for question in questions:
-		# get the answers and stash it in the object
-		question.options = question.option_set.all().order_by('option_label')
-		# set a default answer
+		# set defaults
 		question.answer = 0
-		# and default answer test
 		question.answer_text = 'No answer'
-		# now try to get an answer
+		question.note = ''
+		# get the options and stash them in the object
+		question.options = question.option_set.all().order_by('option_label')
+		# add the answer, if we already have one
 		answer = Answer.try_to_get(
 									person=person,
 									question=question
 									)
-		# check whether we got an answer
 		if answer:
-			# set the answer
 			question.answer = answer.option.pk
-			# and the text
 			question.answer_text = answer.option.option_label
-			# and the flag
 			answer_flag = True
-		# set a default note
-		question.note = ''
-		# now try to get an answer note
+		# add notes, if we already have them 
 		answer_note = Answer_Note.try_to_get(
 											person=person,
 											question=question
 											)
-		# check whether we got an answer note
 		if answer_note:
-			# set the answer
 			question.note = answer_note.notes
-			# and the flag
 			answer_flag = True
 	# return the results
 	return questions, answer_flag
@@ -2578,7 +2569,8 @@ def add_venue(request):
 							website = addvenueform.cleaned_data['website'],
 							price = addvenueform.cleaned_data['price'],
 							facilities = addvenueform.cleaned_data['facilities'],
-							opening_hours = addvenueform.cleaned_data['opening_hours']
+							opening_hours = addvenueform.cleaned_data['opening_hours'],
+							notes = addvenueform.cleaned_data['notes'],
 							)
 			venue.save()
 			# and redirect to the venue page
@@ -2625,6 +2617,7 @@ def edit_venue(request, venue_id=0):
 			venue.price = editvenueform.cleaned_data['price']
 			venue.facilities = editvenueform.cleaned_data['facilities']
 			venue.opening_hours = editvenueform.cleaned_data['opening_hours']
+			venue.notes = editvenueform.cleaned_data['notes']
 			venue.save()
 			# and redirect to the venue page
 			return redirect('/venue/' + str(venue.pk))
@@ -2646,7 +2639,8 @@ def edit_venue(request, venue_id=0):
 											'website' : venue.website,
 											'price' : venue.price,
 											'facilities' : venue.facilities,
-											'opening_hours' : venue.opening_hours
+											'opening_hours' : venue.opening_hours,
+											'notes' : venue.notes,
 										},
 										venue_id = venue.pk
 									)
@@ -3307,16 +3301,14 @@ def answer_questions(request,person_id=0):
 	# this view enables people to answer a dynamic set of questions from the database
 	# load the template
 	answer_questions_template = loader.get_template('people/answer_questions.html')
-	# get the person
+	# try to get the person, crashing to a banner if unsuccessful
 	person = Person.try_to_get(pk=person_id)
-	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
 	# get the questions, with the answers included as an attribute
 	questions, answer_flag = get_questions_and_answers(person)
 	# build the form
 	if request.method == 'POST':
-		# build the form
 		answerquestionsform = AnswerQuestionsForm(request.POST,questions=questions)
 		# go through the fields
 		for field in answerquestionsform.fields:
@@ -3350,8 +3342,8 @@ def answer_questions(request,person_id=0):
 @login_required
 @user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
 def uploaddata(request):
-	# set results to empty
-	results = []
+	# initialise variables
+	file_handler = False
 	# define the records that need simple file handlers
 	simple_file_handlers = {
 							'Areas' : {'file_class' : Area, 'field_name' : 'area_name'},
@@ -3388,27 +3380,18 @@ def uploaddata(request):
 		uploaddataform = UploadDataForm(request.POST, request.FILES)
 		# check whether the form is valid
 		if uploaddataform.is_valid():
-			# decode the file
+			# get the file and file type from the request
 			file = TextIOWrapper(request.FILES['file'], encoding=request.encoding, errors='ignore')
-			# get the file type
 			file_type = uploaddataform.cleaned_data['file_type']
-			# check to see whether we have a simple loader
+			# handle a simple file
 			if file_type in simple_file_handlers.keys():
-				# get the parameters
 				file_handler_kwargs = simple_file_handlers[file_type]
-				# load using a simple file handler
 				file_handler = File_Handler(**file_handler_kwargs)
-				# handle the uploaded file
 				file_handler.handle_uploaded_file(file)
-				# get the results
-				results = file_handler.results
 			else:
-				# create a file handler
+				# handle a complex file
 				file_handler = file_handlers[file_type]()
-				# handle the uploaded file
 				file_handler.handle_uploaded_file(file)
-				# get the results
-				results = file_handler.results
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
@@ -3418,7 +3401,7 @@ def uploaddata(request):
 	# set the context
 	context = build_context({
 				'uploaddataform' : uploaddataform,
-				'results' : results
+				'file_handler' : file_handler
 				})
 	# return the HttpResponse
 	return HttpResponse(upload_data_template.render(context=context, request=request))

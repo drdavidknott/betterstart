@@ -1,3 +1,3 @@
-name,venue_type,building_name_or_number,street,post_code,contact_name,phone,mobile_phone,email_address,website,price,facilities,opening_hours
-Test Venue,test_venue_type,123,venue_street0,TV10,contact,phone,mobile,test@test.com,website,price,facilities,opening_hours
-Test Venue 2,test_venue_type,456,venue_street0,TV10,contact2,phone2,mobile2,test@test.com2,website2,price2,facilities2,opening_hours2
+name,venue_type,building_name_or_number,street,post_code,contact_name,phone,mobile_phone,email_address,website,price,facilities,opening_hours,notes
+Test Venue,test_venue_type,123,venue_street0,TV10,contact,phone,mobile,test@test.com,website,price,facilities,opening_hours,notes
+Test Venue 2,test_venue_type,456,venue_street0,TV10,contact2,phone2,mobile2,test@test.com2,website2,price2,facilities2,opening_hours2,notes2

@@ -271,11 +271,15 @@ class File_Handler():
 	def __init__(self,*args,**kwargs):
 		# set default attributes
 		self.results = []
+		self.errors = []
 		self.fields = []
 		self.additional_download_fields = []
 		self.file_class = ''
 		self.upload = True
 		self.objects = None
+		self.records_read = 0
+		self.records_created = 0
+		self.records_with_errors = 0
 		# set the file class if we have received one
 		if 'file_class' in kwargs.keys():
 			self.file_class = kwargs['file_class']
@@ -308,12 +312,17 @@ class File_Handler():
 			if self.file_format_valid(records.fieldnames.copy()):
 				# go through the records
 				for record in records:
+					# count the read
+					self.records_read += 1
 					# do the validation
 					fields_valid = self.fields_valid(record)
 					complex_valid = self.complex_validation_valid(record)
-					# create the record if all is valid
+					# create the record if all is valid; increment counts in either case
 					if (fields_valid and complex_valid):
 						self.create_record(record)
+						self.records_created += 1
+					else:
+						self.records_with_errors += 1
 			# print(self.results)
 		else:
 			# set the message to say that upload is not allowed
@@ -362,8 +371,10 @@ class File_Handler():
 		# now check that they match
 		if file_keys != self.fields:
 			# set the message to a failure message
-			self.results.append('File cannot be loaded as it does not contain the right fields.')
-			self.results.append('Expected ' + str(self.fields) + ' but got ' + str(file_keys) + '.')
+			self.add_file_errors([
+									'File cannot be loaded as it does not contain the right fields.',
+									'Expected ' + str(self.fields) + ' but got ' + str(file_keys) + '.'
+									])
 		# otherwise, we got what we expected
 		else:
 			# set the success flag
@@ -372,29 +383,33 @@ class File_Handler():
 		return success
 
 	def add_record_results(self,record,results):
-		# add results if there are any
-		if results:
-			# go through the results
-			for result in results:
-				# set the result
-				result = self.label(record) + result
-				# and append the result
-				self.results.append(result)
+		# add results if there are any, adding the standard record label
+		for result in results:
+			result = self.label(record) + result
+			self.results.append(result)
+
+	def add_record_errors(self,record,errors):
+		# add errors if there are any, adding the standard error label
+		for error in errors:
+			error = 'Record ' + str(self.records_read) + ': ' + self.label(record) + error
+			self.errors.append(error)
+
+	def add_file_errors(self,errors):
+		# add errors if there are any
+		for error in errors:
+			self.errors.append(error)
 
 	def fields_valid(self,record):
 		# set the result to True
 		success = True
-		# do field level validation
+		# attempt to validate the field, setting the value in the process
 		for field in self.fields:
-			# get the attr
 			file_field = getattr(self,field)
-			# now set the value 
 			file_field.set_upload_value(record)
-			# and check the value
 			file_field.validate_upload_value()
 			# if there are errors, append them to the file errors
 			if file_field.errors: 
-				self.add_record_results(record,file_field.errors)
+				self.add_record_errors(record,file_field.errors)
 				success = False
 		# return the result
 		return success
@@ -406,16 +421,15 @@ class File_Handler():
 	def create_record(self,record):
 		# build a dictionary which contains the fields
 		field_dict = {}
-		# go through the fields
+		# set the fields
 		for field in self.fields:
 			file_field = getattr(self,field)
-			# set the field if it is to be included in record creation
 			if file_field.include_in_create:
 				field_dict[file_field.name] = file_field.value
 		# create the record
 		new_record = self.file_class(**field_dict)
 		new_record.save()
-		# set a message
+		# record the creation
 		self.add_record_results(record,[' created.'])
 		# return the created record
 		return new_record
@@ -575,7 +589,7 @@ class Streets_File_Handler(File_Handler):
 			# see if we got a street
 			if street:
 				# set the error
-				self.add_record_results(record,[' not created: street already exists.'])
+				self.add_record_errors(record,[' not created: street already exists.'])
 				# and the flag
 				valid = False
 		# return the result
@@ -755,7 +769,7 @@ class People_File_Handler(File_Handler):
 										date_of_birth = self.date_of_birth.value
 										).exists():
 				# set the error
-				self.add_record_results(record,[' not created: person already exists.'])
+				self.add_record_errors(record,[' not created: person already exists.'])
 				# and the flag
 				valid = False
 		# check whether the role is valid for the age status
@@ -763,7 +777,7 @@ class People_File_Handler(File_Handler):
 			and self.default_role.exists 
 			and not self.age_status.value.role_types.filter(pk=self.default_role.value.pk).exists()):
 			# set the error
-			self.add_record_results(record,[' not created: role type is not valid for age status.'])
+			self.add_record_errors(record,[' not created: role type is not valid for age status.'])
 			# and the flag
 			valid = False
 		# get today's date
@@ -774,19 +788,19 @@ class People_File_Handler(File_Handler):
 			and self.date_of_birth.valid
 			and self.date_of_birth.value.date() < today.replace(year=today.year-self.age_status.value.maximum_age)):
 			# set the error
-			self.add_record_results(record,[' not created: too old for age status'])
+			self.add_record_errors(record,[' not created: too old for age status'])
 			# and the flag
 			valid = False
 		# now check whether we have a due date without a pregnancy flag
 		if self.due_date.value and not self.pregnant.value:
 			# set the errors
-			self.add_record_results(record,[' not created: has due date but is not pregnant.'])
+			self.add_record_errors(record,[' not created: has due date but is not pregnant.'])
 			# and the flag
 			valid = False
 		# now check the other way around
 		if not self.due_date.value and self.pregnant.value:
 			# set the messages
-			self.add_record_results(record,[' not created: has no due date but is pregnant.'])
+			self.add_record_errors(record,[' not created: has no due date but is pregnant.'])
 			# and the flag
 			valid = False
 		# check whether we have any address details
@@ -794,7 +808,7 @@ class People_File_Handler(File_Handler):
 			# now check whether we have ALL address details
 			if not (self.post_code.value and self.street.value and self.house_name_or_number.value):
 				# set the error
-				self.add_record_results(record,[' not created: all of post code, street and name/number needed for address.'])
+				self.add_record_errors(record,[' not created: all of post code, street and name/number needed for address.'])
 				# and the flag
 				valid = False
 			# else check the details if the post code exists
@@ -807,7 +821,7 @@ class People_File_Handler(File_Handler):
 				# deal with the exception
 				if not street:
 					# set the error
-					self.add_record_results(record,[' not created: Street ' + self.street.value + ' does not exist.'])
+					self.add_record_errors(record,[' not created: Street ' + self.street.value + ' does not exist.'])
 					# and the flag
 					valid = False
 				# otherwise set the value
@@ -817,7 +831,7 @@ class People_File_Handler(File_Handler):
 		# check whether we have an ABSS end date without a start date
 		if self.ABSS_end_date.value and not self.ABSS_start_date.value:
 			# set the message
-			self.add_record_results(record,[' not created: ABSS end date is provided but not ABSS start date.'])
+			self.add_record_errors(record,[' not created: ABSS end date is provided but not ABSS start date.'])
 			# and the flag
 			valid = False
 		# check whether the end date is greater than the start date
@@ -825,7 +839,7 @@ class People_File_Handler(File_Handler):
 			and self.ABSS_start_date.valid and self.ABSS_end_date.valid
 			and self.ABSS_start_date.value >= self.ABSS_end_date.value): 
 				# set the message
-				self.add_record_results(record,[' not created: ABSS end date is not greater than ABSS start date.'])
+				self.add_record_errors(record,[' not created: ABSS end date is not greater than ABSS start date.'])
 				# and the flag
 				valid = False
 		# return the result
@@ -927,7 +941,7 @@ class Relationships_File_Handler(File_Handler):
 			# if there was an error, add it
 			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: from ' + message])
+				self.add_record_errors(record,[' not created: from ' + message])
 				# and set the flag
 				valid = False
 		# check whether we had a valid to age status
@@ -941,7 +955,7 @@ class Relationships_File_Handler(File_Handler):
 			# if there was an error, add it
 			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: to ' + message])
+				self.add_record_errors(record,[' not created: to ' + message])
 				# and set the flag
 				valid = False
 		# return the result
@@ -969,7 +983,7 @@ class Relationships_File_Handler(File_Handler):
 										relationship_type = relationship_type
 										)
 		# set a message
-		self.add_record_results(record,[' created.'])
+		self.add_record_errors(record,[' created.'])
 
 	def set_download_fields(self,relationship):
 		# call the built in field setter
@@ -1062,7 +1076,7 @@ class Events_File_Handler(File_Handler):
 																		date = self.date.value,
 																		).exists():
 			# set the message to show that it exists
-			self.add_record_results(record,[' not created: event already exists.'])
+			self.add_record_errors(record,[' not created: event already exists.'])
 			# and set the flag
 			valid = False
 		# now go through the areas
@@ -1070,7 +1084,7 @@ class Events_File_Handler(File_Handler):
 			# deal with the exception
 			if not Area.try_to_get(area_name = area_name):
 				# set the error
-				self.add_record_results(record,[' not created: area ' + area_name + ' does not exist.'])
+				self.add_record_errors(record,[' not created: area ' + area_name + ' does not exist.'])
 				# and the flag
 				valid = False
 		# return the result
@@ -1154,6 +1168,7 @@ class Venues_File_Handler(File_Handler):
 		self.price = File_Field(name='price',max_length=50)
 		self.facilities = File_Field(name='facilities',max_length=50)
 		self.opening_hours = File_Field(name='opening_hours',max_length=50)
+		self.notes = File_Field(name='notes',max_length=1000)
 
 		# and a list of the fields
 		self.fields = [
@@ -1170,6 +1185,7 @@ class Venues_File_Handler(File_Handler):
 						'price',
 						'facilities',
 						'opening_hours',
+						'notes',
 						]
 
 	def complex_validation_valid(self,record):
@@ -1184,7 +1200,7 @@ class Venues_File_Handler(File_Handler):
 											post_code = self.post_code.value
 											)
 				if not street:
-					self.add_record_results(record,[' not created: Street ' + self.street.value + ' does not exist.'])
+					self.add_record_errors(record,[' not created: Street ' + self.street.value + ' does not exist.'])
 					valid = False
 				# otherwise set the street value
 				else:
@@ -1252,7 +1268,7 @@ class Venues_For_Events_File_Handler(File_Handler):
 														)
 			# deal with the exception if we couldn't find an event
 			if not event:
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				valid = False
 		# return the result
 		return valid
@@ -1357,14 +1373,14 @@ class Registrations_File_Handler(File_Handler):
 			# if there was an error, add it
 			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 		# check whether the role type is valid for the age status
 		if (self.role_type.exists and self.age_status.exists 
 				and self.role_type.value not in self.age_status.value.role_types.all()):
 			# set the error
-			self.add_record_results(record,
+			self.add_record_errors(record,
 									[' not created: ' + str(self.role_type.value.role_type_name) + 
 										' is not valid for ' + str(self.age_status.value.status) + '.']
 									)
@@ -1380,13 +1396,13 @@ class Registrations_File_Handler(File_Handler):
 			# see what we got
 			if not event:
 				# append the error message
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 		# check that one of registered or participated is set
 		if not self.registered.value and not self.participated.value and not self.apologies.value:
 			# set the error
-			self.add_record_results(record,[' not created: none of registered, apologies or participated is True.'])
+			self.add_record_errors(record,[' not created: none of registered, apologies or participated is True.'])
 			# and set the flag
 			valid = False
 		# return the result
@@ -1595,7 +1611,7 @@ class Questions_File_Handler(File_Handler):
 		# check whether we had a valid from age status
 		if self.notes.value and not self.notes_label.value:
 			# append the error message
-			self.add_record_results(record,[' not created: questions has notes but no notes label'])
+			self.add_record_errors(record,[' not created: questions has notes but no notes label'])
 			# and set the flag
 			valid = False
 		# return the result
@@ -1636,7 +1652,7 @@ class Options_File_Handler(File_Handler):
 										option_label = self.option_label.value
 										).exists():
 				# set the error
-				self.add_record_results(record,[' not created: option already exists.'])
+				self.add_record_errors(record,[' not created: option already exists.'])
 				# and the flag
 				valid = False
 		# return the result
@@ -1711,7 +1727,7 @@ class Answers_File_Handler(File_Handler):
 			# see what we got
 			if not self.option.value:
 				# set the message
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 				# and the option flag
@@ -1727,7 +1743,7 @@ class Answers_File_Handler(File_Handler):
 			# if there was an error, add it
 			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 			# otherwise, check whether we have a duplicate
@@ -1745,7 +1761,7 @@ class Answers_File_Handler(File_Handler):
 											option = self.option.value
 										).exists():
 					# set the error message
-					self.add_record_results(record,[' not created: answer already exists.'])
+					self.add_record_errors(record,[' not created: answer already exists.'])
 					# and the flag
 					valid = False
 		# return the result
@@ -1847,7 +1863,7 @@ class Answer_Notes_File_Handler(File_Handler):
 			# if there was an error, add it
 			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 			# otherwise, do the other checks
@@ -1864,7 +1880,7 @@ class Answer_Notes_File_Handler(File_Handler):
 												question = self.question.value
 												).exists():
 					# set the error message
-					self.add_record_results(record,['not created: person has not answered this question.'])
+					self.add_record_errors(record,['not created: person has not answered this question.'])
 					# and the flag
 					valid = False
 				# now check whether notes already exist
@@ -1873,7 +1889,7 @@ class Answer_Notes_File_Handler(File_Handler):
 												question = self.question.value
 												).exists():
 					# set the error message
-					self.add_record_results(record,[' not created: answer note already exists.'])
+					self.add_record_errors(record,[' not created: answer note already exists.'])
 					# and the flag
 					valid = False
 		# return the result
@@ -1977,7 +1993,7 @@ class Activities_File_Handler(File_Handler):
 			# if there was an error, add it
 			if not person:
 				# append the error message
-				self.add_record_results(record,[' not created: ' + message])
+				self.add_record_errors(record,[' not created: ' + message])
 				# and set the flag
 				valid = False
 		# return the result

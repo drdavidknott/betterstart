@@ -55,34 +55,69 @@
 	 	</div>
 	</div>
 
-	{% if results %}
-		<div class="row">
-	 		<div class="col-xs-12">
-		 		<div>
-		 			<h4>
-			 			<span class="glyphicon glyphicon-cloud-upload"></span>
-			 			<span class="glyphicon glyphicon-list"></span>
-			 			Upload Results
-		 			<h4>
-		 		</div>
-			</div>
-		</div>
+	{% if file_handler %}
 
-		<div class="form-row">
-			<div class="col-xs-12">
-				<table class="table table-striped">
-					<tbody>
-						{% for result in results %}
-							<tr>
-								<td>
-									{{ result }}
-								</td>
-							</tr>
-						{% endfor %}
-					</tbody>
-				</table>
+
+		{% if file_handler.errors %}
+			<div class="row">
+		 		<div class="col-xs-12">
+			 		<div>
+			 			<h4>
+				 			<span class="glyphicon glyphicon-cloud-upload"></span>
+				 			<span class="glyphicon glyphicon-remove"></span>
+				 			Upload Errors: {{ file_hander.records_with_errors }}
+			 			<h4>
+			 		</div>
+				</div>
 			</div>
-		</div>
+
+			<div class="form-row">
+				<div class="col-xs-12">
+					<table class="table table-striped">
+						<tbody>
+							{% for error in file_handler.errors %}
+								<tr>
+									<td>
+										{{ error }}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{% endif %}
+
+		{% if file_handler.results %}
+			<div class="row">
+		 		<div class="col-xs-12">
+			 		<div>
+			 			<h4>
+				 			<span class="glyphicon glyphicon-cloud-upload"></span>
+				 			<span class="glyphicon glyphicon-ok"></span>
+				 			Upload Records Created: {{ file_hander.records_created }}
+			 			<h4>
+			 		</div>
+				</div>
+			</div>
+
+			<div class="form-row">
+				<div class="col-xs-12">
+					<table class="table table-striped">
+						<tbody>
+							{% for result in file_handler.results %}
+								<tr>
+									<td>
+										{{ result }}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{% endif %}
+
 	{% endif %}
 
 </div>

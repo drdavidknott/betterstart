@@ -458,26 +458,31 @@ class PersonSearchForm(forms.Form):
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# initialise variables
-		user = False
-		# pull the user out of the parameters if provided
-		if 'user' in kwargs.keys():
-			user = kwargs.pop('user')
+		# pull additional paramterts out of kwargs if provided
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
+		download = kwargs.pop('download') if 'download' in kwargs.keys() else False
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# build the crispy form
 		self.helper = FormHelper()
 		self.helper.form_action = reverse('listpeople')
 		# define the row containing buttons, depending on whether the user is allowed to download or not
-		if user and user.is_superuser:
+		if not download:
 			button_row = FormActions(
 										Submit('action', 'Search'),
-										Submit('action', 'Download')
 									)
 		else:
-			button_row = FormActions(
-										Submit('action', 'Search')
-									)
+			if user and user.is_superuser:
+				button_row = FormActions(
+											Submit('action', 'Search'),
+											Submit('action', 'Download'),
+											Submit('action', 'Download Full Data')
+										)
+			else:
+				button_row = FormActions(
+											Submit('action', 'Search'),
+											Submit('action', 'Download'),
+										)
 		# define the layout
 		self.helper.layout = Layout(
 									Row(

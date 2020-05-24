@@ -32,7 +32,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler, Events_And_Registrations_File_Handler, \
-							Venues_File_Handler, Venues_For_Events_File_Handler
+							Venues_File_Handler, Venues_For_Events_File_Handler, People_Limited_Data_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
 									Questions_Invitation_Handler, Introduction_Invitation_Handler
@@ -1673,6 +1673,7 @@ def build_download_file(file_type,objects=None):
 	# initialise variables
 	file_handlers = {
 						'People' : People_File_Handler,
+						'People Limited' : People_Limited_Data_File_Handler,
 						'Relationships' : Relationships_File_Handler,
 						'Events' : Events_File_Handler,
 						'Registrations' : Registrations_File_Handler,
@@ -1794,7 +1795,7 @@ def people(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(request.POST,user=request.user)
+		personsearchform = PersonSearchForm(request.POST,user=request.user,download=True)
 		# set the flag to show that a search was attempted
 		search_attempted = True
 		# validate the form
@@ -1833,7 +1834,12 @@ def people(request):
 				people = people[previous_page*results_per_page:this_page*results_per_page]
 			# otherwise check whether we got a request for a download
 			elif personsearchform.cleaned_data['action'] == 'Download':
-				# only superusers are allowed to perform downloads
+				# get a file response using the search results and return it
+				response = build_download_file('People Limited',objects=people)
+				return response
+			# otherwise check whether we got a request for a download
+			elif personsearchform.cleaned_data['action'] == 'Download Full Data':
+				# only superusers are allowed to perform full data downloads
 				if not request.user.is_superuser:
 					personsearchform.add_error(None, 'You do not have permission to download files.')
 				else:

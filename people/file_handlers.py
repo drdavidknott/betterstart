@@ -2091,3 +2091,52 @@ class Event_Summary_File_Handler(File_Handler):
 						'participated',
 						'total'
 						]
+
+class People_Limited_Data_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(People_Limited_Data_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Person
+		# set the flag to indicate that this file type is for downloads only
+		self.upload = False
+		# set the file fields
+		self.first_name = File_Field(name='first_name')
+		self.last_name = File_Field(name='last_name')
+		self.other_names = File_Field(name='other_names')
+		self.email_address = File_Field(name='email_address')
+		self.home_phone = File_Field(name='home_phone')
+		self.mobile_phone = File_Field(name='mobile_phone')
+		self.address = File_Field(
+								name='address',
+								set_download_from_object=False,
+								)
+		self.ward = File_Field(
+								name='ward',
+								set_download_from_object=False,
+								)
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'other_names',
+						'email_address',
+						'home_phone',
+						'mobile_phone',
+						'address',
+						'ward',
+						]
+
+	def set_download_fields(self,person):
+		# call the built in field setter
+		super(People_Limited_Data_File_Handler, self).set_download_fields(person)
+		# set address and ward if we have a street
+		if person.street:
+			self.address.value = ' '.join([
+											person.house_name_or_number,
+											person.street.name,
+											person.street.post_code.post_code,
+											])
+			self.ward.value = person.street.post_code.ward.ward_name
+

@@ -927,7 +927,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'Download',
+											'action' : 'Download Full Data',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -949,7 +949,7 @@ class PeopleViewTest(TestCase):
 		response = self.client.post(
 									reverse('listpeople'),
 									data = { 
-											'action' : 'Download',
+											'action' : 'Download Full Data',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
 											'ABSS_type' : '0',
@@ -964,6 +964,29 @@ class PeopleViewTest(TestCase):
 		# check that we got the error message
 		self.assertContains(response,'Test_Role_1_0,Test_Role_1_0,,test@test.com,,,01/01/2000,Gender,False,,test role 1,')
 		self.assertContains(response,'Test_Role_1_49,Test_Role_1_49,,test@test.com,,,01/01/2000,Gender,False,,test role 1,')
+
+	def test_download_limited(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download',
+											'names' : 'Test_Role_1',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the error message
+		self.assertContains(response,'Test_Role_1_0,Test_Role_1_0,,test@test.com,,,,')
+		self.assertContains(response,'Test_Role_1_49,Test_Role_1_49,,test@test.com,,,,')
 
 	def test_search_by_first_name_with_non_matching_case(self):
 		# log the user in
@@ -11717,6 +11740,103 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
 		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+
+	def test_download_people_via_search(self):
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC')
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0')
+		# get the second test person
+		person = Person.objects.get(first_name='test_adult_1')
+		# set the values
+		person.other_names = 'test other_names'
+		person.home_phone = '123456'
+		person.mobile_phone = '789012'
+		person.pregnant = True
+		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
+		person.house_name_or_number = '123'
+		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		person.emergency_contact_details = 'test ecd'
+		person.street = Street.objects.get(name='ABC streets 10')
+		# save the record
+		person.save()
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit a Download request to the people search page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download Full Data',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'include_people' : 'all',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+
+	def test_download_people_limited_via_search(self):
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC')
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0')
+		# get the second test person
+		person = Person.objects.get(first_name='test_adult_1')
+		# set the values
+		person.other_names = 'test other_names'
+		person.home_phone = '123456'
+		person.mobile_phone = '789012'
+		person.pregnant = True
+		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
+		person.house_name_or_number = '123'
+		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		person.emergency_contact_details = 'test ecd'
+		person.street = Street.objects.get(name='ABC streets 10')
+		# save the record
+		person.save()
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit a Download request to the people search page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'include_people' : 'all',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,123 ABC streets 10 ABC0,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,,')
 
 class DownloadEventsDataViewTest(TestCase):
 	@classmethod

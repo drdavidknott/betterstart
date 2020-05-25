@@ -23,7 +23,6 @@
 	 	</div>
 	 </div>
 
-<!--
 	<div class="row">
  		<div class='col-xs-1 text-right'>
  			<a href="{% url 'change_password' %}">
@@ -38,7 +37,6 @@
 	 		</div>
 		</div>
 	</div>
--->
 
 	<div class="row">
  		<div class='col-xs-1 text-right'>
@@ -59,24 +57,24 @@
 		<div class="col-xs-12">
 				<hr>
 	 	</div>
-	 </div>
-
-	 <div class="row">
-		<div class="col-xs-12">
- 			<h3>
- 				<span class="glyphicon glyphicon-wrench"></span>
- 				Data and Settings for Site
- 			</h3>
-	 	</div>
-	 </div>
-
-	 <div class="row">
-		<div class="col-xs-12">
- 			<hr>
-	 	</div>
-	 </div>
+	</div>
 
 	{% if request.user.is_superuser %}
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<h3>
+	 				<span class="glyphicon glyphicon-wrench"></span>
+	 				Data and Settings for Site
+	 			</h3>
+		 	</div>
+		 </div>
+
+		 <div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		 </div>
 
 		 <div class="row">
 	 		<div class='col-xs-1 text-right'>

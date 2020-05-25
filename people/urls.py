@@ -66,4 +66,5 @@ urlpatterns = [
     url(r'^display_qrcode$', views.display_qrcode, name='display_qrcode'),
     url(r'^display_qrcode_image$', views.display_qrcode_image, name='display_qrcode_image'),
     url(r'^login_data$', views.login_data, name='login_data'),
+    url(r'^change_password$', views.change_password, name='change_password'),
 ]

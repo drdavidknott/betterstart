@@ -11,6 +11,8 @@ from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolde
 from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
 from .utilities import build_choices
+from zxcvbn_password.fields import PasswordField, PasswordConfirmationField
+from django.contrib.auth.hashers import check_password
 
 def role_type_choices(role_types):
 	# set the choice field for role types
@@ -86,6 +88,63 @@ class LoginForm(forms.Form):
 											Column(Submit('submit', 'Login'),css_class='col-xs-12 mb-0')
 											)
 										)
+
+class ChangePasswordForm(forms.Form):
+	# Define the fields that we need in the form.
+	old_password = forms.CharField(
+										label="Password",
+										max_length=30,
+										widget=forms.PasswordInput(attrs={'class' : 'form-control'}))
+	new_password = PasswordField()
+	new_password_confirmation = PasswordConfirmationField(confirm_with='new_password',)
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull the user out of the parameters
+		self.user = kwargs.pop('user') if 'user' in kwargs.keys() else False
+		# call the built in constructor
+		super(ChangePasswordForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		self.helper.attrs['autocomplete'] = 'off'
+		# and define the layout, depending on whether the site required otp or not
+		self.helper.layout = Layout(
+									Row(
+										Column('old_password',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column(
+												'new_password',
+												css_class='form-group col-xs-12 mbt-0',
+												autocomplete='off',
+												),	
+										),
+									Row(
+										Column('new_password_confirmation',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Submit'),css_class='col-xs-12 mb-0')
+										)
+									)
+
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(ChangePasswordForm, self).is_valid()
+		# now perform the additional checks
+		# check that the old password is correct
+		if not check_password(
+								password=self.cleaned_data['old_password'],
+								encoded=self.user.password
+								):
+			self.add_error('old_password','Password is not correct.')
+			valid = False
+		# check that the password and the confirmation match
+		if valid:
+			if self.cleaned_data['new_password'] != self.cleaned_data['new_password_confirmation']:
+				self.add_error('new_password_confirmation','Passwords do not match.')
+				valid = False
+		# return the result
+		return valid
 
 class UploadDataForm(forms.Form):
 	# Define the choices for file type

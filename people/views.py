@@ -15,7 +15,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
-					VenueForm, VenueSearchForm
+					VenueForm, VenueSearchForm, ChangePasswordForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
@@ -42,6 +42,7 @@ from django_otp.plugins.otp_static.models import StaticDevice
 from django.utils import timezone
 import qrcode
 import qrcode.image.svg
+from django.contrib.auth.hashers import check_password
 
 @login_required
 def index(request):
@@ -3638,5 +3639,30 @@ def login_data(request,):
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))
 
-
+@login_required
+def change_password(request):
+	# this view is used to change a user's password
+	# initialise variables
+	template = loader.get_template('people/change_password.html')
+	user = request.user
+	# process the post
+	if request.method == 'POST':
+		changepasswordform = ChangePasswordForm(request.POST,user=user)
+		# validate the form
+		if changepasswordform.is_valid():
+			# update the password for the user
+			user.set_password(changepasswordform.cleaned_data['new_password'])
+			user.save()
+			# and redirect to the home page
+			return redirect('index')
+	# otherwsie create a fresh form
+	else:
+		changepasswordform = ChangePasswordForm(user=user)
+	# set the context from the person based on person id
+	context = build_context({
+				'changepasswordform' : changepasswordform,
+				'user' : user
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
 

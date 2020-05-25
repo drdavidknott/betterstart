@@ -454,6 +454,88 @@ class DisplayQRCodeViewTest(TestCase):
 		# check the results
 		self.assertEqual(TOTPDevice.objects.all().count(),2)
 
+class ChangePasswordViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = User.objects.create_user(
+										username='test@test.com',
+										password='testword'
+										)
+
+	def test_incorrect_old_password(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('change_password'),
+									data = {
+											'old_password' : 'invalid',
+											'new_password' : 'test',
+											'new_password_confirmation' : 'test'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'Password is not correct')
+
+	def test_weak_new_password(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('change_password'),
+									data = {
+											'old_password' : 'testword',
+											'new_password' : 'test',
+											'new_password_confirmation' : 'test'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'short')
+		self.assertContains(response,'common')
+
+	def test_passwords_dont_match(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('change_password'),
+									data = {
+											'old_password' : 'testword',
+											'new_password' : '8aPquVd@4kDmXAK',
+											'new_password_confirmation' : 'doesnotmatch'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'Passwords do not match')
+
+	def test_password_change(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('change_password'),
+									data = {
+											'old_password' : 'testword',
+											'new_password' : '8aPquVd@4kDmXAK',
+											'new_password_confirmation' : '8aPquVd@4kDmXAK'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# log the user in
+		self.client.login(username='test@test.com', password='8aPquVd@4kDmXAK')
+		# attempt to get the index page
+		response = self.client.get(reverse('index'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
 class PeopleViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

@@ -6,6 +6,7 @@ from django.db.models import Sum
 from .utilities import get_period_dates
 import collections
 import random, string
+from django.contrib.auth.models import User
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -1459,11 +1460,24 @@ class Site(DataAccessMixin,models.Model):
 	dob_offset = models.IntegerField(default=0)
 	dashboard = models.ForeignKey(Dashboard, null=True, blank=True, on_delete=models.SET_NULL)
 	otp_required = models.BooleanField(default=False)
+	otp_practice = models.BooleanField(default=False)
 	invitations_active = models.BooleanField(default=False)
 	invitation_introduction = models.TextField(max_length=25000, default='', blank=True)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
+
+# Profile model: keeps track of additional information about the user
+class Profile(DataAccessMixin,models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE)
+	successful_logins = models.IntegerField(default=0)
+	unsuccessful_logins = models.IntegerField(default=0)
+	successful_otp_logins = models.IntegerField(default=0)
+	unsuccessful_otp_logins = models.IntegerField(default=0)
+
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.user.username
 
 # Terms_And_Conditions model: used to store terms and conditions, bounded by dates
 class Terms_And_Conditions(DataAccessMixin,models.Model):

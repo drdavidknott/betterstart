@@ -59,7 +59,7 @@ class LoginForm(forms.Form):
 		self.helper = FormHelper()
 		# and define the layout, depending on whether the site required otp or not
 		site = Site.objects.all().first()
-		if site and site.otp_required:
+		if site and (site.otp_required or site.otp_practice):
 			self.helper.layout = Layout(
 										Row(
 											Column('email_address',css_class='form-group col-xs-12 mbt-0'),	

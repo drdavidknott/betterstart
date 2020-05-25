@@ -1,0 +1,108 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-wrench"></span>
+ 				Settings for {{ request.user.username }}
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
+
+<!--
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'change_password' %}">
+ 				<span class="glyphicon glyphicon-wrench"></span>
+ 			</a>
+ 		</div>
+ 		<div class='col-xs-11'>
+			<div class="row">
+	 			<a href="{% url 'change_password' %}">
+ 					Change Password
+ 				</a>
+	 		</div>
+		</div>
+	</div>
+-->
+
+	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'display_qrcode' %}">
+ 				<span class="glyphicon glyphicon-wrench"></span>
+ 			</a>
+ 		</div>
+ 		<div class='col-xs-11'>
+			<div class="row">
+	 			<a href="{% url 'display_qrcode' %}">
+ 					Display QRCode
+ 				</a>
+	 		</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-wrench"></span>
+ 				Data and Settings for Site
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
+
+	{% if request.user.is_superuser %}
+
+		 <div class="row">
+	 		<div class='col-xs-1 text-right'>
+	 			<a href="{% url 'login_data' %}">
+	 				<span class="glyphicon glyphicon-wrench"></span>
+	 			</a>
+	 		</div>
+	 		<div class='col-xs-11'>
+				<div class="row">
+		 			<a href="{% url 'login_data' %}">
+	 					Login Data
+	 				</a>
+		 		</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+					<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+
+{% endblock %}
+

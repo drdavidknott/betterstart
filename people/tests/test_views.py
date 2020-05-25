@@ -5,7 +5,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
-							Terms_And_Conditions
+							Terms_And_Conditions, Profile
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -250,6 +250,8 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		self.assertEqual(Profile.objects.all().exists(),False)
 
 	def test_login_invalid_password_no_otp(self):
 		# attempt to get the event page
@@ -263,6 +265,12 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,1)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
 
 	def test_login_success_no_otp(self):
 		# attempt to get the event page
@@ -276,6 +284,12 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertRedirects(response, '/')
 		self.assertEqual(response.status_code, 302)
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,0)
+		self.assertEqual(profile.successful_logins,1)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
 
 	def test_login_invalid_user_name_with_otp(self):
 		Site.objects.create(
@@ -294,6 +308,8 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		self.assertEqual(Profile.objects.all().exists(),False)
 
 	def test_login_invalid_password_with_otp(self):
 		Site.objects.create(
@@ -312,6 +328,12 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,1)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
 
 	def test_login_invalid_otp(self):
 		Site.objects.create(
@@ -330,6 +352,12 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Invalid token')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,1)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,1)
 
 	def test_login_valid_totp(self):
 		Site.objects.create(
@@ -350,6 +378,12 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertRedirects(response, '/')
 		self.assertEqual(response.status_code, 302)
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,0)
+		self.assertEqual(profile.successful_logins,1)
+		self.assertEqual(profile.successful_otp_logins,1)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
 
 	def test_login_emergency_otp(self):
 		Site.objects.create(
@@ -368,6 +402,57 @@ class LoginViewTest(TestCase):
 		# check the response
 		self.assertRedirects(response, '/')
 		self.assertEqual(response.status_code, 302)
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,0)
+		self.assertEqual(profile.successful_logins,1)
+		self.assertEqual(profile.successful_otp_logins,1)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
+
+class DisplayQRCodeViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = User.objects.create_user(
+										username='test@test.com',
+										password='testword'
+										)
+		# set up a TOTP device
+		totp_device = TOTPDevice.objects.create(
+													user=user,
+													name='test_totp'
+													)
+		# and another user without a device
+		user = User.objects.create_user(
+										username='test@test.com2',
+										password='testword'
+										)
+
+	def test_display_qrcode_existing_device(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('display_qrcode'),
+									data = {},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertEqual(TOTPDevice.objects.all().count(),1)
+
+	def test_display_qrcode_no_device(self):
+		# log the user in
+		self.client.login(username='test@test.com2', password='testword')
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('display_qrcode'),
+									data = {},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertEqual(TOTPDevice.objects.all().count(),2)
 
 class PeopleViewTest(TestCase):
 	@classmethod

@@ -1,0 +1,44 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-qrcode"></span>
+ 				QRCode for {{ request.user.username }}
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+ 		<div class='col-xs-12'>
+			To set up your phone, follow these steps:
+			<ol>
+				<li>Download Google Authenticator from the Apple Store or Play Store.</li>
+				<li>Press the + symbol.</li>
+				<li>Select the option to scan QR code.</li>
+				<li>Scan this code:</li>
+				<img src='{{ qrcode_image_url }}'>
+				<li>Next time you login, enter the number from Google Authenticator in the Token field.</li>
+			</ol>
+		</div>
+	</div>
+
+</div>
+
+
+{% endblock %}
+

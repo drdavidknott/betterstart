@@ -61,4 +61,9 @@ urlpatterns = [
     url(r'^activities/(?P<person_id>[0-9]+)$', views.activities, name='activities'),
     url(r'^dashboard/(?P<name>[\w]+)$', views.dashboard, name='dashboard'),
     url(r'^dashboard$', views.dashboard, name='dashboard'),
+    url(r'^settings$', views.settings, name='settings'),
+    url(r'^change_password$', views.change_password, name='change_password'),
+    url(r'^display_qrcode$', views.display_qrcode, name='display_qrcode'),
+    url(r'^display_qrcode_image$', views.display_qrcode_image, name='display_qrcode_image'),
+    url(r'^login_data$', views.login_data, name='login_data'),
 ]

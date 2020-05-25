@@ -7,7 +7,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Filter_Spec, \
 					Panel_Column, Panel_Column_In_Panel, Panel, \
 					Column, Panel_In_Column, Dashboard, Column_In_Dashboard, Venue_Type, Venue, \
-					Invitation, Invitation_Step, Invitation_Step_Type, Terms_And_Conditions
+					Invitation, Invitation_Step, Invitation_Step_Type, Terms_And_Conditions, Profile
 
 class PersonAdmin(admin.ModelAdmin):
     search_fields = ['first_name','last_name']
@@ -64,3 +64,4 @@ admin.site.register(Invitation)
 admin.site.register(Invitation_Step)
 admin.site.register(Invitation_Step_Type)
 admin.site.register(Terms_And_Conditions)
+admin.site.register(Profile)

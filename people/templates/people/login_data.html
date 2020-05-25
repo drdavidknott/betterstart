@@ -1,0 +1,74 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+ 		<div class="col-md-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-log-in"></span>
+	 			Login Data
+ 			<h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	{% if profiles %}
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped">
+					<thead>
+						<td></td>
+						<td align='center'>All Successful</td>
+						<td align='center'>All Unsuccesful</td>
+						<td align='center'>Successful OTP</td>
+						<td align='center'>Unsuccessful OTP</td>
+					</thead>
+					<tbody>
+				 		{% for profile in profiles %}
+			 				<tr>
+			 					<td>
+			 						{{ profile.user.username }}
+								</td>
+								<td align='center'>
+									{{ profile.successful_logins }}
+								</td>
+								<td align='center'>
+									{{ profile.unsuccessful_logins }}
+								</td>
+								<td align='center'>
+									{{ profile.successful_otp_logins }}
+								</td>
+								<td align='center'>
+									{{ profile.unsuccessful_otp_logins }}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% else %}
+		<div class="row">
+			<div class="col-xs-12">
+	 			No profiles
+		 	</div>
+		</div>
+	{% endif %}
+
+ </div>
+
+
+ {% endblock %}

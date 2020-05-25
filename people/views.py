@@ -4,7 +4,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
-					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type
+					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile
 import os
 import csv
 import copy
@@ -40,6 +40,8 @@ import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
 from django.utils import timezone
+import qrcode
+import qrcode.image.svg
 
 @login_required
 def index(request):
@@ -549,6 +551,28 @@ def update_registration(registration, registered, apologies, participated, role_
 	registration.save()
 	# and return the record
 	return registration
+
+def get_device(user):
+	# get the device if the user has one, otherwise create a device
+	try:
+		device = TOTPDevice.objects.get(user=user)
+	except (TOTPDevice.DoesNotExist):
+		device = TOTPDevice.objects.create(
+											user=user,
+											name=user.username + ' device',
+											tolerance=6,
+											drift=2 
+											)
+	# return the device
+	return device
+
+def get_profile(user):
+	# get the profile if the user has one, otherwise create a profile
+	profile = Profile.try_to_get(user=user)
+	if not profile:
+		profile = Profile.objects.create(user=user)
+	# return the device
+	return profile
 
 # BUILD FUNCTIONS
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
@@ -1702,6 +1726,34 @@ def build_download_file(file_type,objects=None):
 	# return the result
 	return response
 
+def record_login(
+					user=False,
+					username=False,
+					success=False,
+					otp=False
+					):
+	# this function records a login attempt against a user profile
+	# if we've been passed a username, attempt to get the user, and return if there is no matching user
+	if username:
+		try:
+			user = User.objects.get(username=username)
+		except (User.DoesNotExist):
+			return
+	# get the profile
+	profile = get_profile(user)
+	# update the profile
+	if success:
+		profile.successful_logins += 1
+	else:
+		profile.unsuccessful_logins += 1
+	if otp:
+		if success:
+			profile.successful_otp_logins += 1
+		else:
+			profile.unsuccessful_otp_logins += 1
+	# save the record
+	profile.save()
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -1710,17 +1762,12 @@ def log_user_in(request):
 	successful_login = False
 	# check whether user is already logged in
 	if request.user.is_authenticated:
-		# the user is already logged in
 		successful_login = True
 	else:
 		# handle the login request
-		# get the template
 		login_template = loader.get_template('people/login.html')
-		# check whether this is a form submission
 		if request.method == 'POST':
-			# get the form from the request object
 			login_form = LoginForm(request.POST)
-			# check whether it has basic validity
 			if login_form.is_valid():
 				# attempt to authenticate the user
 				user = authenticate(
@@ -1732,19 +1779,26 @@ def log_user_in(request):
 				if user is not None:
 					# see whether we need an otp
 					site = Site.objects.all().first()
-					if site and site.otp_required:
+					if site and (
+									site.otp_required or 
+									(site.otp_practice and login_form.cleaned_data['token'])
+									):
 						# check the token
 						successful_login, message = verify_token(user,login_form.cleaned_data['token'])
 						if successful_login:
 							login(request,user)
+							record_login(user=user,success=True,otp=True)
 						else:
 							login_form.add_error(None,message)
+							record_login(user=user,success=False,otp=True)
 					else:
 						login(request,user)
 						successful_login = True
+						record_login(user=user,success=True,otp=False)
 				else:
 					# set an error for the login failure
 					login_form.add_error(None, 'Email address or password not recognised.')
+					record_login(username=login_form.cleaned_data['email_address'],success=False)
 		else:
 			# this is a first time submission, so create an empty form
 			login_form = LoginForm()
@@ -2666,8 +2720,6 @@ def venue(request, venue_id=0):
 	venue = Venue.try_to_get(pk=venue_id)
 	if not venue:
 		return make_banner(request, 'Venue does not exist.')
-	# get the additional data
-	# TODO: get events
 	# set the context
 	context = build_context({
 				'venue' : venue,
@@ -3525,5 +3577,66 @@ def dashboard(request,name=''):
 								})
 	# return the HttpResponse
 	return HttpResponse(index_template.render(context=context, request=request))
+
+@login_required
+def settings(request,):
+	# load the template
+	template = loader.get_template('people/settings.html')
+	# set the context
+	context = build_context({})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def change_password(request,):
+	# load the template
+	template = loader.get_template('people/change_password.html')
+	# set the context
+	context = build_context({})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def display_qrcode(request,):
+	# initialise variables
+	user = request.user
+	device = get_device(user)
+	# load the template
+	template = loader.get_template('people/display_qrcode.html')
+	# create a url for the qrcode image
+	qrcode_image_url = reverse('display_qrcode_image')
+	# set the context
+	context = build_context({
+								'device' : device,
+								'qrcode_image_url' : qrcode_image_url
+							})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def display_qrcode_image(request,):
+	# initialise variables
+	user = request.user
+	device = get_device(user)
+	# load the template
+	template = loader.get_template('people/display_qrcode.html')
+	# create the image and return it as a response
+	img = qrcode.make(device.config_url,image_factory=qrcode.image.svg.SvgImage)
+	response = HttpResponse(content_type='image/svg+xml')
+	img.save(response)
+	return response
+	
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def login_data(request,):
+	# load the template
+	template = loader.get_template('people/login_data.html')
+	# set the context
+	context = build_context({
+								'profiles' : Profile.objects.all().order_by('user__username'),
+							})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
 
 

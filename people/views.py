@@ -3741,9 +3741,10 @@ def reset_password(request,reset_code):
 			# update the password for the user and clear the reset variables
 			user = profile.user
 			user.set_password(form.cleaned_data['new_password'])
-			user.reset_code = 0
-			user.reset_timeout = None
 			user.save()
+			profile.reset_code = ''
+			profile.reset_timeout = None
+			profile.save()
 			# and flag success
 			reset = True
 	# otherwise create a fresh form

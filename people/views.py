@@ -1730,13 +1730,15 @@ def build_download_file(file_type,objects=None):
 	# return the result
 	return response
 
-def record_login(
+def auth_log(
 					user=False,
 					username=False,
 					success=False,
-					otp=False
+					otp=False,
+					reset_requested=False,
+					reset_successful=False,
 					):
-	# this function records a login attempt against a user profile
+	# this function records authentication stats
 	# if we've been passed a username, attempt to get the user, and return if there is no matching user
 	if username:
 		try:
@@ -1755,6 +1757,10 @@ def record_login(
 			profile.successful_otp_logins += 1
 		else:
 			profile.unsuccessful_otp_logins += 1
+	if reset_requested:
+		profile.requested_resets += 1
+	if reset_successful:
+		profile.successful_resets += 1
 	# save the record
 	profile.save()
 
@@ -1793,18 +1799,18 @@ def log_user_in(request):
 						successful_login, message = verify_token(user,login_form.cleaned_data['token'])
 						if successful_login:
 							login(request,user)
-							record_login(user=user,success=True,otp=True)
+							auth_log(user=user,success=True,otp=True)
 						else:
 							login_form.add_error(None,message)
-							record_login(user=user,success=False,otp=True)
+							auth_log(user=user,success=False,otp=True)
 					else:
 						login(request,user)
 						successful_login = True
-						record_login(user=user,success=True,otp=False)
+						auth_log(user=user,success=True,otp=False)
 				else:
 					# set an error for the login failure
 					login_form.add_error(None, 'Email address or password not recognised.')
-					record_login(username=login_form.cleaned_data['email_address'],success=False)
+					auth_log(username=login_form.cleaned_data['email_address'],success=False)
 		else:
 			# this is a first time submission, so create an empty form
 			login_form = LoginForm()
@@ -1859,6 +1865,8 @@ def forgot_password(request):
 							[email_address],
 							fail_silently=False
 							)
+				# log the request
+				auth_log(user=user,reset_requested=True)
 	# otherwise create a blank form
 	else:
 		form = ForgotPasswordForm()
@@ -3747,6 +3755,7 @@ def reset_password(request,reset_code):
 			profile.save()
 			# and flag success
 			reset = True
+			auth_log(user=user,reset_successful=True)
 	# otherwise create a fresh form
 	else:
 		form = ResetForgottenPasswordForm(reset_code=reset_code)

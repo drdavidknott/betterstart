@@ -35,6 +35,8 @@
 						<td align='center'>All Unsuccesful</td>
 						<td align='center'>Successful OTP</td>
 						<td align='center'>Unsuccessful OTP</td>
+						<td align='center'>Requested Resets</td>
+						<td align='center'>Successful Resets</td>
 					</thead>
 					<tbody>
 				 		{% for profile in profiles %}
@@ -53,6 +55,12 @@
 								</td>
 								<td align='center'>
 									{{ profile.unsuccessful_otp_logins }}
+								</td>
+								<td align='center'>
+									{{ profile.requested_resets }}
+								</td>
+								<td align='center'>
+									{{ profile.successful_resets }}
 								</td>
 							</tr>
 						{% endfor %}

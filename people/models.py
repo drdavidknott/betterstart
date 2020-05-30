@@ -1481,7 +1481,7 @@ class Profile(DataAccessMixin,models.Model):
 	unsuccessful_otp_logins = models.IntegerField(default=0)
 	requested_resets = models.IntegerField(default=0)
 	successful_resets = models.IntegerField(default=0)
-	reset_code = models.CharField(max_length=16,default=0)
+	reset_code = models.CharField(max_length=16,default='',null=True,blank=True)
 	reset_timeout = models.DateTimeField(null=True, blank=True)
 
 	# define the function that will return the SITE name as the object reference

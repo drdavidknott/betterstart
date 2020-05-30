@@ -15,7 +15,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					EditRegistrationForm, LoginForm, EventSearchForm, EventForm, PersonNameSearchForm, \
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
-					VenueForm, VenueSearchForm, ChangePasswordForm
+					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
+					ResetForgottenPasswordForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
@@ -43,6 +44,8 @@ from django.utils import timezone
 import qrcode
 import qrcode.image.svg
 from django.contrib.auth.hashers import check_password
+from django.core.mail import send_mail
+from django.utils import timezone
 
 @login_required
 def index(request):
@@ -1759,8 +1762,10 @@ def record_login(
 # A set of functions which implement the functionality of the site and serve pages.
 
 def log_user_in(request):
-	# set a flag to indicate whether this is a successful login
+	# initialise variables
 	successful_login = False
+	site = Site.objects.all().first()
+	password_reset_allowed = site.password_reset_allowed if site else False
 	# check whether user is already logged in
 	if request.user.is_authenticated:
 		successful_login = True
@@ -1810,9 +1815,61 @@ def log_user_in(request):
 		# redirect to the home page
 		return redirect('index')
 	# otherwsise, set the context and output a form
-	context = build_context({'login_form' : login_form})
+	context = build_context({
+								'login_form' : login_form,
+								'password_reset_allowed' : password_reset_allowed,
+								})
 	# set the output
 	return HttpResponse(login_template.render(context, request))
+
+def forgot_password(request):
+	# initialise variables
+	request_submitted = False
+	site = Site.objects.all().first()
+	password_reset_allowed = site.password_reset_allowed if site else False
+	# if the user is already logged in, redirect to the index page
+	if request.user.is_authenticated or not password_reset_allowed:
+		return redirect('index')
+	# handle the login request
+	if request.method == 'POST':
+		request_submitted = True
+		form = ForgotPasswordForm(request.POST)
+		if form.is_valid():
+			# get the form values
+			email_address = form.cleaned_data['email_address']
+			# determine whether the email address is valid
+			try:
+				user = User.objects.get(username=email_address)
+			except (User.DoesNotExist):
+				user = False
+			# if we have a valid user, generate the code and the email
+			if user:
+				# generate and store the reset code
+				profile = get_profile(user)
+				profile.reset_code = Profile.generate_reset_code()
+				profile.reset_timeout = Profile.generate_reset_timeout()
+				profile.save()
+				# generate the url and mail text, then send the mail
+				reset_url = request.build_absolute_uri(reverse('reset_password',args=[profile.reset_code]))
+				email_text = site.password_reset_email_text + '\r' + reset_url
+				send_mail(
+							site.password_reset_email_title,
+							email_text,
+							site.password_reset_email_from,
+							[email_address],
+							fail_silently=False
+							)
+	# otherwise create a blank form
+	else:
+		form = ForgotPasswordForm()
+	# otherwsise, set the context and output a form
+	context = build_context({
+								'forgotpasswordform' : form,
+								'request_submitted' : request_submitted,
+								})
+	# set the output
+	template = loader.get_template('people/forgot_password.html')
+	return HttpResponse(template.render(context, request))
 
 @login_required
 def log_user_out(request):
@@ -3664,5 +3721,40 @@ def change_password(request):
 				'user' : user
 				})
 	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+def reset_password(request,reset_code):
+	# this view is used to reset a user's password via a link sent by mail
+	# initialise variables
+	reset = False
+	# check that the code is valid and has not timed out
+	profile = Profile.try_to_get(reset_code=reset_code)
+	if not profile:
+		return make_banner(request, 'The link is not valid',public=True)
+	if profile.reset_timeout and timezone.now() > profile.reset_timeout:
+		return make_banner(request, 'The link is no longer valid',public=True)
+	# process the post
+	if request.method == 'POST':
+		form = ResetForgottenPasswordForm(request.POST,reset_code=reset_code)
+		# validate the form
+		if form.is_valid():
+			# update the password for the user and clear the reset variables
+			user = profile.user
+			user.set_password(form.cleaned_data['new_password'])
+			user.reset_code = 0
+			user.reset_timeout = None
+			user.save()
+			# and flag success
+			reset = True
+	# otherwise create a fresh form
+	else:
+		form = ResetForgottenPasswordForm(reset_code=reset_code)
+	# set the context from the person based on person id
+	context = build_context({
+				'resetpasswordform' : form,
+				'reset' : reset,
+				})
+	# build and return the response
+	template = loader.get_template('people/reset_password.html')
 	return HttpResponse(template.render(context=context, request=request))
 

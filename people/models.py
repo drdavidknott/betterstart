@@ -1463,6 +1463,11 @@ class Site(DataAccessMixin,models.Model):
 	otp_practice = models.BooleanField(default=False)
 	invitations_active = models.BooleanField(default=False)
 	invitation_introduction = models.TextField(max_length=25000, default='', blank=True)
+	password_reset_allowed = models.BooleanField(default=False)
+	password_reset_email_from = models.CharField(max_length=100, default='', blank=True)
+	password_reset_email_title = models.CharField(max_length=100, default='', blank=True)
+	password_reset_email_text = models.TextField(max_length=1000, default='', blank=True)
+	password_reset_timeout = models.IntegerField(default=15)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
@@ -1474,10 +1479,31 @@ class Profile(DataAccessMixin,models.Model):
 	unsuccessful_logins = models.IntegerField(default=0)
 	successful_otp_logins = models.IntegerField(default=0)
 	unsuccessful_otp_logins = models.IntegerField(default=0)
+	requested_resets = models.IntegerField(default=0)
+	successful_resets = models.IntegerField(default=0)
+	reset_code = models.CharField(max_length=16,default=0)
+	reset_timeout = models.DateTimeField(null=True, blank=True)
 
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.user.username
+
+	# class method to generate a code
+	@classmethod
+	def generate_reset_code(cls,*args,**kwargs):
+		# return an randomly generated 16 character string of letters and digits
+		return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+	# class method to generate a code
+	@classmethod
+	def generate_reset_timeout(cls,*args,**kwargs):
+		# get the site and the timeout value
+		site = Site.objects.first()
+		site_reset_timeout = site.password_reset_timeout if site else False
+		# generate the value
+		reset_timeout = datetime.now() + timedelta(minutes=site_reset_timeout) if site_reset_timeout else None
+		# return the result
+		return reset_timeout
 
 # Terms_And_Conditions model: used to store terms and conditions, bounded by dates
 class Terms_And_Conditions(DataAccessMixin,models.Model):

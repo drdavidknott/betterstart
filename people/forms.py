@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site
+							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site, Profile
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -137,6 +137,87 @@ class ChangePasswordForm(forms.Form):
 								encoded=self.user.password
 								):
 			self.add_error('old_password','Password is not correct.')
+			valid = False
+		# check that the password and the confirmation match
+		if valid:
+			if self.cleaned_data['new_password'] != self.cleaned_data['new_password_confirmation']:
+				self.add_error('new_password_confirmation','Passwords do not match.')
+				valid = False
+		# return the result
+		return valid
+
+class ForgotPasswordForm(forms.Form):
+	# Define the fields that we need in the form.
+	email_address = forms.EmailField(
+										label="Email address",
+										max_length=100,
+										widget=forms.EmailInput(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(ForgotPasswordForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout, depending on whether the site required otp or not
+		self.helper.layout = Layout(
+									Row(
+										Column('email_address',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Submit'),css_class='col-xs-12 mb-0')
+										)
+									)
+
+class ResetForgottenPasswordForm(forms.Form):
+	# Define the fields that we need in the form.
+	email_address = forms.EmailField(
+										label="Email address",
+										max_length=100,
+										widget=forms.EmailInput(attrs={'class' : 'form-control'}))
+	new_password = PasswordField()
+	new_password_confirmation = PasswordConfirmationField(confirm_with='new_password',)
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull the user out of the parameters
+		self.reset_code = kwargs.pop('reset_code')
+		# call the built in constructor
+		super(ResetForgottenPasswordForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		self.helper.attrs['autocomplete'] = 'off'
+		# and define the layout, depending on whether the site required otp or not
+		self.helper.layout = Layout(
+									Row(
+										Column('email_address',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column(
+												'new_password',
+												css_class='form-group col-xs-12 mbt-0',
+												autocomplete='off',
+												),	
+										),
+									Row(
+										Column('new_password_confirmation',css_class='form-group col-xs-12 mbt-0'),	
+										),
+									Row(
+										Column(Submit('submit', 'Submit'),css_class='col-xs-12 mb-0')
+										)
+									)
+
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(ResetForgottenPasswordForm, self).is_valid()
+		# now perform the additional checks
+		# check that the email address is correct
+		email_address = self.cleaned_data['email_address']
+		profile = Profile.try_to_get(
+										user__username=email_address,
+										reset_code=self.reset_code
+										)
+		if not profile:
+			self.add_error('email_address','Incorrect email address.')
 			valid = False
 		# check that the password and the confirmation match
 		if valid:

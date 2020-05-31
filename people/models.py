@@ -7,6 +7,7 @@ from .utilities import get_period_dates
 import collections
 import random, string
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -1501,7 +1502,7 @@ class Profile(DataAccessMixin,models.Model):
 		site = Site.objects.first()
 		site_reset_timeout = site.password_reset_timeout if site else False
 		# generate the value
-		reset_timeout = datetime.now() + timedelta(minutes=site_reset_timeout) if site_reset_timeout else None
+		reset_timeout = timezone.now() + timedelta(minutes=site_reset_timeout) if site_reset_timeout else None
 		# return the result
 		return reset_timeout
 

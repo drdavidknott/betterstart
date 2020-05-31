@@ -13,6 +13,7 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from django_otp.oath import totp
 from django.utils import timezone
+from django.core import mail
 
 def set_up_people_base_data():
 	# set up base data needed to do tests for people
@@ -535,6 +536,205 @@ class ChangePasswordViewTest(TestCase):
 		response = self.client.get(reverse('index'))
 		# check the response
 		self.assertEqual(response.status_code, 200)
+
+class ForgotPasswordViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = User.objects.create_user(
+										username='test@test.com',
+										password='testword'
+										)
+		# set up a site
+		site = Site.objects.create(
+									name='Test Site',
+									password_reset_allowed=True,
+									password_reset_email_from='from@test.com',
+									password_reset_email_title='Test Title',
+									password_reset_email_text='test email text',
+									password_reset_timeout=15
+									)
+
+	def test_already_authenticated(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the page
+		response = self.client.get(
+									reverse('forgot_password'),
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+
+	def test_reset_not_allowed(self):
+		# set the not allowed flag on the site
+		site = Site.objects.get(name='Test Site')
+		site.password_reset_allowed=False
+		site.save()
+		# attempt to get the page
+		response = self.client.get(
+									reverse('forgot_password'),
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+
+	def test_invalid_email_address(self):
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('forgot_password'),
+									data = {
+											'email_address' : 'invalid@invalid.com',
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that no mail was sent out
+		self.assertEqual(len(mail.outbox), 0)
+
+	def test_forgot_password(self):
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('forgot_password'),
+									data = {
+											'email_address' : 'test@test.com',
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that no mail was sent out
+		self.assertEqual(len(mail.outbox),1)
+		self.assertEqual(mail.outbox[0].subject,'Test Title')
+		self.assertEqual(mail.outbox[0].from_email,'from@test.com')
+		self.assertEqual(mail.outbox[0].to,['test@test.com'])
+		self.assertEqual(mail.outbox[0].body[:15],'test email text')
+
+class ResetPasswordViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = User.objects.create_user(
+										username='test@test.com',
+										password='testword'
+										)
+		# set up a profile
+		profile = Profile.objects.create(
+											user=user,
+											reset_code='123456',
+											reset_timeout=timezone.now() + datetime.timedelta(minutes=15),
+											)
+		# set up a site
+		site = Site.objects.create(
+									name='Test Site',
+									password_reset_allowed=True,
+									password_reset_email_from='from@test.com',
+									password_reset_email_title='Test Title',
+									password_reset_email_text='test email text',
+									password_reset_timeout=15
+									)
+
+	def test_incorrect_code(self):
+		# attempt to get the qrcode page
+		response = self.client.get('/reset_password/456789')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'The link is not valid')
+
+	def test_timeout(self):
+		# set an expired timeout
+		profile = Profile.objects.first()
+		profile.reset_timeout = timezone.now() - datetime.timedelta(minutes=60)
+		profile.save()
+		# attempt to get the page
+		response = self.client.get('/reset_password/123456')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'The link is no longer valid')
+
+	def test_weak_new_password(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the page
+		response = self.client.post(
+									reverse('reset_password',args=['123456']),
+									data = {
+											'email_address' : 'test@test.com',
+											'new_password' : 'test',
+											'new_password_confirmation' : 'test'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'short')
+		self.assertContains(response,'common')
+
+	def test_passwords_dont_match(self):
+		# log the user in
+		self.client.login(username='test@test.com', password='testword')
+		# attempt to get the page
+		response = self.client.post(
+									reverse('reset_password',args=['123456']),
+									data = {
+											'email_address' : 'test@test.com',
+											'new_password' : '8aPquVd@4kDmXAK',
+											'new_password_confirmation' : 'test'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the results
+		self.assertContains(response,'Passwords do not match')
+
+	def test_password_change(self):
+		# attempt to get the page
+		response = self.client.post(
+									reverse('reset_password',args=['123456']),
+									data = {
+											'email_address' : 'test@test.com',
+											'new_password' : '8aPquVd@4kDmXAK',
+											'new_password_confirmation' : '8aPquVd@4kDmXAK'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# log the user in
+		self.client.login(username='test@test.com', password='8aPquVd@4kDmXAK')
+		# attempt to get the index page
+		response = self.client.get(reverse('index'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that the profile has been updated
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.reset_code,'')
+		self.assertEqual(profile.reset_timeout,None)
+
+	def test_password_change_no_reset_timeout(self):
+		# remove the reset timeout from the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		profile.reset_timeout = None
+		profile.save()
+		# attempt to get the page
+		response = self.client.post(
+									reverse('reset_password',args=['123456']),
+									data = {
+											'email_address' : 'test@test.com',
+											'new_password' : '8aPquVd@4kDmXAK',
+											'new_password_confirmation' : '8aPquVd@4kDmXAK'
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# log the user in
+		self.client.login(username='test@test.com', password='8aPquVd@4kDmXAK')
+		# attempt to get the index page
+		response = self.client.get(reverse('index'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that the profile has been updated
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.reset_code,'')
+		self.assertEqual(profile.reset_timeout,None)		
 
 class PeopleViewTest(TestCase):
 	@classmethod

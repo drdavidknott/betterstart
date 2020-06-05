@@ -1,7 +1,7 @@
 asgiref==3.2.3
 certifi==2018.11.29
 cycler==0.10.0
-Django==3.0.3
+Django==3.0.7
 django-crispy-forms==1.8.0
 django-otp==0.8.1
 django-zxcvbn-password==2.1.0

@@ -8,6 +8,9 @@ import collections
 import random, string
 from django.contrib.auth.models import User
 from django.utils import timezone
+import pygal
+import calendar
+from dateutil.relativedelta import relativedelta
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -952,6 +955,190 @@ class Filter_Spec(DataAccessMixin,models.Model):
 		verbose_name_plural = 'filter specs'
 		ordering = ['term']
 
+# Panel model: used to define a dashboard panel
+class Chart(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	chart_type = models.CharField(
+									max_length=50,
+									choices = [
+												('pie','Pie Chart'),
+												('bar','Bar Chart'),
+												('month_bar','Bar Chart by Month')
+												],
+									default='',
+									blank=True
+									)
+	title = models.CharField(max_length=50)
+	model = models.CharField(max_length=50)
+	label_field = models.CharField(max_length=50, blank=True)
+	sort_field = models.CharField(max_length=50, blank=True)
+	count_field = models.CharField(max_length=50, blank=True)
+	date_field = models.CharField(max_length=50, blank=True)
+	filters = models.ManyToManyField(Filter_Spec, blank=True)
+	months = models.IntegerField(choices=[(i, i) for i in range(0, 13)], blank=True, default=0)
+	
+	# define the function that will return the event name, date and time as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'charts'
+		ordering = ['name']
+
+	# build and return a set of rows
+	def get_chart(self):
+		# check validity
+		if not self.is_valid():
+			return False
+		# get the chart based on the chart type
+		if self.chart_type == 'pie':
+			chart = self.get_pie_chart()
+		elif self.chart_type == 'bar':
+			chart = self.get_bar_chart()
+		elif self.chart_type == 'month_bar':
+			chart = self.get_month_bar_chart()
+		# return the results
+		return chart
+
+	# check whether the chart is valid
+	def is_valid(self):
+		# check whether the model is a valid class
+		model = class_from_str(self.model)
+		if not model:
+			return False
+		# get one record, so that we can test attributes
+		test_object = model.objects.first()
+		# check the attributes
+		for attribute in (self.label_field, self.sort_field, self.date_field):
+			if attribute and not has_field(model,attribute):
+				return False
+		if self.chart_type in ('pie','bar') and (not self.label_field or not self.count_field):
+			return False
+		# we made it this far, so it must be valid
+		return True
+
+	def get_bar_chart(self):
+		# initialise variables
+		x_labels = []
+		data_values = []
+		# get the data
+		model = class_from_str(self.model)
+		for record in model.objects.all():
+			x_labels.append(getattr(record,self.label_field))
+		for record in model.objects.all():
+			queryset = self.get_queryset(record)
+			data_values.append(queryset.count())
+		# build the chart
+		bar_chart = pygal.Bar(show_legend=False)
+		bar_chart.title = self.title
+		bar_chart.x_labels = x_labels
+		bar_chart.add('', data_values)
+		# return the chart
+		return bar_chart.render_django_response()
+
+	def get_pie_chart(self):
+		# create the chart
+		pie_chart = pygal.Pie()
+		pie_chart.title = self.title
+		# build the pie wedges
+		model = class_from_str(self.model)
+		for record in model.objects.all():
+			# get the label and the count
+			label = getattr(record,self.label_field)
+			queryset = self.get_queryset(record)
+			count = queryset.count()
+			# set the pie wedge
+			pie_chart.add(label,count)
+		# return the chart
+		return pie_chart.render_django_response()
+
+	def get_month_bar_chart(self):
+		# initialise variables
+		x_labels = []
+		data_values = []
+		today = datetime.today()
+		this_year = today.year
+		this_month = today.month
+		model = class_from_str(self.model)
+		# build an array of months
+		months = []
+		start_month = (today - relativedelta(months=self.months)).month
+		for month in range(0,self.months):
+			this_month = (start_month + month)%12 + 1
+			months.append(this_month)
+		print(months)
+		# go through months, building labels and data
+		for month in months:
+			x_labels.append(calendar.month_name[month])
+			# set the right year, based on current month
+			if month > this_month:
+				query_year = this_year - 1
+			else:
+				query_year = this_year
+			# set the filter
+			filter_dict = {
+							self.date_field + '__month' : month,
+							self.date_field + '__year' : query_year
+							}
+			# get the queryset and add to the chart
+			queryset = model.objects.filter(**filter_dict)
+			data_values.append(queryset.count())
+		# build the chart
+		bar_chart = pygal.Bar(show_legend=False)
+		bar_chart.title = self.title
+		bar_chart.x_labels = x_labels
+		bar_chart.add('', data_values)
+		# return the chart
+		return bar_chart.render_django_response()
+
+	def get_queryset(self,record):
+		# get the queryset used to populate the panel
+		queryset = getattr(record,self.count_field).all()
+		# filter it if it needs filtering
+		queryset, valid = self.apply_filters(queryset,self.filters.all())
+		# and try to order it if it needs ordering
+		if valid and self.sort_field:
+				queryset = queryset.order_by(self.sort_field)
+		# return the results
+		return queryset
+
+	def apply_filters(self,queryset,filters,master_object=False):
+		# initialise the variables
+		filter_dict = {}
+		valid = True
+		# apply filters to a queryset and return the result
+		for filter in filters:
+			if filter.filter_type == 'boolean':
+				filter_dict[filter.term] = filter.boolean_value
+			elif filter.filter_type == 'string':
+				filter_dict[filter.term] = filter.string_value
+			elif filter.filter_type == 'period':
+				filter_dict = self.add_period_filters(filter, filter_dict)
+			elif filter.filter_type == 'object':
+				filter_dict[filter.term] = master_object
+		# try to apply the filters
+		try:
+			queryset = queryset.filter(**filter_dict)
+		except:
+			queryset = False
+			valid = False
+		# return the result
+		return queryset, valid
+
+	def add_period_filters(self,filter,filter_dict):
+		# get the start and end of the period, based on the type of period
+		period_start, period_end = get_period_dates(filter.period)
+		# set the terms based on the supplied term
+		start_term = filter.term + '__gte'
+		end_term = filter.term + '__lte'
+		# add the filters if we have values
+		if period_start:
+			filter_dict[start_term] = period_start
+		if period_end:
+			filter_dict[end_term] = period_end
+		# return the results
+		return filter_dict
+
 # Dashboard_Column model: used to define a dashboard column
 class Panel_Column(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
@@ -990,11 +1177,11 @@ class Panel(DataAccessMixin,models.Model):
 	row_url = models.CharField(max_length=50, default='', blank=True)
 	row_parameter_name = models.CharField(max_length=50, default='', blank=True)
 	row_parameter_prefix = models.CharField(max_length=50, default='', blank=True)
-	row_name_field = models.CharField(max_length=50)
+	row_name_field = models.CharField(max_length=50, default='', blank=True)
 	sort_field = models.CharField(max_length=50, default='', blank=True)
 	totals = models.BooleanField(default=False)
 	display_zeroes = models.BooleanField(default=False)
-	model = models.CharField(max_length=50)
+	model = models.CharField(max_length=50,default='',blank=True)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	sub_filters = models.ManyToManyField(Filter_Spec, blank=True, related_name='owning_panels')
 	columns = models.ManyToManyField(Panel_Column, through='Panel_Column_In_Panel')
@@ -1007,6 +1194,8 @@ class Panel(DataAccessMixin,models.Model):
 										default='',
 										blank=True
 										)
+	chart = models.ForeignKey(Chart, blank=True, null=True, on_delete=models.SET_NULL)
+
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name
@@ -1033,7 +1222,9 @@ class Panel(DataAccessMixin,models.Model):
 	# build the contents of the panel from the database
 	def build(self):
 		# build from a prebuilt panel if we have, otherwise check validity and build from data if valid
-		if self.prebuilt_panel:
+		if self.chart:
+			pass
+		elif self.prebuilt_panel:
 			self.build_from_prebuilt_panel()
 		elif self.is_valid():
 			self.model = class_from_str(self.model)

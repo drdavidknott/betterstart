@@ -4,7 +4,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
-					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile
+					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart
 import os
 import csv
 import copy
@@ -17,7 +17,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm
-from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, Chart
+from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -46,6 +46,7 @@ import qrcode.image.svg
 from django.contrib.auth.hashers import check_password
 from django.core.mail import send_mail
 from django.utils import timezone
+import io
 
 @login_required
 def index(request):
@@ -3589,37 +3590,6 @@ def activities(request,person_id=0):
 	return HttpResponse(activities_template.render(context=context, request=request))
 
 @login_required
-@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
-def alpha_graph_dashboard(request):
-	# create the list of charts
-	charts = []
-	# create the chart
-	roles_chart = Chart(
-						'Roles',
-						queryset = get_role_types_with_people_counts(),
-						label_attr = 'role_type_name',
-						size_attr = 'count'
-						)
-	# build the chart
-	figure, axes = plt.subplots()
-	# build a pie chart
-	axes.pie(roles_chart.sizes, labels=roles_chart.labels, autopct='%1.1f%%', startangle=90)
-	# make the axes equal
-	axes.axis('equal')
-	# set the title
-	plt.title(roles_chart.title)
-	# and append to the list of charts
-	charts.append(mpld3.fig_to_html(figure))
-	# get the template
-	dashboard_template = loader.get_template('people/dashboard.html')
-	# set the context
-	context = build_context({
-				'charts' : charts
-				})
-	# return the HttpResponse
-	return HttpResponse(dashboard_template.render(context=context, request=request))
-
-@login_required
 def dashboard(request,name=''):
 	# initialise the variables
 	dashboard = False
@@ -3767,4 +3737,11 @@ def reset_password(request,reset_code):
 	# build and return the response
 	template = loader.get_template('people/reset_password.html')
 	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def chart(request,chart):
+	# attempt to get the chart
+	chart = Chart.try_to_get(name=chart)
+	# return the chart
+	return chart.get_chart()
 

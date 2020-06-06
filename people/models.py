@@ -974,9 +974,20 @@ class Chart(DataAccessMixin,models.Model):
 	sort_field = models.CharField(max_length=50, blank=True)
 	count_field = models.CharField(max_length=50, blank=True)
 	date_field = models.CharField(max_length=50, blank=True)
+	sum_field = models.CharField(max_length=50, blank=True)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	months = models.IntegerField(choices=[(i, i) for i in range(0, 13)], blank=True, default=0)
-	
+	query_type = models.CharField(
+							max_length=50,
+							choices = [
+										('query from one','query from one'),
+										('query from many','query from many'),
+										],
+							default='query from one',
+							blank=True
+							)
+	many_model = models.CharField(max_length=50, blank=True)
+
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name
@@ -1002,17 +1013,25 @@ class Chart(DataAccessMixin,models.Model):
 
 	# check whether the chart is valid
 	def is_valid(self):
-		# check whether the model is a valid class
+		# check whether the models are valid classes
 		model = class_from_str(self.model)
 		if not model:
 			return False
+		if self.many_model:
+			many_model = class_from_str(self.many_model)
+			if not many_model:
+				return False
 		# get one record, so that we can test attributes
 		test_object = model.objects.first()
 		# check the attributes
 		for attribute in (self.label_field, self.sort_field, self.date_field):
 			if attribute and not has_field(model,attribute):
 				return False
-		if self.chart_type in ('pie','bar') and (not self.label_field or not self.count_field):
+		if (	
+				self.query_type == 'query_from_one'
+				and self.chart_type in ('pie','bar') 
+				and (not self.label_field or (not self.count_field and not self.sum_field))
+				):
 			return False
 		# we made it this far, so it must be valid
 		return True
@@ -1027,7 +1046,7 @@ class Chart(DataAccessMixin,models.Model):
 			x_labels.append(getattr(record,self.label_field))
 		for record in model.objects.all():
 			queryset = self.get_queryset(record)
-			data_values.append(queryset.count())
+			data_values.append(self.get_value(queryset))
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False)
 		bar_chart.title = self.title
@@ -1045,10 +1064,11 @@ class Chart(DataAccessMixin,models.Model):
 		for record in model.objects.all():
 			# get the label and the count
 			label = getattr(record,self.label_field)
+			# the way in which we do the count depends on the type of query
 			queryset = self.get_queryset(record)
-			count = queryset.count()
+			value = self.get_value(queryset)
 			# set the pie wedge
-			pie_chart.add(label,count)
+			pie_chart.add(label,value)
 		# return the chart
 		return pie_chart.render_django_response()
 
@@ -1082,7 +1102,7 @@ class Chart(DataAccessMixin,models.Model):
 							}
 			# get the queryset and add to the chart
 			queryset = model.objects.filter(**filter_dict)
-			data_values.append(queryset.count())
+			data_values.append(self.get_value(queryset))
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False)
 		bar_chart.title = self.title
@@ -1092,13 +1112,14 @@ class Chart(DataAccessMixin,models.Model):
 		return bar_chart.render_django_response()
 
 	def get_queryset(self,record):
-		# get the queryset used to populate the panel
-		queryset = getattr(record,self.count_field).all()
+		# get the queryset used to populate the chart
+		if self.query_type == 'query from one':
+			queryset = getattr(record,self.count_field).all()
+		else:
+			many_model = class_from_str(self.many_model)
+			queryset = many_model.objects.all()
 		# filter it if it needs filtering
-		queryset, valid = self.apply_filters(queryset,self.filters.all())
-		# and try to order it if it needs ordering
-		if valid and self.sort_field:
-				queryset = queryset.order_by(self.sort_field)
+		queryset, valid = self.apply_filters(queryset,self.filters.all(),master_object=record)
 		# return the results
 		return queryset
 
@@ -1138,6 +1159,15 @@ class Chart(DataAccessMixin,models.Model):
 			filter_dict[end_term] = period_end
 		# return the results
 		return filter_dict
+
+	def get_value(self,queryset):
+		# return a value depending on whether we are doing a count or a sum
+		if self.sum_field:
+			value = queryset.aggregate(sum_value=Sum(self.sum_field))['sum_value']
+		else:
+			value = queryset.count()
+		# return the value
+		return value
 
 # Dashboard_Column model: used to define a dashboard column
 class Panel_Column(DataAccessMixin,models.Model):

@@ -932,7 +932,8 @@ class Filter_Spec(DataAccessMixin,models.Model):
 											('this_project_year','this project year'),
 											('last_project_year','last project year'),
 											('this_calendar_year','this calendar year'),
-											('last_calendar_year','last_calendar_year')
+											('last_calendar_year','last_calendar_year'),
+											('rolling_quarter','rolling_quarter')
 											],
 								default='',
 								blank=True

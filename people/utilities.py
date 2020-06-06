@@ -4,6 +4,7 @@ from django.template import loader
 from django.shortcuts import render, HttpResponse, redirect
 import collections
 import datetime
+from dateutil.relativedelta import relativedelta
 
 def get_page_list(objects, page_length):
 	# take a list of objects and a page length, and build a list of pages
@@ -123,6 +124,7 @@ def get_period_dates(period):
 	last_month_end = this_month_start - datetime.timedelta(days=1)
 	last_month_start = last_month_end.replace(day=1)
 	this_project_year_start = today.replace(day=1,month=4)
+	rolling_quarter_start = (today - relativedelta(months=3))
 	# check if we have jumped into the future
 	if this_project_year_start > today:
 		this_project_year_start = this_project_year_start.replace(year=this_project_year_start.year-1)
@@ -147,6 +149,9 @@ def get_period_dates(period):
 	elif period == 'last_calendar_year':
 		period_start = last_calendar_year_start
 		period_end = last_calendar_year_end
+	elif period == 'rolling_quarter':
+		period_start = rolling_quarter_start
+		period_end = today
 	# return the results
 	return period_start, period_end
 

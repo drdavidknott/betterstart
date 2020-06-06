@@ -969,7 +969,8 @@ class Chart(DataAccessMixin,models.Model):
 									choices = [
 												('pie','Pie Chart'),
 												('bar','Bar Chart'),
-												('month_bar','Bar Chart by Month')
+												('month_bar','Bar Chart by Month'),
+												('stacked_bar','Stacked Bar Chart'),
 												],
 									default='',
 									blank=True
@@ -994,6 +995,10 @@ class Chart(DataAccessMixin,models.Model):
 							blank=True
 							)
 	many_model = models.CharField(max_length=50, blank=True)
+	stack_model = models.CharField(max_length=50, blank=True)
+	stack_label_field = models.CharField(max_length=50, blank=True)
+	stack_filter_term = models.CharField(max_length=50, blank=True)
+	x_label_rotation = models.IntegerField(default=0)
 
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
@@ -1015,6 +1020,8 @@ class Chart(DataAccessMixin,models.Model):
 			chart = self.get_bar_chart()
 		elif self.chart_type == 'month_bar':
 			chart = self.get_month_bar_chart()
+		elif self.chart_type == 'stacked_bar':
+			chart = self.get_stacked_bar_chart()
 		# return the results
 		return chart
 
@@ -1060,7 +1067,7 @@ class Chart(DataAccessMixin,models.Model):
 			queryset = self.get_queryset(record)
 			data_values.append(self.get_value(queryset))
 		# build the chart
-		bar_chart = pygal.Bar(show_legend=False)
+		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)
 		bar_chart.title = self.title
 		bar_chart.x_labels = x_labels
 		bar_chart.add('', data_values)
@@ -1119,10 +1126,46 @@ class Chart(DataAccessMixin,models.Model):
 			queryset = model.objects.filter(**filter_dict)
 			data_values.append(self.get_value(queryset))
 		# build the chart
-		bar_chart = pygal.Bar(show_legend=False)
+		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)
 		bar_chart.title = self.title
 		bar_chart.x_labels = x_labels
 		bar_chart.add('', data_values)
+		# return the chart
+		return bar_chart.render_django_response()
+
+	def get_stacked_bar_chart(self):
+		# initialise variables
+		x_labels = []
+		data_values = []
+		# initialise a list for each stack_record
+		stack_model = class_from_str(self.stack_model)
+		stack_records = stack_model.objects.all()
+		for stack_record in stack_records:
+			stack_record.values = []
+		# get the data
+		model = class_from_str(self.model)
+		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
+		# create the chart
+		bar_chart = pygal.StackedBar(x_label_rotation=self.x_label_rotation)
+		bar_chart.title = self.title
+		# build up the data for the chart
+		for record in records:
+			# get the label, converting methods to values if necessary
+			label = getattr(record,self.label_field)
+			if ismethod(label):
+				label = label()
+			x_labels.append(label)
+			# get the queryset
+			queryset = self.get_queryset(record)
+			# go through the stack entries and set the values based on a filter of the queryset
+			for stack_record in stack_records:
+				filter_dict = { self.stack_filter_term : stack_record }
+				stack_record.values.append(queryset.filter(**filter_dict).count())
+		# build the chart
+		bar_chart.x_labels = x_labels
+		for stack_record in stack_records:
+			if not all([ value == 0 for value in stack_record.values ]):
+				bar_chart.add(getattr(stack_record,self.stack_label_field),stack_record.values)
 		# return the chart
 		return bar_chart.render_django_response()
 

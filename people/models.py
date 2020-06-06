@@ -11,6 +11,7 @@ from django.utils import timezone
 import pygal
 import calendar
 from dateutil.relativedelta import relativedelta
+from inspect import ismethod
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -853,6 +854,10 @@ class Event_Registration(DataAccessMixin,models.Model):
 		desc = add_description(desc=desc,value=self.apologies,text='apologies sent')
 		# now return the result
 		return desc
+	# define a function to return the duration of the event in hours
+	def hours(self):
+		# return an exact number of hours
+		return self.event.duration().seconds // 3600
 
 	# set the name to be used in the admin console
 	class Meta:
@@ -976,6 +981,7 @@ class Chart(DataAccessMixin,models.Model):
 	count_field = models.CharField(max_length=50, blank=True)
 	date_field = models.CharField(max_length=50, blank=True)
 	sum_field = models.CharField(max_length=50, blank=True)
+	super_filters = models.ManyToManyField(Filter_Spec, blank=True, related_name='owning_charts')
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	months = models.IntegerField(choices=[(i, i) for i in range(0, 13)], blank=True, default=0)
 	query_type = models.CharField(
@@ -1025,7 +1031,7 @@ class Chart(DataAccessMixin,models.Model):
 		# get one record, so that we can test attributes
 		test_object = model.objects.first()
 		# check the attributes
-		for attribute in (self.label_field, self.sort_field, self.date_field):
+		for attribute in (self.sort_field, self.date_field):
 			if attribute and not has_field(model,attribute):
 				return False
 		if (	
@@ -1043,9 +1049,14 @@ class Chart(DataAccessMixin,models.Model):
 		data_values = []
 		# get the data
 		model = class_from_str(self.model)
-		for record in model.objects.all():
-			x_labels.append(getattr(record,self.label_field))
-		for record in model.objects.all():
+		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
+		for record in records:
+			# get the label, converting methods to values if necessary
+			label = getattr(record,self.label_field)
+			if ismethod(label):
+				label = label()
+			x_labels.append(label)
+			# get the data and calculate the value
 			queryset = self.get_queryset(record)
 			data_values.append(self.get_value(queryset))
 		# build the chart
@@ -1062,10 +1073,13 @@ class Chart(DataAccessMixin,models.Model):
 		pie_chart.title = self.title
 		# build the pie wedges
 		model = class_from_str(self.model)
-		for record in model.objects.all():
-			# get the label and the count
+		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
+		for record in records:
+			# get the label, converting methods to values if necessary
 			label = getattr(record,self.label_field)
-			# the way in which we do the count depends on the type of query
+			if ismethod(label):
+				label = label()
+			# get the data and calculate the value
 			queryset = self.get_queryset(record)
 			value = self.get_value(queryset)
 			# set the pie wedge
@@ -1162,9 +1176,20 @@ class Chart(DataAccessMixin,models.Model):
 		return filter_dict
 
 	def get_value(self,queryset):
+		# initialise variables
+		value = 0
 		# return a value depending on whether we are doing a count or a sum
 		if self.sum_field:
-			value = queryset.aggregate(sum_value=Sum(self.sum_field))['sum_value']
+			# if the sum_field is a method, iterate through, applying the method, else use aggregation
+			test_record = queryset.first()
+			if test_record:
+				sum_attr = getattr(test_record,self.sum_field)
+				if ismethod(sum_attr):
+					for record in queryset:
+						sum_attr = getattr(record,self.sum_field)
+						value += sum_attr()
+				else:
+					value = queryset.aggregate(sum_value=Sum(self.sum_field))['sum_value']
 		else:
 			value = queryset.count()
 		# return the value

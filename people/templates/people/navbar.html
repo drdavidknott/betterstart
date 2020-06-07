@@ -75,6 +75,9 @@ $(document).ready(function() {
 			<li><a href="{% url 'dashboard' %}">
 				<span class="glyphicon glyphicon-dashboard"></span>
 			</a></li>
+			<li><a href="{% url 'charts' %}">
+				<span class="glyphicon glyphicon-signal"></span>
+			</a></li>
 			{% if request.user.is_superuser %}
 				<li><a href="{% url 'uploaddata' %}">
 					<span class="glyphicon glyphicon-cloud-upload"></span>

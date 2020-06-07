@@ -8,24 +8,22 @@
 
  {% block content %}
 
+ 	<div class="container">
+
  	<div class="row col-md-12">
 
- 		{% if show_title %}
+ 		<div class="col-md-10">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-signal"></span>
+	 			{{ chart.title }} {{ chart.name }}
+ 			</h3>
+		</div>
 
-	 		<div class="col-md-12">
-	 			<h3>
-		 			<span class="glyphicon glyphicon-dashboard"></span>
-		 			{{ chart.title }} {{ chart.name }}
-	 			</h3>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-		 			<hr>
-			 	</div>
-			</div>
-
-		{% endif %}
+		<div class="row">
+			<div class="col-xs-10">
+	 			<hr>
+		 	</div>
+		</div>
 
 		{% if chartdatesform %}
 
@@ -42,6 +40,8 @@
 	 			<embed type="image/svg+xml" src= {{ chart_display|safe }} />
 			</div>
 		</div>
+
+	</div>
 
 	</div>
 

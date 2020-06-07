@@ -70,4 +70,5 @@ urlpatterns = [
     url(r'^forgot_password$', views.forgot_password, name='forgot_password'),
     url(r'^reset_password/(?P<reset_code>[\w]+)$', views.reset_password, name='reset_password'),
     url(r'^chart/(?P<name>[\w]+)$', views.chart, name='chart'),
+    url(r'^charts$', views.chart, name='charts'),
 ]

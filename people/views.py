@@ -4,7 +4,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
-					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart
+					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
+					Filter_Spec
 import os
 import csv
 import copy
@@ -17,7 +18,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm
-from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page
+from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -3646,13 +3647,27 @@ def chart(request,name=''):
 	if name:
 		chart = Chart.try_to_get(name=name)
 		template = loader.get_template('people/chart.html')
-		if request.method == 'POST':
-			chart_dates_form = DashboardDatesForm(request.POST)
-			if chart_dates_form.is_valid():
-				start_date = chart_dates_form.cleaned_data['start_date']
-				end_date = chart_dates_form.cleaned_data['end_date']
-		else:
-			chart_dates_form = DashboardDatesForm()
+		# figure out whether there are any date filters
+		filters = chart.filters.filter(filter_type='period')
+		super_filters = chart.filters.filter(filter_type='period')
+		if filters.exists() or super_filters.exists():
+			# because we have date filters, set up and process the date form 
+			if request.method == 'POST':
+				chart_dates_form = DashboardDatesForm(request.POST)
+				if chart_dates_form.is_valid():
+					start_date = chart_dates_form.cleaned_data['start_date']
+					end_date = chart_dates_form.cleaned_data['end_date']
+			else:
+				# get the first period from the filters
+				if filters.exists():
+					this_filter = filters.first()
+				else:
+					this_filter = super_filters.first()
+				start_date, end_date = get_period_dates(this_filter.period)
+				chart_dates_form = DashboardDatesForm(
+														start_date=start_date,
+														end_date=end_date
+														)
 		# get the chart to display
 		chart_display = chart.get_chart(start_date=start_date,end_date=end_date)
 	# if we don't have a chart, get the list of charts
@@ -3664,7 +3679,7 @@ def chart(request,name=''):
 								'chart' : chart,
 								'charts' : charts,
 								'chart_display' : chart_display,
-								'chartdatesform' : chart_dates_form
+								'chartdatesform' : chart_dates_form,
 								})
 	# return the HttpResponse
 	return HttpResponse(template.render(context=context, request=request))

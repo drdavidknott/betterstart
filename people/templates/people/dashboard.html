@@ -64,15 +64,21 @@
 			 					{% if panel.title_url %}
 			 						</a>
 			 					{% endif %}
+			 					{% if panel.chart %}
+			 						<a href="{% url 'chart' panel.chart.name %}">
+			 							<span class="glyphicon glyphicon-zoom-in"></span>
+			 						</a>
+			 					{% endif %}
 			 				</h4>
 			 			</div>
 				 		<div class="panel-body">
 				 			{% if panel.chart %}
-								<div class="row">
-							 		<div class='col-xs-12'>
-							 			<embed type="image/svg+xml" src= {{ panel.get_chart|safe }} />
+									<div class="row">
+								 		<div class='col-xs-12'>
+								 			<embed type="image/svg+xml" src= {{ panel.get_chart|safe }} />
+										</div>
 									</div>
-								</div>
+								</a>
 							{% else %}
 					 			{% if panel.show_column_names %}
 					 				<div class="row">

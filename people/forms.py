@@ -1721,7 +1721,6 @@ class DashboardDatesForm(forms.Form):
 		end_date = kwargs.pop('end_date') if 'end_date' in kwargs.keys() else False
 		# call the built in constructor
 		super(DashboardDatesForm, self).__init__(*args, **kwargs)
-		print(start_date)
 		# build the initial values
 		if start_date:
 			self.fields['start_date'].initial = start_date

@@ -1,0 +1,49 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+ 	<div class="row col-md-12">
+
+ 		{% if show_title %}
+
+	 		<div class="col-md-12">
+	 			<h3>
+		 			<span class="glyphicon glyphicon-dashboard"></span>
+		 			{{ chart.title }} {{ chart.name }}
+	 			</h3>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+		 			<hr>
+			 	</div>
+			</div>
+
+		{% endif %}
+
+		{% if chartdatesform %}
+
+			<div class="form-row">
+		 		<div class="col-xs-12">
+		 			{% crispy chartdatesform %}
+				</div>
+			</div>
+
+		{% endif %}
+
+		<div class="row">
+	 		<div class='col-xs-12'>
+	 			<embed type="image/svg+xml" src= {{ chart_display|safe }} />
+			</div>
+		</div>
+
+	</div>
+
+{% endblock %}
+

@@ -1082,6 +1082,7 @@ class Chart(DataAccessMixin,models.Model):
 		pie_chart = pygal.Pie()
 		pie_chart.title = self.title
 		# get the data
+		print('hello')
 		data = self.get_data()
 		# build the pie wedges
 		for key in data.keys():

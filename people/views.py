@@ -3631,6 +3631,42 @@ def dashboard(request,name=''):
 	return HttpResponse(template.render(context=context, request=request))
 
 @login_required
+def chart(request,name=''):
+	# initialise the variables
+	chart = False
+	chart_display = False
+	charts = False
+	chart_dates_form = False
+	start_date = False
+	end_date = False
+	# if we have a chart name, attempt to get the chart
+	if name:
+		chart = Chart.try_to_get(name=name)
+		template = loader.get_template('people/chart.html')
+		if request.method == 'POST':
+			chart_dates_form = DashboardDatesForm(request.POST)
+			if chart_dates_form.is_valid():
+				start_date = chart_dates_form.cleaned_data['start_date']
+				end_date = chart_dates_form.cleaned_data['end_date']
+		else:
+			chart_dates_form = DashboardDatesForm()
+		# get the chart to display
+		chart_display = chart.get_chart(start_date=start_date,end_date=end_date)
+	# if we don't have a chart, get the list of charts
+	if not chart:
+		charts = Chart.objects.all().order_by('name')
+		template = loader.get_template('people/charts.html')
+	# set the context
+	context = build_context({
+								'chart' : chart,
+								'charts' : charts,
+								'chart_display' : chart_display,
+								'chartdatesform' : chart_dates_form
+								})
+	# return the HttpResponse
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
 def settings(request,):
 	# load the template
 	template = loader.get_template('people/settings.html')

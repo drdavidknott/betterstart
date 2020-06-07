@@ -54,6 +54,9 @@ def index(request):
 	site = Site.objects.all().first()
 	if site and site.dashboard:
 		dashboard = site.dashboard
+		# set the dummy dates
+		dashboard.start_date = False
+		dashboard.end_date = False
 		index_template = loader.get_template('people/dashboard.html')
 	else:
 		dashboard = build_default_dashboard()

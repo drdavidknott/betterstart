@@ -1694,3 +1694,45 @@ class AnswerQuestionsForm(forms.Form):
 										widget=forms.HiddenInput(attrs={'class' : 'form-control',}),
 										initial='spacer'
 										)
+
+
+class DashboardDatesForm(forms.Form):
+	# Define the fields that we need in the form to capture the event
+	start_date = forms.DateField(
+									label="From",
+									widget=forms.DateInput(		format='%d/%m/%Y',
+																attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}),
+									input_formats=('%d/%m/%Y',))
+	end_date = forms.DateField(
+									label="To",
+									widget=forms.DateInput(		format='%d/%m/%Y',
+																attrs={
+																	'class' : 'form-control datepicker',
+																	'autocomplete' : 'off'
+																	}),
+									input_formats=('%d/%m/%Y',))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull additional paramterts out of kwargs if provided
+		start_date = kwargs.pop('start_date') if 'start_date' in kwargs.keys() else False
+		end_date = kwargs.pop('end_date') if 'end_date' in kwargs.keys() else False
+		# call the built in constructor
+		super(DashboardDatesForm, self).__init__(*args, **kwargs)
+		print(start_date)
+		# build the initial values
+		if start_date:
+			self.fields['start_date'].initial = start_date
+		if end_date:
+			self.fields['end_date'].initial = end_date
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+									Row(
+										Column('start_date',css_class='form-group col-md-2 mb-0'),
+										Column('end_date',css_class='form-group col-md-2 mb-0'),
+										Column(Submit('submit', 'Submit'),css_class='col-md-2 mb-0')
+										)
+									)

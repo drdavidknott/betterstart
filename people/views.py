@@ -16,7 +16,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
-					ResetForgottenPasswordForm
+					ResetForgottenPasswordForm, DashboardDatesForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page
 from .old_dashboards import Old_Dashboard_Panel_Row, Old_Dashboard_Panel, Old_Dashboard_Column, Old_Dashboard
 from django.contrib import messages
@@ -3594,14 +3594,29 @@ def dashboard(request,name=''):
 	# initialise the variables
 	dashboard = False
 	dashboards = False
+	dashboard_dates_form = False
 	# if we have a dashboard name, attempt to get the dashboard
 	if name:
 		dashboard = Dashboard.try_to_get(name=name)
-		index_template = loader.get_template('people/dashboard.html')
+		dashboard.start_date = False
+		dashboard.end_date = False
+		template = loader.get_template('people/dashboard.html')
+		if dashboard.date_controlled:
+			if request.method == 'POST':
+				dashboard_dates_form = DashboardDatesForm(request.POST)
+				if dashboard_dates_form.is_valid():
+					dashboard.start_date = dashboard_dates_form.cleaned_data['start_date']
+					dashboard.end_date = dashboard_dates_form.cleaned_data['end_date']
+			else:
+				start_date, end_date = dashboard.get_dates()
+				dashboard_dates_form = DashboardDatesForm(
+															start_date=start_date,
+															end_date=end_date
+															)
 	# if we don't have a dashboard, get the list of dashboards
 	if not dashboard:
 		dashboards = Dashboard.objects.all().order_by('title')
-		index_template = loader.get_template('people/dashboards.html')
+		template = loader.get_template('people/dashboards.html')
 		# if the user is not a superuser, exclude all non-live dashboards
 		if not request.user.is_superuser:
 			dashboards = dashboards.exclude(live=False)
@@ -3609,10 +3624,11 @@ def dashboard(request,name=''):
 	context = build_context({
 								'dashboard' : dashboard,
 								'dashboards' : dashboards,
-								'show_title' : True
+								'show_title' : True,
+								'dashboarddatesform' : dashboard_dates_form
 								})
 	# return the HttpResponse
-	return HttpResponse(index_template.render(context=context, request=request))
+	return HttpResponse(template.render(context=context, request=request))
 
 @login_required
 def settings(request,):

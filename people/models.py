@@ -1018,7 +1018,10 @@ class Chart(DataAccessMixin,models.Model):
 		ordering = ['name']
 
 	# build and return a set of rows
-	def get_chart(self):
+	def get_chart(self,start_date,end_date):
+		# add the dates
+		self.start_date = start_date
+		self.end_date = end_date
 		# check validity
 		if not self.is_valid():
 			return False
@@ -1237,7 +1240,12 @@ class Chart(DataAccessMixin,models.Model):
 
 	def add_period_filters(self,filter,filter_dict):
 		# get the start and end of the period, based on the type of period
-		period_start, period_end = get_period_dates(filter.period)
+		# if we have a start date or end date on the panel, over-ride the filter
+		if self.start_date or self.end_date:
+			period_start = self.start_date if self.start_date else False
+			period_end = self.end_date if self.end_date else False
+		else:
+			period_start, period_end = get_period_dates(filter.period)
 		# set the terms based on the supplied term
 		start_term = filter.term + '__gte'
 		end_term = filter.term + '__lte'
@@ -1341,9 +1349,10 @@ class Panel(DataAccessMixin,models.Model):
 
 	# build a chart
 	def get_chart(self):
-		print('hello')
-		print(self.chart.get_chart())
-		return self.chart.get_chart()
+		# set dates if they have been set for the panel
+		start_date = self.start_date if hasattr(self,'start_date') else False
+		end_date = self.end_date if hasattr(self,'end_date') else False
+		return self.chart.get_chart(start_date=start_date,end_date=end_date)
 
 	# return a set of column names
 	def get_column_names(self):
@@ -1359,7 +1368,7 @@ class Panel(DataAccessMixin,models.Model):
 	def build(self):
 		# build from a prebuilt panel if we have, otherwise check validity and build from data if valid
 		if self.chart:
-			self.chart = self.chart.get_chart()
+			pass
 		elif self.prebuilt_panel:
 			self.build_from_prebuilt_panel()
 		elif self.is_valid():
@@ -1620,7 +1629,12 @@ class Panel(DataAccessMixin,models.Model):
 
 	def add_period_filters(self,filter,filter_dict):
 		# get the start and end of the period, based on the type of period
-		period_start, period_end = get_period_dates(filter.period)
+		# if we have a start date or end date on the panel, over-ride the filter
+		if self.start_date or self.end_date:
+			period_start = self.start_date if self.start_date else False
+			period_end = self.end_date if self.end_date else False
+		else:
+			period_start, period_end = get_period_dates(filter.period)
 		# set the terms based on the supplied term
 		start_term = filter.term + '__gte'
 		end_term = filter.term + '__lte'
@@ -1709,6 +1723,9 @@ class Column(DataAccessMixin,models.Model):
 		# go through the panels
 		for panel_in_column in self.panel_in_column_set.all().order_by('order'):
 			panels.append(panel_in_column.panel)
+			# if we have dates, add them
+			panel_in_column.panel.start_date = self.start_date if self.start_date else False
+			panel_in_column.panel.end_date = self.end_date if self.end_date else False
 		# return the results
 		return panels
 
@@ -1731,6 +1748,22 @@ class Dashboard(DataAccessMixin,models.Model):
 	margin = models.IntegerField(default=1)
 	columns = models.ManyToManyField(Column, through='Column_In_Dashboard')
 	live = models.BooleanField(default=False)
+	date_controlled = models.BooleanField(default=False)
+	period = models.CharField(
+								max_length=50,
+								choices = [
+											('','no period'),
+											('this_month','this month'),
+											('last_month','last_month'),
+											('this_project_year','this project year'),
+											('last_project_year','last project year'),
+											('this_calendar_year','this calendar year'),
+											('last_calendar_year','last_calendar_year'),
+											('rolling_quarter','rolling_quarter')
+											],
+								default='',
+								blank=True
+								)
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -1745,8 +1778,20 @@ class Dashboard(DataAccessMixin,models.Model):
 		# go through the columns
 		for column_in_dashboard in self.column_in_dashboard_set.all().order_by('order'):
 			columns.append(column_in_dashboard.column)
+			# if we have dates, add them
+			column_in_dashboard.column.start_date = self.start_date if self.start_date else False
+			column_in_dashboard.column.end_date = self.end_date if self.end_date else False
 		# return the results
 		return columns
+
+	def get_dates(self):
+		# get the start and end of the default period for the dashboard, based on the type of period
+		if self.period:
+			start_date, end_date = get_period_dates(self.period)
+		else:
+			start_date, end_date = False, False
+		# return the results
+		return start_date, end_date
 
 # Column_In_Dashboard model: used to define the inclusion of a column within a dashboard
 class Column_In_Dashboard(DataAccessMixin,models.Model):

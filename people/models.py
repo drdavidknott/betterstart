@@ -507,6 +507,14 @@ class Person(DataAccessMixin,models.Model):
 	def has_unvalidated_invitation(self):
 		return Invitation.objects.filter(person=self,datetime_completed__isnull=False,validated=False).exists()
 
+	# and the current age in years
+	def age_in_years(self):
+		if self.date_of_birth:
+			age_in_years = relativedelta(datetime.today(), self.date_of_birth).years
+		else:
+			age_in_years = 'Unknown'
+		return str(age_in_years)
+
 	# and a class method to get a person by names and age status
 	@classmethod
 	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):
@@ -982,6 +990,7 @@ class Chart(DataAccessMixin,models.Model):
 	count_field = models.CharField(max_length=50, blank=True)
 	date_field = models.CharField(max_length=50, blank=True)
 	sum_field = models.CharField(max_length=50, blank=True)
+	group_by_field = models.CharField(max_length=50, blank=True)
 	super_filters = models.ManyToManyField(Filter_Spec, blank=True, related_name='owning_charts')
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	months = models.IntegerField(choices=[(i, i) for i in range(0, 13)], blank=True, default=0)
@@ -1023,7 +1032,8 @@ class Chart(DataAccessMixin,models.Model):
 		elif self.chart_type == 'stacked_bar':
 			chart = self.get_stacked_bar_chart()
 		# return the results
-		return chart
+		# return chart.render(is_unicode=True)
+		return chart.render_data_uri()
 
 	# check whether the chart is valid
 	def is_valid(self):
@@ -1055,44 +1065,27 @@ class Chart(DataAccessMixin,models.Model):
 		x_labels = []
 		data_values = []
 		# get the data
-		model = class_from_str(self.model)
-		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
-		for record in records:
-			# get the label, converting methods to values if necessary
-			label = getattr(record,self.label_field)
-			if ismethod(label):
-				label = label()
-			x_labels.append(label)
-			# get the data and calculate the value
-			queryset = self.get_queryset(record)
-			data_values.append(self.get_value(queryset))
+		data = self.get_data()
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)
 		bar_chart.title = self.title
-		bar_chart.x_labels = x_labels
-		bar_chart.add('', data_values)
+		bar_chart.x_labels = data.keys()
+		bar_chart.add('', data.values())
 		# return the chart
-		return bar_chart.render_django_response()
+		return bar_chart
 
 	def get_pie_chart(self):
 		# create the chart
 		pie_chart = pygal.Pie()
 		pie_chart.title = self.title
+		# get the data
+		data = self.get_data()
 		# build the pie wedges
-		model = class_from_str(self.model)
-		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
-		for record in records:
-			# get the label, converting methods to values if necessary
-			label = getattr(record,self.label_field)
-			if ismethod(label):
-				label = label()
-			# get the data and calculate the value
-			queryset = self.get_queryset(record)
-			value = self.get_value(queryset)
+		for key in data.keys():
 			# set the pie wedge
-			pie_chart.add(label,value)
+			pie_chart.add(key,data[key])
 		# return the chart
-		return pie_chart.render_django_response()
+		return pie_chart
 
 	def get_month_bar_chart(self):
 		# initialise variables
@@ -1108,7 +1101,6 @@ class Chart(DataAccessMixin,models.Model):
 		for month in range(0,self.months):
 			this_month = (start_month + month)%12 + 1
 			months.append(this_month)
-		print(months)
 		# go through months, building labels and data
 		for month in months:
 			x_labels.append(calendar.month_name[month])
@@ -1131,7 +1123,46 @@ class Chart(DataAccessMixin,models.Model):
 		bar_chart.x_labels = x_labels
 		bar_chart.add('', data_values)
 		# return the chart
-		return bar_chart.render_django_response()
+		return bar_chart
+
+	def get_data(self):
+		# build and return a dictionary of data
+		data = {}
+		# get the data from the database, filtering and sorting as required
+		model = class_from_str(self.model)
+		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
+		if self.sort_field:
+			records = records.order_by(self.sort_field)
+		# go through the data
+		for record in records:
+			# get the label, converting methods to values if necessary
+			label = getattr(record,self.label_field)
+			if ismethod(label):
+				label = label()
+			# get the data and calculate the value
+			if self.group_by_field:
+				data[label] = self.add_group_by_value(record,data,label)
+			else:
+				queryset = self.get_queryset(record)
+				value = self.get_value(queryset)
+				data[label] = value
+		# return the result
+		return data
+
+	def add_group_by_value(self,record,data,label):
+		# return the value to add to the dictionary
+		# start by figuring out whether we are adding or counting
+		if self.sum_field:
+			sum_attr = getattr(test_record,self.sum_field)
+			if ismethod(sum_attr):
+				value += sum_attr()
+		else:
+			value = 1
+		# add the value to the dictionary entry if it exists
+		if label in data.keys():
+			value = data[label] + value
+		# return the value
+		return value
 
 	def get_stacked_bar_chart(self):
 		# initialise variables
@@ -1167,7 +1198,7 @@ class Chart(DataAccessMixin,models.Model):
 			if not all([ value == 0 for value in stack_record.values ]):
 				bar_chart.add(getattr(stack_record,self.stack_label_field),stack_record.values)
 		# return the chart
-		return bar_chart.render_django_response()
+		return bar_chart
 
 	def get_queryset(self,record):
 		# get the queryset used to populate the chart
@@ -1308,6 +1339,12 @@ class Panel(DataAccessMixin,models.Model):
 		self.build()
 		return self.rows
 
+	# build a chart
+	def get_chart(self):
+		print('hello')
+		print(self.chart.get_chart())
+		return self.chart.get_chart()
+
 	# return a set of column names
 	def get_column_names(self):
 		# initialise the variables
@@ -1322,7 +1359,7 @@ class Panel(DataAccessMixin,models.Model):
 	def build(self):
 		# build from a prebuilt panel if we have, otherwise check validity and build from data if valid
 		if self.chart:
-			pass
+			self.chart = self.chart.get_chart()
 		elif self.prebuilt_panel:
 			self.build_from_prebuilt_panel()
 		elif self.is_valid():

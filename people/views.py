@@ -3738,10 +3738,4 @@ def reset_password(request,reset_code):
 	template = loader.get_template('people/reset_password.html')
 	return HttpResponse(template.render(context=context, request=request))
 
-@login_required
-def chart(request,chart):
-	# attempt to get the chart
-	chart = Chart.try_to_get(name=chart)
-	# return the chart
-	return chart.get_chart()
 

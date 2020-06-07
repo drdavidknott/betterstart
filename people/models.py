@@ -1156,7 +1156,7 @@ class Chart(DataAccessMixin,models.Model):
 		# return the value to add to the dictionary
 		# start by figuring out whether we are adding or counting
 		if self.sum_field:
-			sum_attr = getattr(test_record,self.sum_field)
+			sum_attr = getattr(record,self.sum_field)
 			if ismethod(sum_attr):
 				value += sum_attr()
 		else:

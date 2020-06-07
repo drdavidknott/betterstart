@@ -1158,7 +1158,7 @@ class Chart(DataAccessMixin,models.Model):
 		if self.sum_field:
 			sum_attr = getattr(record,self.sum_field)
 			if ismethod(sum_attr):
-				value += sum_attr()
+				value = sum_attr()
 		else:
 			value = 1
 		# add the value to the dictionary entry if it exists

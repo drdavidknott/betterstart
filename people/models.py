@@ -983,7 +983,7 @@ class Chart(DataAccessMixin,models.Model):
 									default='',
 									blank=True
 									)
-	title = models.CharField(max_length=50,blank=True, default='')
+	title = models.CharField(max_length=50)
 	model = models.CharField(max_length=50)
 	label_field = models.CharField(max_length=50, blank=True)
 	sort_field = models.CharField(max_length=50, blank=True)

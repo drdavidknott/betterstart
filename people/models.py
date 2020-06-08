@@ -203,7 +203,7 @@ class Venue(DataAccessMixin,models.Model):
 	email_address = models.CharField(max_length=50, default='', null=True)
 	website = models.CharField(max_length=50, default='', null=True)
 	price = models.CharField(max_length=50, default='', null=True)
-	facilities = models.CharField(max_length=50, default='', null=True)
+	facilities = models.CharField(max_length=100, default='', null=True)
 	opening_hours = models.CharField(max_length=50, default='', null=True)
 	notes = models.TextField(max_length=1000, default='', blank=True)
 
@@ -1171,7 +1171,7 @@ class Chart(DataAccessMixin,models.Model):
 		data_values = []
 		# initialise a list for each stack_record
 		stack_model = class_from_str(self.stack_model)
-		stack_records = stack_model.objects.all()
+		stack_records = stack_model.objects.all().order_by(self.stack_label_field)
 		for stack_record in stack_records:
 			stack_record.values = []
 		# get the data

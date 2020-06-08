@@ -945,7 +945,7 @@ class VenueForm(forms.Form):
 	# Define the fields that we need in the form to capture initial venue details and search for address
 	name = forms.CharField(
 							label="Name",
-							max_length=50,
+							max_length=100,
 							widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	venue_type = forms.ChoiceField(
 									label="Venue type",

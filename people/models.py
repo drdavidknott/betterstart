@@ -193,7 +193,7 @@ class Venue_Type(DataAccessMixin,models.Model):
 # Has a many to one relationship with venue type.
 # Has a one to many relationship with venue.
 class Venue(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=100)
 	venue_type = models.ForeignKey(Venue_Type, on_delete=models.CASCADE)
 	building_name_or_number = models.CharField(max_length=50)
 	street = models.ForeignKey(Street, blank=True, null=True, on_delete=models.SET_NULL)
@@ -205,7 +205,7 @@ class Venue(DataAccessMixin,models.Model):
 	price = models.CharField(max_length=50, default='', null=True)
 	facilities = models.CharField(max_length=100, default='', null=True)
 	opening_hours = models.CharField(max_length=50, default='', null=True)
-	notes = models.TextField(max_length=1000, default='', blank=True)
+	notes = models.TextField(max_length=1500, default='', blank=True)
 
 	# define the function that will return the venue name as the object reference
 	def __str__(self):

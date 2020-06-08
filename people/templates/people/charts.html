@@ -35,8 +35,11 @@
 			 				<tr>
 			 					<td>
 			 						<a href="{% url 'chart' chart.name %}">
-										{{ chart.title }}
-										{{ chart.name }}
+			 							{% if chart.title %}
+											{{ chart.title }}
+										{% else %}
+											{{ chart.name }}
+										{% endif %}
 									</a>
 								</td>
 							</tr>

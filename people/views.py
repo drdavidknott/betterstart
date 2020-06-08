@@ -3672,7 +3672,7 @@ def chart(request,name=''):
 		chart_display = chart.get_chart(start_date=start_date,end_date=end_date)
 	# if we don't have a chart, get the list of charts
 	if not chart:
-		charts = Chart.objects.all().order_by('name')
+		charts = Chart.objects.all().order_by('title','name')
 		template = loader.get_template('people/charts.html')
 	# set the context
 	context = build_context({

@@ -15,7 +15,11 @@
  		<div class="col-md-10">
  			<h3>
 	 			<span class="glyphicon glyphicon-signal"></span>
-	 			{{ chart.title }} {{ chart.name }}
+	 			{% if chart.title %}
+					{{ chart.title }}
+				{% else %}
+					{{ chart.name }}
+				{% endif %}
  			</h3>
 		</div>
 

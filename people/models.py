@@ -1071,7 +1071,6 @@ class Chart(DataAccessMixin,models.Model):
 		data = self.get_data()
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)
-		bar_chart.title = self.title
 		bar_chart.x_labels = data.keys()
 		bar_chart.add('', data.values())
 		# return the chart
@@ -1080,7 +1079,6 @@ class Chart(DataAccessMixin,models.Model):
 	def get_pie_chart(self):
 		# create the chart
 		pie_chart = pygal.Pie()
-		pie_chart.title = self.title
 		# get the data
 		print('hello')
 		data = self.get_data()
@@ -1123,7 +1121,6 @@ class Chart(DataAccessMixin,models.Model):
 			data_values.append(self.get_value(queryset))
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)
-		bar_chart.title = self.title
 		bar_chart.x_labels = x_labels
 		bar_chart.add('', data_values)
 		# return the chart
@@ -1182,7 +1179,6 @@ class Chart(DataAccessMixin,models.Model):
 		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
 		# create the chart
 		bar_chart = pygal.StackedBar(x_label_rotation=self.x_label_rotation)
-		bar_chart.title = self.title
 		# build up the data for the chart
 		for record in records:
 			# get the label, converting methods to values if necessary

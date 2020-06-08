@@ -3649,7 +3649,7 @@ def chart(request,name=''):
 		template = loader.get_template('people/chart.html')
 		# figure out whether there are any date filters
 		filters = chart.filters.filter(filter_type='period')
-		super_filters = chart.filters.filter(filter_type='period')
+		super_filters = chart.super_filters.filter(filter_type='period')
 		if filters.exists() or super_filters.exists():
 			# because we have date filters, set up and process the date form 
 			if request.method == 'POST':

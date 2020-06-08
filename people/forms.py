@@ -1000,7 +1000,7 @@ class VenueForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	facilities = forms.CharField(
 									label="Facilities",
-									max_length=50,
+									max_length=100,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	opening_hours = forms.CharField(

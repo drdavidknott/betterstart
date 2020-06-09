@@ -1023,8 +1023,8 @@ class Chart(DataAccessMixin,models.Model):
 		self.start_date = start_date
 		self.end_date = end_date
 		# check validity
-		if not self.is_valid():
-			return False
+		#if not self.is_valid():
+		#	return False
 		# get the chart based on the chart type
 		if self.chart_type == 'pie':
 			chart = self.get_pie_chart()
@@ -1080,7 +1080,6 @@ class Chart(DataAccessMixin,models.Model):
 		# create the chart
 		pie_chart = pygal.Pie()
 		# get the data
-		print('hello')
 		data = self.get_data()
 		# build the pie wedges
 		for key in data.keys():

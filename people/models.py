@@ -1051,7 +1051,7 @@ class Chart(DataAccessMixin,models.Model):
 		# get one record, so that we can test attributes
 		test_object = model.objects.first()
 		# check the attributes
-		for attribute in (self.sort_field, self.date_field):
+		for attribute in (self.sort_field):
 			if attribute and not has_field(model,attribute):
 				return False
 		if (	

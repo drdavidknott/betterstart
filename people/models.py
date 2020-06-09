@@ -951,6 +951,7 @@ class Filter_Spec(DataAccessMixin,models.Model):
 								default='',
 								blank=True
 								)
+	exclusion = models.BooleanField(default=False)
 	# define the function that will return a description of the filter
 	def __str__(self):
 		# build the description depending on the type of filter
@@ -962,6 +963,9 @@ class Filter_Spec(DataAccessMixin,models.Model):
 			filter_str = self.term + ' = object'
 		else: 
 			filter_str = self.term + ' = '  + self.string_value
+		# add exlcusion text if this is an exclusion
+		if self.exclusion:
+			filter_str = filter_str + ' (exclusion)'
 		#return the value
 		return filter_str
 	# set the name to be used in the admin console
@@ -1214,20 +1218,32 @@ class Chart(DataAccessMixin,models.Model):
 	def apply_filters(self,queryset,filters,master_object=False):
 		# initialise the variables
 		filter_dict = {}
+		exclusion_dict = {}
 		valid = True
 		# apply filters to a queryset and return the result
 		for filter in filters:
 			if filter.filter_type == 'boolean':
-				filter_dict[filter.term] = filter.boolean_value
+				value = filter.boolean_value
 			elif filter.filter_type == 'string':
-				filter_dict[filter.term] = filter.string_value
+				value = filter.string_value
 			elif filter.filter_type == 'period':
-				filter_dict = self.add_period_filters(filter, filter_dict)
+				value = self.add_period_filters(filter, filter_dict)
 			elif filter.filter_type == 'object':
-				filter_dict[filter.term] = master_object
+				value = master_object
+			# update the dict depending on whether this is an exclusion
+			if filter.exclusion:
+				exclusion_dict[filter.term] = value
+			else:
+				filter_dict[filter.term] = value
 		# try to apply the filters
 		try:
 			queryset = queryset.filter(**filter_dict)
+		except:
+			queryset = False
+			valid = False
+		# try to apply the exclusions
+		try:
+			queryset = queryset.exclude(**exclusion_dict)
 		except:
 			queryset = False
 			valid = False
@@ -1602,24 +1618,35 @@ class Panel(DataAccessMixin,models.Model):
 	def apply_filters(self,queryset,filters,master_object=False):
 		# initialise the variables
 		filter_dict = {}
+		exclusion_dict = {}
 		valid = True
 		# apply filters to a queryset and return the result
 		for filter in filters:
 			if filter.filter_type == 'boolean':
-				filter_dict[filter.term] = filter.boolean_value
+				value = filter.boolean_value
 			elif filter.filter_type == 'string':
-				filter_dict[filter.term] = filter.string_value
+				value = filter.string_value
 			elif filter.filter_type == 'period':
-				filter_dict = self.add_period_filters(filter, filter_dict)
+				value = self.add_period_filters(filter, filter_dict)
 			elif filter.filter_type == 'object':
-				filter_dict[filter.term] = master_object
+				value = master_object
+			# update the dict depending on whether this is an exclusion
+			if filter.exclusion:
+				exclusion_dict[filter.term] = value
+			else:
+				filter_dict[filter.term] = value
 		# try to apply the filters
 		try:
 			queryset = queryset.filter(**filter_dict)
 		except:
 			queryset = False
 			valid = False
-			self.totals = False
+		# try to apply the exclusions
+		try:
+			queryset = queryset.exclude(**exclusion_dict)
+		except:
+			queryset = False
+			valid = False
 		# return the result
 		return queryset, valid
 

@@ -1241,17 +1241,19 @@ class Chart(DataAccessMixin,models.Model):
 				elif filter.filter_type == 'object':
 					exclusion_dict[filter.term] = master_object
 		# try to apply the filters
-		try:
-			queryset = queryset.filter(**filter_dict)
-		except:
-			queryset = False
-			valid = False
+		if filter_dict:
+			try:
+				queryset = queryset.filter(**filter_dict)
+			except:
+				queryset = False
+				valid = False
 		# try to apply the exclusions
-		try:
-			queryset = queryset.exclude(**exclusion_dict)
-		except:
-			queryset = False
-			valid = False
+		if exclusion_dict:
+			try:
+				queryset = queryset.exclude(**exclusion_dict)
+			except:
+				queryset = False
+				valid = False
 		# return the result
 		return queryset, valid
 
@@ -1646,17 +1648,19 @@ class Panel(DataAccessMixin,models.Model):
 				elif filter.filter_type == 'object':
 					exclusion_dict[filter.term] = master_object
 		# try to apply the filters
-		try:
-			queryset = queryset.filter(**filter_dict)
-		except:
-			queryset = False
-			valid = False
+		if filter_dict:
+			try:
+				queryset = queryset.filter(**filter_dict)
+			except:
+				queryset = False
+				valid = False
 		# try to apply the exclusions
-		try:
-			queryset = queryset.exclude(**exclusion_dict)
-		except:
-			queryset = False
-			valid = False
+		if exclusion_dict:
+			try:
+				queryset = queryset.exclude(**exclusion_dict)
+			except:
+				queryset = False
+				valid = False
 		# return the result
 		return queryset, valid
 

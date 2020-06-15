@@ -1213,7 +1213,7 @@ class Chart(DataAccessMixin,models.Model):
 		# filter it if it needs filtering
 		queryset, valid = self.apply_filters(queryset,self.filters.all(),master_object=record)
 		# return the results
-		return queryset
+		return queryset.distinct()
 
 	def apply_filters(self,queryset,filters,master_object=False):
 		# initialise the variables

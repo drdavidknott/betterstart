@@ -515,6 +515,17 @@ class Person(DataAccessMixin,models.Model):
 			age_in_years = 'Unknown'
 		return str(age_in_years)
 
+	# and the first participation date
+	def first_participation_date(self):
+		# initialise variables
+		first_participation_date = None
+		# try to get the date
+		if self.event_registration_set.all().exists():
+			first_participation = self.event_registration_set.latest('event__date')
+			first_participation_date = first_participation.event.date
+		# return the date
+		return first_participation_date
+
 	# and a class method to get a person by names and age status
 	@classmethod
 	def check_person_by_name_and_age_status(cls,first_name,last_name,age_status):
@@ -1139,10 +1150,11 @@ class Chart(DataAccessMixin,models.Model):
 			records = records.order_by(self.sort_field)
 		# go through the data
 		for record in records:
-			# get the label, converting methods to values if necessary
+			# get the label, converting methods to values if necessary, and converting the label to a string
 			label = getattr(record,self.label_field)
 			if ismethod(label):
 				label = label()
+			label = str(label)
 			# get the data and calculate the value
 			if self.group_by_field:
 				data[label] = self.add_group_by_value(record,data,label)
@@ -1875,6 +1887,7 @@ class Site(DataAccessMixin,models.Model):
 	invitation_introduction = models.TextField(max_length=25000, default='', blank=True)
 	password_reset_allowed = models.BooleanField(default=False)
 	password_reset_email_from = models.CharField(max_length=100, default='', blank=True)
+	password_reset_email_cc = models.CharField(max_length=100, default='', blank=True)
 	password_reset_email_title = models.CharField(max_length=100, default='', blank=True)
 	password_reset_email_text = models.TextField(max_length=1000, default='', blank=True)
 	password_reset_timeout = models.IntegerField(default=15)

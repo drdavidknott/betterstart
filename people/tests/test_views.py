@@ -550,6 +550,7 @@ class ForgotPasswordViewTest(TestCase):
 									name='Test Site',
 									password_reset_allowed=True,
 									password_reset_email_from='from@test.com',
+									password_reset_email_cc='bcc@test.com',
 									password_reset_email_title='Test Title',
 									password_reset_email_text='test email text',
 									password_reset_timeout=15
@@ -604,6 +605,29 @@ class ForgotPasswordViewTest(TestCase):
 		self.assertEqual(len(mail.outbox),1)
 		self.assertEqual(mail.outbox[0].subject,'Test Title')
 		self.assertEqual(mail.outbox[0].from_email,'from@test.com')
+		self.assertEqual(mail.outbox[0].bcc,['bcc@test.com'])
+		self.assertEqual(mail.outbox[0].to,['test@test.com'])
+		self.assertEqual(mail.outbox[0].body[:15],'test email text')
+
+	def test_forgot_password_no_bcc(self):
+		# update the site
+		site = Site.objects.all().first()
+		site.password_reset_email_cc = ''
+		site.save()
+		# attempt to get the qrcode page
+		response = self.client.post(
+									reverse('forgot_password'),
+									data = {
+											'email_address' : 'test@test.com',
+											},
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that no mail was sent out
+		self.assertEqual(len(mail.outbox),1)
+		self.assertEqual(mail.outbox[0].subject,'Test Title')
+		self.assertEqual(mail.outbox[0].from_email,'from@test.com')
+		self.assertEqual(mail.outbox[0].bcc,[])
 		self.assertEqual(mail.outbox[0].to,['test@test.com'])
 		self.assertEqual(mail.outbox[0].body[:15],'test email text')
 

@@ -45,7 +45,7 @@ from django.utils import timezone
 import qrcode
 import qrcode.image.svg
 from django.contrib.auth.hashers import check_password
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.utils import timezone
 import io
 
@@ -1863,6 +1863,7 @@ def forgot_password(request):
 				# generate the url and mail text, then send the mail
 				reset_url = request.build_absolute_uri(reverse('reset_password',args=[profile.reset_code]))
 				email_text = site.password_reset_email_text + '\r' + reset_url
+				'''
 				send_mail(
 							site.password_reset_email_title,
 							email_text,
@@ -1870,6 +1871,15 @@ def forgot_password(request):
 							[email_address],
 							fail_silently=False
 							)
+				'''
+				email = EmailMessage(
+										subject = site.password_reset_email_title,
+										body = email_text,
+										from_email = site.password_reset_email_from,
+										bcc = [site.password_reset_email_cc] if site.password_reset_email_cc else [],
+										to = [email_address]
+										)
+				email.send()
 				# log the request
 				auth_log(user=user,reset_requested=True)
 	# otherwise create a blank form
@@ -3688,15 +3698,6 @@ def chart(request,name=''):
 def settings(request,):
 	# load the template
 	template = loader.get_template('people/settings.html')
-	# set the context
-	context = build_context({})
-	# return the response
-	return HttpResponse(template.render(context=context, request=request))
-
-@login_required
-def change_password(request,):
-	# load the template
-	template = loader.get_template('people/change_password.html')
 	# set the context
 	context = build_context({})
 	# return the response

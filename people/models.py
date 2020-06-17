@@ -294,6 +294,12 @@ class Event(DataAccessMixin,models.Model):
 		return self.event_registration_set.filter(apologies=True).count()
 	def participated_count(self):
 		return self.event_registration_set.filter(participated=True).count()
+	# define a function to return the total number of hours participated for this event
+	def participation_hours(self):
+		participation = self.event_registration_set.filter(participated=True).count()
+		participation_seconds = self.duration().seconds * participation
+		participation_hours = participation_seconds // 3600 
+		return participation_hours
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):
@@ -1632,7 +1638,7 @@ class Panel(DataAccessMixin,models.Model):
 		if valid_filters and self.sort_field:
 				panel_queryset = panel_queryset.order_by(self.sort_field)
 		# return the results
-		return panel_queryset
+		return panel_queryset.distinct() if panel_queryset else panel_queryset
 
 	def apply_filters(self,queryset,filters,master_object=False):
 		# initialise the variables

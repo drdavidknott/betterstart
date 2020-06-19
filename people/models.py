@@ -298,7 +298,7 @@ class Event(DataAccessMixin,models.Model):
 	def participation_hours(self):
 		participation = self.event_registration_set.filter(participated=True).count()
 		participation_seconds = self.duration().seconds * participation
-		participation_hours = participation_seconds // 3600 
+		participation_hours = participation_seconds / 3600 
 		return participation_hours
 
 # Question model: represents questions
@@ -882,7 +882,7 @@ class Event_Registration(DataAccessMixin,models.Model):
 	# define a function to return the duration of the event in hours
 	def hours(self):
 		# return an exact number of hours
-		return self.event.duration().seconds // 3600
+		return self.event.duration().seconds / 3600
 
 	# set the name to be used in the admin console
 	class Meta:

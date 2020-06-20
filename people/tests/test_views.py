@@ -5,7 +5,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
-							Terms_And_Conditions, Profile
+							Terms_And_Conditions, Profile, Chart
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -4431,6 +4431,217 @@ class DashboardViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
 		self.assertContains(response,'COUNT FIELD DOES NOT EXIST')
+
+class ChartViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create an event category
+		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+		# create two test event types
+		test_event_type_1 = Event_Type.objects.create(
+														name = 'test_event_type_1',
+														description = 'type desc',
+														event_category = test_event_category)
+		test_event_type_2 = Event_Type.objects.create(
+														name = 'test_event_type_2',
+														description = 'type desc',
+														event_category = test_event_category)
+		# Create 10 test events for each type
+		set_up_test_events('Test_Event_Type_1_', test_event_type_1,10)
+		set_up_test_events('Test_Event_Type_2_', test_event_type_2,10)
+		# create the chart
+		test_chart = Chart.objects.create(
+											name='test_chart',
+											title='Test Chart',
+											chart_type='pie',
+											model='Event_Type',
+											label_field='name',
+											sort_field='name',
+											count_field='event_set',
+											query_type='query from one',
+											)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/chart/test_chart')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/chart/test_chart')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_model_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.model = 'invalid'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'invalid is not a valid model')
+
+	def test_many_model_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.many_model = 'invalid'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'invalid is not a valid model')
+
+	def test_stack_model_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.stack_model = 'invalid'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'invalid is not a valid model')
+
+	def test_label_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.label_field = 'invalid'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'invalid is not a valid attribute')
+
+	def test_label_missing_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.label_field = ''
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'Label not provided')
+
+	def test_count_and_sum_missing_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.count_field = ''
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'Count or sum not provided')
+
+	def test_group_by_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.group_by_field = 'invalid'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'invalid is not a valid attribute')
+
+	def test_count_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.count_field = 'invalid'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'Invalid is not a valid model')
+
+	def test_count_model_error(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.count_field = 'invalid_set'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'Invalid is not a valid model')
+
+	def test_invalid_super_filter(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		# create the filter
+		test_filter = Filter_Spec.objects.create(
+											term='invalid',
+											filter_type='string',
+											string_value='test',
+											)
+		test_filter.save()
+		test_chart.super_filters.add(test_filter)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'Invalid filter')
+
+	def test_invalid_filter(self):
+		# change the model to an invalid value
+		test_chart = Chart.objects.get(name='test_chart')
+		# create the filter
+		test_filter = Filter_Spec.objects.create(
+											term='invalid',
+											filter_type='string',
+											string_value='test',
+											)
+		test_filter.save()
+		test_chart.filters.add(test_filter)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertContains(response,'Invalid filter')
 
 class AddPersonViewTest(TestCase):
 	@classmethod

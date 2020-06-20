@@ -41,7 +41,13 @@
 
 		<div class="row">
 	 		<div class='col-xs-12'>
-	 			<embed type="image/svg+xml" src= {{ chart_display|safe }} />
+	 			{% if chart.errors %}
+	 				{% for error in chart.errors %}
+	 					{{ error }}
+	 				{% endfor %}
+	 			{% else %}
+	 				<embed type="image/svg+xml" src= {{ chart_display|safe }} />
+	 			{% endif %}
 			</div>
 		</div>
 

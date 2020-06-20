@@ -75,10 +75,15 @@
 				 			{% if panel.chart %}
 									<div class="row">
 								 		<div class='col-xs-12'>
-								 			<embed type="image/svg+xml" src= {{ panel.get_chart|safe }} />
+								 			{% if panel.chart.errors %}
+								 				{% for error in panel.chart.errors %}
+								 					{{ error }}
+								 				{% endfor %}
+								 			{% else %}
+								 				<embed type="image/svg+xml" src= {{ panel.get_chart|safe }} />
+								 			{% endif %}
 										</div>
 									</div>
-								</a>
 							{% else %}
 					 			{% if panel.show_column_names %}
 					 				<div class="row">

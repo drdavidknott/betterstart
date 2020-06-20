@@ -18,6 +18,14 @@ def class_from_str(class_str):
 	# this function takes the name of a class in a string and returns the class, if it exists
 	return globals()[class_str] if class_str in globals() else False
 
+# function to derive a class from a set string: i.e. a django relationship manager ending in _set
+def class_name_from_set_str(set_str):
+	# format the str
+	class_str = set_str.replace('_set','')
+	class_name = '_'.join([word.capitalize() for word in class_str.split('_')])
+	# return the class if it is valid
+	return class_name
+
 # function to check whether a model contains a field
 def has_field(model,field_name):
 	# this function takes a model Class and the name of a field, and uses the _meta API to check whether the 
@@ -1038,14 +1046,23 @@ class Chart(DataAccessMixin,models.Model):
 		verbose_name_plural = 'charts'
 		ordering = ['name']
 
+	# over ride the init to add an errors field
+	def __init__(self, *args, **kwargs):
+		super(Chart, self).__init__(*args, **kwargs)
+		self.errors = []
+
+	# add an error to the list
+	def add_error(self,error):
+		self.errors.append(error)
+
 	# build and return a set of rows
 	def get_chart(self,start_date,end_date):
 		# add the dates
 		self.start_date = start_date
 		self.end_date = end_date
 		# check validity
-		#if not self.is_valid():
-		#	return False
+		if not self.is_valid():
+			return False
 		# get the chart based on the chart type
 		if self.chart_type == 'pie':
 			chart = self.get_pie_chart()
@@ -1055,32 +1072,42 @@ class Chart(DataAccessMixin,models.Model):
 			chart = self.get_month_bar_chart()
 		elif self.chart_type == 'stacked_bar':
 			chart = self.get_stacked_bar_chart()
-		# return the results
-		# return chart.render(is_unicode=True)
-		return chart.render_data_uri()
+		# return the results, or False if we have errors
+		return chart.render_data_uri() if not self.errors else False
 
 	# check whether the chart is valid
 	def is_valid(self):
+		# if we have a count field, figure out the model
+		count_model_name = class_name_from_set_str(self.count_field) if self.count_field else False
 		# check whether the models are valid classes
+		for this_model in (self.model, self.many_model, self.stack_model, count_model_name):
+			if this_model:
+				model = class_from_str(this_model)
+				if not model:
+					self.add_error(this_model + ' is not a valid model')
+					return False
+		# get the main model and the count model
 		model = class_from_str(self.model)
-		if not model:
-			return False
-		if self.many_model:
-			many_model = class_from_str(self.many_model)
-			if not many_model:
-				return False
-		# get one record, so that we can test attributes
-		test_object = model.objects.first()
+		count_model = class_from_str(count_model_name) if count_model_name else False
 		# check the attributes
-		for attribute in (self.sort_field):
-			if attribute and not has_field(model,attribute):
+		for attribute in (self.sort_field, self.label_field, self.count_field, self.group_by_field):
+			if attribute and not hasattr(model,attribute):
+				self.add_error(attribute + ' is not a valid attribute')
 				return False
-		if (	
-				self.query_type == 'query_from_one'
-				and self.chart_type in ('pie','bar') 
-				and (not self.label_field or (not self.count_field and not self.sum_field))
-				):
-			return False
+		# what we do with sum field depends on whether we are grouping or navigating a relationship
+		if self.sum_field:
+			if ((self.group_by_field and not hasattr(model,self.sum_field))
+				or (not self.group_by_field and not hasattr(count_model,self.sum_field))):
+				self.add_error(attribute + ' is not a valid attribute')
+				return False
+		# check that we have the fields necessary fro a pie or bar chart
+		if self.query_type == 'query from one' and self.chart_type in ('pie','bar'):
+			if not self.label_field:
+				self.add_error('Label not provided')
+				return False
+			if not self.count_field and not self.sum_field:
+				self.add_error('Count or sum not provided')
+				return False
 		# we made it this far, so it must be valid
 		return True
 
@@ -1088,8 +1115,10 @@ class Chart(DataAccessMixin,models.Model):
 		# initialise variables
 		x_labels = []
 		data_values = []
-		# get the data
+		# get the data, breaking out if we get errors
 		data = self.get_data()
+		if self.errors:
+			return False
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)
 		bar_chart.x_labels = data.keys()
@@ -1100,11 +1129,12 @@ class Chart(DataAccessMixin,models.Model):
 	def get_pie_chart(self):
 		# create the chart
 		pie_chart = pygal.Pie()
-		# get the data
+		# get the data, breaking out if we get errors
 		data = self.get_data()
+		if self.errors:
+			return False
 		# build the pie wedges
 		for key in data.keys():
-			# set the pie wedge
 			pie_chart.add(key,data[key])
 		# return the chart
 		return pie_chart
@@ -1152,6 +1182,9 @@ class Chart(DataAccessMixin,models.Model):
 		# get the data from the database, filtering and sorting as required
 		model = class_from_str(self.model)
 		records, valid = self.apply_filters(model.objects.all(),self.super_filters.all())
+		if not valid:
+			return False
+		# sort the records if we have a sort field
 		if self.sort_field:
 			records = records.order_by(self.sort_field)
 		# go through the data
@@ -1166,8 +1199,9 @@ class Chart(DataAccessMixin,models.Model):
 				data[label] = self.add_group_by_value(record,data,label)
 			else:
 				queryset = self.get_queryset(record)
-				value = self.get_value(queryset)
-				data[label] = value
+				if not self.errors:
+					value = self.get_value(queryset)
+					data[label] = value
 		# return the result
 		return data
 
@@ -1212,7 +1246,12 @@ class Chart(DataAccessMixin,models.Model):
 			# go through the stack entries and set the values based on a filter of the queryset
 			for stack_record in stack_records:
 				filter_dict = { self.stack_filter_term : stack_record }
-				stack_record.values.append(queryset.filter(**filter_dict).count())
+				try:
+					count = queryset.filter(**filter_dict).count()
+					stack_record.values.append(count)
+				except:
+					self.add_error('Invalid stack filter')
+					return False
 		# build the chart
 		bar_chart.x_labels = x_labels
 		for stack_record in stack_records:
@@ -1230,8 +1269,11 @@ class Chart(DataAccessMixin,models.Model):
 			queryset = many_model.objects.all()
 		# filter it if it needs filtering
 		queryset, valid = self.apply_filters(queryset,self.filters.all(),master_object=record)
+		# deduplicate the results if they are valid
+		if valid:
+			queryset = queryset.distinct()
 		# return the results
-		return queryset.distinct()
+		return queryset
 
 	def apply_filters(self,queryset,filters,master_object=False):
 		# initialise the variables
@@ -1265,6 +1307,7 @@ class Chart(DataAccessMixin,models.Model):
 			except:
 				queryset = False
 				valid = False
+				self.add_error('Invalid filter')
 		# try to apply the exclusions
 		if exclusion_dict:
 			try:
@@ -1272,6 +1315,7 @@ class Chart(DataAccessMixin,models.Model):
 			except:
 				queryset = False
 				valid = False
+				self.add_error('Invalid filter')
 		# return the result
 		return queryset, valid
 
@@ -1637,8 +1681,11 @@ class Panel(DataAccessMixin,models.Model):
 		# and try to order it if it needs ordering
 		if valid_filters and self.sort_field:
 				panel_queryset = panel_queryset.order_by(self.sort_field)
+		# deduplicate the results if we have them
+		if valid_filters:
+			panel_queryset = panel_queryset.distinct()
 		# return the results
-		return panel_queryset.distinct() if panel_queryset else panel_queryset
+		return panel_queryset
 
 	def apply_filters(self,queryset,filters,master_object=False):
 		# initialise the variables

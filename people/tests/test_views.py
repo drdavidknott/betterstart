@@ -4547,7 +4547,7 @@ class ChartViewTest(TestCase):
 		# check the values in the response
 		self.assertContains(response,'Label not provided')
 
-	def test_count_and_sum_missing_error(self):
+	def test_count_and_sum_and_group_by_missing_error(self):
 		# change the model to an invalid value
 		test_chart = Chart.objects.get(name='test_chart')
 		test_chart.count_field = ''
@@ -4559,7 +4559,7 @@ class ChartViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check the values in the response
-		self.assertContains(response,'Count or sum not provided')
+		self.assertContains(response,'Count or sum or group by not provided')
 
 	def test_group_by_error(self):
 		# change the model to an invalid value

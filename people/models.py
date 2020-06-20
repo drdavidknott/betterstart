@@ -1096,17 +1096,20 @@ class Chart(DataAccessMixin,models.Model):
 				return False
 		# what we do with sum field depends on whether we are grouping or navigating a relationship
 		if self.sum_field:
-			if ((self.group_by_field and not hasattr(model,self.sum_field))
-				or (not self.group_by_field and not hasattr(count_model,self.sum_field))):
-				self.add_error(attribute + ' is not a valid attribute')
+			if count_model:
+				if not hasattr(count_model,self.sum_field):
+					self.add_error(self.sum_field + ' is not a valid attribute')
+					return False
+			elif not hasattr(model,self.sum_field):
+				self.add_error(self.sum_field + ' is not a valid attribute')
 				return False
 		# check that we have the fields necessary fro a pie or bar chart
 		if self.query_type == 'query from one' and self.chart_type in ('pie','bar'):
 			if not self.label_field:
 				self.add_error('Label not provided')
 				return False
-			if not self.count_field and not self.sum_field:
-				self.add_error('Count or sum not provided')
+			if not self.count_field and not self.sum_field and not self.group_by_field:
+				self.add_error('Count or sum or group by not provided')
 				return False
 		# we made it this far, so it must be valid
 		return True

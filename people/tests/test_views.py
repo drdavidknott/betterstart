@@ -4477,6 +4477,51 @@ class ChartViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
+	def test_pie_chart(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertNotContains(response,'ERROR')
+
+	def test_bar_chart(self):
+		# change to a bar chart
+		test_chart = Chart.objects.get(name='test_chart')
+		test_chart.chart_type = 'bar'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertNotContains(response,'ERROR')
+
+	def test_month_bar_chart(self):
+		# change to a bar chart
+		test_chart = Chart.objects.get(name='test_chart')
+		model = 'Event'
+		test_chart.chart_type = 'month_bar'
+		date_field = 'date'
+		months=12
+		label_field=None
+		sort_field=None
+		count_field=None
+		query_type='query from one'
+		test_chart.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('chart',args=['test_chart']))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check the values in the response
+		self.assertNotContains(response,'ERROR')
+
 	def test_model_error(self):
 		# change the model to an invalid value
 		test_chart = Chart.objects.get(name='test_chart')

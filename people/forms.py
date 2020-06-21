@@ -990,12 +990,12 @@ class VenueForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	website = forms.CharField(
 									label="Website",
-									max_length=50,
+									max_length=100,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	price = forms.CharField(
 									label="Price",
-									max_length=50,
+									max_length=100,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	facilities = forms.CharField(
@@ -1005,7 +1005,7 @@ class VenueForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	opening_hours = forms.CharField(
 									label="Opening Hours",
-									max_length=50,
+									max_length=100,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	notes = forms.CharField(
@@ -1190,7 +1190,7 @@ class EventForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	description = forms.CharField(
 									label="Description",
-									max_length=1000,
+									max_length=1500,
 									widget=forms.Textarea(attrs={'class' : 'form-control', 'cols' : 100, 'rows' : 6}))
 	event_type = forms.ChoiceField(
 									label="Event Type",

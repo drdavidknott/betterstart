@@ -1007,7 +1007,7 @@ class Events_File_Handler(File_Handler):
 		self.file_class = Event
 		# set the file fields
 		self.name = File_Field(name='name',mandatory=True,max_length=50)
-		self.description = File_Field(name='description',mandatory=True,max_length=500)
+		self.description = File_Field(name='description',mandatory=True,max_length=1500)
 		self.event_type = File_Field(
 									name='event_type',
 									mandatory=True,
@@ -1127,7 +1127,7 @@ class Venues_File_Handler(File_Handler):
 		self.name = File_Field(
 								name='name',
 								mandatory=True,
-								max_length=50,
+								max_length=100,
 								corresponding_model=Venue,
 								corresponding_field='name',
 								corresponding_must_not_exist=True,
@@ -1160,15 +1160,15 @@ class Venues_File_Handler(File_Handler):
 									include_in_create=False,
 									set_download_from_object=False
 									)
-		self.contact_name = File_Field(name='contact_name',max_length=50)
+		self.contact_name = File_Field(name='contact_name',max_length=100)
 		self.email_address = File_Field(name='email_address',max_length=50)
 		self.phone = File_Field(name='phone',max_length=50)
 		self.mobile_phone = File_Field(name='mobile_phone',max_length=50)
-		self.website = File_Field(name='website',max_length=50)
-		self.price = File_Field(name='price',max_length=50)
-		self.facilities = File_Field(name='facilities',max_length=50)
-		self.opening_hours = File_Field(name='opening_hours',max_length=50)
-		self.notes = File_Field(name='notes',max_length=1000)
+		self.website = File_Field(name='website',max_length=100)
+		self.price = File_Field(name='price',max_length=100)
+		self.facilities = File_Field(name='facilities',max_length=100)
+		self.opening_hours = File_Field(name='opening_hours',max_length=100)
+		self.notes = File_Field(name='notes',max_length=1500)
 
 		# and a list of the fields
 		self.fields = [

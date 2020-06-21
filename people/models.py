@@ -205,14 +205,14 @@ class Venue(DataAccessMixin,models.Model):
 	venue_type = models.ForeignKey(Venue_Type, on_delete=models.CASCADE)
 	building_name_or_number = models.CharField(max_length=50)
 	street = models.ForeignKey(Street, blank=True, null=True, on_delete=models.SET_NULL)
-	contact_name = models.CharField(max_length=50, default='', null=True)
+	contact_name = models.CharField(max_length=100, default='', null=True)
 	phone = models.CharField(max_length=50, default='', null=True)
 	mobile_phone = models.CharField(max_length=50, default='', null=True)
 	email_address = models.CharField(max_length=50, default='', null=True)
-	website = models.CharField(max_length=50, default='', null=True)
-	price = models.CharField(max_length=50, default='', null=True)
+	website = models.CharField(max_length=100, default='', null=True)
+	price = models.CharField(max_length=100, default='', null=True)
 	facilities = models.CharField(max_length=100, default='', null=True)
-	opening_hours = models.CharField(max_length=50, default='', null=True)
+	opening_hours = models.CharField(max_length=100, default='', null=True)
 	notes = models.TextField(max_length=1500, default='', blank=True)
 
 	# define the function that will return the venue name as the object reference
@@ -251,7 +251,7 @@ class Event_Type(DataAccessMixin,models.Model):
 # Event model: represents events which people register for and attend
 class Event(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
-	description = models.TextField(max_length=500)
+	description = models.TextField(max_length=1500)
 	event_type = models.ForeignKey(Event_Type, default=1, on_delete=models.SET_DEFAULT)
 	date = models.DateField()
 	start_time = models.TimeField()
@@ -1053,7 +1053,7 @@ class Chart(DataAccessMixin,models.Model):
 
 	# add an error to the list
 	def add_error(self,error):
-		self.errors.append(error)
+		self.errors.append('ERROR: ' + error)
 
 	# build and return a set of rows
 	def get_chart(self,start_date,end_date):

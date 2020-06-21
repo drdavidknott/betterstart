@@ -6195,6 +6195,27 @@ class EventRegistrationViewTest(TestCase):
 		# check that we got the right number of events
 		self.assertEqual(response.context['search_number'],36)
 
+	def test_event_registration_search_names_over_100(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some people
+		set_up_test_people('test person',number=200)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'test',
+												'include_people' : 'all'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertContains(response,'More than 100 search results found: please refine search')
+
 	def test_event_registration_register_people_multiple_roles(self):
 		# create an event
 		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
@@ -6544,6 +6565,62 @@ class EventRegistrationViewTest(TestCase):
 		self.assertEqual(registration_3.apologies,False)
 		self.assertEqual(registration_3.participated,False)
 		self.assertEqual(registration_3.role_type,test_role_1)
+
+	def test_event_registration_edit_second_page(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		# create some people
+		set_up_test_people('Registered_',number=50)
+		# create the registrations and the data for the submission
+		keys = ''
+		data = { 'action' : 'editregistration' }
+		for n in range(50):
+			person = Person.objects.get(first_name='Registered_' + str(n))
+			# create some registrations
+			Event_Registration.objects.create(
+												event=Event.objects.get(name='test_event_0'),
+												person=person,
+												role_type=test_role_1,
+												registered=False,
+												participated=True,
+												apologies=False
+												)
+			# build the data for the second page
+			if n >= 24:
+				key = str(person.pk)
+				keys = keys = ','.join([keys,key]) if keys else key
+				data['registered_' + key] = 'on'
+				data['apologies_' + key] = ''
+				data['participated_' + key] = ''
+				data['role_type_' + key] =  str(test_role_1.pk)
+		data['registration_keys'] = keys
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = data,
+									edit_page = '2'
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# get the event
+		event = Event.objects.get(name='test_event_0')
+		# check the results
+		for n in range(50):
+			registration = Event_Registration.objects.get(person=Person.objects.get(first_name='Registered_' + str(n)),event=event)
+			if n >= 24:
+				self.assertEqual(registration.registered,True)
+				self.assertEqual(registration.apologies,False)
+				self.assertEqual(registration.participated,False)
+				self.assertEqual(registration.role_type,test_role_1)
+			else:
+				self.assertEqual(registration.registered,False)
+				self.assertEqual(registration.apologies,False)
+				self.assertEqual(registration.participated,True)
+				self.assertEqual(registration.role_type,test_role_1)
 
 	def test_event_registration_apologies_change_roles(self):
 		# create an event

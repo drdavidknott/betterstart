@@ -5,6 +5,7 @@ from django.shortcuts import render, HttpResponse, redirect
 import collections
 import datetime
 from dateutil.relativedelta import relativedelta
+import operator
 
 def get_page_list(objects, page_length):
 	# take a list of objects and a page length, and build a list of pages
@@ -64,11 +65,12 @@ def build_page_list(objects, page_length, attribute, length=False, separator='to
 				# set the end index
 				end_index = (len(objects) - 1)
 			# create a page object in a new list
+			attribute_getter = operator.attrgetter(attribute)
 			page_list.append(
 								Page(
 									number = page,
-									start = getattr(objects[start_index],attribute),
-									end = getattr(objects[end_index],attribute),
+									start = attribute_getter(objects[start_index]),
+									end = attribute_getter(objects[end_index]),
 									length = length,
 									separator = separator
 									)

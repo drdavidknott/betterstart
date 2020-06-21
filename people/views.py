@@ -3229,6 +3229,8 @@ def event_registration(request,event_id=0):
 		search_key_delimiter = ''
 		addregistrationform = ''
 		addpersonandregistrationform = ''
+		excess_search_results = False
+		total_search_results = 0
 		# create a search form
 		personsearchform = PersonNameSearchForm(request.POST)
 		# validate the form
@@ -3243,6 +3245,11 @@ def event_registration(request,event_id=0):
 									)
 			# remove the people who already have a registration
 			search_results = remove_existing_registrations(event, people)
+			# if we have over a hundred results, truncate and set a flag
+			total_search_results = len(search_results)
+			if total_search_results >= 100:
+				search_results = search_results[:100]
+				excess_search_results = True
 			# if there are search results, create a form to create relationships from the search results
 			if search_results:
 				# create the form to add registrations
@@ -3268,7 +3275,8 @@ def event_registration(request,event_id=0):
 																			last_name = last_name
 																			)
 		# return the forms and results
-		return personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys
+		return personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys, \
+				excess_search_results, total_search_results
 
 	def event_registration_addregistration(event,request):
 		# process the addition of registrations
@@ -3325,19 +3333,30 @@ def event_registration(request,event_id=0):
 									person_id = int(registration_key)
 								)
 
-	def event_registration_registrations(event):
+	def event_registration_registrations(event,this_page):
 		# initialise variables
 		registration_keys = ''
 		registration_key_delimiter = ''
 		editregistrationform = ''
+		page_list = []
+		results_per_page = 25
 		# update the existing registrations: there may be new ones
-		registrations = event.event_registration_set.all()
+		registrations = event.event_registration_set.all().order_by('person__last_name','person__first_name')
 		# if there are registrations, create the form
 		if registrations:
 			# clear the registration keys
 			registration_keys = ''
 			# create the form
 			editregistrationform = EditRegistrationForm(registrations = registrations)
+			# do the pagination
+			page_list = build_page_list(
+										objects=registrations,
+										page_length=results_per_page,
+										attribute='person.last_name',
+										length=3
+										)
+			previous_page = this_page - 1
+			registrations = registrations[previous_page*results_per_page:this_page*results_per_page]
 			# add field names to each registration, so that we know when to display them
 			for registration in registrations:
 				# add the three field names
@@ -3350,7 +3369,7 @@ def event_registration(request,event_id=0):
 				# and set the delimiter
 				registration_key_delimiter = ','
 		# return the results
-		return registrations, registration_keys, editregistrationform
+		return registrations, registration_keys, editregistrationform, page_list
 
 	def event_registration_addpersonandregistration(event,request):
 		# process the request to add a person and register them to this event
@@ -3395,6 +3414,11 @@ def event_registration(request,event_id=0):
 	search_keys = ''
 	search_error = ''
 	search_attempted = False
+	edit_page = 1
+	names = ''
+	include_people = ''
+	excess_search_results = False
+	total_search_results = 0
 	# initalise forms
 	addregistrationform = ''
 	addpersonandregistrationform = ''
@@ -3405,9 +3429,13 @@ def event_registration(request,event_id=0):
 		# search returns search results and builds the forms necessary to add and edit registrations
 		# addregistration processes registration of new people for the event
 		# editregistration processes changes to registration for existing people for the event
+		# start by getting the page
+		if 'edit_page' in request.POST.keys():
+			edit_page = int(request.POST['edit_page'])
+		# now do the requsted function
 		if request.POST['action'] == 'search':
-			personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys = \
-			event_registration_search(event,request)
+			personsearchform, addregistrationform, addpersonandregistrationform, search_results, search_keys, \
+				excess_search_results, total_search_results = event_registration_search(event,request)
 			search_attempted = True
 		elif request.POST['action'] == 'addregistration':
 			event_registration_addregistration(event,request)
@@ -3416,7 +3444,8 @@ def event_registration(request,event_id=0):
 		elif request.POST['action'] == 'addpersonandregistration':
 			addpersonandregistrationform = event_registration_addpersonandregistration(event,request)
 	# build the form to edit registrations, along with an enriched list of existing registrations
-	registrations, registration_keys, editregistrationform = event_registration_registrations(event)
+	registrations, registration_keys, editregistrationform, edit_page_list = \
+		event_registration_registrations(event,edit_page)
 	# set the context from the person based on person id
 	context = build_context({
 				'personsearchform' : personsearchform,
@@ -3430,7 +3459,11 @@ def event_registration(request,event_id=0):
 				'event' : event,
 				'registrations' : registrations,
 				'registration_keys' : registration_keys,
-				'search_attempted' : search_attempted
+				'search_attempted' : search_attempted,
+				'edit_page_list' : edit_page_list,
+				'edit_page' : edit_page,
+				'excess_search_results' : excess_search_results,
+				'total_search_results' : total_search_results,
 				})
 	# return the response
 	return HttpResponse(event_registration_template.render(context=context, request=request))

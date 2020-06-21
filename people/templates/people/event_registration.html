@@ -31,7 +31,12 @@
 	 			<h4>
 		 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
 		 			Search for People:
-		 				{% if search_results or search_attempted %} ({{ search_results|length }} found){% endif %}
+		 				{% if search_results or search_attempted %} ({{ total_search_results }} found){% endif %}
+		 				{% if excess_search_results %}
+		 					<div>
+		 						More than 100 search results found: please refine search.
+		 					</div>
+		 				{% endif %}
 	 			<h4>
 	 		</div>
 		</div>
@@ -237,8 +242,39 @@
 				</div>
 			</div>
 			<div class = "form-row">
-				<div class = "col-xs-2">
-					<input type="submit" class="btn btn-primary" value="Submit">
+				<div class = "col-xs-12">
+					{% if edit_page_list %}
+						{% for page in edit_page_list %}
+							<button 
+								type="submit" 
+								name="edit_page" 
+								value="{{ page.number }}" 
+								class="btn btn-sm btn-primary person-page-button"
+								{% if page.number == edit_page %}
+									disabled
+								{% endif %}
+								>
+								{{ page }}
+							</button>
+						{% endfor %}
+					{% endif %}
+				</div>
+			</div>
+			<div class = "form-row">
+				<div class = "col-xs-12">
+					&nbsp;
+				</div>
+			</div>
+			<div class = "form-row">
+				<div class = "col-xs-12">
+					<button 
+						type="submit" 
+						name="edit_page" 
+						value="{{ edit_page }}" 
+						class="btn btn-primary person-page-button"
+						>
+						Submit
+					</button>
 				</div>
 			</div>
 		</form>

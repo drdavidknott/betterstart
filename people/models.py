@@ -295,6 +295,9 @@ class Event(DataAccessMixin,models.Model):
 						)
 		# and return the results
 		return duration
+	# define a function to return a string containing the month and year of the event
+	def month_and_year(self):
+		return self.date.strftime('%Y %m %B')
 	# define a set of functions to return counts based on registration, participation and apologies
 	def registered_count(self):
 		return self.event_registration_set.filter(registered=True).count()

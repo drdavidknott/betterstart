@@ -1172,8 +1172,9 @@ class Chart(DataAccessMixin,models.Model):
 							self.date_field + '__month' : month,
 							self.date_field + '__year' : query_year
 							}
-			# get the queryset and add to the chart
+			# get the queryset, apply further filters and add to the chart
 			queryset = model.objects.filter(**filter_dict)
+			queryset, valid = self.apply_filters(queryset,self.super_filters.all())
 			data_values.append(self.get_value(queryset))
 		# build the chart
 		bar_chart = pygal.Bar(show_legend=False,x_label_rotation=self.x_label_rotation)

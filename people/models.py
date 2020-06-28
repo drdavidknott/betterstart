@@ -18,6 +18,7 @@ import json
 import base64
 from PIL import Image
 from io import BytesIO
+from django.urls import reverse, resolve
 
 # function to derive a class from a string
 def class_from_str(class_str):

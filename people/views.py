@@ -37,7 +37,8 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Venues_File_Handler, Venues_For_Events_File_Handler, People_Limited_Data_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
-									Questions_Invitation_Handler, Introduction_Invitation_Handler
+									Questions_Invitation_Handler, Introduction_Invitation_Handler, \
+									Signature_Invitation_Handler
 import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
@@ -48,6 +49,7 @@ from django.contrib.auth.hashers import check_password
 from django.core.mail import send_mail, EmailMessage
 from django.utils import timezone
 import io
+from jsignature.utils import draw_signature
 
 @login_required
 def index(request):
@@ -1471,7 +1473,7 @@ def generate_invitation(person):
 	return invitation
 
 def validate_invitations(person):
-	# mark all inivations which have been completed but not validated as alid
+	# mark all invitations which have been completed but not validated as valid
 	invitations = Invitation.objects.filter(person=person,datetime_completed__isnull=False,validated=False)
 	for invitation in invitations:
 		invitation.validated = True
@@ -2227,6 +2229,7 @@ def invitation(request, code):
 								'address' : Address_Invitation_Handler,
 								'children' : Children_Invitation_Handler,
 								'questions' : Questions_Invitation_Handler,
+								'signature' : Signature_Invitation_Handler,
 							}
 	# try to get the invitation, returning a banner if it doesn't exist, or has been completed
 	invitation = Invitation.try_to_get(code=code)
@@ -2263,6 +2266,52 @@ def invitation(request, code):
 				})
 	# return the response
 	return HttpResponse(invitation_template.render(context=context, request=request))
+
+@login_required
+def review_invitation(request,invitation_id):
+	# attempt to get the invitation
+	invitation = Invitation.try_to_get(pk=invitation_id)
+	if not invitation:
+		return make_banner(request, 'Invitation does not exist.', public=True)
+	# get the data
+	invitation_url = request.build_absolute_uri(reverse('invitation', args=[invitation.code]))
+	# load the template
+	template = loader.get_template('people/review_invitation.html')
+	# set the context
+	context = build_context({
+								'invitation': invitation,
+								'invitation_url' : invitation_url
+							})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def validate_invitation(request,invitation_id):
+	# attempt to get the invitation
+	invitation = Invitation.try_to_get(pk=invitation_id)
+	if not invitation:
+		return make_banner(request, 'Invitation does not exist.', public=True)
+	if invitation.validated:
+		return make_banner(request, 'Invitation already validated.', public=True)
+	# update the invitation
+	invitation.validated = True
+	invitation.save()
+	# return the redirect
+	return redirect('/person/' + str(invitation.person.pk))
+
+@login_required
+def display_signature(request,invitation_step_id):
+	# attempt to get the invitation
+	invitation_step = Invitation_Step.try_to_get(pk=invitation_step_id)
+	if not invitation_step:
+		return make_banner(request, 'Invitation step id is not valid.', public=True)
+	if not invitation_step.signature:
+		return make_banner(request, 'Invitation step has no signature.', public=True)
+	# create the image and return it as a response
+	img = invitation_step.get_signature()
+	response = HttpResponse(content_type='image/png')
+	img.save(response,'PNG')
+	return response
 
 @login_required
 def profile(request, person_id=0):
@@ -3758,8 +3807,6 @@ def display_qrcode_image(request,):
 	# initialise variables
 	user = request.user
 	device = get_device(user)
-	# load the template
-	template = loader.get_template('people/display_qrcode.html')
 	# create the image and return it as a response
 	img = qrcode.make(device.config_url,image_factory=qrcode.image.svg.SvgImage)
 	response = HttpResponse(content_type='image/svg+xml')

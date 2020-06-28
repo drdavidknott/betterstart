@@ -8086,11 +8086,12 @@ class InvitationViewTest(TestCase):
 									)
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 302)
-		# check that the invitation step was created
+		# check that the invitation step was created and that it contains the right data
 		invitation_step_type = Invitation_Step_Type.objects.get(name='introduction')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=invitation_step_type)
+		self.assertEqual(invitation_step.step_data,'Introduction acknowledged')
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Terms and Conditions')
@@ -8122,6 +8123,7 @@ class InvitationViewTest(TestCase):
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
+		self.assertEqual(invitation_step.step_data, 'test_t_and_c accepted')
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Personal Details')
@@ -8196,6 +8198,11 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(response.status_code, 302)
 		# check that the invitation step was created
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
+		self.assertIn('{"First Name": "first", "Last Name": "last",', invitation_step.step_data)
+		self.assertIn('"Email Address": "testing@test.com", "Home Phone": "12345678",', invitation_step.step_data)
+		self.assertIn('"Mobile Phone": "78901234", "Emergency Contact Details": "EMERGENCY",', invitation_step.step_data)
+		self.assertIn('"Date of Birth": "2003-01-01", "Gender": "Female",', invitation_step.step_data)
+		self.assertIn('"Pregnant": "True", "Due Data": "2021-01-01"}', invitation_step.step_data)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Address')

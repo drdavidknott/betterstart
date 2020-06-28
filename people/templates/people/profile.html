@@ -112,9 +112,7 @@
 			<div class="form-group col-md-12 mb-0">
 				<input type="submit" name="action" class="btn btn-primary" value="Submit">
 				{% if request.user.is_superuser and site.invitations_active %}
-					{% if person.has_unvalidated_invitation %}
-						<input type="submit" name="action" class="btn btn-primary" value="Validate Invitation">
-					{% elif not person.has_open_invitation %}
+					{% if not person.has_open_invitation %}
 						<input type="submit" name="action" class="btn btn-primary" value="Generate Invitation">
 					{% endif %}
 				{% endif %}

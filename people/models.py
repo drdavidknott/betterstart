@@ -12,6 +12,12 @@ import pygal
 import calendar
 from dateutil.relativedelta import relativedelta
 from inspect import ismethod
+from jsignature.fields import JSignatureField
+from jsignature.utils import draw_signature
+import json
+import base64
+from PIL import Image
+from io import BytesIO
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -2008,13 +2014,25 @@ class Invitation_Step_Type(DataAccessMixin,models.Model):
 					('personal_details','Personal Details'),
 					('address','Address'),
 					('children','Children'),
-					('questions','Questions')
+					('questions','Questions'),
+					('signature','Signature'),
 					]
 	name = models.CharField(max_length=50, choices=name_choices)
 	display_name = models.CharField(max_length=50, default='')
 	order = models.IntegerField(default=0)
 	active = models.BooleanField(default=True)
 	terms_and_conditions = models.ForeignKey(Terms_And_Conditions, null=True, blank=True, on_delete=models.CASCADE)
+	data_type = models.CharField(
+									max_length=50,
+									choices=[
+										('string', 'string'),
+										('table', 'table'),
+										('fields', 'fields'),
+										('signature', 'signature'),
+									],
+									default='',
+									blank=True
+								)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.display_name
@@ -2033,6 +2051,7 @@ class Invitation(DataAccessMixin,models.Model):
 	invitation_steps = models.ManyToManyField(Invitation_Step_Type, through='Invitation_Step')
 	validated = models.BooleanField(default=False)
 	invalid  = models.BooleanField(default=False)
+	signature = JSignatureField(blank=True, null=True)
 	# define the function that will return the string for the object
 	def __str__(self):
 		completed = 'completed' if self.datetime_completed is not None else 'not completed'
@@ -2061,11 +2080,24 @@ class Invitation(DataAccessMixin,models.Model):
 	def complete_steps(self):
 		return Invitation_Step_Type.objects.filter(invitation=self)
 
+	# method to display the signature
+	def get_signature(self):
+		# initialise variables
+		signature_image = False
+		# if we have a signature, build a base64 string
+		if self.signature:
+			signature_image = draw_signature(self.signature)
+		# return the results
+		return signature_image
+
 # Invitation_Step model: contains the steps that have been followed 
 class Invitation_Step(DataAccessMixin,models.Model):
 	invitation = models.ForeignKey(Invitation, on_delete=models.CASCADE)
 	invitation_step_type = models.ForeignKey(Invitation_Step_Type, on_delete=models.CASCADE)
 	datetime_created = models.DateTimeField(auto_now_add=True)
+	step_data = models.TextField(max_length=1500, default='', blank=True)
+	signature = JSignatureField(blank=True, null=True)
+
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.invitation_step_type.display_name + ' for ' + \
@@ -2074,5 +2106,30 @@ class Invitation_Step(DataAccessMixin,models.Model):
 
 	class Meta:
 		verbose_name_plural = 'invitation steps'
-		ordering = ('invitation_step_type__order',)
+		ordering = (['invitation_step_type__order'])
 
+	# return data for display
+	def get_display_data(self):
+		# initialise variables
+		step_data = 'No data'
+		data_type = self.invitation_step_type.data_type
+		# get the data depending on the type
+		if self.step_data:
+			if data_type == 'string':
+				step_data = self.step_data
+			elif data_type == 'table' or data_type == 'fields':
+				step_data = json.loads(self.step_data)
+			elif data_type == 'signature':
+				step_data = reverse('display_signature',args=[self.pk])
+		# return the results
+		return step_data
+
+	# method to display the signature
+	def get_signature(self):
+		# initialise variables
+		signature_image = False
+		# if we have a signature, build a base64 string
+		if self.signature:
+			signature_image = draw_signature(self.signature)
+		# return the results
+		return signature_image

@@ -79,11 +79,32 @@
 			</div>
 		{% endif %}
 
-		<div class="row">
-	 		<div class="col-xs-12">
-				{% crispy invitation_handler.form %}
+		{% if not invitation_handler.signature %}
+			<div class="row">
+				<div class="col-xs-12">
+					{% crispy invitation_handler.form %}
+				</div>
 			</div>
-		</div>
+		{% else %}
+			<div class="row">
+				<div class="col-xs-12">
+					{{ invitation_handler.form.media }}
+					<form action="{% url 'invitation' invitation.code %}" method="POST">
+						{% if invitation_handler.form.signature.errors %}
+							{% for error in invitation_handler.form.signature.errors %}
+							<div><strong>{{ error }}</strong></div>
+							{% endfor %}
+						{% endif %}
+						{% for field in invitation_handler.form %}
+							{{ field.label_tag }}
+							{{ field }}
+						{% endfor %}
+						<input type="submit" value="Submit"/>
+						{% csrf_token %}
+					</form>
+				</div>
+			</div>
+		{% endif %}
 
 		<div class="row">
 			<div class="col-xs-12">

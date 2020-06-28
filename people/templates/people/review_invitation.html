@@ -1,0 +1,136 @@
+{% extends "people/base.html" %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+				<a href="{% url 'person' invitation.person.pk %}">
+					<span class="glyphicon glyphicon-user"></span>
+					{{ invitation.person }}
+				</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	 <div class="row">
+		<div class="col-xs-12">
+			<hr>
+		</div>
+	 </div>
+
+	<div class='col-xs-1 text-right'>
+		<span class="glyphicon glyphicon-question-sign"></span>
+	</div>
+	<div class='col-xs-11'>
+		<div class="row">
+			Invitation created on {{ invitation.datetime_created|date:"M d Y" }}
+			{% if invitation.datetime_completed %}
+				Invitation completed on {{ invitation.datetime_completed|date:"M d Y" }}
+			{% endif %}
+		</div>
+		<div class="row">
+			<strong>Link: </strong>
+			<a href="{% url 'invitation' invitation.code %}">
+				{{ invitation_url }}
+			</a>
+		</div>
+	</div>
+
+	{% for completed_step in invitation.invitation_step_set.all %}
+		<div class="col-xs-12 row">
+			<div>
+				<hr>
+			</div>
+		</div>
+		<div class='col-xs-1 text-right'>
+			<span class="glyphicon glyphicon-ok-sign"></span>
+		</div>
+		<div class='col-xs-11'>
+			<div class="row">
+				{{ completed_step.invitation_step_type.display_name }}
+				completed on {{ completed_step.datetime_created|date:"M d Y" }}
+			</div>
+			<div class="row">
+				{% if completed_step.get_display_data == 'No data' %}
+					No data
+				{% elif completed_step.invitation_step_type.data_type == 'string' %}
+					{{ completed_step.get_display_data }}
+				{% elif completed_step.invitation_step_type.data_type == 'table' %}
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								{% for header in completed_step.get_display_data.headers %}
+									<th>{{ header }}</th>
+								{% endfor %}
+							</tr>
+						</thead>
+						<tbody>
+							{% for row in completed_step.get_display_data.rows %}
+								<tr>
+								{% for field in row %}
+									<td>{{ field }}</td>
+								{% endfor %}
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				{% elif completed_step.invitation_step_type.data_type == 'fields' %}
+					{% for key, value in completed_step.get_display_data.items %}
+						<div>
+							{{ key }}: {{ value }}
+						</div>
+					{% endfor %}
+				{% elif completed_step.invitation_step_type.data_type == 'signature' %}
+					<img src='{% url 'display_signature' completed_step.pk %}' width='400'>
+				{% endif %}
+			</div>
+		</div>
+	{% endfor %}
+
+	{% if invitation.incomplete_steps %}
+		<div class="row col-xs-12">
+			<div>
+				<hr>
+			</div>
+		</div>
+		{% for incomplete_step in invitation.incomplete_steps %}
+			<div class='col-xs-1 text-right'>
+				<span class="glyphicon glyphicon-remove-circle"></span>
+			</div>
+			<div class='row col-xs-11'>
+				{{ incomplete_step.display_name }}
+			</div>
+		{% endfor %}
+	{% elif not invitation.validated %}
+		<div class="row col-xs-12">
+			<div>
+				<hr>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-1"></div>
+			<div class="col-xs-11">
+				<a href="{% url 'validate_invitation' invitation.pk %}" class="btn btn-primary">
+					Validate Invitation
+				</a>
+			</div>
+		</div>
+	{% endif %}
+
+	<div class="row">
+		<div class="col-xs-12">
+			<hr>
+		</div>
+	</div>
+
+</div>
+
+{% endblock %}
+

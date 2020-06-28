@@ -17,3 +17,8 @@
 .events-page-button {
 	width: 180px;
 }
+
+.glyphicon-none:before {
+    content: "\2122";
+    color: transparent !important;
+}

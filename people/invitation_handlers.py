@@ -13,6 +13,8 @@ from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolde
 from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
 from .utilities import build_choices, replace_if_value
+from jsignature.forms import JSignatureField
+import json
 
 class IntroductionForm(forms.Form):
 	# this form has no fields: it simply presents the introduction
@@ -418,6 +420,9 @@ class QuestionsForm(forms.Form):
 		rows.append(row)
 		self.helper.layout = Layout(*rows)
 
+class SignatureForm(forms.Form):
+	signature = JSignatureField()
+
 class Invitation_Handler():
 	template = 'people/invitation.html'
 
@@ -428,6 +433,8 @@ class Invitation_Handler():
 		self.step_complete = False
 		self.display_text = False
 		self.default_date = datetime.date.today().strftime('%d/%m/%Y')
+		self.signature = False
+		self.step_data = ''
 		# set the default date of birth based on site level offset
 		site = Site.objects.all().first()
 		dob_offset = site.dob_offset if site else 0
@@ -460,7 +467,8 @@ class Invitation_Handler():
 		# mark the step as complete in this object and in the database
 		Invitation_Step.objects.create(
 										invitation=self.invitation,
-										invitation_step_type=self.invitation_step_type
+										invitation_step_type=self.invitation_step_type,
+										step_data = self.step_data
 										)
 		self.step_complete = True
 
@@ -473,6 +481,10 @@ class Terms_And_Conditions_Invitation_Handler(Invitation_Handler):
 		# get the terms and conditions text and set it as display text
 		self.display_text = self.invitation_step_type.terms_and_conditions.notes
 
+	def handle_step_updates(self):
+		# set the data
+		self.step_data = self.invitation_step_type.terms_and_conditions.name + ' accepted'
+
 class Introduction_Invitation_Handler(Invitation_Handler):
 	form_class = IntroductionForm
 
@@ -482,6 +494,10 @@ class Introduction_Invitation_Handler(Invitation_Handler):
 		# get the introduction text from the site and set it as display text
 		site = Site.objects.all().first()
 		self.display_text = site.invitation_introduction if site else ''
+
+	def handle_step_updates(self):
+		# set the data
+		self.step_data = 'Introduction acknowledged'
 
 class Personal_Details_Invitation_Handler(Invitation_Handler):
 	form_class = PersonalDetailsForm
@@ -507,6 +523,20 @@ class Personal_Details_Invitation_Handler(Invitation_Handler):
 		person.pregnant = replace_if_value(person.pregnant,self.form.cleaned_data['pregnant'])
 		person.due_date = replace_if_value(person.due_date,self.form.cleaned_data['due_date'])
 		person.save()
+		# update the data for recording and display
+		data_dict = {
+						'First Name' : self.form.cleaned_data['first_name'],
+						'Last Name' : self.form.cleaned_data['last_name'],
+						'Email Address' : self.form.cleaned_data['email_address'],
+						'Home Phone' : self.form.cleaned_data['home_phone'],
+						'Mobile Phone' : self.form.cleaned_data['mobile_phone'],
+						'Emergency Contact Details' : self.form.cleaned_data['emergency_contact_details'],
+						'Date of Birth' : str(self.form.cleaned_data['date_of_birth']),
+						'Gender' : self.form.cleaned_data['gender'],
+						'Pregnant' : str(self.form.cleaned_data['pregnant']),
+						'Due Data': str(self.form.cleaned_data['due_date']),
+					}
+		self.step_data = json.dumps(data_dict)
 
 class Address_Invitation_Handler(Invitation_Handler):
 	form_class = AddressForm
@@ -519,6 +549,8 @@ class Address_Invitation_Handler(Invitation_Handler):
 		person.house_name_or_number = self.form.cleaned_data['house_name_or_number']
 		person.street = street
 		person.save()
+		# update the data for recording and display
+		self.step_data = person.house_name_or_number + ' ' + person.street.name + ' ' + person.street.post_code.post_code
 
 class Children_Invitation_Handler(Invitation_Handler):
 	form_class = ChildrenForm
@@ -537,6 +569,8 @@ class Children_Invitation_Handler(Invitation_Handler):
 		child_over_four = Age_Status.objects.get(status='Child over four')
 		child_under_four = Age_Status.objects.get(status='Child under four')
 		today = datetime.date.today()
+		data_dict = {}
+		rows = []
 		# go through the fields
 		for i in range(6):
 			# check that we have the data to create the record
@@ -564,11 +598,37 @@ class Children_Invitation_Handler(Invitation_Handler):
 													person_to=child,
 													relationship_type_from=relationship_type
 													)
+				# append the data to the row
+				rows.append(
+							[
+								self.form.cleaned_data['first_name_' + str(i)],
+								self.form.cleaned_data['last_name_' + str(i)],
+								str(date_of_birth),
+								str(age_status),
+								self.form.cleaned_data['gender_' + str(i)],
+								str(relationship_type)
+							]
+							)
+		# if data has been entered, store it as json in the step data
+		if rows:
+			data_dict['headers'] = (
+									'First Name',
+									'Last Name',
+									'Date of Birth',
+									'Age Status',
+									'Gender',
+									'Relationship'
+									)
+			data_dict['rows'] = rows
+		self.step_data = json.dumps(data_dict)
 
 class Questions_Invitation_Handler(Invitation_Handler):
 	form_class = QuestionsForm
 
 	def handle_step_updates(self):
+		# initialise the variables
+		data_dict = {}
+		rows = []
 		# get the questions and set the values we need for each question
 		for question in Question.objects.filter(use_for_invitations=True):
 			field_name = 'question_' + str(question.pk)
@@ -605,7 +665,46 @@ class Questions_Invitation_Handler(Invitation_Handler):
 													question=question,
 													notes=notes)
 					answer_note.save()
+				# append the data to the row
+				rows.append(
+							[
+								str(question),
+								option.option_label,
+								notes if notes else 'No notes'
+							]
+							)
+		# if data has been entered, store it as json in the step data
+		if rows:
+			data_dict['headers'] = (
+										'Question',
+										'Answer',
+										'Notes',
+									)
+			data_dict['rows'] = rows
+		self.step_data = json.dumps(data_dict)
 
+class Signature_Invitation_Handler(Invitation_Handler):
+	form_class = SignatureForm
 
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(Signature_Invitation_Handler, self).__init__(*args, **kwargs)
+		# set the signature flag
+		self.signature = True
+
+	def handle_step_updates(self):
+		# add the signature to the invitation
+		self.signature = self.form.cleaned_data['signature']
+
+	def mark_step_complete(self):
+		# mark the step as complete in this object and in the database
+		# as this is a signature step, include the signature
+		Invitation_Step.objects.create(
+										invitation=self.invitation,
+										invitation_step_type=self.invitation_step_type,
+										signature = self.signature,
+										step_data='signed',
+										)
+		self.step_complete = True
 
 	

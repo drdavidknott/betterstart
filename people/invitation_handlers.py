@@ -620,7 +620,9 @@ class Children_Invitation_Handler(Invitation_Handler):
 									'Relationship'
 									)
 			data_dict['rows'] = rows
-		self.step_data = json.dumps(data_dict)
+			self.step_data = json.dumps(data_dict)
+		else:
+			self.step_data = ''
 
 class Questions_Invitation_Handler(Invitation_Handler):
 	form_class = QuestionsForm
@@ -681,7 +683,9 @@ class Questions_Invitation_Handler(Invitation_Handler):
 										'Notes',
 									)
 			data_dict['rows'] = rows
-		self.step_data = json.dumps(data_dict)
+			self.step_data = json.dumps(data_dict)
+		else:
+			self.step_data = ''
 
 class Signature_Invitation_Handler(Invitation_Handler):
 	form_class = SignatureForm

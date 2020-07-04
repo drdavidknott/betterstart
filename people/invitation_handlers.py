@@ -449,6 +449,7 @@ class Invitation_Handler():
 		else:
 			# otherwise, check if the form is valid, do the updates for the step, and then update the step
 			self.form = self.initialise_form_from_post(request.POST)
+			# print(request.POST['signature'])
 			if self.form.is_valid():
 				self.handle_step_updates()
 				self.mark_step_complete()

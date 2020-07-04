@@ -8028,6 +8028,7 @@ class InvitationViewTest(TestCase):
 									'address' : 'Address',
 									'children' : 'Children',
 									'questions' : 'Questions',
+									'signature' : 'Signature',
 								}
 		order = 10
 		for invitation_step_type in invitation_step_types.keys():
@@ -8426,8 +8427,9 @@ class InvitationViewTest(TestCase):
 									)
 		# check that we got a response
 		self.assertEqual(response.status_code, 302)
-		# check that the invitation step was created
+		# check that the invitation step was created and contains the right data
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
+		self.assertEqual('55 ABC streets 10 ABC0', invitation_step.step_data)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Children')
@@ -8578,8 +8580,9 @@ class InvitationViewTest(TestCase):
 									)
 		# check that we got a response
 		self.assertEqual(response.status_code, 302)
-		# check that the invitation step was created
+		# check that the invitation step was created and contains the right data
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
+		self.assertEqual(invitation_step.step_data,'{"headers": ["First Name", "Last Name", "Date of Birth", "Age Status", "Gender", "Relationship"], "rows": [["Test", "Underfour", "2017-07-04", "Child under four", "Male", "Other carer"], ["Testing", "Overfour", "2015-07-04", "Child over four", "Female", "Other carer"]]}')
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Questions')
@@ -8625,14 +8628,16 @@ class InvitationViewTest(TestCase):
 											'notes_' + str(question_with_notes.pk): ''
 											}
 									)
-		# check that we got a response with a finished message (rather than a redirect)
-		self.assertEqual(response.status_code, 200)
-		self.assertContains(response,'You have finished')
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created and contains the right data
+		invitation_step = Invitation_Step.objects.get(invitation=invitation, invitation_step_type=this_step)
+		self.assertEqual(invitation_step.step_data,'')
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response, 'Signature')
 		# check that the invitation step was created
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
-		# check that the invitation is complete
-		invitation = Invitation.objects.get(person=test_person)
-		self.assertNotEqual(invitation.datetime_completed,None)
 		# check that we don't have any answers
 		self.assertEqual(Answer.objects.all().exists(),False)
 
@@ -8662,19 +8667,268 @@ class InvitationViewTest(TestCase):
 											'notes_' + str(question_with_notes.pk): 'test_notes'
 											}
 									)
-		# check that we got a response with a finished message (rather than a redirect)
-		self.assertEqual(response.status_code, 200)
-		self.assertContains(response,'You have finished')
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created and contains the right data
+		invitation_step = Invitation_Step.objects.get(invitation=invitation, invitation_step_type=this_step)
+		self.assertEqual(invitation_step.step_data,'{"headers": ["Question", "Answer", "Notes"], "rows": [["q_no_notes0", "q_no_notes_option_0", "No notes"], ["q_with_notes0", "q_with_notes_option_0", "test_notes"]]}')
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response, 'Signature')
 		# check that the invitation step was created
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
-		# check that the invitation is complete
-		invitation = Invitation.objects.get(person=test_person)
-		self.assertNotEqual(invitation.datetime_completed,None)
 		# check the answers and the notes
 		self.assertTrue(Answer.objects.filter(person=test_person,question=question_no_notes,option=option_no_notes).exists())
 		self.assertTrue(Answer.objects.filter(person=test_person,question=question_with_notes,option=option_with_notes).exists())
 		answer_note = Answer_Note.objects.get(person=test_person,question=question_with_notes)
 		self.assertEqual(answer_note.notes,'test_notes')
+
+	def test_signature_blank(self):
+		# get the test data
+		this_step = Invitation_Step_Type.objects.get(name='signature')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+											invitation_step_type=prior_step,
+											invitation=invitation
+											)
+		# submit the page with no signature
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = {
+											'signature' : '[]'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response, 'required')
+
+	def test_signature(self):
+		# get the test data
+		this_step = Invitation_Step_Type.objects.get(name='signature')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		# mark the previous steps complete
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+				invitation_step_type=prior_step,
+				invitation=invitation
+			)
+		# define the signature image
+		signature = '[{"x":[145,154,163,176,200,222,239,261,278,287,294,298,300],"y":[89,90,94,101,116,132,145,161,173,180,186,190,193]},{"x":[162,163,166,171,177,191,214,228,245,256,267,272,277,280],"y":[184,180,173,165,155,136,108,95,80,73,66,63,60,58]}]'
+		# submit the page
+		response = self.client.post(
+			reverse('invitation', args=['123456']),
+			data={
+				'signature': signature
+			}
+		)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that the invitation is complete
+		invitation = Invitation.objects.get(person=test_person)
+		self.assertNotEqual(invitation.datetime_completed,None)
+		# check that the invitation step was created
+		invitation_step = Invitation_Step.objects.get(invitation=invitation, invitation_step_type=this_step)
+		# check the answers and the notes
+		self.assertTrue(invitation_step.signature,signature)
+
+class ReviewInvitationViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC', number=50)
+		set_up_test_post_codes('XYZ', number=75)
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1', 'ABC0', number=50)
+		set_up_test_streets('ABC streets 2', 'ABC0', number=60)
+		set_up_test_streets('XYZ streets', 'XYZ0', number=35)
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('invitation_test', number=1)
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		# and terms and conditions
+		tandcs = Terms_And_Conditions.objects.create(
+			name='test_t_and_c',
+			start_date=datetime.date.today(),
+			notes='test terms and conditions'
+		)
+		# and invitation steps
+		invitation_step_types = {
+			'introduction': 'Introduction',
+			'terms_and_conditions': 'Terms and Conditions',
+			'personal_details': 'Personal Details',
+			'address': 'Address',
+			'children': 'Children',
+			'questions': 'Questions',
+			'signature': 'Signature',
+		}
+		order = 10
+		for invitation_step_type in invitation_step_types.keys():
+			terms = tandcs if invitation_step_type == 'terms_and_conditions' else None
+			Invitation_Step_Type.objects.create(
+				name=invitation_step_type,
+				display_name=invitation_step_types[invitation_step_type],
+				order=order,
+				active=True,
+				terms_and_conditions=terms,
+			)
+			order += 10
+		# and an invitation
+		Invitation.objects.create(
+			code='123456',
+			person=test_person,
+		)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/review_invitation/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/review_invitation/1')
+
+	def test_invalid_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/review_invitation/56789')
+		# check the response
+		self.assertContains(response, 'Invitation does not exist')
+
+	def test_not_completed(self):
+		# complete the invitation
+		invitation = Invitation.objects.get(code='123456')
+		invitation.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/review_invitation/' + str(invitation.pk))
+		# check the response
+		self.assertNotContains(response, 'Validate')
+
+	def test_completed(self):
+		# complete the invitation
+		invitation = Invitation.objects.get(code='123456')
+		invitation.datetime_completed = timezone.now()
+		invitation.save()
+		# mark the steps complete
+		for step in Invitation_Step_Type.objects.all():
+			Invitation_Step.objects.create(
+				invitation_step_type=step,
+				invitation=invitation
+			)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/review_invitation/' + str(invitation.pk))
+		# check the response
+		self.assertContains(response, 'Validate')
+
+class ValidateInvitationViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC', number=50)
+		set_up_test_post_codes('XYZ', number=75)
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1', 'ABC0', number=50)
+		set_up_test_streets('ABC streets 2', 'ABC0', number=60)
+		set_up_test_streets('XYZ streets', 'XYZ0', number=35)
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('invitation_test', number=1)
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		# and terms and conditions
+		tandcs = Terms_And_Conditions.objects.create(
+			name='test_t_and_c',
+			start_date=datetime.date.today(),
+			notes='test terms and conditions'
+		)
+		# and invitation steps
+		invitation_step_types = {
+			'introduction': 'Introduction',
+			'terms_and_conditions': 'Terms and Conditions',
+			'personal_details': 'Personal Details',
+			'address': 'Address',
+			'children': 'Children',
+			'questions': 'Questions',
+			'signature': 'Signature',
+		}
+		order = 10
+		for invitation_step_type in invitation_step_types.keys():
+			terms = tandcs if invitation_step_type == 'terms_and_conditions' else None
+			Invitation_Step_Type.objects.create(
+				name=invitation_step_type,
+				display_name=invitation_step_types[invitation_step_type],
+				order=order,
+				active=True,
+				terms_and_conditions=terms,
+			)
+			order += 10
+		# and an invitation
+		Invitation.objects.create(
+			code='123456',
+			person=test_person,
+		)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/validate_invitation/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/validate_invitation/1')
+
+	def test_invalid_code(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/validate_invitation/56789')
+		# check the response
+		self.assertContains(response, 'Invitation does not exist')
+
+	def test_already_validated(self):
+		# validate the invitation
+		invitation = Invitation.objects.get(code='123456')
+		invitation.validated = True
+		invitation.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/validate_invitation/' + str(invitation.pk))
+		# check the response
+		self.assertContains(response, 'Invitation already validated')
+
+	def test_validate(self):
+		# complete the invitation
+		invitation = Invitation.objects.get(code='123456')
+		invitation.datetime_completed = timezone.now()
+		invitation.save()
+		# mark the steps complete
+		for step in Invitation_Step_Type.objects.all():
+			Invitation_Step.objects.create(
+				invitation_step_type=step,
+				invitation=invitation
+			)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/validate_invitation/' + str(invitation.pk))
+		# check the response
+		self.assertRedirects(response, '/person/' + str(invitation.person.pk))
+		# check that the invitation was updated
+		invitation = Invitation.objects.get(code='123456')
+		self.assertTrue(invitation.validated)
 
 class AddressViewTest(TestCase):
 	@classmethod

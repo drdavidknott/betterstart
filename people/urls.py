@@ -1,5 +1,4 @@
 from django.urls import path
-
 from . import views
 from django.conf.urls import url
 
@@ -18,6 +17,7 @@ urlpatterns = [
     url(r'^person/(?P<person_id>[0-9]+)$', views.person, name='person'),
     url(r'^invitation/(?P<code>[\w]+)$', views.invitation, name='invitation'),
     url(r'^review_invitation/(?P<invitation_id>[0-9]+)$', views.review_invitation, name='review_invitation'),
+    url(r'^review_invitation_pdf/(?P<invitation_id>[0-9]+)$', views.review_invitation_pdf, name='review_invitation_pdf'),
     url(r'^validate_invitation/(?P<invitation_id>[0-9]+)$', views.validate_invitation, name='validate_invitation'),
     url(r'^display_signature/(?P<invitation_step_id>[0-9]+)$', views.display_signature, name='display_signature'),
     url(r'^role_type/(?P<id>[0-9]+)$', views.people_query, name='role_type'),

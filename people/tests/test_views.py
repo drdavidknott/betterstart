@@ -14,6 +14,7 @@ from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from django_otp.oath import totp
 from django.utils import timezone
 from django.core import mail
+import json
 
 def set_up_people_base_data():
 	# set up base data needed to do tests for people
@@ -8582,7 +8583,35 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(response.status_code, 302)
 		# check that the invitation step was created and contains the right data
 		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
-		self.assertEqual(invitation_step.step_data,'{"headers": ["First Name", "Last Name", "Date of Birth", "Age Status", "Gender", "Relationship"], "rows": [["Test", "Underfour", "2017-07-04", "Child under four", "Male", "Other carer"], ["Testing", "Overfour", "2015-07-04", "Child over four", "Female", "Other carer"]]}')
+		data_dict = {}
+		data_dict['headers'] = (
+									'First Name',
+									'Last Name',
+									'Date of Birth',
+									'Age Status',
+									'Gender',
+									'Relationship'
+									)
+		data_dict['rows'] = (
+								(
+									'Test',
+									'Underfour',
+									under_four_age.strftime('%Y-%m-%d'),
+									'Child under four',
+									'Male',
+									'Other carer'
+								),
+								(
+									'Testing',
+									'Overfour',
+									over_four_age.strftime('%Y-%m-%d'),
+									'Child over four',
+									'Female',
+									'Other carer'
+								),
+							)
+		json_data = json.dumps(data_dict)
+		self.assertEqual(invitation_step.step_data,json_data)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Questions')

@@ -1,4 +1,5 @@
 asgiref==3.2.3
+astroid==2.4.2
 certifi==2018.11.29
 cycler==0.10.0
 Django==3.0.7
@@ -8,8 +9,11 @@ django-otp==0.8.1
 django-zxcvbn-password==2.1.0
 entrypoints==0.3
 flake8==3.7.9
+html5lib==1.1
+isort==4.3.21
 Jinja2==2.10.3
 kiwisolver==1.1.0
+lazy-object-proxy==1.4.3
 MarkupSafe==1.1.1
 matplotlib==3.1.2
 mccabe==0.6.1
@@ -20,10 +24,18 @@ Pillow==7.1.2
 pycodestyle==2.5.0
 pyflakes==2.1.1
 pygal==2.4.0
+pylint==2.5.3
 pyparsing==2.4.6
+PyPDF2==1.26.0
 python-dateutil==2.8.1
 pytz==2018.9
 qrcode==6.1
+reportlab==3.5.44
 six==1.13.0
 sqlparse==0.3.0
+toml==0.10.1
+typed-ast==1.4.1
+webencodings==0.5.1
+wrapt==1.12.1
+xhtml2pdf==0.2.4
 zxcvbn==4.4.28

@@ -50,6 +50,8 @@ from django.core.mail import send_mail, EmailMessage
 from django.utils import timezone
 import io
 from jsignature.utils import draw_signature
+from xhtml2pdf import pisa
+from django.contrib.staticfiles import finders
 
 @login_required
 def index(request):
@@ -1771,6 +1773,37 @@ def auth_log(
 	# save the record
 	profile.save()
 
+def link_callback(uri, rel):
+	"""
+	Convert HTML URIs to absolute system paths so xhtml2pdf can access those
+	resources
+	"""
+	result = finders.find(uri)
+	if result:
+			if not isinstance(result, (list, tuple)):
+					result = [result]
+			result = list(os.path.realpath(path) for path in result)
+			path=result[0]
+	else:
+			sUrl = settings.STATIC_URL        # Typically /static/
+			sRoot = settings.STATIC_ROOT      # Typically /home/userX/project_static/
+			mUrl = settings.MEDIA_URL         # Typically /media/
+			mRoot = settings.MEDIA_ROOT       # Typically /home/userX/project_static/media/
+
+			if uri.startswith(mUrl):
+					path = os.path.join(mRoot, uri.replace(mUrl, ""))
+			elif uri.startswith(sUrl):
+					path = os.path.join(sRoot, uri.replace(sUrl, ""))
+			else:
+					return uri
+
+	# make sure that file exists
+	if not os.path.isfile(path):
+			raise Exception(
+					'media URI must start with %s or %s' % (sUrl, mUrl)
+			)
+	return path
+
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
@@ -2284,6 +2317,38 @@ def review_invitation(request,invitation_id):
 							})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def review_invitation_pdf(request,invitation_id):
+	# attempt to get the invitation
+	invitation = Invitation.try_to_get(pk=invitation_id)
+	if not invitation:
+		return make_banner(request, 'Invitation does not exist.', public=True)
+	# get the data
+	invitation_url = request.build_absolute_uri(reverse('invitation', args=[invitation.code]))
+	# load the template
+	template = loader.get_template('people/review_invitation.html')
+	# Create a Django response object, and specify content_type as pdf
+	response = HttpResponse(content_type='application/pdf')
+	response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+	# render the template
+	# set the context
+	context = build_context({
+								'invitation': invitation,
+								'invitation_url' : invitation_url
+							})
+	html = template.render(context)
+	# create a pdf
+	pisa_status = pisa.CreatePDF(
+	   								html,
+									dest=response,
+									link_callback = link_callback
+								)
+	# if errors, display them
+	if pisa_status.err:
+		return HttpResponse('PDF conversion errors: <pre>' + html + '</pre>')
+	# return the response
+	return response
 
 @login_required
 def validate_invitation(request,invitation_id):

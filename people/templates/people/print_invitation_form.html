@@ -1,4 +1,4 @@
-{% extends "people/base.html" %}
+{% extends "people/print_base.html" %}
 
 <!-- Home page -->
  
@@ -10,6 +10,10 @@
 
 	<div class="row">
 		<div class="col-xs-12">
+            <h3>
+                <span class="glyphicon glyphicon-wrench"></span>
+                Beta Form Print Page: Work in Progress
+ 			</h3>
  			<h3>
 				<a href="{% url 'person' invitation.person.pk %}">
 					<span class="glyphicon glyphicon-user"></span>
@@ -135,7 +139,7 @@
 		<div class="row">
 			<div class="col-xs-1"></div>
 			<div class="col-xs-11">
-				<a href="{% url 'print_invitation_form' invitation.pk %}" class="btn btn-primary" target="_blank">
+				<a href="{% url 'print_invitation_form' invitation.pk %}" class="btn btn-primary">
 					Print Form
 				</a>
 			</div>

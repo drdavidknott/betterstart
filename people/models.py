@@ -2034,6 +2034,7 @@ class Invitation_Step_Type(DataAccessMixin,models.Model):
 									default='',
 									blank=True
 								)
+	special_category_text = models.TextField(max_length=1000, default='', blank=True)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.display_name
@@ -2097,6 +2098,7 @@ class Invitation_Step(DataAccessMixin,models.Model):
 	datetime_created = models.DateTimeField(auto_now_add=True)
 	step_data = models.TextField(max_length=1500, default='', blank=True)
 	signature = JSignatureField(blank=True, null=True)
+	special_category_accepted = models.BooleanField(null=True)
 
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):

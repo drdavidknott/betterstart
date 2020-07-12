@@ -103,6 +103,10 @@ class PersonalDetailsForm(forms.Form):
 									label="Gender",
 									choices=gender_choices,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	ethnicity = forms.ChoiceField(
+									label="Ethnicity",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	pregnant = forms.BooleanField(
 									label = "Pregnant (or partner is pregnant)",
 									required = False)
@@ -116,6 +120,11 @@ class PersonalDetailsForm(forms.Form):
 																	'autocomplete' : 'off'
 																	}),
 									input_formats=('%d/%m/%Y',))
+	accept_conditions = forms.BooleanField(
+											label = "Please tick this box to consent",
+											required = True,
+											widget=forms.CheckboxInput()
+											)
 	def __init__(self, *args, **kwargs):
 		# pull out the person if we have been passed one
 		person = kwargs.pop('person') if 'person' in kwargs.keys() else False
@@ -125,6 +134,14 @@ class PersonalDetailsForm(forms.Form):
 		if person:
 			self.fields['first_name'].initial = person.first_name
 			self.fields['last_name'].initial = person.last_name
+		# set choices
+		self.fields['ethnicity'].choices = build_choices(
+															choice_queryset=Ethnicity.objects.all(),
+															choice_field='description',
+															default=True,
+															default_value='',
+															default_label='--------',
+															)
 		# define the crispy form
 		self.helper = FormHelper()
 		self.helper.layout = Layout(
@@ -147,6 +164,19 @@ class PersonalDetailsForm(forms.Form):
 										),
 									Row(
 										Column('emergency_contact_details',css_class='form-group col-md-12 mbt-0'),
+										),
+									Row(
+										Column('ethnicity',css_class='form-group col-md-12 mbt-0'),
+										),
+									Row(
+										HTML(
+												"<div class='formColumn form-group col-md-12 mbt-0'>" + 
+												"{{ invitation_step_type.special_category_text }}" +
+												"</div>"
+											)
+										),
+									Row(
+										Column('accept_conditions',css_class='form-group col-md-12 mbt-0'),	
 										),
 									Row(
 										Column(Submit('action', 'Enter'),css_class='col-md-12 mb-0')
@@ -260,6 +290,11 @@ class AddressForm(forms.Form):
 		return cleaned_data
 
 class ChildrenForm(forms.Form):
+	accept_conditions = forms.BooleanField(
+											label = "Please tick this box to consent",
+											required = True,
+											widget=forms.CheckboxInput()
+											)
 
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -274,6 +309,13 @@ class ChildrenForm(forms.Form):
 		relationship_type_choices = build_choices(
 													choice_queryset=relationship_types,
 													choice_field='relationship_type',
+													default=True,
+													default_value='',
+													default_label='--------',
+													)
+		ethnicity_choices = build_choices(
+													choice_queryset=Ethnicity.objects.all(),
+													choice_field='description',
 													default=True,
 													default_value='',
 													default_label='--------',
@@ -307,28 +349,49 @@ class ChildrenForm(forms.Form):
 																choices=gender_choices,
 																required=False,
 																widget=forms.Select(attrs={'class' : 'form-control'}))
+			self.fields['ethnicity_' + str_i] = forms.ChoiceField(
+																label="Ethnicity",
+																choices=ethnicity_choices,
+																required=False,
+																widget=forms.Select(attrs={'class' : 'form-control'}))
 			self.fields['relationship_type_' + str_i] = forms.ChoiceField(
 																label="Your relationship",
 																choices=relationship_type_choices,
 																required=False,
 																widget=forms.Select(attrs={'class' : 'form-control'}))
-		# build the crispy form
+		# build the children rows for the crispy form
 		self.helper = FormHelper()
 		rows = []
 		for i in range(6):
 			str_i = str(i)
 			row = Row(
-						Column('first_name_' + str_i,css_class='form-group col-md-3 mbt-0'),
-						Column('last_name_' + str_i,css_class='form-group col-md-3 mbt-0'),
+						Column('first_name_' + str_i,css_class='form-group col-md-2 mbt-0'),
+						Column('last_name_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						Column('date_of_birth_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						Column('gender_' + str_i,css_class='form-group col-md-2 mbt-0'),
+						Column('ethnicity_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						Column('relationship_type_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						)
 			rows.append(row)
+		# add the special category text and acceptance
+		row = Row(
+					HTML(
+							"<div class='formColumn form-group col-md-12 mbt-0'>" + 
+							"{{ invitation_step_type.special_category_text }}" +
+							"</div>"
+						)
+					)
+		rows.append(row)
+		row = Row(
+					Column('accept_conditions',css_class='form-group col-md-12 mbt-0'),	
+					)
+		rows.append(row)
+		# add the submit button
 		row = Row(
 					Column(Submit('action', 'Enter'),css_class='col-md-12 mb-0')
 					)
 		rows.append(row)
+		# and finally build the layout
 		self.helper.layout = Layout(*rows)
 
 	# override the validation to provide additional checks	
@@ -351,9 +414,11 @@ class ChildrenForm(forms.Form):
 				if 'gender_' + str(i) in self.cleaned_data else False
 			relationship_type = self.cleaned_data['relationship_type_' + str(i)] \
 				if 'relationship_type_' + str(i) in self.cleaned_data else False
+			ethnicity = self.cleaned_data['ethnicity_' + str(i)] \
+				if 'ethnicity_' + str(i) in self.cleaned_data else False
 			# check that if we have any fields, we have all fields
-			if (first_name or last_name or date_of_birth or gender or relationship_type) and \
-				not (first_name and last_name and date_of_birth and gender and relationship_type) :
+			if (first_name or last_name or date_of_birth or gender or relationship_type or ethnicity) and \
+				not (first_name and last_name and date_of_birth and gender and relationship_type and ethnicity) :
 				self.add_error('first_name_' + str(i),'All fields must be entered')
 				valid = False
 			# check that children are not too old
@@ -370,6 +435,11 @@ class ChildrenForm(forms.Form):
 		return valid
 
 class QuestionsForm(forms.Form):
+	accept_conditions = forms.BooleanField(
+											label = "Please tick this box to consent",
+											required = True,
+											widget=forms.CheckboxInput()
+											)
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -377,7 +447,7 @@ class QuestionsForm(forms.Form):
 		# build the crispy form
 		self.helper = FormHelper()
 		rows = []
-		# now through the questions to be used for invitaions and build fields
+		# now through the questions to be used for invitations and build fields
 		for question in Question.objects.filter(use_for_invitations=True):
 			field_name = 'question_' + str(question.pk)
 			notes_name = 'notes_' + str(question.pk)
@@ -413,11 +483,25 @@ class QuestionsForm(forms.Form):
 						Column(field_name,css_class='form-group col-md-6 mbt-0'),
 						)
 			rows.append(row)
-		# build the crispy layout
+		# add the special category text and acceptance
+		row = Row(
+					HTML(
+							"<div class='formColumn form-group col-md-12 mbt-0'>" + 
+							"{{ invitation_step_type.special_category_text }}" +
+							"</div>"
+						)
+					)
+		rows.append(row)
+		row = Row(
+					Column('accept_conditions',css_class='form-group col-md-12 mbt-0'),	
+					)
+		rows.append(row)
+		# add the submit button
 		row = Row(
 					Column(Submit('action', 'Enter'),css_class='col-md-12 mb-0')
 					)
 		rows.append(row)
+		# build the crispy layout
 		self.helper.layout = Layout(*rows)
 
 class SignatureForm(forms.Form):
@@ -435,6 +519,7 @@ class Invitation_Handler():
 		self.default_date = datetime.date.today().strftime('%d/%m/%Y')
 		self.signature = False
 		self.step_data = ''
+		self.special_category_accepted = None
 		# set the default date of birth based on site level offset
 		site = Site.objects.all().first()
 		dob_offset = site.dob_offset if site else 0
@@ -469,7 +554,8 @@ class Invitation_Handler():
 		Invitation_Step.objects.create(
 										invitation=self.invitation,
 										invitation_step_type=self.invitation_step_type,
-										step_data = self.step_data
+										step_data = self.step_data,
+										special_category_accepted = self.special_category_accepted,
 										)
 		self.step_complete = True
 
@@ -523,6 +609,13 @@ class Personal_Details_Invitation_Handler(Invitation_Handler):
 		person.gender = replace_if_value(person.gender,self.form.cleaned_data['gender'])
 		person.pregnant = replace_if_value(person.pregnant,self.form.cleaned_data['pregnant'])
 		person.due_date = replace_if_value(person.due_date,self.form.cleaned_data['due_date'])
+		# get the selected ethnicity
+		if self.form.cleaned_data['ethnicity']:
+			ethnicity = Ethnicity.objects.get(pk=self.form.cleaned_data['ethnicity'])
+			person.ethnicity = ethnicity
+			ethnicity_description = ethnicity.description
+		else:
+			ethnicity_description = ''
 		person.save()
 		# update the data for recording and display
 		data_dict = {
@@ -534,10 +627,12 @@ class Personal_Details_Invitation_Handler(Invitation_Handler):
 						'Emergency Contact Details' : self.form.cleaned_data['emergency_contact_details'],
 						'Date of Birth' : str(self.form.cleaned_data['date_of_birth']),
 						'Gender' : self.form.cleaned_data['gender'],
+						'Ethnicity' : ethnicity_description,
 						'Pregnant' : str(self.form.cleaned_data['pregnant']),
 						'Due Data': str(self.form.cleaned_data['due_date']),
 					}
 		self.step_data = json.dumps(data_dict)
+		self.special_category_accepted = self.form.cleaned_data['accept_conditions']
 
 class Address_Invitation_Handler(Invitation_Handler):
 	form_class = AddressForm
@@ -582,6 +677,11 @@ class Children_Invitation_Handler(Invitation_Handler):
 					age_status = child_over_four
 				else:
 					age_status = child_under_four
+				# get the ethnicity if we have one
+				if self.form.cleaned_data['ethnicity_' + str(i)]:
+					ethnicity = Ethnicity.objects.get(pk=self.form.cleaned_data['ethnicity_' + str(i)])
+				else:
+					ethnicity = None
 				# create the person
 				child = Person.objects.create(
 												first_name = self.form.cleaned_data['first_name_' + str(i)],
@@ -589,7 +689,8 @@ class Children_Invitation_Handler(Invitation_Handler):
 												date_of_birth = date_of_birth,
 												age_status = age_status,
 												default_role = age_status.default_role_type,
-												gender = self.form.cleaned_data['gender_' + str(i)]
+												gender = self.form.cleaned_data['gender_' + str(i)],
+												ethnicity = ethnicity,
 												)
 				# and the relationship
 				relationship_type = Relationship_Type.objects.get(
@@ -607,6 +708,7 @@ class Children_Invitation_Handler(Invitation_Handler):
 								str(date_of_birth),
 								str(age_status),
 								self.form.cleaned_data['gender_' + str(i)],
+								ethnicity.description if ethnicity else 'Not specified',
 								str(relationship_type)
 							]
 							)
@@ -618,12 +720,15 @@ class Children_Invitation_Handler(Invitation_Handler):
 									'Date of Birth',
 									'Age Status',
 									'Gender',
+									'Ethnicity',
 									'Relationship'
 									)
 			data_dict['rows'] = rows
 			self.step_data = json.dumps(data_dict)
 		else:
 			self.step_data = ''
+		# and record acceptance for special category data
+		self.special_category_accepted = self.form.cleaned_data['accept_conditions']
 
 class Questions_Invitation_Handler(Invitation_Handler):
 	form_class = QuestionsForm
@@ -687,6 +792,8 @@ class Questions_Invitation_Handler(Invitation_Handler):
 			self.step_data = json.dumps(data_dict)
 		else:
 			self.step_data = ''
+		# and record acceptance for special category data
+		self.special_category_accepted = self.form.cleaned_data['accept_conditions']
 
 class Signature_Invitation_Handler(Invitation_Handler):
 	form_class = SignatureForm

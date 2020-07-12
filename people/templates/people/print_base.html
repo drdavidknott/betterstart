@@ -1,0 +1,45 @@
+{% load static %}
+
+<!-- The base html template for the Volunteering application -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>{% block title %}Better Start{% endblock %}</title>
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.css">
+	<link rel="stylesheet" type="text/css" href="{% static '/people/style.css' %}">
+	<link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
+	<link href='https://fonts.googleapis.com/css?family=Montserrat:bold' rel='stylesheet'>
+
+	<!-- jquery scripts -->
+	<script>
+		$(document).ready(function(){
+			// assign datepicker function to fields with the class datepicker
+			$( function() {
+    			$( ".datepicker" ).datepicker({ dateFormat : 'dd/mm/yy', changeYear : true, defaultDate : '{{ default_date }}' });
+    			$( ".default-date-of-birth" ).datepicker({ dateFormat : 'dd/mm/yy', changeYear : true, defaultDate : '{{ default_date_of_birth }}' });
+ 			});
+		});
+	</script>
+
+
+</head>
+
+<body>
+
+{% block content %}{% endblock %}
+
+</body>
+
+<br>
+
+</html>

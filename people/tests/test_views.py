@@ -8135,6 +8135,7 @@ class InvitationViewTest(TestCase):
 		this_step = Invitation_Step_Type.objects.get(name='personal_details')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 		# set future date of birth
 		today = datetime.datetime.today()
 		future_dob = today.replace(year=today.year+1)
@@ -8158,8 +8159,10 @@ class InvitationViewTest(TestCase):
 											'emergency_contact_details' : 'EMERGENCY',
 											'date_of_birth' : future_dob.strftime('%d/%m/%Y'),
 											'gender' : 'Female',
+											'ethnicity' : str(ethnicity.pk),
 											'pregnant' : True,
 											'due_date' : '01/01/2021',
+											'accept_conditions' : True,
 											}
 									)
 		# check that we got a valid response
@@ -8172,6 +8175,7 @@ class InvitationViewTest(TestCase):
 		this_step = Invitation_Step_Type.objects.get(name='personal_details')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 		# mark the previous steps complete
 		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
@@ -8192,8 +8196,10 @@ class InvitationViewTest(TestCase):
 											'emergency_contact_details' : 'EMERGENCY',
 											'date_of_birth' : '01/01/2003',
 											'gender' : 'Female',
+											'ethnicity' : str(ethnicity.pk),
 											'pregnant' : True,
 											'due_date' : '01/01/2021',
+											'accept_conditions' : True,
 											}
 									)
 		# check that we got a valid response
@@ -8203,8 +8209,9 @@ class InvitationViewTest(TestCase):
 		self.assertIn('{"First Name": "first", "Last Name": "last",', invitation_step.step_data)
 		self.assertIn('"Email Address": "testing@test.com", "Home Phone": "12345678",', invitation_step.step_data)
 		self.assertIn('"Mobile Phone": "78901234", "Emergency Contact Details": "EMERGENCY",', invitation_step.step_data)
-		self.assertIn('"Date of Birth": "2003-01-01", "Gender": "Female",', invitation_step.step_data)
+		self.assertIn('"Date of Birth": "2003-01-01", "Gender": "Female", "Ethnicity": "test_ethnicity",', invitation_step.step_data)
 		self.assertIn('"Pregnant": "True", "Due Data": "2021-01-01"}', invitation_step.step_data)
+		self.assertEqual(invitation_step.special_category_accepted,True)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
 		self.assertContains(response,'Address')
@@ -8215,6 +8222,7 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(test_person.mobile_phone,'78901234')
 		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2003')
 		self.assertEqual(test_person.gender,'Female')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.pregnant,True)
 		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2021')
 		self.assertEqual(test_person.emergency_contact_details,'EMERGENCY')
@@ -8224,6 +8232,7 @@ class InvitationViewTest(TestCase):
 		this_step = Invitation_Step_Type.objects.get(name='personal_details')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 		# mark the previous steps complete
 		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
@@ -8244,8 +8253,10 @@ class InvitationViewTest(TestCase):
 											'emergency_contact_details' : '',
 											'date_of_birth' : '',
 											'gender' : 'Female',
+											'ethnicity' : str(ethnicity.pk),
 											'pregnant' : True,
 											'due_date' : '',
+											'accept_conditions' : True,
 											}
 									)
 		# check that we got a valid response
@@ -8456,6 +8467,7 @@ class InvitationViewTest(TestCase):
 									reverse('invitation',args=['123456']),
 									data = { 
 											'first_name_0' : 'Test',
+											'accept_conditions' : 'on',
 											}
 									)
 		# check that we got a response
@@ -8479,6 +8491,7 @@ class InvitationViewTest(TestCase):
 									reverse('invitation',args=['123456']),
 									data = { 
 											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											'accept_conditions' : 'on',
 											}
 									)
 		# check that we got a response
@@ -8491,6 +8504,7 @@ class InvitationViewTest(TestCase):
 		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 		# mark the previous steps complete
 		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
 			Invitation_Step.objects.create(
@@ -8505,7 +8519,9 @@ class InvitationViewTest(TestCase):
 											'last_name_0' : 'Child',
 											'date_of_birth_0' : '01/01/1960',
 											'gender_0' : 'Male',
+											'ethnicity_0' : str(ethnicity.pk),
 											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											'accept_conditions' : 'on',
 											}
 									)
 		# check that we got a response
@@ -8518,6 +8534,7 @@ class InvitationViewTest(TestCase):
 		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 		# set future date of birth
 		today = datetime.datetime.today()
 		future_dob = today.replace(year=today.year+1)
@@ -8535,7 +8552,9 @@ class InvitationViewTest(TestCase):
 											'last_name_0' : 'Child',
 											'date_of_birth_0' : future_dob.strftime('%d/%m/%Y'),
 											'gender_0' : 'Male',
+											'ethnicity_0' : str(ethnicity.pk),
 											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											'accept_conditions' : 'on',
 											}
 									)
 		# check that we got a response
@@ -8548,6 +8567,7 @@ class InvitationViewTest(TestCase):
 		this_step = Invitation_Step_Type.objects.get(name='children')
 		test_person = Person.objects.get(first_name__startswith='invitation')
 		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
 		# allow the relationship type for each age status
 		for age_status in Age_Status.objects.all():
 			for relationship_type in Relationship_Type.objects.all():
@@ -8571,12 +8591,15 @@ class InvitationViewTest(TestCase):
 											'last_name_0' : 'Underfour',
 											'date_of_birth_0' : under_four_age.strftime('%d/%m/%Y'),
 											'gender_0' : 'Male',
+											'ethnicity_0' : str(ethnicity.pk),
 											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
 											'first_name_1' : 'Testing',
 											'last_name_1' : 'Overfour',
 											'date_of_birth_1' : over_four_age.strftime('%d/%m/%Y'),
 											'gender_1' : 'Female',
+											'ethnicity_1' : str(ethnicity.pk),
 											'relationship_type_1' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											'accept_conditions' : 'on'
 											}
 									)
 		# check that we got a response
@@ -8590,6 +8613,7 @@ class InvitationViewTest(TestCase):
 									'Date of Birth',
 									'Age Status',
 									'Gender',
+									'Ethnicity',
 									'Relationship'
 									)
 		data_dict['rows'] = (
@@ -8599,6 +8623,7 @@ class InvitationViewTest(TestCase):
 									under_four_age.strftime('%Y-%m-%d'),
 									'Child under four',
 									'Male',
+									'test_ethnicity',
 									'Other carer'
 								),
 								(
@@ -8607,6 +8632,7 @@ class InvitationViewTest(TestCase):
 									over_four_age.strftime('%Y-%m-%d'),
 									'Child over four',
 									'Female',
+									'test_ethnicity',
 									'Other carer'
 								),
 							)
@@ -8622,6 +8648,7 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(test_person.date_of_birth,under_four_age.date())
 		self.assertEqual(test_person.age_status.status,'Child under four')
 		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.ethnicity,ethnicity)
 		test_relationship = Relationship.objects.get(relationship_to=test_person)
 		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
 		# test the person over four
@@ -8631,6 +8658,7 @@ class InvitationViewTest(TestCase):
 		self.assertEqual(test_person.date_of_birth,over_four_age.date())
 		self.assertEqual(test_person.age_status.status,'Child over four')
 		self.assertEqual(test_person.gender,'Female')
+		self.assertEqual(test_person.ethnicity,ethnicity)
 		test_relationship = Relationship.objects.get(relationship_to=test_person)
 		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
 
@@ -8654,7 +8682,8 @@ class InvitationViewTest(TestCase):
 									data = { 
 											'question_' + str(question_no_notes.pk): '0',
 											'question_' + str(question_with_notes.pk): '0',
-											'notes_' + str(question_with_notes.pk): ''
+											'notes_' + str(question_with_notes.pk): '',
+											'accept_conditions' : 'on'
 											}
 									)
 		# check that we got a response
@@ -8693,7 +8722,8 @@ class InvitationViewTest(TestCase):
 									data = { 
 											'question_' + str(question_no_notes.pk): str(option_no_notes.pk),
 											'question_' + str(question_with_notes.pk): str(option_with_notes.pk),
-											'notes_' + str(question_with_notes.pk): 'test_notes'
+											'notes_' + str(question_with_notes.pk): 'test_notes',
+											'accept_conditions' : 'on',
 											}
 									)
 		# check that we got a response

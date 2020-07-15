@@ -16,6 +16,41 @@ from .utilities import build_choices, replace_if_value
 from jsignature.forms import JSignatureField
 import json
 
+def process_answer(person,question,option_id,notes):
+	# function to process form entries and update or create an answer and related notes
+	if option_id != '0':
+		option = Option.try_to_get(pk=int(option_id))
+		answer = Answer.try_to_get(
+									person=person,
+									question=question
+									)
+		if answer:
+			answer.option = option
+		else:
+			answer = Answer(
+							person=person,
+							question=question,
+							option=option)
+		answer.save()
+		# if we have notes, update those too
+		if notes:
+			answer_note = Answer_Note.try_to_get(
+												person=person,
+												question=question
+												)
+			if answer_note:
+				answer_note.notes = notes
+			else:
+				answer_note = Answer_Note(
+											person=person,
+											question=question,
+											notes=notes)
+			answer_note.save()
+		else:
+			answer_note = False
+		# return the results
+		return option, answer, answer_note
+
 class IntroductionForm(forms.Form):
 	# this form has no fields: it simply presents the introduction
 	# over-ride the __init__ method
@@ -320,9 +355,12 @@ class ChildrenForm(forms.Form):
 													default_value='',
 													default_label='--------',
 													)
+		# get the questions to be answered for each child
+		questions = Question.objects.filter(use_for_children_form=True)
 		# build six sets of fields
 		for i in range(6):
 			str_i = str(i)
+			# build the main child fields
 			self.fields['first_name_' + str_i] = forms.CharField(
 															label="First name",
 															max_length=50,
@@ -359,11 +397,37 @@ class ChildrenForm(forms.Form):
 																choices=relationship_type_choices,
 																required=False,
 																widget=forms.Select(attrs={'class' : 'form-control'}))
+			# build the questions for the child
+			for question in questions:
+				field_name = 'question_' + str(question.pk) + '_' + str_i
+				notes_name = 'notes_' + str(question.pk) + '_' + str_i
+				option_list = []
+				# set the non-answer
+				option_list.append((0,'No answer'))
+				# now build the options
+				for option in question.option_set.all():
+					option_list.append((option.pk,option.option_label))
+				# create the field
+				self.fields[field_name]= forms.ChoiceField(
+															label=question.question_text,
+															widget=forms.Select(attrs={'class' : 'form-control'}),
+															choices=option_list,
+															required=False
+															)
+				# if the question has notes, also create a notes field
+				if question.notes:
+					self.fields[notes_name]= forms.CharField(
+											label=question.notes_label,
+											max_length=50,
+											widget=forms.TextInput(attrs={'class' : 'form-control',}),
+											required=False,
+											)
 		# build the children rows for the crispy form
 		self.helper = FormHelper()
 		rows = []
 		for i in range(6):
 			str_i = str(i)
+			# build the main child row
 			row = Row(
 						Column('first_name_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						Column('last_name_' + str_i,css_class='form-group col-md-2 mbt-0'),
@@ -371,6 +435,28 @@ class ChildrenForm(forms.Form):
 						Column('gender_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						Column('ethnicity_' + str_i,css_class='form-group col-md-2 mbt-0'),
 						Column('relationship_type_' + str_i,css_class='form-group col-md-2 mbt-0'),
+						)
+			rows.append(row)
+			# build the question rows
+			for question in questions:
+				field_name = 'question_' + str(question.pk) + '_' + str_i
+				notes_name = 'notes_' + str(question.pk) + '_' + str_i
+				option_list = []
+				# build the crispy row
+				if question.notes:
+					row = Row(
+							Column(field_name,css_class='form-group col-md-6 mbt-0'),
+							Column(notes_name,css_class='form-group col-md-6 mbt-0'),
+							)
+				else:
+					row = Row(
+							Column(field_name,css_class='form-group col-md-6 mbt-0'),
+							)
+				# and append the row
+				rows.append(row)
+			# add the divider
+			row = Row (
+						HTML('<div class="form-row"><div class="col-xs-12"><hr></div></div>')
 						)
 			rows.append(row)
 		# add the special category text and acceptance
@@ -667,6 +753,7 @@ class Children_Invitation_Handler(Invitation_Handler):
 		today = datetime.date.today()
 		data_dict = {}
 		rows = []
+		questions = Question.objects.filter(use_for_children_form=True)
 		# go through the fields
 		for i in range(6):
 			# check that we have the data to create the record
@@ -700,6 +787,23 @@ class Children_Invitation_Handler(Invitation_Handler):
 													person_to=child,
 													relationship_type_from=relationship_type
 													)
+				# process the questions
+				question_data = []
+				for question in questions:
+					field_name = 'question_' + str(question.pk) + '_' + str(i)
+					notes_name = 'notes_' + str(question.pk) + '_' + str(i)
+					option_id = self.form.cleaned_data[field_name]
+					notes = self.form.cleaned_data[notes_name] if question.notes else False
+					# if we have a value, create or update the answer, and append it to the questions data
+					if option_id != '0':
+						option, answer, answer_note = process_answer(child, question, option_id, notes)
+						question_data += [
+											option.option_label,
+											notes if notes else 'No notes'
+											]
+					# otherwise append blanks
+					else:
+						question_data += ['','']
 				# append the data to the row
 				rows.append(
 							[
@@ -710,11 +814,16 @@ class Children_Invitation_Handler(Invitation_Handler):
 								self.form.cleaned_data['gender_' + str(i)],
 								ethnicity.description if ethnicity else 'Not specified',
 								str(relationship_type)
-							]
+							] + question_data
 							)
 		# if data has been entered, store it as json in the step data
 		if rows:
-			data_dict['headers'] = (
+			# find the headers for questions
+			question_headers = []
+			for question in questions:
+				question_headers += [str(question), 'Notes']
+			# set all the headers
+			data_dict['headers'] = [
 									'First Name',
 									'Last Name',
 									'Date of Birth',
@@ -722,7 +831,7 @@ class Children_Invitation_Handler(Invitation_Handler):
 									'Gender',
 									'Ethnicity',
 									'Relationship'
-									)
+									] + question_headers
 			data_dict['rows'] = rows
 			self.step_data = json.dumps(data_dict)
 		else:
@@ -746,33 +855,7 @@ class Questions_Invitation_Handler(Invitation_Handler):
 			person = self.invitation.person
 			# if we have a value, create or update the answer
 			if option_id != '0':
-				option = Option.try_to_get(pk=int(option_id))
-				answer = Answer.try_to_get(
-											person=person,
-											question=question
-											)
-				if answer:
-					answer.option = option
-				else:
-					answer = Answer(
-									person=person,
-									question=question,
-									option=option)
-				answer.save()
-				# if we have notes, update those too
-				if notes:
-					answer_note = Answer_Note.try_to_get(
-														person=person,
-														question=question
-														)
-					if answer_note:
-						answer_note.notes = notes
-					else:
-						answer_note = Answer_Note(
-													person=person,
-													question=question,
-													notes=notes)
-					answer_note.save()
+				option, answer, answer_note = process_answer(person, question, option_id, notes)
 				# append the data to the row
 				rows.append(
 							[

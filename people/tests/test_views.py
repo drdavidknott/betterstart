@@ -8662,6 +8662,129 @@ class InvitationViewTest(TestCase):
 		test_relationship = Relationship.objects.get(relationship_to=test_person)
 		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
 
+	def test_children_with_question(self):
+		# get the test data
+		this_step = Invitation_Step_Type.objects.get(name='children')
+		test_person = Person.objects.get(first_name__startswith='invitation')
+		invitation = Invitation.objects.get(person=test_person)
+		ethnicity = Ethnicity.objects.get(description='test_ethnicity')
+		# get the question, set it for use in the children form, and get the related option
+		question = Question.objects.get(question_text='q_with_notes0')
+		question.use_for_children_form = True
+		question.save()
+		option = Option.objects.get(option_label='q_with_notes_option_0')
+		# allow the relationship type for each age status
+		for age_status in Age_Status.objects.all():
+			for relationship_type in Relationship_Type.objects.all():
+				age_status.relationship_types.add(relationship_type)
+		# set a date older than child under four
+		age_status = Age_Status.objects.get(status='Child under four')
+		today = datetime.datetime.today()
+		over_four_age = today.replace(year=today.year-(age_status.maximum_age + 1))
+		under_four_age = today.replace(year=today.year-(age_status.maximum_age - 1))
+		# mark the previous steps complete
+		for prior_step in Invitation_Step_Type.objects.filter(order__lt=this_step.order):
+			Invitation_Step.objects.create(
+											invitation_step_type=prior_step,
+											invitation=invitation
+											)
+		# attempt to get the invitation page
+		response = self.client.post(
+									reverse('invitation',args=['123456']),
+									data = { 
+											'first_name_0' : 'Test',
+											'last_name_0' : 'Underfour',
+											'date_of_birth_0' : under_four_age.strftime('%d/%m/%Y'),
+											'gender_0' : 'Male',
+											'ethnicity_0' : str(ethnicity.pk),
+											'relationship_type_0' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											'question_' + str(question.pk) + '_0' : str(option.pk),
+											'notes_' + str(question.pk) + '_0' : 'test_notes',
+											'first_name_1' : 'Testing',
+											'last_name_1' : 'Overfour',
+											'date_of_birth_1' : over_four_age.strftime('%d/%m/%Y'),
+											'gender_1' : 'Female',
+											'ethnicity_1' : str(ethnicity.pk),
+											'relationship_type_1' : str(Relationship_Type.objects.get(relationship_type='Other carer').pk),
+											'question_' + str(question.pk) + '_1' : str(option.pk),
+											'notes_' + str(question.pk) + '_1' : 'test_notes',
+											'accept_conditions' : 'on'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 302)
+		# check that the invitation step was created and contains the right data
+		invitation_step = Invitation_Step.objects.get(invitation=invitation,invitation_step_type=this_step)
+		data_dict = {}
+		data_dict['headers'] = (
+									'First Name',
+									'Last Name',
+									'Date of Birth',
+									'Age Status',
+									'Gender',
+									'Ethnicity',
+									'Relationship',
+									'q_with_notes0',
+									'Notes'
+									)
+		data_dict['rows'] = (
+								(
+									'Test',
+									'Underfour',
+									under_four_age.strftime('%Y-%m-%d'),
+									'Child under four',
+									'Male',
+									'test_ethnicity',
+									'Other carer',
+									'q_with_notes_option_0',
+									'test_notes'
+								),
+								(
+									'Testing',
+									'Overfour',
+									over_four_age.strftime('%Y-%m-%d'),
+									'Child over four',
+									'Female',
+									'test_ethnicity',
+									'Other carer',
+									'q_with_notes_option_0',
+									'test_notes'
+								),
+							)
+		json_data = json.dumps(data_dict)
+		self.assertEqual(invitation_step.step_data,json_data)
+		# check that if we call it again, we get the next step
+		response = self.client.get('/invitation/123456')
+		self.assertContains(response,'Questions')
+		# test the person under four
+		test_person = Person.objects.get(last_name__startswith='Under')
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.last_name,'Underfour')
+		self.assertEqual(test_person.date_of_birth,under_four_age.date())
+		self.assertEqual(test_person.age_status.status,'Child under four')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.ethnicity,ethnicity)
+		test_relationship = Relationship.objects.get(relationship_to=test_person)
+		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
+		# check the answers and the notes
+		self.assertTrue(Answer.objects.filter(person=test_person,question=question,option=option).exists())
+		answer_note = Answer_Note.objects.get(person=test_person,question=question)
+		self.assertEqual(answer_note.notes,'test_notes')
+		# test the person over four
+		test_person = Person.objects.get(last_name__startswith='Over')
+		self.assertEqual(test_person.first_name,'Testing')
+		self.assertEqual(test_person.last_name,'Overfour')
+		self.assertEqual(test_person.date_of_birth,over_four_age.date())
+		self.assertEqual(test_person.age_status.status,'Child over four')
+		self.assertEqual(test_person.gender,'Female')
+		self.assertEqual(test_person.ethnicity,ethnicity)
+		test_relationship = Relationship.objects.get(relationship_to=test_person)
+		self.assertEqual(test_relationship.relationship_type.relationship_type,'Other carer')
+		# check the answers and the notes
+		self.assertTrue(Answer.objects.filter(person=test_person,question=question,option=option).exists())
+		answer_note = Answer_Note.objects.get(person=test_person,question=question)
+		self.assertEqual(answer_note.notes,'test_notes')
+
 	def test_questions_no_answers(self):
 		# get the test data
 		this_step = Invitation_Step_Type.objects.get(name='questions')

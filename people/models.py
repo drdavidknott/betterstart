@@ -325,6 +325,7 @@ class Question(DataAccessMixin,models.Model):
 	notes = models.BooleanField(default=False)
 	notes_label = models.CharField(max_length=30, default='Notes')
 	use_for_invitations = models.BooleanField(default=False)
+	use_for_children_form = models.BooleanField(default=False)
 	order = models.IntegerField(default=0)
 	# define the function that will return the question text as the object reference
 	def __str__(self):

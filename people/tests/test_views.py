@@ -8210,7 +8210,7 @@ class InvitationViewTest(TestCase):
 		self.assertIn('"Email Address": "testing@test.com", "Home Phone": "12345678",', invitation_step.step_data)
 		self.assertIn('"Mobile Phone": "78901234", "Emergency Contact Details": "EMERGENCY",', invitation_step.step_data)
 		self.assertIn('"Date of Birth": "2003-01-01", "Gender": "Female", "Ethnicity": "test_ethnicity",', invitation_step.step_data)
-		self.assertIn('"Pregnant": "True", "Due Data": "2021-01-01"}', invitation_step.step_data)
+		self.assertIn('"Pregnant": "True", "Due Date": "2021-01-01"}', invitation_step.step_data)
 		self.assertEqual(invitation_step.special_category_accepted,True)
 		# check that if we call it again, we get the next step
 		response = self.client.get('/invitation/123456')
@@ -8725,7 +8725,7 @@ class InvitationViewTest(TestCase):
 									'Ethnicity',
 									'Relationship',
 									'q_with_notes0',
-									'Notes'
+									'q_with_notes0: notes'
 									)
 		data_dict['rows'] = (
 								(

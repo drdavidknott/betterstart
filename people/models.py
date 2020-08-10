@@ -325,6 +325,7 @@ class Question(DataAccessMixin,models.Model):
 	notes = models.BooleanField(default=False)
 	notes_label = models.CharField(max_length=30, default='Notes')
 	use_for_invitations = models.BooleanField(default=False)
+	use_for_invitations_additional_info = models.BooleanField(default=False)
 	use_for_children_form = models.BooleanField(default=False)
 	order = models.IntegerField(default=0)
 	# define the function that will return the question text as the object reference
@@ -2008,6 +2009,19 @@ class Terms_And_Conditions(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'terms and conditions'
 
+# Terms_And_Conditions model: used to store terms and conditions, bounded by dates
+class Registration_Form(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	start_date = models.DateField()
+	end_date = models.DateField(null=True, blank=True)
+	title = models.CharField(max_length=150, default='', blank=True)
+	subtitle = models.CharField(max_length=150, default='', blank=True)
+	def __str__(self):
+		return self.name
+
+	class Meta:
+		verbose_name_plural = 'registration forms'
+
 # Invitation_Step_Type model: contains the steps to be followed for an invitation
 class Invitation_Step_Type(DataAccessMixin,models.Model):
 	name_choices = [
@@ -2124,6 +2138,25 @@ class Invitation_Step(DataAccessMixin,models.Model):
 				step_data = json.loads(self.step_data)
 			elif data_type == 'signature':
 				step_data = reverse('display_signature',args=[self.pk])
+		# return the results
+		return step_data
+
+	#return data as a dictionary or list of dictionaries if of the right type
+	def get_dict_data(self):
+		# return False if we have no data or this is the wrong data type
+		if not self.step_data or self.invitation_step_type.data_type not in ('fields','table'):
+			return False
+		# get the data depending on the type
+		if self.invitation_step_type.data_type == 'fields':
+			# return a dictionary from the json
+			step_data = json.loads(self.step_data)
+		elif self.invitation_step_type.data_type == 'table':
+			# return a list of dictionaries, one for each row
+			step_data = []
+			table_dict = json.loads(self.step_data)
+			for row in table_dict['rows']:
+				row_dict = dict(zip(table_dict['headers'], row))
+				step_data.append(row_dict)
 		# return the results
 		return step_data
 

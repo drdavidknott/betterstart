@@ -429,12 +429,15 @@ class ChildrenForm(forms.Form):
 			str_i = str(i)
 			# build the main child row
 			row = Row(
-						Column('first_name_' + str_i,css_class='form-group col-md-2 mbt-0'),
-						Column('last_name_' + str_i,css_class='form-group col-md-2 mbt-0'),
-						Column('date_of_birth_' + str_i,css_class='form-group col-md-2 mbt-0'),
-						Column('gender_' + str_i,css_class='form-group col-md-2 mbt-0'),
-						Column('ethnicity_' + str_i,css_class='form-group col-md-2 mbt-0'),
-						Column('relationship_type_' + str_i,css_class='form-group col-md-2 mbt-0'),
+						Column('first_name_' + str_i,css_class='form-group col-md-6 mbt-0'),
+						Column('last_name_' + str_i,css_class='form-group col-md-6 mbt-0'),
+						)
+			rows.append(row)
+			row = Row(
+						Column('date_of_birth_' + str_i,css_class='form-group col-md-3 mbt-0'),
+						Column('gender_' + str_i,css_class='form-group col-md-3 mbt-0'),
+						Column('ethnicity_' + str_i,css_class='form-group col-md-3 mbt-0'),
+						Column('relationship_type_' + str_i,css_class='form-group col-md-3 mbt-0'),
 						)
 			rows.append(row)
 			# build the question rows
@@ -715,7 +718,7 @@ class Personal_Details_Invitation_Handler(Invitation_Handler):
 						'Gender' : self.form.cleaned_data['gender'],
 						'Ethnicity' : ethnicity_description,
 						'Pregnant' : str(self.form.cleaned_data['pregnant']),
-						'Due Data': str(self.form.cleaned_data['due_date']),
+						'Due Date': str(self.form.cleaned_data['due_date']),
 					}
 		self.step_data = json.dumps(data_dict)
 		self.special_category_accepted = self.form.cleaned_data['accept_conditions']
@@ -821,7 +824,7 @@ class Children_Invitation_Handler(Invitation_Handler):
 			# find the headers for questions
 			question_headers = []
 			for question in questions:
-				question_headers += [str(question), 'Notes']
+				question_headers += [str(question), str(question) + ': notes']
 			# set all the headers
 			data_dict['headers'] = [
 									'First Name',

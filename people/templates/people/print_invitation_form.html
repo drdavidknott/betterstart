@@ -1,153 +1,683 @@
 {% extends "people/print_base.html" %}
 
+{% load people_tags %}
+
 <!-- Home page -->
  
  {% block title %}Better Start{% endblock %}
 
  {% block content %}
 
-<div class="container" id="pdf">
+<div class="container reg-form">
 
 	<div class="row">
 		<div class="col-xs-12">
-            <h3>
-                <span class="glyphicon glyphicon-wrench"></span>
-                Beta Form Print Page: Work in Progress
- 			</h3>
- 			<h3>
-				<a href="{% url 'person' invitation.person.pk %}">
-					<span class="glyphicon glyphicon-user"></span>
-					{{ invitation.person }}
-				</a>
- 			</h3>
+            <h2>
+                LOGOS GO HERE
+ 			</h2>
 		 </div>
-	 </div>
-
-	 <div class="row">
-		<div class="col-xs-12">
-			<hr>
-		</div>
-	 </div>
-
-	<div class='col-xs-1 text-right'>
-		<span class="glyphicon glyphicon-question-sign"></span>
 	</div>
-	<div class='col-xs-11'>
-		<div class="row">
-			Invitation created on {{ invitation.datetime_created|date:"M d Y" }}
-			{% if invitation.datetime_completed %}
-				Invitation completed on {{ invitation.datetime_completed|date:"M d Y" }}
-			{% endif %}
-		</div>
-		<div class="row">
-			<strong>Link: </strong>
-			<a href="{% url 'invitation' invitation.code %}">
-				{{ invitation_url }}
-			</a>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-title">
+			{{ registration_form.title }}
+			<br>
+			{{ registration_form.subtitle }}
+		 </div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-title">
+			SECTION A - PARENT/GRANDPARENT/LEGAL GUARDIAN
 		</div>
 	</div>
 
-	{% for completed_step in invitation.invitation_step_set.all %}
-		<div class="col-xs-12 row">
-			<div>
-				<hr>
-			</div>
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-header">
+			Adult 1:
 		</div>
-		<div class='col-xs-1 text-right'>
-			<span class="glyphicon glyphicon-ok-sign"></span>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-table-cell-left">
+			Title:
 		</div>
-		<div class='col-xs-11'>
-			<div class="row">
-				{{ completed_step.invitation_step_type.display_name }}
-				completed on {{ completed_step.datetime_created|date:"M d Y" }}
-			</div>
-			<div class="row">
-				{% if completed_step.get_display_data == 'No data' %}
-					No data
-				{% elif completed_step.invitation_step_type.data_type == 'string' %}
-					{{ completed_step.get_display_data }}
-				{% elif completed_step.invitation_step_type.data_type == 'table' %}
-					<table class="table table-striped">
-						<thead>
-							<tr>
-								{% for header in completed_step.get_display_data.headers %}
-									<th>{{ header }}</th>
-								{% endfor %}
-							</tr>
-						</thead>
-						<tbody>
-							{% for row in completed_step.get_display_data.rows %}
-								<tr>
-								{% for field in row %}
-									<td>{{ field }}</td>
-								{% endfor %}
-								</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-				{% elif completed_step.invitation_step_type.data_type == 'fields' %}
-					{% for key, value in completed_step.get_display_data.items %}
-						<div>
-							{{ key }}: {{ value }}
-						</div>
-					{% endfor %}
-				{% elif completed_step.invitation_step_type.data_type == 'signature' %}
-					<div id='signature'>
-						<img src='{% url 'display_signature' completed_step.pk %}' width='400'>
+		<div class="col-xs-6 reg-form-table-cell">
+			First Name: <span class="reg-form-data">{{ personal_details|getkey:'First Name' }}</span>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Surname: <span class="reg-form-data">{{ personal_details|getkey:'Last Name' }}</span>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Address: <span class="reg-form-data">{{ address }}</span>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-table-cell-left">
+			Tel: <span class="reg-form-data">{{ personal_details|getkey:'Home Phone' }}</span>
+		</div>
+		<div class="col-xs-6 reg-form-table-cell">
+			Mob: <span class="reg-form-data">{{ personal_details|getkey:'Mobile Phone' }}</span>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Email: <span class="reg-form-data">{{ personal_details|getkey:'Email Address'}}</span>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Date of Birth: <span class="reg-form-data">{{ personal_details|getkey:'Date of Birth' }}</span>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-bottom">
+				<div class="col-xs-4 row">
+					Do you have parental responsibility?
+				</div>
+				{% if parental_responsibility.Answer == 'Yes' %}
+					<div class="col-xs-1">
+						<span class="glyphicon glyphicon-check"></span> Yes
+					</div>
+					<div class="col-xs-1">
+						<span class="glyphicon glyphicon-unchecked"></span> No
+					</div>
+				{% else %}
+					<div class="col-xs-1">
+						<span class="glyphicon glyphicon-unchecked"></span> Yes
+					</div>
+					<div class="col-xs-1">
+						<span class="glyphicon glyphicon-check"></span> No
 					</div>
 				{% endif %}
+				<div class="col-xs-6"></div>
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-header">
+			(ADULT 2 - ONLY TO BE COMPLETED IF PRESENT)
+		</div>
+		<div class="col-xs-12 reg-form-section-header">
+			Adult 2:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-table-cell-left">
+			Title:
+		</div>
+		<div class="col-xs-6 reg-form-table-cell">
+			First Name:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Surname:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Address:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-table-cell-left">
+			Tel:
+		</div>
+		<div class="col-xs-6 reg-form-table-cell">
+			Mob:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Email:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Surname:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-bottom">
+				<div class="col-xs-4 row">
+					Do you have parental responsibility?
+				</div>
+				<div class="col-xs-1">
+					<span class="glyphicon glyphicon-unchecked"></span> Yes
+				</div>
+				<div class="col-xs-1">
+					<span class="glyphicon glyphicon-unchecked"></span> No
+				</div>
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			If you do not have parental responsibility, please answer the below question
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-bottom">
+			<div class="col-xs-10 row">
+				Do you have consent to fill out this form on behalf of the child from the legal guardian?
+			</div>
+			{% if legal_guardian.Answer == 'Yes' %}
+				<div class="col-xs-1">
+					<span class="glyphicon glyphicon-check"></span> Yes
+				</div>
+				<div class="col-xs-1">
+					<span class="glyphicon glyphicon-unchecked"></span> No
+				</div>
+			{% else %}
+				<div class="col-xs-1">
+					<span class="glyphicon glyphicon-unchecked"></span> Yes
+				</div>
+				<div class="col-xs-1">
+					<span class="glyphicon glyphicon-check"></span> No
+				</div>
+			{% endif %}
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-header">
+			Emergency Contact Details
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell">
+			Name:
+		</div>
+		<div class="col-xs-12 reg-form-table-cell">
+			Contact Number:
+		</div>
+		<div class="col-xs-12 reg-form-table-cell-bottom">
+			Relationship to child:
+		</div>
+	</div>
+
+	<div class="reg-form-page-break">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-header">
+			Ethnic Origin: (please tick)
+		</div>
+	</div>
+
+	<div class="reg-form-short-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-tick-box-header">
+			<div class="col-xs-4">
+				<div class="row">
+					<div class="col-xs-8" align="right">
+						Adult:
+					</div>
+					<div class="col-xs-2">1</div>
+					<div class="col-xs-2">2</div>
+				</div>
+			</div>
+			<div class="col-xs-4">
+				<div class="row">
+					<div class="col-xs-8" align="right">
+						Adult:
+					</div>
+					<div class="col-xs-2">1</div>
+					<div class="col-xs-2">2</div>
+				</div>
+			</div>
+			<div class="col-xs-4">
+				<div class="row">
+					<div class="col-xs-8" align="right">
+						Adult:
+					</div>
+					<div class="col-xs-2">1</div>
+					<div class="col-xs-2">2</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-tick-box">
+			{% for ethnicity in ethnicities %}
+				<div class="col-xs-4">
+					<div class="row">
+						<div class="col-xs-8">
+							{{ ethnicity.description }}
+						</div>
+						<div class="col-xs-2">
+							{% if ethnicity.selected %}
+								<span class="glyphicon glyphicon-check"></span>
+							{% else %}
+								<span class="glyphicon glyphicon-unchecked"></span>
+							{% endif %}
+						</div>
+						<div class="col-xs-2">
+							<span class="glyphicon glyphicon-unchecked"></span>
+						</div>
+					</div>
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+
+	<div class="reg-form-short-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-special-category-box">
+			<div class="reg-form-section-header">
+				Special Category Data
+			</div>
+			<div>
+				{{ personal_details_step.invitation_step_type.special_category_text }}
+			</div>
+			<div>
+				{% if personal_details_step.special_category_accepted %}
+					<span class="glyphicon glyphicon-check"></span>
+				{% else %}
+					<span class="glyphicon glyphicon-unchecked"></span>
+				{% endif %}
+				<b>Please tick this box to consent</b>
+			</div>
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-title">
+			SECTION B - CHILD'S DETAILS
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-text">
+			(Please complete for all children aged 16 and under) The sections highlighted in yellow contain special categories of data which require your consent.
+		</div>
+	</div>
+
+	{% for child in children %}
+
+		<div class="row">
+			<div class="col-xs-12 reg-form-section-header">
+				Child {{ child.number }}:
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-6 reg-form-table-cell-left">
+				First Name: <span class="reg-form-data">{{ child|getkey:'First Name' }}</span>
+			</div>
+			<div class="col-xs-6 reg-form-table-cell">
+				Surname: <span class="reg-form-data">{{ child|getkey:'Last Name' }}</span>
+			</div>
+		</div>
+	
+		<div class="row">
+			<div class="col-xs-12 reg-form-table-cell">
+				Address including postcode (if different from Section A):
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-6 reg-form-table-cell-left">
+				Date of Birth: <span class="reg-form-data">{{ child|getkey:'Date of Birth' }}</span>
+			</div>
+			<div class="col-xs-6 reg-form-table-cell">
+				Gender:
+					{% if child.Gender == 'Male' %}
+						<span class="glyphicon glyphicon-check"></span>
+					{% else %}
+						<span class="glyphicon glyphicon-unchecked"></span>
+					{% endif %}
+					&nbsp;Male
+					{% if child.Gender == 'Female' %}
+						<span class="glyphicon glyphicon-check"></span>
+					{% else %}
+						<span class="glyphicon glyphicon-unchecked"></span>
+					{% endif %}
+					&nbsp;Female
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12 reg-form-table-cell">
+				Your Relationship to Child: <span class="reg-form-data">{{ child.Relationship }}</span>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12 reg-form-table-cell-special-category">
+				Disabilities/difficulties or additional needs:
+				<span class="reg-form-data">{{ child.additional_needs_notes }}</span>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12 reg-form-table-cell-special-category">
+				Ethnic origin: <span class="reg-form-data">{{ child.Ethnicity }}</span>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-6 reg-form-table-cell-left-bottom-special-category">
+				Is English the child's first language: <span class="reg-form-data">{{ child.first_language }}</span>
+			</div>
+			<div class="col-xs-6 reg-form-table-cell-bottom-special-category">
+				If no, please state their first language: <span class="reg-form-data">{{ child.first_language_notes }}</span>
+			</div>
+		</div>
+	
+		<div class="reg-form-divider">&nbsp;</div>
+
+		{% if child.number == 3 %}
+			<div class="reg-form-page-break">&nbsp;</div>
+		{% endif %}
+
+	{% endfor %}
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-special-category-box">
+			<div class="reg-form-section-header">
+				Special Category Data
+			</div>
+			<div>
+				{{ children_step.invitation_step_type.special_category_text }}
+			</div>
+			<div>
+				{% if children_step.special_category_accepted %}
+					<span class="glyphicon glyphicon-check"></span>
+				{% else %}
+					<span class="glyphicon glyphicon-unchecked"></span>
+				{% endif %}
+				<b>Please tick this box to consent</b>
+			</div>
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-title">
+			SECTION C - ADDITIONAL INFORMATION: Delete where not applicable
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-8 reg-form-table-cell-left">
+			Are you or your partner pregnant?
+		</div>
+		{% if personal_details.Pregnant == 'True' %}
+			<div class="col-xs-2 reg-form-table-cell-left reg-form-selected">
+				YES
+			</div>
+			<div class="col-xs-2 reg-form-table-cell reg-form-not-selected">
+				NO
+			</div>
+		{% else %}
+			<div class="col-xs-2 reg-form-table-cell-left reg-form-not-selected">
+				YES
+			</div>
+			<div class="col-xs-2 reg-form-table-cell reg-form-selected">
+				NO
+			</div>
+		{% endif %}
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-bottom">
+			If yes, please state expected due date:
+			{% if personal_details.Pregnant == 'True' %}
+				<span class="reg-form-data">{{ personal_details|getkey:'Due Date' }}</span>
+			{% endif %}
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-section-header">
+			Adult 1:
+		</div>
+		<div class="col-xs-6 reg-form-section-header">
+			Adult 2:
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6">
+			{% for question in additional_info_questions %}
+				<div class="row match-my-cols">
+					<div class="col-xs-8 reg-form-table-cell-left">
+						{{ question.Question }}
+					</div>
+					{% if question.Answer == 'Yes' %}
+						<div class="col-xs-2 reg-form-table-cell-left reg-form-selected">
+							YES
+						</div>
+						<div class="col-xs-2 reg-form-table-cell reg-form-not-selected">
+							NO
+						</div>
+					{% else %}
+						<div class="col-xs-2 reg-form-table-cell-left reg-form-not-selected">
+							YES
+						</div>
+						<div class="col-xs-2 reg-form-table-cell reg-form-selected">
+							NO
+						</div>
+					{% endif %}
+				</div>
+				{% if question.notes_required %}
+					<div class="row match-my-cols">
+						<div class="col-xs-12 reg-form-table-cell">
+							{{ question.notes_label }}
+							<span class="reg-form-data">{{ question.Notes }}</span>
+						</div>
+					</div>
+				{% endif %}
+			{% endfor %}
+			<div class="row">
+				<div class="col-xs-12 reg-form-table-cell-top-closer">&nbsp;</div>
+			</div>
+		</div>
+		<div class="col-xs-6">
+			{% for question in additional_info_questions %}
+				<div class="row match-my-cols">
+					<div class="col-xs-8 reg-form-table-cell-left">
+						{{ question.Question }}
+					</div>
+					<div class="col-xs-2 reg-form-table-cell-left">
+						YES
+					</div>
+					<div class="col-xs-2 reg-form-table-cell">
+						NO
+					</div>
+				</div>
+				{% if question.notes_required %}
+					<div class="row match-my-cols">
+						<div class="col-xs-12 reg-form-table-cell">
+							{{ question.notes_label }}
+						</div>
+					</div>
+				{% endif %}
+			{% endfor %}
+			<div class="row">
+				<div class="col-xs-12 reg-form-table-cell-top-closer">&nbsp;</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-special-category-box">
+			<div class="reg-form-section-header">
+				Special Category Data
+			</div>
+			<div>
+				{{ questions_step.invitation_step_type.special_category_text }}
+			</div>
+			<div>
+				{% if questions_step.special_category_accepted %}
+					<span class="glyphicon glyphicon-check"></span>
+				{% else %}
+					<span class="glyphicon glyphicon-unchecked"></span>
+				{% endif %}
+				<b>Please tick this box to consent</b>
+			</div>
+		</div>
+	</div>
+
+	<div class="reg-form-page-break">&nbsp;</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-section-title">
+			SECTION D - EMPLOYMENT DETAILS: (please tick)
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="reg-form-section-header">
+			1) Do you work?
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-table-cell-left"><b>Adult 1:</b></div>
+		<div class="col-xs-6 reg-form-table-cell"><b>Adult 2:</b></div>
+	</div>
+
+	{% for employment_status in employment_statuses %}
+		<div class="row">
+			<div class="col-xs-6 reg-form-table-cell-left">
+				<span class="glyphicon glyphicon-unchecked"></span>
+				{{ employment_status }}
+			</div>
+			<div class="col-xs-6 reg-form-table-cell">
+				<span class="glyphicon glyphicon-unchecked"></span>
+				{{ employment_status }}
 			</div>
 		</div>
 	{% endfor %}
-
-	{% if invitation.incomplete_steps %}
-		<div class="row col-xs-12">
-			<div>
-				<hr>
-			</div>
-		</div>
-		{% for incomplete_step in invitation.incomplete_steps %}
-			<div class='col-xs-1 text-right'>
-				<span class="glyphicon glyphicon-remove-circle"></span>
-			</div>
-			<div class='row col-xs-11'>
-				{{ incomplete_step.display_name }}
-			</div>
-		{% endfor %}
-	{% elif not invitation.validated %}
-		<div class="row col-xs-12">
-			<div>
-				<hr>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-xs-1"></div>
-			<div class="col-xs-11">
-				<a href="{% url 'validate_invitation' invitation.pk %}" class="btn btn-primary">
-					Validate Invitation
-				</a>
-			</div>
-		</div>
-	{% endif %}
-
-	{% if request.user.is_superuser %}
-		<div class="row col-xs-12">
-			<div>
-				<hr>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-xs-1"></div>
-			<div class="col-xs-11">
-				<a href="{% url 'print_invitation_form' invitation.pk %}" class="btn btn-primary">
-					Print Form
-				</a>
-			</div>
-		</div>
-	{% endif %}
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-top-closer">&nbsp;</div>
+	</div>
 
 	<div class="row">
-		<div class="col-xs-12">
+		<div class="col-xs-12 reg-form-table-cell-solo">
+			Does anyone else in your household work?    YES   NO
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row">
+		<div class="reg-form-section-header">
+			1) Are you in receipt of any of the following benefits? (please tick)
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-6 reg-form-table-cell-left"><b>Adult 1:</b></div>
+		<div class="col-xs-6 reg-form-table-cell"><b>Adult 2:</b></div>
+	</div>
+
+	{% for benefit in benefits %}
+		<div class="row">
+			<div class="col-xs-6 reg-form-table-cell-left">
+				<span class="glyphicon glyphicon-unchecked"></span>
+				{{ benefit }}
+			</div>
+			<div class="col-xs-6 reg-form-table-cell">
+				<span class="glyphicon glyphicon-unchecked"></span>
+				{{ benefit }}
+			</div>
+		</div>
+	{% endfor %}
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-top-closer">&nbsp;</div>
+	</div>
+
+	<div class="row">
+		<div class="reg-form-section-header">
+			3) Qualifications and training (please circle)
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-solo">
+			Are you interested in studying for a new qualification or learning a new skill?    YES    NO
+			<br>If yes, please state:
+			<br>&nbsp;
+		</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="row match-my-cols">
+		<div class="col-xs-6 reg-form-section-header">
+			Adult 1:
+		</div>
+		<div class="col-xs-6 reg-form-section-header">
+			Adult 2:
+		</div>
+	</div>
+
+	<div class="row match-my-cols">
+		<div class="col-xs-6 reg-form-table-cell-solo">
+			Print name: {{ personal_details|getkey:'First Name' }} {{ personal_details|getkey:'Last Name' }}<br>
+			Signature:<br>
+			<div id='signature'>
+				<img src='{% url 'display_signature' signature_step.pk %}' width='300'>
+			</div>
+		</div>
+		<div class="col-xs-6 reg-form-table-cell-solo">
+				Print name:<br>
+				Signature:<br>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-xs-12 reg-form-table-cell-top-closer">&nbsp;</div>
+	</div>
+
+	<div class="reg-form-divider">&nbsp;</div>
+	<div class="reg-form-divider">&nbsp;</div>
+	<div class="reg-form-divider">&nbsp;</div>
+
+	<div class="col-xs-12 row">
+		<div>
 			<hr>
 		</div>
 	</div>

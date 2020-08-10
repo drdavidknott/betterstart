@@ -22,3 +22,214 @@
     content: "\2122";
     color: transparent !important;
 }
+
+.row.match-my-cols {
+  overflow: hidden; 
+}
+
+.row.match-my-cols [class*="col-"]{
+  margin-bottom: -99999px;
+  padding-bottom: 99999px;
+}
+
+.reg-form {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.reg-form-title {
+  color: purple;
+  text-align: center;
+  font-size: 300%;
+}
+
+.reg-form-section-title {
+  color: purple;
+  font-size: x-large;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.reg-form-section-header {
+  color: black;
+  font-size: large;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.reg-form-text {
+  padding: 0;
+  margin: 0;
+}
+
+.reg-form-not-selected {
+  text-decoration: line-through;
+}
+
+.reg-form-selected {
+  font-weight: bold;
+}
+
+.reg-form-divider {
+  line-height: 2;
+}
+
+.reg-form-short-divider {
+  line-height: 1;
+}
+
+.reg-form-data{
+  font-style: italic;
+}
+
+.reg-form-table-cell {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  border-right: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-left {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-left-bottom {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  border-bottom: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-bottom {
+  border: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-left {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-left-bottom {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  border-bottom: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-bottom {
+  border: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-top-closer {
+  border-top: thin solid black;
+}
+
+.reg-form-table-cell-solo {
+  border: thin solid black;
+  font-size: large;
+}
+
+.reg-form-table-cell-special-category {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  border-right: thin solid black;
+  font-size: large;
+  background-color: lightgoldenrodyellow;
+}
+
+.reg-form-table-cell-left-bottom-special-category {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  border-bottom: thin solid black;
+  font-size: large;
+  background-color: lightgoldenrodyellow;
+}
+
+.reg-form-table-cell-bottom-special-category {
+  border: thin solid black;
+  font-size: large;
+  background-color: lightgoldenrodyellow;
+}
+
+.reg-form-page-break {
+  page-break-after: always;
+}
+
+.reg-form-tick-box-header {
+  color: black;
+  font-size: large;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
+}
+
+.reg-form-tick-box {
+  color: black;
+  font-size: large;
+  padding: 0;
+  margin: 0;
+}
+
+.reg-form-special-category-box {
+  border: medium solid black;
+  background-color: lightgoldenrodyellow;
+  font-size: large;
+}
+
+@media print {    
+  .reg-form-special-category-box {
+    background-color: lightgoldenrodyellow !important;
+    -webkit-print-color-adjust: exact; 
+  }
+  .reg-form-title {
+    color: purple !important;
+    -webkit-print-color-adjust: exact; 
+  }
+  .reg-form-section-title {
+    color: purple !important;
+    -webkit-print-color-adjust: exact; 
+  }
+  .reg-form-table-cell-special-category {
+    border-top: thin solid black;
+    border-left: thin solid black;
+    border-right: thin solid black;
+    font-size: large;
+    background-color: lightgoldenrodyellow !important;
+    -webkit-print-color-adjust: exact; 
+  }
+  .reg-form-table-cell-left-bottom-special-category {
+    border-top: thin solid black;
+    border-left: thin solid black;
+    border-bottom: thin solid black;
+    font-size: large;
+    background-color: lightgoldenrodyellow !important;
+    -webkit-print-color-adjust: exact; 
+  }
+  .reg-form-table-cell-bottom-special-category {
+    border: thin solid black;
+    font-size: large;
+    background-color: lightgoldenrodyellow !important;
+    -webkit-print-color-adjust: exact; 
+  }
+  html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
+              font-size: 11pt !important;
+      }
+      .reg-form-title {
+      font-size: 200% !important;
+            }
+      .reg-form-section-title {
+        font-size: large !important;
+              }
+      .reg-form-section-header {
+        font-size: large !important;
+              }
+  }
+}

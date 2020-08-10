@@ -5,7 +5,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
-					Filter_Spec
+					Filter_Spec, Registration_Form
 import os
 import csv
 import copy
@@ -2320,18 +2320,130 @@ def review_invitation(request,invitation_id):
 
 @login_required
 def print_invitation_form(request,invitation_id):
+	# initialise vairables
+	parental_responsibility = False
+	# attempt to get the current registration form
+	registration_form = Registration_Form.try_to_get(end_date=None)
+	if not registration_form:
+		return make_banner(request, 'No current registration form.')
 	# attempt to get the invitation
 	invitation = Invitation.try_to_get(pk=invitation_id)
 	if not invitation:
-		return make_banner(request, 'Invitation does not exist.', public=True)
-	# get the data
-	invitation_url = request.build_absolute_uri(reverse('invitation', args=[invitation.code]))
+		return make_banner(request, 'Invitation does not exist.')
+	# check whether the invitation is complete and validated
+	if not invitation.validated:
+		return make_banner(request, 'Invitation has not been validated.')
+	# create a dict to hold the step types, and the list of types we are looking for
+	invitation_steps = {}
+	invitation_step_types = (
+								'personal_details',
+								'address',
+								'children',
+								'questions',
+								'signature'
+							)
+	# go through the steps and load them into the dict, crashing out to a banner if they don't exist
+	for invitation_step_type in invitation_step_types:
+		this_step = Invitation_Step.try_to_get(
+												invitation_step_type__name=invitation_step_type,
+												invitation = invitation
+												)
+		if not this_step:
+			return make_banner(request, invitation_step_type + ' does not exist.')
+		else:
+			invitation_steps[invitation_step_type] = this_step
+	# do the special processing for each step type
+	personal_details_step = invitation_steps['personal_details']
+	personal_details = personal_details_step.get_display_data()
+	address = invitation_steps['address'].get_display_data()
+	questions_step = invitation_steps['questions']
+	signature_step = invitation_steps['signature']
+	# get a list of dictionaries for the questions, then go through and set values for individually displayed questions
+	questions = invitation_steps['questions'].get_dict_data()
+	if questions:
+		for question in questions:
+			if 'parental responsibility' in question['Question']:
+				parental_responsibility = question
+			if 'legal guardian' in question['Question']:
+				legal_guardian = question
+	# build a new list of questions to be displayed in the 'additional information' section
+	# check whether the question is to be used for additional info, and append a supplemented dict
+	# to the list if it is
+	additional_info_questions = []
+	for question in questions:
+		question_record = Question.try_to_get(
+												question_text=question['Question'],
+												use_for_invitations_additional_info=True
+												)
+		if question_record:
+			question['notes_label'] = question_record.notes_label
+			question['notes_required'] = question_record.notes
+			additional_info_questions.append(question)
+	# get the ethnicities, and indicate which one was selected
+	ethnicities = Ethnicity.objects.all()
+	for ethnicity in ethnicities:
+		ethnicity.selected = True if ethnicity.description == personal_details['Ethnicity'] else False
+	# get the list of children, converting a false response to an empty list
+	children = invitation_steps['children'].get_dict_data()
+	children = children if children else []
+	for child in children:
+		# initialise variables
+		additional_needs = False
+		additional_needs_notes = ''
+		first_language = ''
+		first_language_notes = ''
+		# run through the dict, looking for specific questions
+		for key in child.keys():
+			# scan for an additional needs question
+			if 'additional needs' in key:
+				if not 'notes' in key:
+					if child[key] == 'Yes':
+						additional_needs = True
+				else:
+					additional_needs_notes = child[key]
+			# scan for a first language question
+			if 'first language' in key:
+				if not 'notes' in key:
+					first_language = child[key]
+				else:
+					first_language_notes = child[key]
+		# augment the dictionary
+		child['additional_needs'] = additional_needs
+		child['additional_needs_notes'] = additional_needs_notes
+		child['first_language'] = first_language
+		child['first_language_notes'] = first_language_notes
+	# add empty dictionaries to pad out the children dict to five entries if necessary
+	while len(children) < 5:
+		children.append({})
+	# add numbers to the children
+	child_number = 1
+	for child in children:
+		child['number'] = child_number
+		child_number += 1
+	# create lists for employment details - TO BE CONVERTED TO MODELS
+	employment_statuses = ['Full Time','Part Time','Unemployed','Retired','Maternity Leave']
+	benefits = ['Working Tax Credit','Child Tax Credit','Jobseekers Allowance','Housing Benefit',
+				"Carer's Allowance",'Income Support','Council Tax Benefit','PIP','Universal Credit',
+				'ESA','In Work Credit Lone Parents']
 	# load the template
 	template = loader.get_template('people/print_invitation_form.html')
 	# set the context
 	context = build_context({
 								'invitation': invitation,
-								'invitation_url' : invitation_url
+								'registration_form' : registration_form,
+								'personal_details' : personal_details,
+								'personal_details_step' : personal_details_step,
+								'address' : address,
+								'parental_responsibility' : parental_responsibility,
+								'legal_guardian' : legal_guardian,
+								'ethnicities' : ethnicities,
+								'children' : children,
+								'children_step' : invitation_steps['children'],
+								'additional_info_questions' : additional_info_questions,
+								'questions_step' : questions_step,
+								'employment_statuses' : employment_statuses,
+								'benefits' : benefits,
+								'signature_step' : signature_step,
 							})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))

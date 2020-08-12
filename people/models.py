@@ -258,7 +258,7 @@ class Event_Type(DataAccessMixin,models.Model):
 # Event model: represents events which people register for and attend
 class Event(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
-	description = models.TextField(max_length=1500)
+	description = models.TextField(max_length=7500)
 	event_type = models.ForeignKey(Event_Type, default=1, on_delete=models.SET_DEFAULT)
 	date = models.DateField()
 	start_time = models.TimeField()

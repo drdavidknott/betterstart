@@ -1190,7 +1190,7 @@ class EventForm(forms.Form):
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	description = forms.CharField(
 									label="Description",
-									max_length=1500,
+									max_length=7500,
 									widget=forms.Textarea(attrs={'class' : 'form-control', 'cols' : 100, 'rows' : 6}))
 	event_type = forms.ChoiceField(
 									label="Event Type",
@@ -1694,7 +1694,6 @@ class AnswerQuestionsForm(forms.Form):
 										widget=forms.HiddenInput(attrs={'class' : 'form-control',}),
 										initial='spacer'
 										)
-
 
 class DashboardDatesForm(forms.Form):
 	# Define the fields that we need in the form to capture the event

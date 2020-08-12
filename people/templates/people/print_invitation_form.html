@@ -214,14 +214,8 @@
 	</div>
 
 	<div class="row">
-		<div class="col-xs-12 reg-form-table-cell">
-			Name:
-		</div>
-		<div class="col-xs-12 reg-form-table-cell">
-			Contact Number:
-		</div>
-		<div class="col-xs-12 reg-form-table-cell-bottom">
-			Relationship to child:
+		<div class="col-xs-12 reg-form-table-cell-solo">
+			<span class="reg-form-data">{{ personal_details|getkey:'Emergency Contact Details' }}&nbsp;</span><br>
 		</div>
 	</div>
 
@@ -268,18 +262,18 @@
 	</div>
 
 	<div class="row">
-		<div class="col-xs-12 reg-form-tick-box">
+		<div class="col-xs-12 reg-form-tick-box reg-form-small-text">
 			{% for ethnicity in ethnicities %}
 				<div class="col-xs-4">
 					<div class="row">
 						<div class="col-xs-8">
-							{{ ethnicity.description }}
+							<span class="reg-form-small-text">{{ ethnicity.description }}</span>
 						</div>
 						<div class="col-xs-2">
 							{% if ethnicity.selected %}
-								<span class="glyphicon glyphicon-check"></span>
+								<span class="glyphicon glyphicon-check reg-form-small-text"></span>
 							{% else %}
-								<span class="glyphicon glyphicon-unchecked"></span>
+								<span class="glyphicon glyphicon-unchecked reg-form-small-text"></span>
 							{% endif %}
 						</div>
 						<div class="col-xs-2">
@@ -299,13 +293,15 @@
 				Special Category Data
 			</div>
 			<div>
-				{{ personal_details_step.invitation_step_type.special_category_text }}
+				<span class="reg-form-special-category-text">
+					{{ personal_details_step.invitation_step_type.special_category_text }}
+				</span>
 			</div>
 			<div>
 				{% if personal_details_step.special_category_accepted %}
-					<span class="glyphicon glyphicon-check"></span>
+					<span class="glyphicon glyphicon-check reg-form-small-text"></span>
 				{% else %}
-					<span class="glyphicon glyphicon-unchecked"></span>
+					<span class="glyphicon glyphicon-unchecked reg-form-small-text"></span>
 				{% endif %}
 				<b>Please tick this box to consent</b>
 			</div>
@@ -412,7 +408,9 @@
 				Special Category Data
 			</div>
 			<div>
-				{{ children_step.invitation_step_type.special_category_text }}
+				<span class="reg-form-special-category-text">
+					{{ children_step.invitation_step_type.special_category_text }}
+				</span>
 			</div>
 			<div>
 				{% if children_step.special_category_accepted %}
@@ -545,7 +543,9 @@
 				Special Category Data
 			</div>
 			<div>
-				{{ questions_step.invitation_step_type.special_category_text }}
+				<span class="reg-form-special-category-text">
+					{{ questions_step.invitation_step_type.special_category_text }}
+				</span>
 			</div>
 			<div>
 				{% if questions_step.special_category_accepted %}

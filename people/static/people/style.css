@@ -181,10 +181,38 @@
 .reg-form-special-category-box {
   border: medium solid black;
   background-color: lightgoldenrodyellow;
-  font-size: large;
 }
 
-@media print {    
+.reg-form-special-category-text {
+  font-size: 9pt;
+}
+
+.reg-form-small-text {
+  font-size: 9pt;
+}
+
+@media print {  
+
+  html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
+    font-size: 11pt !important;
+  }
+  .reg-form-title {
+  font-size: 200% !important;
+    }
+  .reg-form-section-title {
+  font-size: large !important;
+      }
+  .reg-form-section-header {
+  font-size: large !important;
+      }
+  .reg-form-special-category-text {
+  font-size: 9pt !important;
+      }
+  .reg-form-small-text {
+    font-size: 9pt !important;
+        }
+  }
+
   .reg-form-special-category-box {
     background-color: lightgoldenrodyellow !important;
     -webkit-print-color-adjust: exact; 
@@ -218,18 +246,5 @@
     font-size: large;
     background-color: lightgoldenrodyellow !important;
     -webkit-print-color-adjust: exact; 
-  }
-  html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
-              font-size: 11pt !important;
-      }
-      .reg-form-title {
-      font-size: 200% !important;
-            }
-      .reg-form-section-title {
-        font-size: large !important;
-              }
-      .reg-form-section-header {
-        font-size: large !important;
-              }
   }
 }

@@ -16,5 +16,3 @@ condenv
 commit
 *.enc
 /experimental
-/images
-/media/*

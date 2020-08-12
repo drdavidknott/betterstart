@@ -1,6 +1,7 @@
 {% extends "people/print_base.html" %}
 
 {% load people_tags %}
+{% load static %}
 
 <!-- Home page -->
  
@@ -12,7 +13,7 @@
 
 	<div class="row">
 		<div class="col-xs-12">
-            <img src="{{ registration_form.logo.url }}" class="left">
+            <img src='{% static "people/images/form_logos.jpg" %}' class="left">
 		 </div>
 	</div>
 

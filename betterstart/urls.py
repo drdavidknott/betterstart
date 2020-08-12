@@ -19,6 +19,7 @@ from django_otp.admin import OTPAdminSite
 import os
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 # require OTP for the admin site depending on the environment variable
 otp_admin = os.getenv('BETTERSTART_OTP_ADMIN','False')
@@ -30,3 +31,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('people.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += staticfiles_urlpatterns()

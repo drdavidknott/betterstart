@@ -13,7 +13,9 @@
 
 	<div class="row">
 		<div class="col-xs-12">
-            <img src='{% static "people/images/form_logos.jpg" %}' class="left">
+			{% if registration_form.logo_url %}
+				<img src='{{ registration_form.logo_url }}' class="left">
+			{% endif %}
 		 </div>
 	</div>
 

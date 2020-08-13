@@ -2016,6 +2016,7 @@ class Registration_Form(DataAccessMixin,models.Model):
 	end_date = models.DateField(null=True, blank=True)
 	title = models.CharField(max_length=150, default='', blank=True)
 	subtitle = models.CharField(max_length=150, default='', blank=True)
+	logo_url = models.CharField(max_length=100, null=True)
 	def __str__(self):
 		return self.name
 

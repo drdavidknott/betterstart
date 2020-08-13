@@ -74,11 +74,11 @@
 }
 
 .reg-form-divider {
-  line-height: 2;
+  line-height: 1;
 }
 
 .reg-form-short-divider {
-  line-height: 1;
+  line-height: 50%;
 }
 
 .reg-form-data{

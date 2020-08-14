@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_views.InvitationViewTest.test_children_with_question",
+                "people.tests.test_views.DownloadEventSummaryDataViewTest",
                 "--verbosity=2",
             ],
             "django": true,

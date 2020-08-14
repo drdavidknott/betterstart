@@ -13302,7 +13302,7 @@ class DownloadEventSummaryDataViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 200)
 
-	def test_download_registrations(self):
+	def test_download_summary(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
 		# open the file
@@ -13354,7 +13354,67 @@ class DownloadEventSummaryDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_event_0,01/01/2019,Test location,2,2,2,3')
+		self.assertContains(response,'test_event_0,01/01/2019,Test location,,2,2,2,3')
+
+	def test_download_summary_with_venue(self):
+		# create the venue and add it to the event
+		set_up_address_base_data()
+		set_up_venue_base_data()
+		event = Event.objects.get(name='test_event_0')
+		event.venue = Venue.objects.get(name='test_venue')
+		event.save()
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Event Summary',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_event_0,01/01/2019,Test location,test_venue,2,2,2,3')
 
 class UploadDownloadAnswersViewTest(TestCase):
 	@classmethod

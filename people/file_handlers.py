@@ -2057,6 +2057,13 @@ class Event_Summary_File_Handler(File_Handler):
 		# set the file fields
 		self.name = File_Field(name='name')
 		self.location = File_Field(name='location')
+		self.venue = File_Field(
+									name='venue',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='venue',
+									corresponding_field='name'
+									)
 		self.date = File_Datetime_Field(
 										name='date',
 										datetime_format='%d/%m/%Y',
@@ -2086,6 +2093,7 @@ class Event_Summary_File_Handler(File_Handler):
 						'name',
 						'date',
 						'location',
+						'venue',
 						'registered',
 						'apologies',
 						'participated',

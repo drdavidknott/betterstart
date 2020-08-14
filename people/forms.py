@@ -450,6 +450,9 @@ class ProfileForm(forms.Form):
 								)
 	def __init__(self, *args, **kwargs):
 		# over-ride the __init__ method to set the choices
+		# pop out the extra parameters if we have them
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
+		person = kwargs.pop('person') if 'person' in kwargs.keys() else False
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice fields
@@ -482,17 +485,111 @@ class ProfileForm(forms.Form):
 			# get the full set of role types
 			self.fields['role_type'].choices = role_type_choices(
 												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
-		# get the trained roles and set up fields for them
+		# get the trained roles and set up fields and rows for them
+		trained_rows = []
 		for trained_role in age_status.role_types.filter(trained=True):
-			# set the field name for role
-			field_name = 'trained_role_' + str(trained_role.pk)
-			# create the field
-			self.fields[field_name]= forms.ChoiceField(
+			# create a field to capture whether the person is trained in a specific role
+			role_field_name = 'trained_role_' + str(trained_role.pk)
+			self.fields[role_field_name]= forms.ChoiceField(
 														label=trained_role.role_type_name,
 														widget=forms.Select(attrs={'class' : 'form-control'}),
 														choices=self.trained_role_choices,
 														required=False
-														)	
+														)
+			# and an accompanying field to capture the date on which they were trained
+			date_field_name = 'trained_date_' + str(trained_role.pk)
+			self.fields[date_field_name] = forms.DateField(
+														label="Date trained",
+														required=False,
+														widget=forms.DateInput(	
+																				format='%d/%m/%Y',
+																				attrs={
+																					'class' : 'form-control datepicker',
+																					'autocomplete' : 'off',
+																					}),
+														input_formats=('%d/%m/%Y',))
+			# append the row
+			row = Row(
+						Column(role_field_name,css_class='form-group col-md-3 mb-0'),
+						Column(date_field_name,css_class='form-group col-md-3 mb-0'),
+						Column(css_class='form-group col-md-6 mb-0'),
+						css_class='form-row'	
+						)
+			trained_rows.append(row)
+		# build the crispy form
+		rows = []
+		rows.append(
+					Row(
+						Column('first_name',css_class='form-group col-md-4 mb-0'),
+						Column('last_name',css_class='form-group col-md-4 mb-0'),
+						Column('other_names',css_class='form-group col-md-4 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows.append(
+					Row(
+						Column('email_address',css_class='form-group col-md-4 mb-0'),
+						Column('home_phone',css_class='form-group col-md-4 mb-0'),
+						Column('mobile_phone',css_class='form-group col-md-4 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows.append(
+					Row(		
+						Column('emergency_contact_details',css_class='form-group col-md-12 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows.append(
+					Row(
+						Column('ABSS_type',css_class='form-group col-md-3 mb-0'),
+						Column('ABSS_start_date',css_class='form-group col-md-3 mb-0'),
+						Column('ABSS_end_date',css_class='form-group col-md-3 mb-0'),
+						Column('membership_number',css_class='form-group col-md-3 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows.append(
+					Row(
+						Column('age_status',css_class='form-group col-md-3 mb-0'),
+						Column('date_of_birth',css_class='form-group col-md-3 mb-0'),
+						Column('ethnicity',css_class='form-group col-md-3 mb-0'),
+						Column('gender',css_class='form-group col-md-3 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows.append(
+					Row(
+						Column('pregnant',css_class='form-group col-md-3 mb-0'),
+						Column('due_date',css_class='form-group col-md-9 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows.append(
+					Row(
+						Column('role_type',css_class='form-group col-md-3 mb-0'),
+						css_class='form-row'	
+						)
+					)
+		rows += trained_rows
+		# build and append the button row
+		site = Site.objects.all().first()
+		if user.is_superuser and site and site.invitations_active and not person.has_open_invitation():
+			button_row = Row(
+								Column(
+										Submit('action', 'Submit'),
+										Submit('action', 'Generate Invitation'),
+										css_class='col-md-12 mb-0 form-group',
+										),
+								css_class='form-row'
+							)				
+		else:
+			button_row = Row(Column(Submit('action', 'Submit'),css_class='col-md-12 mb-0'))
+		rows.append(button_row)	
+		# build the rows into a crispy layout
+		self.helper = FormHelper()
+		self.helper.layout = Layout(*rows)
+
 	def is_valid(self):
 		# the validation function
 		# start by calling the built in validation function

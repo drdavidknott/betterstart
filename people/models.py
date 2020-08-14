@@ -192,6 +192,7 @@ class Street(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'streets'
+		ordering = ('name',)
 
 # Venue Type model: represents the list of types of venues.
 # Has a one to many relationship with Venue
@@ -811,6 +812,7 @@ class Trained_Role(DataAccessMixin,models.Model):
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
 	role_type = models.ForeignKey(Role_Type, on_delete=models.CASCADE)
 	active = models.BooleanField(default=False)
+	date_trained = models.DateField(null=True, blank=True)
 	# define the function that will return a string showing the relationship as the object reference
 	def __str__(self):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \

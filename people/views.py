@@ -102,28 +102,24 @@ def get_relationships_to(person):
 
 def get_trained_status(person,role_type):
 	# determine whether a person is trained to perform this role and whether they are active
-	# attempt to get the record
-	try:
-		# do the database call
-		trained_role = Trained_Role.objects.get(person=person,role_type=role_type)
-	# handle the exception
-	except Trained_Role.DoesNotExist:
-		# set the trained role to false
-		trained_role = False
-	# set the value
+	trained_role = Trained_Role.try_to_get(person=person,role_type=role_type)
+	# set the value depending on the status
 	if not trained_role:
-		# set the default trained status
 		trained_status = 'none'
-	# otherwise check if the role is active
 	elif not trained_role.active:
-		# set the text to trained only
 		trained_status = 'trained'
-	# otherwise the role must be active
 	else:
-		# set the text to active
 		trained_status = 'active'
 	# return the result
 	return trained_status
+
+def get_trained_date(person,role_type):
+	# determine the trained date for a person if they are trained in this role
+	trained_role = Trained_Role.try_to_get(person=person,role_type=role_type)
+	if trained_role:
+		return trained_role.date_trained
+	else:
+		return None
 
 def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
 	# set a blank error
@@ -1065,7 +1061,7 @@ def remove_address(
 	# set the message
 	messages.success(request, 'Address removed for ' + str(person))
 
-def build_trained_role(person,role_type_id,trained_status):
+def build_trained_role(person,role_type_id,trained_status,date_trained):
 	# create, delete or modify a trained role record, based on its current state and the desired trained status
 	# get the role type
 	role_type = Role_Type.objects.get(pk=role_type_id)
@@ -1092,7 +1088,11 @@ def build_trained_role(person,role_type_id,trained_status):
 		# set up a trained role if one is required
 		if not trained_role:
 			# create the role
-			trained_role = Trained_Role(person=person,role_type=role_type)
+			trained_role = Trained_Role(
+										person=person,
+										role_type=role_type,
+										date_trained=date_trained
+										)
 		# set the active status if required
 		if trained_status == 'active':
 			# set the flag
@@ -2514,7 +2514,7 @@ def profile(request, person_id=0):
 		return make_banner(request, 'Person does not exist.')
 	# when the form is POSTed, validate it, then update the person
 	if request.method == 'POST':
-		profileform = ProfileForm(request.POST)
+		profileform = ProfileForm(request.POST,user=request.user,person=person)
 		if profileform.is_valid():
 			# update the person
 			person = update_person(
@@ -2545,10 +2545,12 @@ def profile(request, person_id=0):
 			person.trained_role_set.all().delete()
 			for field_name in profileform.cleaned_data.keys():
 				if 'trained_role_' in field_name:
+					role_type_id = int(extract_id(field_name))
 					build_trained_role(
 										person=person,
-										role_type_id=int(extract_id(field_name)),
-										trained_status=profileform.cleaned_data[field_name]
+										role_type_id=role_type_id,
+										trained_status=profileform.cleaned_data[field_name],
+										date_trained=profileform.cleaned_data['trained_date_' + str(role_type_id)],
 										)
 			# generate an invitation if we have been asked
 			if 'Generate' in request.POST['action']:
@@ -2580,20 +2582,21 @@ def profile(request, person_id=0):
 						'ABSS_end_date' : person.ABSS_end_date,
 						'age_status' : person.age_status.pk,
 						'notes' : person.notes,
-						'membership_number' : person.membership_number
+						'membership_number' : person.membership_number,
 						}
 		# add the trained role values to the profile dictionary
 		for trained_role in Role_Type.objects.filter(trained=True):
 			# set the profile dictionary value
 			profile_dict['trained_role_' + str(trained_role.pk)] = get_trained_status(person,trained_role)
+			profile_dict['trained_date_' + str(trained_role.pk)] = get_trained_date(person,trained_role)
 		# create the form
-		profileform = ProfileForm(profile_dict)
+		profileform = ProfileForm(profile_dict,user=request.user,person=person)
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
 	# set the context
 	context = build_context({
 				'profileform' : profileform,
-				'person' : person
+				'person' : person,
 				})
 	# return the response
 	return HttpResponse(profile_template.render(context, request))

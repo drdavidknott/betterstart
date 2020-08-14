@@ -140,7 +140,10 @@
 		 	{% endif %}
 	 		{% for trained_role in person.trained_role_set.all %}
 		 		<div class="row">
-		 			<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
+					<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
+					{% if trained_role.date_trained %}
+						trained on {{ trained_role.date_trained|date:"M d Y" }}
+					{% endif %}
 				</div>
 			{% endfor %}
 		</div>

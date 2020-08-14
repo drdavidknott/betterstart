@@ -23,6 +23,9 @@ class AnswerAdmin(admin.ModelAdmin):
 	list_display = ['person','__str__']
 	search_fields = ['person__last_name']
 
+class StreetAdmin(admin.ModelAdmin):
+    search_fields = ['name']
+
 admin.site.register(Person, PersonAdmin)
 admin.site.register(Relationship_Type)
 admin.site.register(Relationship)
@@ -46,7 +49,7 @@ admin.site.register(Answer, AnswerAdmin)
 admin.site.register(Role_History)
 admin.site.register(ABSS_Type)
 admin.site.register(Age_Status)
-admin.site.register(Street)
+admin.site.register(Street, StreetAdmin)
 admin.site.register(Answer_Note)
 admin.site.register(Site)
 admin.site.register(Activity_Type)

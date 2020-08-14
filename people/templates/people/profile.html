@@ -26,99 +26,11 @@
 	 	</div>
 	</div>
 
-	<form action ="{% url 'profile' person.pk %}" method="post">
-	{% csrf_token %}					
-		<div class="form-row">
-			<div class="form-group col-md-4 mb-0">
-				{{ profileform.first_name|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-4 mb-0">
-				{{ profileform.last_name|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-4 mb-0">
-				{{ profileform.other_names|as_crispy_field }}
-			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-4 mb-0">
-				{{ profileform.email_address|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-4 mb-0">
-				{{ profileform.home_phone|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-4 mb-0">
-				{{ profileform.mobile_phone|as_crispy_field }}
-			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-12 mb-0">
-				{{ profileform.emergency_contact_details|as_crispy_field }}
-			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.ABSS_type|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.ABSS_start_date|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.ABSS_end_date|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.membership_number|as_crispy_field }}
-			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.age_status|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.date_of_birth|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.ethnicity|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.gender|as_crispy_field }}
-			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.pregnant|as_crispy_field }}
-			</div>
-			<div class="form-group col-md-9 mb-0">
-				{{ profileform.due_date|as_crispy_field }}
-			</div>
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-3 mb-0">
-				{{ profileform.role_type|as_crispy_field }}
-			</div>
-			{% for field in profileform %}
-				{% if 'trained_role' in field.label_tag %}
-					<div class="form-group col-md-3 mb-0">
-						{{ field|as_crispy_field }}
-					</div>
-				{% endif %}
-			{% endfor %}
-		</div>
-		<div class="form-row">
-			<div class="form-group col-md-12 mb-0">
-				{{ profileform.notes|as_crispy_field }}
-			</div>
-		</div>
-		<div class = "form-row">
-			<div class="form-group col-md-12 mb-0">
-				<input type="submit" name="action" class="btn btn-primary" value="Submit">
-				{% if request.user.is_superuser and site.invitations_active %}
-					{% if not person.has_open_invitation %}
-						<input type="submit" name="action" class="btn btn-primary" value="Generate Invitation">
-					{% endif %}
-				{% endif %}
-			</div>
-		</div>
-	</form>
+	<div class="row">
+		<div class="col-xs-12">
+			<div>{% crispy profileform %}</div>
+	   </div>
+   </div>
 
 	<div class="row">
 		<div class="col-xs-12">

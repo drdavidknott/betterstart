@@ -10,7 +10,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field
 from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
-from .utilities import build_choices
+from .utilities import build_choices, extract_id
 from zxcvbn_password.fields import PasswordField, PasswordConfirmationField
 from django.contrib.auth.hashers import check_password
 
@@ -622,9 +622,10 @@ class ProfileForm(forms.Form):
 			if self.cleaned_data['trained_role_' + str(role_type.pk)] not in ['trained','active']:
 				self._errors['role_type'] = ['Must be trained to perform this role.']
 				valid = False
+		# DATE CHECKS
+		today = datetime.date.today()
 		# if we have a valid date of birth, check whether it is allowed by age status
 		if 'date_of_birth' in self.cleaned_data:
-			today = datetime.date.today()
 			if self.cleaned_data['date_of_birth'] != None and \
 				self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
 				self._errors['date_of_birth'] = ["Must be less than " + str(age_status.maximum_age) + " years old."]
@@ -640,6 +641,18 @@ class ProfileForm(forms.Form):
 					and self.cleaned_data['ABSS_end_date'] <= self.cleaned_data['ABSS_start_date'] ):
 				self._errors['ABSS_end_date'] = ['ABSS end date must be after ABSS start date.']
 				valid = False
+		# go through the fields and check trained dates
+		for key in self.cleaned_data.keys():
+			if (
+				'trained_date' in key and 
+				self.cleaned_data[key] != None
+				):
+				if self.cleaned_data['trained_role_' + extract_id(key)] == 'none':
+					self.errors[key] = ['Person is not trained.']
+					valid = False
+				elif self.cleaned_data[key] > today:
+					self.errors[key] = ['Date must not be in the future.']
+					valid = False
 		# return the result
 		return valid
 

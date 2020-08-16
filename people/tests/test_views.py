@@ -5367,6 +5367,100 @@ class ProfileViewTest(TestCase):
 		# check the active status
 		self.assertEqual(trained_role.active,False)
 
+	def test_update_profile_trained_role_with_future_date(self):
+		# set a future date
+		tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : 'updated_middle_names',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'trained_date_' + str(role_type.pk) : tomorrow.strftime('%d/%m/%Y'),
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Date must not be in the future.')
+
+	def test_update_profile_trained_date_not_trained(self):
+		# set a future date
+		tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : 'updated_middle_names',
+											'last_name' : 'updated_last_name',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
+											'trained_role_' + str(role_type.pk) : 'none',
+											'trained_date_' + str(role_type.pk) : '01/01/2010',
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'ABSS_start_date' : '01/01/2010',
+											'ABSS_end_date' : '01/01/2015',
+											'membership_number' : '0',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Person is not trained.')
+
 	def test_update_profile_trained_role_active(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')

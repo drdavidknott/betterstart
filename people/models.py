@@ -2172,3 +2172,28 @@ class Invitation_Step(DataAccessMixin,models.Model):
 			signature_image = draw_signature(self.signature)
 		# return the results
 		return signature_image
+
+# Printform Data Type model: contains types of data for printable forms
+class Printform_Data_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.name
+
+	class Meta:
+		verbose_name_plural = 'printform data types'
+
+# Printform Data model: contains data for printable forms
+class Printform_Data(DataAccessMixin,models.Model):
+	printform_data_type = models.ForeignKey(Printform_Data_Type, on_delete=models.CASCADE)
+	value = models.CharField(max_length=50)
+	order = models.IntegerField(default=0)
+
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.printform_data_type.name + ': ' + self.value
+
+	class Meta:
+		verbose_name_plural = 'printform data'
+		ordering = (['printform_data_type__name','order'])

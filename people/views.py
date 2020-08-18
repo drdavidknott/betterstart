@@ -5,7 +5,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
-					Filter_Spec, Registration_Form
+					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data
 import os
 import csv
 import copy
@@ -2420,11 +2420,9 @@ def print_invitation_form(request,invitation_id):
 	for child in children:
 		child['number'] = child_number
 		child_number += 1
-	# create lists for employment details - TO BE CONVERTED TO MODELS
-	employment_statuses = ['Full Time','Part Time','Unemployed','Retired','Maternity Leave']
-	benefits = ['Working Tax Credit','Child Tax Credit','Jobseekers Allowance','Housing Benefit',
-				"Carer's Allowance",'Income Support','Council Tax Benefit','PIP','Universal Credit',
-				'ESA','In Work Credit Lone Parents']
+	# get lists of printform
+	employment_statuses = Printform_Data.objects.filter(printform_data_type__name='employment status')
+	benefits = Printform_Data.objects.filter(printform_data_type__name='benefit')
 	# load the template
 	template = loader.get_template('people/print_invitation_form.html')
 	# set the context

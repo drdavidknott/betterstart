@@ -572,6 +572,12 @@ class ProfileForm(forms.Form):
 						)
 					)
 		rows += trained_rows
+		rows.append(
+					Row(
+						Column('notes',css_class='form-group col-md-12 mb-0'),
+						css_class='form-row'	
+						)
+					)
 		# build and append the button row
 		site = Site.objects.all().first()
 		if user.is_superuser and site and site.invitations_active and not person.has_open_invitation():

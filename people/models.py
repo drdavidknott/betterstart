@@ -2197,3 +2197,18 @@ class Printform_Data(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'printform data'
 		ordering = (['printform_data_type__name','order'])
+
+# Document_Link model: contains data for links to external documents
+class Document_Link(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	description = models.CharField(max_length=100)
+	link = models.CharField(max_length=200)
+	order = models.IntegerField(default=0)
+
+	# define the function that will return the SITE name as the object reference
+	def __str__(self):
+		return self.name
+
+	class Meta:
+		verbose_name_plural = 'document links'
+		ordering = (['order','name'])

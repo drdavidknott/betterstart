@@ -5,11 +5,12 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
-					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data
+					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link
 import os
 import csv
 import copy
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils.decorators import method_decorator
 from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationshipForm, \
 					AddRelationshipToExistingPersonForm, EditExistingRelationshipsForm, \
 					AddAddressForm, AddressSearchForm, AddRegistrationForm, \
@@ -52,6 +53,7 @@ import io
 from jsignature.utils import draw_signature
 from xhtml2pdf import pisa
 from django.contrib.staticfiles import finders
+from django.views.generic import ListView
 
 @login_required
 def index(request):
@@ -4080,4 +4082,15 @@ def reset_password(request,reset_code):
 	template = loader.get_template('people/reset_password.html')
 	return HttpResponse(template.render(context=context, request=request))
 
+@method_decorator(login_required, name='dispatch')
+class Document_Link_List(ListView):
+	model = Document_Link
+	template_name = 'people/document_links.html'
+	context_object_name = 'document_links'
 
+	def get_context_data(self, **kwargs):
+		# Call the base implementation first to get a context
+		context = super().get_context_data(**kwargs)
+		# add in the standard extra context
+		context = build_context(context)
+		return context

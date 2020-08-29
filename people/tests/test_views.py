@@ -5,7 +5,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
-							Terms_And_Conditions, Profile, Chart
+							Terms_And_Conditions, Profile, Chart, Document_Link
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -14751,3 +14751,50 @@ class DownloadActivitiesDataViewTest(TestCase):
 		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 2,01/01/2019,2')
 		self.assertContains(response,'test_child_0,test_child_0,Child under four,Test activity type 1,01/01/2019,1')
 		self.assertContains(response,'test_adult_1,test_adult_1,Adult,Test activity type 1,01/01/2019,5')
+
+class DocumentLinksViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/document_links')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/document_links')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('document_links'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_no_documents(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('document_links'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'No documents')
+
+	def test_document_links(self):
+		# create a document link
+		Document_Link.objects.create(
+										name='test document',
+										description='test desc',
+										link='test url',
+										order=10
+									)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('document_links'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'test document')
+		self.assertContains(response,'test desc')
+		self.assertContains(response,'test url')

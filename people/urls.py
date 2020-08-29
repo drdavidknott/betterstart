@@ -75,4 +75,5 @@ urlpatterns = [
     url(r'^reset_password/(?P<reset_code>[\w]+)$', views.reset_password, name='reset_password'),
     url(r'^chart/(?P<name>[\w]+)$', views.chart, name='chart'),
     url(r'^charts$', views.chart, name='charts'),
+    url(r'^document_links$', views.Document_Link_List.as_view(), name='document_links'),
 ]

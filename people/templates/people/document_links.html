@@ -1,0 +1,54 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>
+                <span class="glyphicon glyphicon-question-sign"></span>
+                Help Documents
+            </h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <hr>
+        </div>
+    </div>
+
+	{% if document_links %}
+
+		<div class="form-row">
+            {% for document_link in document_links %}
+                <div class="col-xs-12">
+                        <a href="{{ document_link.link }}">
+                            {{ document_link.name }}
+                        </a>
+                        {{ document_link.description }}
+                </div>
+            {% endfor %}
+		</div>
+
+	{% else %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				No documents
+			</div>
+		</div>
+	
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

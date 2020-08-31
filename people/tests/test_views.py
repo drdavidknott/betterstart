@@ -4433,6 +4433,60 @@ class DashboardViewTest(TestCase):
 		# check the values in the response
 		self.assertContains(response,'COUNT FIELD DOES NOT EXIST')
 
+class IndexViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# and a site
+		Site.objects.create(
+							name='test_site'
+							)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('index'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_default_dashboard_create(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get('')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that the dashboard was created
+		dashboard = Dashboard.objects.get(name='default_dashboard')
+		site = Site.objects.get(name='test_site')
+		self.assertEqual(site.dashboard,dashboard)
+
+	def test_default_dashboard_no_create_if_exists(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get('')
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that the dashboard was created
+		dashboard = Dashboard.objects.get(name='default_dashboard')
+		site = Site.objects.get(name='test_site')
+		self.assertEqual(site.dashboard,dashboard)
+		# count the number of panels
+		panel_count = Panel.objects.all().count()
+		# attempt to get the page again
+		response = self.client.get(reverse('index'))
+		# check that there are no extra panels
+		self.assertEqual(panel_count,Panel.objects.all().count())
+
 class ChartViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

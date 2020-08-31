@@ -2,29 +2,7 @@
 {
   "model": "people.filter_spec",
   "fields": {
-    "term": "date",
-    "filter_type": "period",
-    "string_value": "",
-    "boolean_value": false,
-    "period": "last_month",
-    "exclusion": false
-  }
-},
-{
-  "model": "people.filter_spec",
-  "fields": {
-    "term": "date",
-    "filter_type": "period",
-    "string_value": "",
-    "boolean_value": false,
-    "period": "last_calendar_year",
-    "exclusion": false
-  }
-},
-{
-  "model": "people.filter_spec",
-  "fields": {
-    "term": "ABSS_end_date__isnull",
+    "term": "trained",
     "filter_type": "boolean",
     "string_value": "",
     "boolean_value": true,
@@ -35,7 +13,18 @@
 {
   "model": "people.filter_spec",
   "fields": {
-    "term": "trained",
+    "term": "role_type",
+    "filter_type": "object",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "active",
     "filter_type": "boolean",
     "string_value": "",
     "boolean_value": true,
@@ -57,7 +46,18 @@
 {
   "model": "people.filter_spec",
   "fields": {
-    "term": "active",
+    "term": "person__ABSS_end_date__isnull",
+    "filter_type": "boolean",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "ABSS_end_date__isnull",
     "filter_type": "boolean",
     "string_value": "",
     "boolean_value": true,
@@ -68,22 +68,22 @@
 {
   "model": "people.filter_spec",
   "fields": {
-    "term": "ward_name",
-    "filter_type": "string",
-    "string_value": "Milton",
+    "term": "ABSS_end_date__isnull",
+    "filter_type": "boolean",
+    "string_value": "",
     "boolean_value": false,
     "period": "",
-    "exclusion": true
+    "exclusion": false
   }
 },
 {
   "model": "people.filter_spec",
   "fields": {
-    "term": "street__post_code__ward",
-    "filter_type": "object",
+    "term": "event__date",
+    "filter_type": "period",
     "string_value": "",
     "boolean_value": false,
-    "period": "",
+    "period": "this_month",
     "exclusion": false
   }
 },
@@ -110,20 +110,86 @@
   }
 },
 {
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "participated",
+    "filter_type": "boolean",
+    "string_value": "",
+    "boolean_value": true,
+    "period": "",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "event__date",
+    "filter_type": "period",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "last_month",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "event__date",
+    "filter_type": "period",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "this_project_year",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "street__post_code__ward",
+    "filter_type": "object",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "ward__area",
+    "filter_type": "object",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "",
+    "exclusion": false
+  }
+},
+{
+  "model": "people.filter_spec",
+  "fields": {
+    "term": "street__post_code__ward__area",
+    "filter_type": "object",
+    "string_value": "",
+    "boolean_value": false,
+    "period": "",
+    "exclusion": false
+  }
+},
+{
   "model": "people.dashboard",
   "fields": {
-    "name": "beta_dashboard",
-    "title": "Beta Dashboard",
+    "name": "default_dashboard",
+    "title": "Default Dashboard",
     "margin": 0,
-    "live": false,
-    "date_controlled": true,
-    "period": "this_month"
+    "live": true,
+    "date_controlled": false,
+    "period": ""
   }
 },
 {
   "model": "people.column",
   "fields": {
-    "name": "events by type and date",
+    "name": "default_people",
     "heading": "",
     "width": 4,
     "margins": 1
@@ -132,148 +198,13 @@
 {
   "model": "people.panel",
   "fields": {
-    "name": "Events last month",
-    "title": "EVENTS - LAST MONTH",
-    "title_url": "",
-    "title_icon": "glyphicon-calendar",
-    "show_column_names": false,
-    "label_width": 8,
-    "column_width": 3,
-    "right_margin": 0,
-    "row_url": "",
-    "row_parameter_name": "",
-    "row_parameter_prefix": "",
-    "row_name_field": "name",
-    "sort_field": "name",
-    "totals": true,
-    "display_zeroes": true,
-    "model": "Event_Type",
-    "prebuilt_panel": "",
-    "chart": null,
-    "filters": [],
-    "sub_filters": [
-      [
-        "date",
-        "period",
-        "",
-        false,
-        "last_month",
-        false
-      ]
-    ]
-  }
-},
-{
-  "model": "people.panel_column",
-  "fields": {
-    "name": "event_set",
-    "title": "",
-    "query_type": "query from one",
-    "count_field": "event_set",
-    "count_model": "",
-    "apply_sub_filters": true,
-    "filters": []
-  }
-},
-{
-  "model": "people.panel",
-  "fields": {
-    "name": "Events last year",
-    "title": "EVENTS - LAST YEAR",
-    "title_url": "",
-    "title_icon": "glyphicon-calendar",
-    "show_column_names": false,
-    "label_width": 8,
-    "column_width": 3,
-    "right_margin": 0,
-    "row_url": "",
-    "row_parameter_name": "",
-    "row_parameter_prefix": "",
-    "row_name_field": "name",
-    "sort_field": "name",
-    "totals": true,
-    "display_zeroes": true,
-    "model": "Event_Type",
-    "prebuilt_panel": "",
-    "chart": null,
-    "filters": [],
-    "sub_filters": [
-      [
-        "date",
-        "period",
-        "",
-        false,
-        "last_calendar_year",
-        false
-      ]
-    ]
-  }
-},
-{
-  "model": "people.column",
-  "fields": {
-    "name": "people by role type",
-    "heading": "",
-    "width": 4,
-    "margins": 1
-  }
-},
-{
-  "model": "people.panel",
-  "fields": {
-    "name": "Role types with people counts",
-    "title": "Roles",
+    "name": "default_trained_roles",
+    "title": "PEOPLE: TRAINED ROLES",
     "title_url": "",
     "title_icon": "glyphicon-user",
     "show_column_names": true,
-    "label_width": 8,
-    "column_width": 3,
-    "right_margin": 0,
-    "row_url": "role_type",
-    "row_parameter_name": "pk",
-    "row_parameter_prefix": "",
-    "row_name_field": "role_type_name",
-    "sort_field": "role_type_name",
-    "totals": true,
-    "display_zeroes": false,
-    "model": "Role_Type",
-    "prebuilt_panel": "",
-    "chart": null,
-    "filters": [],
-    "sub_filters": []
-  }
-},
-{
-  "model": "people.panel_column",
-  "fields": {
-    "name": "person_set in project",
-    "title": "In project",
-    "query_type": "query from one",
-    "count_field": "person_set",
-    "count_model": "",
-    "apply_sub_filters": true,
-    "filters": [
-      [
-        "ABSS_end_date__isnull",
-        "boolean",
-        "",
-        true,
-        "",
-        false
-      ]
-    ]
-  }
-},
-{
-  "model": "people.panel",
-  "fields": {
-    "name": "trained_people_in_project",
-    "title": "TRAINED PEOPLE: IN PROJECT",
-    "title_url": "",
-    "title_icon": "",
-    "show_column_names": true,
     "label_width": 6,
-    "column_width": 3,
+    "column_width": 2,
     "right_margin": 0,
     "row_url": "trained_role",
     "row_parameter_name": "pk",
@@ -281,7 +212,7 @@
     "row_name_field": "role_type_name",
     "sort_field": "role_type_name",
     "totals": false,
-    "display_zeroes": false,
+    "display_zeroes": true,
     "model": "Role_Type",
     "prebuilt_panel": "",
     "chart": null,
@@ -301,18 +232,18 @@
 {
   "model": "people.panel_column",
   "fields": {
-    "name": "trained_people_for_role_type_in_project",
+    "name": "trained_people",
     "title": "Trained",
-    "query_type": "query from one",
-    "count_field": "trained_role_set",
-    "count_model": "",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Trained_Role",
     "apply_sub_filters": true,
     "filters": [
       [
-        "person__ABSS_end_date__isnull",
-        "boolean",
+        "role_type",
+        "object",
         "",
-        true,
+        false,
         "",
         false
       ]
@@ -322,11 +253,11 @@
 {
   "model": "people.panel_column",
   "fields": {
-    "name": "active_roles_in_project",
+    "name": "active_people_in_project",
     "title": "Active",
-    "query_type": "query from one",
-    "count_field": "trained_role_set",
-    "count_model": "",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Trained_Role",
     "apply_sub_filters": true,
     "filters": [
       [
@@ -344,102 +275,38 @@
         true,
         "",
         false
+      ],
+      [
+        "role_type",
+        "object",
+        "",
+        false,
+        "",
+        false
       ]
     ]
   }
 },
 {
-  "model": "people.column",
-  "fields": {
-    "name": "activities",
-    "heading": "",
-    "width": 4,
-    "margins": 1
-  }
-},
-{
-  "model": "people.panel",
-  "fields": {
-    "name": "activities",
-    "title": "ACTIVITY COUNT",
-    "title_url": "",
-    "title_icon": "",
-    "show_column_names": false,
-    "label_width": 8,
-    "column_width": 3,
-    "right_margin": 0,
-    "row_url": "",
-    "row_parameter_name": "",
-    "row_parameter_prefix": "",
-    "row_name_field": "name",
-    "sort_field": "name",
-    "totals": true,
-    "display_zeroes": true,
-    "model": "Activity_Type",
-    "prebuilt_panel": "",
-    "chart": null,
-    "filters": [],
-    "sub_filters": []
-  }
-},
-{
   "model": "people.panel_column",
   "fields": {
-    "name": "activity_set_count",
-    "title": "",
-    "query_type": "query from one",
-    "count_field": "activity_set",
-    "count_model": "",
-    "apply_sub_filters": true,
-    "filters": []
-  }
-},
-{
-  "model": "people.panel",
-  "fields": {
-    "name": "people_in_ward",
-    "title": "PEOPLE IN WARD",
-    "title_url": "",
-    "title_icon": "",
-    "show_column_names": false,
-    "label_width": 8,
-    "column_width": 3,
-    "right_margin": 1,
-    "row_url": "ward",
-    "row_parameter_name": "pk",
-    "row_parameter_prefix": "",
-    "row_name_field": "ward_name",
-    "sort_field": "ward_name",
-    "totals": false,
-    "display_zeroes": true,
-    "model": "Ward",
-    "prebuilt_panel": "",
-    "chart": null,
-    "filters": [
-      [
-        "ward_name",
-        "string",
-        "Milton",
-        false,
-        "",
-        true
-      ]
-    ],
-    "sub_filters": []
-  }
-},
-{
-  "model": "people.panel_column",
-  "fields": {
-    "name": "people_in_ward",
-    "title": "",
+    "name": "trained_people_left_project",
+    "title": "Left",
     "query_type": "query from many",
     "count_field": "",
-    "count_model": "Person",
+    "count_model": "Trained_Role",
     "apply_sub_filters": true,
     "filters": [
       [
-        "street__post_code__ward",
+        "person__ABSS_end_date__isnull",
+        "boolean",
+        "",
+        false,
+        "",
+        false
+      ],
+      [
+        "role_type",
         "object",
         "",
         false,
@@ -452,14 +319,106 @@
 {
   "model": "people.panel",
   "fields": {
-    "name": "parent_exceptions",
-    "title": "PARENTS: EXCEPTIONS",
-    "title_url": "",
-    "title_icon": "",
-    "show_column_names": false,
-    "label_width": 8,
+    "name": "default_people_by_role_type",
+    "title": "PEOPLE: ROLE TYPE",
+    "title_url": "listpeople",
+    "title_icon": "glyphicon-user",
+    "show_column_names": true,
+    "label_width": 6,
     "column_width": 3,
-    "right_margin": 1,
+    "right_margin": 0,
+    "row_url": "role_type",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "role_type_name",
+    "sort_field": "role_type_name",
+    "totals": true,
+    "display_zeroes": false,
+    "model": "Role_Type",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_person_set_in_project",
+    "title": "In Project",
+    "query_type": "query from one",
+    "count_field": "person_set",
+    "count_model": "",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ABSS_end_date__isnull",
+        "boolean",
+        "",
+        true,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_person_set_left_project",
+    "title": "Left Project",
+    "query_type": "query from one",
+    "count_field": "person_set",
+    "count_model": "",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ABSS_end_date__isnull",
+        "boolean",
+        "",
+        false,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_people_by_age_status",
+    "title": "PEOPLE: AGE STATUS",
+    "title_url": "",
+    "title_icon": "glyphicon-user",
+    "show_column_names": true,
+    "label_width": 6,
+    "column_width": 3,
+    "right_margin": 0,
+    "row_url": "age_status",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "status",
+    "sort_field": "status",
+    "totals": true,
+    "display_zeroes": false,
+    "model": "Age_Status",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_parent_exceptions",
+    "title": "EXCEPTIONS: PARENTS",
+    "title_url": "",
+    "title_icon": "glyphicon-warning-sign",
+    "show_column_names": false,
+    "label_width": 6,
+    "column_width": 6,
+    "right_margin": 0,
     "row_url": "",
     "row_parameter_name": "",
     "row_parameter_prefix": "",
@@ -477,14 +436,14 @@
 {
   "model": "people.panel",
   "fields": {
-    "name": "age_status_exceptions",
-    "title": "AGE STATUS: EXCEPTIONS",
+    "name": "default_age_status_exceptions",
+    "title": "EXCEPTIONS: AGE STATUS",
     "title_url": "",
-    "title_icon": "glyphicon-user",
+    "title_icon": "glyphicon-warning-sign",
     "show_column_names": false,
-    "label_width": 8,
-    "column_width": 3,
-    "right_margin": 1,
+    "label_width": 6,
+    "column_width": 6,
+    "right_margin": 0,
     "row_url": "",
     "row_parameter_name": "",
     "row_parameter_prefix": "",
@@ -500,18 +459,27 @@
   }
 },
 {
+  "model": "people.column",
+  "fields": {
+    "name": "default_events",
+    "heading": "",
+    "width": 4,
+    "margins": 1
+  }
+},
+{
   "model": "people.panel",
   "fields": {
-    "name": "event_reg_by_category",
+    "name": "default_events_by_category_with_reg_this_month",
     "title": "EVENTS: THIS MONTH",
-    "title_url": "",
-    "title_icon": "",
-    "show_column_names": false,
-    "label_width": 6,
-    "column_width": 3,
+    "title_url": "events_this_month",
+    "title_icon": "glyphicon-calendar",
+    "show_column_names": true,
+    "label_width": 4,
+    "column_width": 4,
     "right_margin": 0,
-    "row_url": "",
-    "row_parameter_name": "",
+    "row_url": "event_category_this_month",
+    "row_parameter_name": "pk",
     "row_parameter_prefix": "",
     "row_name_field": "name",
     "sort_field": "name",
@@ -521,13 +489,22 @@
     "prebuilt_panel": "",
     "chart": null,
     "filters": [],
-    "sub_filters": []
+    "sub_filters": [
+      [
+        "event__date",
+        "period",
+        "",
+        false,
+        "this_month",
+        false
+      ]
+    ]
   }
 },
 {
   "model": "people.panel_column",
   "fields": {
-    "name": "event_reg_by_category",
+    "name": "default_event_registrations_by_category",
     "title": "Registered",
     "query_type": "query from many",
     "count_field": "",
@@ -554,158 +531,406 @@
   }
 },
 {
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_event_participation_by_category",
+    "title": "Participated",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Event_Registration",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "event__event_type__event_category",
+        "object",
+        "",
+        false,
+        "",
+        false
+      ],
+      [
+        "participated",
+        "boolean",
+        "",
+        true,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_events_by_category_with_reg_last_month",
+    "title": "EVENTS: LAST MONTH",
+    "title_url": "events_last_month",
+    "title_icon": "glyphicon-calendar",
+    "show_column_names": true,
+    "label_width": 4,
+    "column_width": 4,
+    "right_margin": 0,
+    "row_url": "event_category_last_month",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "name",
+    "sort_field": "name",
+    "totals": true,
+    "display_zeroes": false,
+    "model": "Event_Category",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": [
+      [
+        "event__date",
+        "period",
+        "",
+        false,
+        "last_month",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_events_by_category_with_reg_this_year",
+    "title": "EVENTS: SINCE 1ST APRIL",
+    "title_url": "events_this_year",
+    "title_icon": "glyphicon-calendar",
+    "show_column_names": true,
+    "label_width": 4,
+    "column_width": 4,
+    "right_margin": 0,
+    "row_url": "event_category_this_year",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "name",
+    "sort_field": "name",
+    "totals": true,
+    "display_zeroes": false,
+    "model": "Event_Category",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": [
+      [
+        "event__date",
+        "period",
+        "",
+        false,
+        "this_project_year",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_events_by_category_with_reg_all_time",
+    "title": "EVENTS: ALL TIME",
+    "title_url": "events_all_time",
+    "title_icon": "glyphicon-calendar",
+    "show_column_names": true,
+    "label_width": 4,
+    "column_width": 4,
+    "right_margin": 0,
+    "row_url": "event_category",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "name",
+    "sort_field": "name",
+    "totals": true,
+    "display_zeroes": false,
+    "model": "Event_Category",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.column",
+  "fields": {
+    "name": "default_places",
+    "heading": "",
+    "width": 4,
+    "margins": 1
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_events_in_ward",
+    "title": "EVENTS IN WARD",
+    "title_url": "",
+    "title_icon": "glyphicon-map-marker",
+    "show_column_names": false,
+    "label_width": 6,
+    "column_width": 6,
+    "right_margin": 0,
+    "row_url": "event_ward",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "ward_name",
+    "sort_field": "ward_name",
+    "totals": false,
+    "display_zeroes": false,
+    "model": "Ward",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_event_set",
+    "title": "",
+    "query_type": "query from one",
+    "count_field": "event_set",
+    "count_model": "",
+    "apply_sub_filters": true,
+    "filters": []
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_people_in_ward",
+    "title": "PEOPLE IN WARD",
+    "title_url": "",
+    "title_icon": "glyphicon-map-marker",
+    "show_column_names": true,
+    "label_width": 6,
+    "column_width": 3,
+    "right_margin": 0,
+    "row_url": "ward",
+    "row_parameter_name": "pk",
+    "row_parameter_prefix": "",
+    "row_name_field": "ward_name",
+    "sort_field": "ward_name",
+    "totals": false,
+    "display_zeroes": false,
+    "model": "Ward",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_people_in_ward_in_project",
+    "title": "In Project",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Person",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ABSS_end_date__isnull",
+        "boolean",
+        "",
+        true,
+        "",
+        false
+      ],
+      [
+        "street__post_code__ward",
+        "object",
+        "",
+        false,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_people_in_ward_left_project",
+    "title": "Left Project",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Person",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ABSS_end_date__isnull",
+        "boolean",
+        "",
+        false,
+        "",
+        false
+      ],
+      [
+        "street__post_code__ward",
+        "object",
+        "",
+        false,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_events_in_area",
+    "title": "EVENTS IN AREA",
+    "title_url": "",
+    "title_icon": "glyphicon-map-marker",
+    "show_column_names": false,
+    "label_width": 6,
+    "column_width": 6,
+    "right_margin": 0,
+    "row_url": "",
+    "row_parameter_name": "",
+    "row_parameter_prefix": "",
+    "row_name_field": "area_name",
+    "sort_field": "area_name",
+    "totals": false,
+    "display_zeroes": false,
+    "model": "Area",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_events_in_area",
+    "title": "",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Event",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ward__area",
+        "object",
+        "",
+        false,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel",
+  "fields": {
+    "name": "default_people_in_area",
+    "title": "PEOPLE IN AREA",
+    "title_url": "",
+    "title_icon": "glyphicon-map-marker",
+    "show_column_names": true,
+    "label_width": 6,
+    "column_width": 3,
+    "right_margin": 0,
+    "row_url": "",
+    "row_parameter_name": "",
+    "row_parameter_prefix": "",
+    "row_name_field": "area_name",
+    "sort_field": "area_name",
+    "totals": false,
+    "display_zeroes": false,
+    "model": "Area",
+    "prebuilt_panel": "",
+    "chart": null,
+    "filters": [],
+    "sub_filters": []
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_people_in_area_in_project",
+    "title": "In Project",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Person",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ABSS_end_date__isnull",
+        "boolean",
+        "",
+        true,
+        "",
+        false
+      ],
+      [
+        "street__post_code__ward__area",
+        "object",
+        "",
+        false,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
+  "model": "people.panel_column",
+  "fields": {
+    "name": "default_people_in_area_left_project",
+    "title": "Left Project",
+    "query_type": "query from many",
+    "count_field": "",
+    "count_model": "Person",
+    "apply_sub_filters": true,
+    "filters": [
+      [
+        "ABSS_end_date__isnull",
+        "boolean",
+        "",
+        false,
+        "",
+        false
+      ],
+      [
+        "street__post_code__ward__area",
+        "object",
+        "",
+        false,
+        "",
+        false
+      ]
+    ]
+  }
+},
+{
   "model": "people.column_in_dashboard",
   "fields": {
-    "order": 0,
+    "order": 10,
     "dashboard": [
-      "beta_dashboard"
+      "default_dashboard"
     ],
     "column": [
-      "events by type and date"
+      "default_people"
     ]
   }
 },
 {
   "model": "people.panel_in_column",
-  "fields": {
-    "order": 10,
-    "panel": [
-      "Events last month"
-    ],
-    "column": [
-      "events by type and date"
-    ]
-  }
-},
-{
-  "model": "people.panel_column_in_panel",
-  "fields": {
-    "order": 0,
-    "panel": [
-      "Events last month"
-    ],
-    "panel_column": [
-      "event_set"
-    ]
-  }
-},
-{
-  "model": "people.panel_in_column",
-  "fields": {
-    "order": 20,
-    "panel": [
-      "Events last year"
-    ],
-    "column": [
-      "events by type and date"
-    ]
-  }
-},
-{
-  "model": "people.panel_column_in_panel",
-  "fields": {
-    "order": 0,
-    "panel": [
-      "Events last year"
-    ],
-    "panel_column": [
-      "event_set"
-    ]
-  }
-},
-{
-  "model": "people.column_in_dashboard",
-  "fields": {
-    "order": 10,
-    "dashboard": [
-      "beta_dashboard"
-    ],
-    "column": [
-      "people by role type"
-    ]
-  }
-},
-{
-  "model": "people.panel_in_column",
-  "fields": {
-    "order": 0,
-    "panel": [
-      "Role types with people counts"
-    ],
-    "column": [
-      "people by role type"
-    ]
-  }
-},
-{
-  "model": "people.panel_column_in_panel",
-  "fields": {
-    "order": 0,
-    "panel": [
-      "Role types with people counts"
-    ],
-    "panel_column": [
-      "person_set in project"
-    ]
-  }
-},
-{
-  "model": "people.panel_in_column",
-  "fields": {
-    "order": 0,
-    "panel": [
-      "trained_people_in_project"
-    ],
-    "column": [
-      "people by role type"
-    ]
-  }
-},
-{
-  "model": "people.panel_column_in_panel",
-  "fields": {
-    "order": 10,
-    "panel": [
-      "trained_people_in_project"
-    ],
-    "panel_column": [
-      "trained_people_for_role_type_in_project"
-    ]
-  }
-},
-{
-  "model": "people.panel_column_in_panel",
-  "fields": {
-    "order": 20,
-    "panel": [
-      "trained_people_in_project"
-    ],
-    "panel_column": [
-      "active_roles_in_project"
-    ]
-  }
-},
-{
-  "model": "people.column_in_dashboard",
   "fields": {
     "order": 30,
-    "dashboard": [
-      "beta_dashboard"
-    ],
-    "column": [
-      "activities"
-    ]
-  }
-},
-{
-  "model": "people.panel_in_column",
-  "fields": {
-    "order": 0,
     "panel": [
-      "activities"
+      "default_trained_roles"
     ],
     "column": [
-      "activities"
+      "default_people"
     ]
   }
 },
@@ -714,34 +939,70 @@
   "fields": {
     "order": 0,
     "panel": [
-      "activities"
+      "default_trained_roles"
     ],
     "panel_column": [
-      "activity_set_count"
-    ]
-  }
-},
-{
-  "model": "people.panel_in_column",
-  "fields": {
-    "order": 0,
-    "panel": [
-      "people_in_ward"
-    ],
-    "column": [
-      "activities"
+      "trained_people"
     ]
   }
 },
 {
   "model": "people.panel_column_in_panel",
   "fields": {
-    "order": 0,
+    "order": 20,
     "panel": [
-      "people_in_ward"
+      "default_trained_roles"
     ],
     "panel_column": [
-      "people_in_ward"
+      "active_people_in_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 30,
+    "panel": [
+      "default_trained_roles"
+    ],
+    "panel_column": [
+      "trained_people_left_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_people_by_role_type"
+    ],
+    "column": [
+      "default_people"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_people_by_role_type"
+    ],
+    "panel_column": [
+      "default_person_set_in_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_people_by_role_type"
+    ],
+    "panel_column": [
+      "default_person_set_left_project"
     ]
   }
 },
@@ -750,10 +1011,34 @@
   "fields": {
     "order": 20,
     "panel": [
-      "parent_exceptions"
+      "default_people_by_age_status"
     ],
     "column": [
-      "activities"
+      "default_people"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_people_by_age_status"
+    ],
+    "panel_column": [
+      "default_person_set_in_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_people_by_age_status"
+    ],
+    "panel_column": [
+      "default_person_set_left_project"
     ]
   }
 },
@@ -762,22 +1047,46 @@
   "fields": {
     "order": 40,
     "panel": [
-      "age_status_exceptions"
+      "default_parent_exceptions"
     ],
     "column": [
-      "activities"
+      "default_people"
     ]
   }
 },
 {
   "model": "people.panel_in_column",
   "fields": {
-    "order": 0,
+    "order": 50,
     "panel": [
-      "event_reg_by_category"
+      "default_age_status_exceptions"
     ],
     "column": [
-      "activities"
+      "default_people"
+    ]
+  }
+},
+{
+  "model": "people.column_in_dashboard",
+  "fields": {
+    "order": 20,
+    "dashboard": [
+      "default_dashboard"
+    ],
+    "column": [
+      "default_events"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_by_category_with_reg_this_month"
+    ],
+    "column": [
+      "default_events"
     ]
   }
 },
@@ -786,10 +1095,262 @@
   "fields": {
     "order": 10,
     "panel": [
-      "event_reg_by_category"
+      "default_events_by_category_with_reg_this_month"
     ],
     "panel_column": [
-      "event_reg_by_category"
+      "default_event_registrations_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_events_by_category_with_reg_this_month"
+    ],
+    "panel_column": [
+      "default_event_participation_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_events_by_category_with_reg_last_month"
+    ],
+    "column": [
+      "default_events"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_by_category_with_reg_last_month"
+    ],
+    "panel_column": [
+      "default_event_registrations_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_events_by_category_with_reg_last_month"
+    ],
+    "panel_column": [
+      "default_event_participation_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 30,
+    "panel": [
+      "default_events_by_category_with_reg_this_year"
+    ],
+    "column": [
+      "default_events"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_by_category_with_reg_this_year"
+    ],
+    "panel_column": [
+      "default_event_registrations_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_events_by_category_with_reg_this_year"
+    ],
+    "panel_column": [
+      "default_event_participation_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 40,
+    "panel": [
+      "default_events_by_category_with_reg_all_time"
+    ],
+    "column": [
+      "default_events"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_by_category_with_reg_all_time"
+    ],
+    "panel_column": [
+      "default_event_registrations_by_category"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_events_by_category_with_reg_all_time"
+    ],
+    "panel_column": [
+      "default_event_participation_by_category"
+    ]
+  }
+},
+{
+  "model": "people.column_in_dashboard",
+  "fields": {
+    "order": 30,
+    "dashboard": [
+      "default_dashboard"
+    ],
+    "column": [
+      "default_places"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_in_ward"
+    ],
+    "column": [
+      "default_places"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_in_ward"
+    ],
+    "panel_column": [
+      "default_event_set"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 30,
+    "panel": [
+      "default_people_in_ward"
+    ],
+    "column": [
+      "default_places"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_people_in_ward"
+    ],
+    "panel_column": [
+      "default_people_in_ward_in_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_people_in_ward"
+    ],
+    "panel_column": [
+      "default_people_in_ward_left_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_events_in_area"
+    ],
+    "column": [
+      "default_places"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_events_in_area"
+    ],
+    "panel_column": [
+      "default_events_in_area"
+    ]
+  }
+},
+{
+  "model": "people.panel_in_column",
+  "fields": {
+    "order": 40,
+    "panel": [
+      "default_people_in_area"
+    ],
+    "column": [
+      "default_places"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 10,
+    "panel": [
+      "default_people_in_area"
+    ],
+    "panel_column": [
+      "default_people_in_area_in_project"
+    ]
+  }
+},
+{
+  "model": "people.panel_column_in_panel",
+  "fields": {
+    "order": 20,
+    "panel": [
+      "default_people_in_area"
+    ],
+    "panel_column": [
+      "default_people_in_area_left_project"
     ]
   }
 }

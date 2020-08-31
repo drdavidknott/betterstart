@@ -1973,8 +1973,6 @@ class Dashboard(DataAccessMixin,models.Model):
 	# define a class method to build a default dashboard
 	@classmethod
 	def build_default_dashboard(cls):
-		# dummy out this function for now
-		return
 		# get the data from the file, read it and deserialize it
 		default_dashboard_file = open('people/data/default_dashboard.json','r')
 		json_dashboard = default_dashboard_file.read()
@@ -1987,7 +1985,10 @@ class Dashboard(DataAccessMixin,models.Model):
 				natural_key = dashboard_object.natural_key()
 				dashboard_object_class.objects.get_by_natural_key(*dashboard_object.natural_key())
 			except (dashboard_object_class.DoesNotExist):
-				pass
+				deserialized_object.save()
+		# retrieve the default dashboard
+		dashboard = Dashboard.objects.get(name='default_dashboard')
+		return dashboard
 
 	def get_columns(self):
 		# get the through models in order and return a list of columns

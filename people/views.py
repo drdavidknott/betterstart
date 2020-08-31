@@ -58,17 +58,25 @@ from django.core import serializers
 
 @login_required
 def index(request):
+	# get the template
+	index_template = loader.get_template('people/dashboard.html')
 	# if we have a dashboard for the site, load that, otherwise use the default dashboard
 	site = Site.objects.all().first()
-	if site and site.dashboard:
-		dashboard = site.dashboard
-		# set the dummy dates
-		dashboard.start_date = False
-		dashboard.end_date = False
-		index_template = loader.get_template('people/dashboard.html')
+	if site:
+		if site.dashboard:
+			dashboard = site.dashboard
+		else:
+			# build a default dashboard and save it to the site
+			dashboard = Dashboard.build_default_dashboard()
+			site.dashboard = dashboard
+			site.save()
 	else:
-		dashboard = build_default_dashboard()
-		index_template = loader.get_template('people/index.html')
+		dashboard = Dashboard.try_to_get(name='default_dashboard')
+		if not dashboard:
+			dashboard = Dashboard.build_default_dashboard()
+	# set the dummy dates
+	dashboard.start_date = False
+	dashboard.end_date = False
 	# set the context
 	context = build_context({
 								'dashboard' : dashboard,

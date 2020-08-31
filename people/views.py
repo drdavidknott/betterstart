@@ -5,7 +5,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
-					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link
+					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column
 import os
 import csv
 import copy
@@ -54,6 +54,7 @@ from jsignature.utils import draw_signature
 from xhtml2pdf import pisa
 from django.contrib.staticfiles import finders
 from django.views.generic import ListView
+from django.core import serializers
 
 @login_required
 def index(request):
@@ -1163,6 +1164,7 @@ def build_activity(request, person, activity_type_id, date, hours):
 	return activity
 
 def build_default_dashboard():
+	Dashboard.build_default_dashboard()
 	# get the exceptions
 	parents_with_no_children, parents_with_no_children_under_four = get_parents_without_children()
 	# get parents with overdue children
@@ -3918,6 +3920,19 @@ def dashboard(request,name=''):
 								})
 	# return the HttpResponse
 	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def download_dashboard(request,name):
+	# attempt to get the dashboard, crashing to a banner if it doesn't exist
+	dashboard = Dashboard.try_to_get(name=name)
+	if not dashboard:
+		return make_banner(request, 'Dashboard does not exist.')
+	# create the http response
+	response = HttpResponse(dashboard.get_json(),content_type='application/json')
+	response['Content-Disposition'] = 'attachment; filename="' + name + '.json"'
+	# return the result
+	return response
 
 @login_required
 def chart(request,name=''):

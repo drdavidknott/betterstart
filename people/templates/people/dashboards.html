@@ -51,6 +51,11 @@
 									{% if not dashboard.live %}
 										(BETA)
 									{% endif %}
+									{% if request.user.is_superuser %}
+										<a href="{% url 'download_dashboard' dashboard.name %}">
+											Download dashboard definition
+										</a>
+									{% endif %}
 								</td>
 							</tr>
 						{% endfor %}

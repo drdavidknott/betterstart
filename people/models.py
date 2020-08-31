@@ -1,6 +1,6 @@
 from django.db import models
 from .django_extensions import DataAccessMixin
-from .utilities import extract_id, add_description
+from .utilities import extract_id, add_description, append_once, append_new_items_to_list
 from datetime import datetime, date, timedelta
 from django.db.models import Sum
 from .utilities import get_period_dates
@@ -19,6 +19,7 @@ import base64
 from PIL import Image
 from io import BytesIO
 from django.urls import reverse, resolve
+from django.core import serializers
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -959,6 +960,17 @@ class Activity(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'activities'
 
+class Filter_SpecManager(models.Manager):
+	def get_by_natural_key(self, term, filter_type, string_value, boolean_value, period, exclusion):
+		return self.get(
+							term=term,
+							filter_type=filter_type,
+							string_value=string_value,
+							boolean_value=boolean_value,
+							period=period,
+							exclusion=exclusion
+						)
+
 # Filter_Spec model: used to define filter terms for a dashboard model
 class Filter_Spec(DataAccessMixin,models.Model):
 	term = models.CharField(max_length=50)
@@ -991,6 +1003,7 @@ class Filter_Spec(DataAccessMixin,models.Model):
 								blank=True
 								)
 	exclusion = models.BooleanField(default=False)
+	objects = Filter_SpecManager()
 	# define the function that will return a description of the filter
 	def __str__(self):
 		# build the description depending on the type of filter
@@ -1012,9 +1025,16 @@ class Filter_Spec(DataAccessMixin,models.Model):
 		verbose_name_plural = 'filter specs'
 		ordering = ['term']
 
+	def natural_key(self):
+		return [self.term, self.filter_type, self.string_value, self.boolean_value, self.period, self.exclusion]
+
+class ChartManager(models.Manager):
+	def get_by_natural_key(self, name):
+		return self.get(name=name)
+
 # Panel model: used to define a dashboard panel
 class Chart(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50,unique=True)
 	chart_type = models.CharField(
 									max_length=50,
 									choices = [
@@ -1051,6 +1071,7 @@ class Chart(DataAccessMixin,models.Model):
 	stack_label_field = models.CharField(max_length=50, blank=True)
 	stack_filter_term = models.CharField(max_length=50, blank=True)
 	x_label_rotation = models.IntegerField(default=0)
+	objects = ChartManager()
 
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
@@ -1059,6 +1080,9 @@ class Chart(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'charts'
 		ordering = ['name']
+
+	def natural_key(self):
+		return [self.name]
 
 	# over ride the init to add an errors field
 	def __init__(self, *args, **kwargs):
@@ -1376,9 +1400,13 @@ class Chart(DataAccessMixin,models.Model):
 		# return the value
 		return value
 
+class Panel_ColumnManager(models.Manager):
+	def get_by_natural_key(self, name):
+		return self.get(name=name)
+
 # Dashboard_Column model: used to define a dashboard column
 class Panel_Column(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50,unique=True)
 	title = models.CharField(max_length=50, default='', blank=True)
 	query_type = models.CharField(
 							max_length=50,
@@ -1393,6 +1421,7 @@ class Panel_Column(DataAccessMixin,models.Model):
 	count_model = models.CharField(max_length=50, default='', blank=True)
 	filters = models.ManyToManyField(Filter_Spec, blank=True)
 	apply_sub_filters = models.BooleanField(default=True)
+	objects = Panel_ColumnManager()
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -1401,9 +1430,16 @@ class Panel_Column(DataAccessMixin,models.Model):
 		verbose_name_plural = 'panel columns'
 		ordering = ['name']
 
+	def natural_key(self):
+		return [self.name]
+
+class PanelManager(models.Manager):
+	def get_by_natural_key(self, name):
+		return self.get(name=name)
+
 # Panel model: used to define a dashboard panel
 class Panel(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50,unique=True)
 	title = models.CharField(max_length=50)
 	title_url = models.CharField(max_length=50, default='', blank=True)
 	title_icon = models.CharField(max_length=50, default='', blank=True)
@@ -1432,6 +1468,7 @@ class Panel(DataAccessMixin,models.Model):
 										blank=True
 										)
 	chart = models.ForeignKey(Chart, blank=True, null=True, on_delete=models.SET_NULL)
+	objects = PanelManager()
 
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
@@ -1440,6 +1477,9 @@ class Panel(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'panels'
 		ordering = ['name']
+
+	def natural_key(self):
+		return [self.name]
 
 	# build and return a set of rows
 	def get_rows(self):
@@ -1809,11 +1849,19 @@ class Panel(DataAccessMixin,models.Model):
 		# return the list of totals
 		return totals
 
+class Panel_Column_In_PanelManager(models.Manager):
+	def get_by_natural_key(self, panel_name, panel_column_name):
+		return self.get(
+						panel__name=panel_name,
+						panel_column__name=panel_column_name
+						)
+
 # Dashboard_Column model: used to define a dashboard column
 class Panel_Column_In_Panel(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
 	panel_column = models.ForeignKey(Panel_Column, on_delete=models.CASCADE)
+	objects = Panel_Column_In_PanelManager()
 	# define the function that will return the name
 	def __str__(self):
 		return self.panel_column.name + ' in ' + self.panel.name
@@ -1822,13 +1870,21 @@ class Panel_Column_In_Panel(DataAccessMixin,models.Model):
 		verbose_name_plural = 'panel columns in panels'
 		ordering = ('panel__name','order')
 
+	def natural_key(self):
+		return self.panel.natural_key() + self.panel_column.natural_key()
+
+class ColumnManager(models.Manager):
+	def get_by_natural_key(self, name):
+		return self.get(name=name)
+
 # Column model: used to define a dashboard column
 class Column(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50,unique=True)
 	heading = models.CharField(max_length=50, default='', blank=True)
 	width = models.IntegerField(default=4)
 	margins = models.IntegerField(default=1)
 	panels = models.ManyToManyField(Panel, through='Panel_In_Column')
+	objects = ColumnManager()
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -1836,6 +1892,9 @@ class Column(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'columns'
 		ordering = ['name']
+
+	def natural_key(self):
+		return [self.name]
 
 	def get_panels(self):
 		# get the through models in order and return a list of panels
@@ -1849,11 +1908,19 @@ class Column(DataAccessMixin,models.Model):
 		# return the results
 		return panels
 
+class Panel_In_ColumnManager(models.Manager):
+	def get_by_natural_key(self, panel_name, column_name):
+		return self.get(
+						panel__name=panel_name,
+						column__name=column_name
+						)
+
 # Panel_In_Column model: used to define the inclusion of a panel within a column
 class Panel_In_Column(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	panel = models.ForeignKey(Panel, on_delete=models.CASCADE)
 	column = models.ForeignKey(Column, on_delete=models.CASCADE)
+	objects = Panel_In_ColumnManager()
 	# define the function that will return the name
 	def __str__(self):
 		return self.panel.name + ' in ' + self.column.name
@@ -1861,9 +1928,16 @@ class Panel_In_Column(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'panels in columns'
 
+	def natural_key(self):
+		return self.panel.natural_key() + self.column.natural_key()
+
+class DashboardManager(models.Manager):
+	def get_by_natural_key(self, name):
+		return self.get(name=name)
+
 # Dashboard model: used to define a dashboard
 class Dashboard(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50,unique=True)
 	title = models.CharField(max_length=50)
 	margin = models.IntegerField(default=1)
 	columns = models.ManyToManyField(Column, through='Column_In_Dashboard')
@@ -1884,6 +1958,7 @@ class Dashboard(DataAccessMixin,models.Model):
 								default='',
 								blank=True
 								)
+	objects = DashboardManager()
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -1891,6 +1966,28 @@ class Dashboard(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'dashboards'
 		ordering = ['name']
+
+	def natural_key(self):
+		return [self.name]
+
+	# define a class method to build a default dashboard
+	@classmethod
+	def build_default_dashboard(cls):
+		# dummy out this function for now
+		return
+		# get the data from the file, read it and deserialize it
+		default_dashboard_file = open('people/data/default_dashboard.json','r')
+		json_dashboard = default_dashboard_file.read()
+		dashboard_objects = serializers.deserialize('json',json_dashboard)
+		# go through the objects, saving them if they don't exist
+		for deserialized_object in dashboard_objects:
+			dashboard_object = deserialized_object.object
+			dashboard_object_class = type(dashboard_object)
+			try:
+				natural_key = dashboard_object.natural_key()
+				dashboard_object_class.objects.get_by_natural_key(*dashboard_object.natural_key())
+			except (dashboard_object_class.DoesNotExist):
+				pass
 
 	def get_columns(self):
 		# get the through models in order and return a list of columns
@@ -1913,17 +2010,75 @@ class Dashboard(DataAccessMixin,models.Model):
 		# return the results
 		return start_date, end_date
 
+	def get_json(self):
+		# build and return a json serialised version of the dashboard
+		# build the lists of objects to serialise
+		# use separate lists for components, connectors and filters, so that we can maintain dependency order
+		component_list = []
+		connector_list = []
+		filter_list = []
+		chart_list = []
+		# add the dashboard
+		component_list.append(self)
+		# now go through and add each of the dashboard components, connectors and filters
+		for column_in_dashboard in self.column_in_dashboard_set.all():
+			append_once(connector_list,column_in_dashboard)
+			column = column_in_dashboard.column
+			if column not in component_list:
+				component_list.append(column)
+				for panel_in_column in column.panel_in_column_set.all():
+					append_once(connector_list,panel_in_column)
+					panel = panel_in_column.panel
+					if panel not in component_list:
+						component_list.append(panel)
+						append_new_items_to_list(filter_list,panel.filters.all())
+						append_new_items_to_list(filter_list,panel.sub_filters.all())
+						if panel.chart:
+							chart = panel.chart
+							append_once(chart_list,panel.chart)
+							append_new_items_to_list(filter_list,chart.super_filters)
+							append_new_items_to_list(filter_list,chart.filters)
+						for panel_column_in_panel in panel.panel_column_in_panel_set.all():
+							append_once(connector_list,panel_column_in_panel)
+							panel_column = panel_column_in_panel.panel_column
+							if panel_column not in component_list:
+								component_list.append(panel_column)
+								append_new_items_to_list(filter_list,panel_column.filters.all())	
+		# combine the lists
+		dashboard_list = filter_list + chart_list + component_list + connector_list
+		# serialise the list
+		json_dashboard = serializers.serialize(
+												"json",
+												dashboard_list,
+												indent=2,
+												use_natural_primary_keys=True,
+												use_natural_foreign_keys=True
+												)
+		# return the results
+		return json_dashboard
+
+class Column_In_DashboardManager(models.Manager):
+	def get_by_natural_key(self, dashboard_name, column_name):
+		return self.get(
+						dashboard__name=dashboard_name,
+						column__name=column_name
+						)
+
 # Column_In_Dashboard model: used to define the inclusion of a column within a dashboard
 class Column_In_Dashboard(DataAccessMixin,models.Model):
 	order = models.IntegerField(default=0)
 	dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE)
 	column = models.ForeignKey(Column, on_delete=models.CASCADE)
+	objects = Column_In_DashboardManager()
 	# define the function that will return the name
 	def __str__(self):
 		return self.column.name + ' in ' + self.dashboard.name
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'columns in dashboards'
+
+	def natural_key(self):
+		return self.dashboard.natural_key() + self.column.natural_key()
 
 class Dashboard_Panel_Row():
 	# this class contains the data and structure for a row

@@ -206,3 +206,14 @@ class Page:
 		# return the page description
 		return str(self.start) + ' ' + str(self.separator) + ' ' + str(self.end)
 
+def append_once(append_list,append_entry):
+	# take a list and an entry, and append the entry if it's not already in the list
+	if append_entry not in append_list:
+		append_list.append(append_entry)
+	return append_list
+
+def append_new_items_to_list(append_list,new_list):
+	# take two lists, and append items to the first list which it doesn't already contain
+	for item in new_list:
+		append_once(append_list,item)
+	return append_list

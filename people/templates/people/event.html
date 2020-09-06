@@ -23,6 +23,29 @@
 	 	</div>
 	 </div>
 
+	{% if event.warnings %}
+
+		<div class="row">
+			<div class='col-xs-1 text-right'>
+				<span class="glyphicon glyphicon-alert text-danger"></span>
+			</div>
+			<div class='col-xs-11'>
+				{% for warning in event.warnings %}
+					<div class="row text-danger">
+						<strong>WARNING: </strong>{{ warning }}
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+				 <hr>
+			 </div>
+		 </div>
+
+	{% endif %}
+
 	<div class="row">
  		<div class='col-xs-1 text-right'>
  			<a href="{% url 'edit_event' event.pk %}">

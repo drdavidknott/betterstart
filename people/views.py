@@ -2884,10 +2884,9 @@ def event(request, event_id=0, page=1):
 		return make_banner(request, 'Event does not exist.')
 	# get the registrations for the event
 	registrations = event.event_registration_set.all().order_by('person__last_name','person__first_name')
-	# do the pagination
+	# do the pagination and check whether we have mandatory roles
 	for registration in registrations:
 		registration.last_name = registration.person.last_name
-	number_of_registrations = len(registrations)
 	page_list = build_page_list(
 								objects=registrations,
 								page_length=results_per_page,
@@ -2901,7 +2900,7 @@ def event(request, event_id=0, page=1):
 				'event' : event,
 				'registrations' : registrations,
 				'page_list' : page_list,
-				'this_page' : page
+				'this_page' : page,
 				})
 	# return the response
 	return HttpResponse(event_template.render(context=context, request=request))

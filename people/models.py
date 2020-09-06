@@ -1,6 +1,6 @@
 from django.db import models
 from .django_extensions import DataAccessMixin
-from .utilities import extract_id, add_description, append_once, append_new_items_to_list
+from .utilities import extract_id, add_description, append_once, append_new_items_to_list, list_to_punctuated_string
 from datetime import datetime, date, timedelta
 from django.db.models import Sum
 from .utilities import get_period_dates
@@ -73,6 +73,7 @@ class Role_Type(DataAccessMixin,models.Model):
 	use_for_events = models.BooleanField(default=False)
 	use_for_people = models.BooleanField(default=False)
 	trained = models.BooleanField(default=False)
+	mandatory = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.role_type_name
@@ -320,6 +321,22 @@ class Event(DataAccessMixin,models.Model):
 		participation_seconds = self.duration().seconds * participation
 		participation_hours = participation_seconds / 3600 
 		return participation_hours
+
+	# define a function to return warnings about the data on the event
+	# build warnings
+	def warnings(self):
+		# initialise variables
+		warnings = []
+		# if there are mandatory roles, check that at least one exists for this event. If not, build a warning
+		mandatory_roles = Role_Type.objects.filter(mandatory=True)
+		if mandatory_roles.exists() and not self.event_registration_set.filter(role_type__mandatory=True).exists():
+			mandatory_role_type_names = []
+			for mandatory_role in mandatory_roles:
+				mandatory_role_type_names.append(mandatory_role.role_type_name)
+			punctuated_string = list_to_punctuated_string(mandatory_role_type_names,final_term=' or ')
+			warnings.append('Event does not have a registration from a person with a role of ' + punctuated_string)
+		# return the result
+		return warnings
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):

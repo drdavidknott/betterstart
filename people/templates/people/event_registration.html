@@ -183,6 +183,17 @@
 		 	</div>
 		 </div>
 
+		 {% if event.warnings %}
+				<div class="row">
+					<div class='col-xs-12 text-danger'>
+						<span class="glyphicon glyphicon-alert"></span>
+						{% for warning in event.warnings %}
+							<strong>WARNING: </strong>{{ warning }}
+						{% endfor %}
+					</div>
+				</div>
+			{% endif %}
+
 		<form action ="{% url 'event_registration' event.pk %}" method="post">
 			{% csrf_token %}
 			<input type="hidden" name="action" value="editregistration">

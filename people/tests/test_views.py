@@ -4212,6 +4212,32 @@ class EventViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
+	def test_warning_no_mandatory_roles(self):
+		# set up the data
+		role_type = Role_Type.objects.get(role_type_name='second_test_role_type')
+		role_type.mandatory = True
+		role_type.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('event',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Event does not have a registration from a person with a role of second_test_role_type')
+
+	def test_warning_has_mandatory_role(self):
+		# set up the data
+		role_type = Role_Type.objects.get(role_type_name='test role 1')
+		role_type.mandatory = True
+		role_type.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('event',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response,'WARNING')
+
 	def test_pagination_default_page(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -7437,6 +7463,138 @@ class EventRegistrationViewTest(TestCase):
 		trained_role = Trained_Role.objects.get(person=person_1,role_type=test_role_1)
 		# check the values
 		self.assertEqual(trained_role.active,True)
+
+	def test_event_registration_register_people_no_mandatory_roles(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True,mandatory=True)
+		# create some people
+		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# set the keys
+		keys = str(Person.objects.get(first_name='Registered_0').pk) + ',' + \
+						str(Person.objects.get(first_name='Registered_1').pk) + ',' + \
+						str(Person.objects.get(first_name='Registered_2').pk)
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'addregistration',
+												'search_keys' : keys,
+												'registered_' + str(person_1.pk) : 'on',
+												'apologies_' + str(person_1.pk) : '',
+												'participated_' + str(person_1.pk) : '',
+												'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+												'registered_' + str(person_2.pk) : 'on',
+												'apologies_' + str(person_2.pk) : '',
+												'participated_' + str(person_2.pk) : '',
+												'role_type_' + str(person_2.pk) : str(test_role_2.pk),
+												'registered_' + str(person_3.pk) : 'on',
+												'apologies_' + str(person_3.pk) : '',
+												'participated_' + str(person_3.pk) : '',
+												'role_type_' + str(person_3.pk) : str(test_role_2.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Event does not have a registration from a person with a role of test role 3')
+		# get the event
+		event = Event.objects.get(name='test_event_0')
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=person_1,event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,True)
+		self.assertEqual(registration_1.apologies,False)
+		self.assertEqual(registration_1.participated,False)
+		self.assertEqual(registration_1.role_type,test_role_1)
+		# get the registration for the second person
+		registration_2 = Event_Registration.objects.get(person=person_2,event=event)
+		# check the values
+		self.assertEqual(registration_2.registered,True)
+		self.assertEqual(registration_2.apologies,False)
+		self.assertEqual(registration_2.participated,False)
+		self.assertEqual(registration_2.role_type,test_role_2)
+		# get the registration for the third person
+		registration_3 = Event_Registration.objects.get(person=person_3,event=event)
+		# check the values
+		self.assertEqual(registration_3.registered,True)
+		self.assertEqual(registration_3.apologies,False)
+		self.assertEqual(registration_3.participated,False)
+		self.assertEqual(registration_3.role_type,test_role_2)
+
+	def test_event_registration_register_people_with_mandatory_role(self):
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		# create some role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True,mandatory=True)
+		# create some people
+		set_up_test_people('Registered_',number=3)
+		# get the people
+		person_1 = Person.objects.get(first_name='Registered_0')
+		person_2 = Person.objects.get(first_name='Registered_1')
+		person_3 = Person.objects.get(first_name='Registered_2')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# set the keys
+		keys = str(Person.objects.get(first_name='Registered_0').pk) + ',' + \
+						str(Person.objects.get(first_name='Registered_1').pk) + ',' + \
+						str(Person.objects.get(first_name='Registered_2').pk)
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'addregistration',
+												'search_keys' : keys,
+												'registered_' + str(person_1.pk) : 'on',
+												'apologies_' + str(person_1.pk) : '',
+												'participated_' + str(person_1.pk) : '',
+												'role_type_' + str(person_1.pk) : str(test_role_1.pk),
+												'registered_' + str(person_2.pk) : 'on',
+												'apologies_' + str(person_2.pk) : '',
+												'participated_' + str(person_2.pk) : '',
+												'role_type_' + str(person_2.pk) : str(test_role_2.pk),
+												'registered_' + str(person_3.pk) : 'on',
+												'apologies_' + str(person_3.pk) : '',
+												'participated_' + str(person_3.pk) : '',
+												'role_type_' + str(person_3.pk) : str(test_role_3.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response,'WARNING')
+		# get the event
+		event = Event.objects.get(name='test_event_0')
+		# get the registration for the first person
+		registration_1 = Event_Registration.objects.get(person=person_1,event=event)
+		# check the values
+		self.assertEqual(registration_1.registered,True)
+		self.assertEqual(registration_1.apologies,False)
+		self.assertEqual(registration_1.participated,False)
+		self.assertEqual(registration_1.role_type,test_role_1)
+		# get the registration for the second person
+		registration_2 = Event_Registration.objects.get(person=person_2,event=event)
+		# check the values
+		self.assertEqual(registration_2.registered,True)
+		self.assertEqual(registration_2.apologies,False)
+		self.assertEqual(registration_2.participated,False)
+		self.assertEqual(registration_2.role_type,test_role_2)
+		# get the registration for the third person
+		registration_3 = Event_Registration.objects.get(person=person_3,event=event)
+		# check the values
+		self.assertEqual(registration_3.registered,True)
+		self.assertEqual(registration_3.apologies,False)
+		self.assertEqual(registration_3.participated,False)
+		self.assertEqual(registration_3.role_type,test_role_3)
 
 class EditEventViewTest(TestCase):
 	@classmethod

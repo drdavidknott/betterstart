@@ -115,6 +115,21 @@ def add_description(value,text,delimiter=', ',desc=''):
 	# return the desc
 	return desc
 
+# function to take a list and return a punctuated string
+def list_to_punctuated_string(list_to_punctuate,delimiter=', ',final_term=' and '):
+	punctuated_string = ''
+	if len(list_to_punctuate) == 1:
+		punctuated_string = str(list_to_punctuate[0])
+	else:
+		for item_count, list_item in enumerate(list_to_punctuate):
+			if item_count == 0:
+				punctuated_string = str(list_item)
+			elif item_count == len(list_to_punctuate) - 1:
+				punctuated_string += final_term + str(list_item)
+			else:
+				punctuated_string += delimiter + str(list_item)
+	return punctuated_string
+
 # function to take a string defining a period and return the start and end dates
 def get_period_dates(period):
 	# initialise the variables

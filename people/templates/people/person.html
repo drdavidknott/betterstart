@@ -127,7 +127,13 @@
 	 		</div>
 	 		<div class="row">
 				<strong>Role: </strong>{{ person.default_role.role_type_name }}&nbsp
-	 		</div>
+			 </div>
+			 {% if person.get_children_ages_desc %}
+				<div class="row">
+					<strong>Children ages: </strong>
+						{{ person.get_children_ages_desc }}
+				</div>
+			{% endif %}
 	 		{% if person.ABSS_type.membership_number_required %}
 	 			<div class="row">
 		 			<strong>Membership number: </strong>

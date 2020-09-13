@@ -731,6 +731,32 @@ class Person(DataAccessMixin,models.Model):
 		# return an incremented version of the number
 		return last_number + 1
 
+	# method to get a list of age bands which a person's children belong to
+	# an age band is the highest 
+	def get_children_ages(self):
+		# initialise variables
+		children_ages = []
+		# go through the children, if they exist
+		for parent_relationship in self.rel_from.filter(relationship_type__relationship_type='parent'):
+			child = parent_relationship.relationship_to
+			child_age = child.age_in_years()
+			if child_age not in children_ages:
+				children_ages.append(child_age)
+		# sort and return the results
+		children_ages.sort()
+		return children_ages
+
+	# method to return children ages as a description
+	def get_children_ages_desc(self):
+		# initialise variables
+		children_ages_desc = ''
+		# get the list of ages and turn it into a punctuated string
+		children_ages = self.get_children_ages()
+		if children_ages:
+			children_ages_desc = list_to_punctuated_string(children_ages,final_term=' and ')
+		# return the results
+		return children_ages_desc
+
 # Relationship model: represents a relationship between two people.
 # This is an intermediate model for a many to many relationship between two Person objects.
 class Relationship(DataAccessMixin,models.Model):

@@ -1,6 +1,7 @@
 from django.db import models
 from .django_extensions import DataAccessMixin
-from .utilities import extract_id, add_description, append_once, append_new_items_to_list, list_to_punctuated_string
+from .utilities import extract_id, add_description, append_once, append_new_items_to_list, list_to_punctuated_string, \
+	free_format_range_to_list, str_represents_int
 from datetime import datetime, date, timedelta
 from django.db.models import Sum
 from .utilities import get_period_dates
@@ -603,6 +604,7 @@ class Person(DataAccessMixin,models.Model):
 		include_people = 'in_project'
 		names = False
 		keywords = False
+		children_ages = False
 
 		# get values from the search request if we have them
 		if 'trained_role' in kwargs.keys():
@@ -613,6 +615,8 @@ class Person(DataAccessMixin,models.Model):
 			names = kwargs.pop('names')
 		if 'keywords' in kwargs.keys():
 			keywords = kwargs.pop('keywords')
+		if 'children_ages' in kwargs.keys():
+			children_ages = kwargs.pop('children_ages')
 
 		# call the mixin method
 		results = super().search(**kwargs)
@@ -652,6 +656,22 @@ class Person(DataAccessMixin,models.Model):
 		# if we have any terms in keywords, call the function to search by keywords
 		if keywords:
 			results = Person.search_by_keywords(keywords,results)
+
+		# if we have a children_ages term, convert it into a list of ages, then go through the results and exclude any
+		# which don't match the term
+		# if the person is a child, check that the child's age is in the list
+		# if the person is an adult, check that they have a child of an age in the list
+		if children_ages:
+			children_ages_list = free_format_range_to_list(children_ages)
+			if children_ages_list:
+				for person in results:
+					if person.age_status.status == 'Adult':
+						check_children_ages =  any(item in children_ages_list for item in person.get_children_ages())
+						if not check_children_ages:
+							results = results.exclude(pk=person.pk)
+					elif str_represents_int(person.age_in_years()):
+						if int(person.age_in_years()) not in children_ages_list:
+							results = results.exclude(pk=person.pk)
 
 		# order the results by name
 		results = results.order_by('last_name','first_name')
@@ -740,8 +760,8 @@ class Person(DataAccessMixin,models.Model):
 		for parent_relationship in self.rel_from.filter(relationship_type__relationship_type='parent'):
 			child = parent_relationship.relationship_to
 			child_age = child.age_in_years()
-			if child_age not in children_ages:
-				children_ages.append(child_age)
+			if str_represents_int(child_age) and int(child_age) not in children_ages:
+				children_ages.append(int(child_age))
 		# sort and return the results
 		children_ages.sort()
 		return children_ages

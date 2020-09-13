@@ -7,6 +7,14 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import operator
 
+# function to check whether a string represent an integer or not
+def str_represents_int(str_value):
+	try:
+		int(str_value)
+		return True
+	except ValueError:
+		return False
+
 def get_page_list(objects, page_length):
 	# take a list of objects and a page length, and build a list of pages
 	object_number = len(objects)
@@ -129,6 +137,44 @@ def list_to_punctuated_string(list_to_punctuate,delimiter=', ',final_term=' and 
 			else:
 				punctuated_string += delimiter + str(list_item)
 	return punctuated_string
+
+# function to take a range string and turn it into a list of values
+# the expected format is comma separated individual values (1,2,3) or range specifications (7-10)
+# individual values and range specifications can be combined, e.g. '1,2,4-7'
+# values not matching this format will be ignored
+def free_format_range_to_list(user_defined_range):
+	# initialise variables
+	range_list = []
+	# first split the range by commas
+	range_values = user_defined_range.split(',')
+	# now go through the values
+	for range_value in range_values:
+		if '-' in range_value:
+			range_list += dashed_range_to_list(range_value)
+		else:
+			if str_represents_int(range_value):
+				range_list.append(int(range_value))
+	# sort and return the results
+	range_list.sort()
+	return range_list
+
+# function to take a string in the expected format 'x-y' where x and y are integers and x is less than y
+# and return a list of values
+# values not matching the format will be ignored
+def dashed_range_to_list(dashed_range):
+	# initialise variables
+	range_list = []
+	# process the string if it is valid
+	range_values = dashed_range.split('-')
+	if len(range_values) == 2:
+		if str_represents_int(range_values[0]) and str_represents_int(range_values[1]):
+			range_start = int(range_values[0])
+			range_end = int(range_values[1])
+			if range_end > range_start:
+				for range_value in range(range_start,range_end+1):
+					range_list.append(range_value)
+	# return the results
+	return range_list
 
 # function to take a string defining a period and return the start and end dates
 def get_period_dates(period):

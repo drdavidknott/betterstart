@@ -680,6 +680,11 @@ class PersonSearchForm(forms.Form):
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	children_ages = forms.CharField(
+									label="Children ages",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	role_type = forms.ChoiceField(
 									label="Role",
 									required=False,
@@ -742,8 +747,9 @@ class PersonSearchForm(forms.Form):
 		# define the layout
 		self.helper.layout = Layout(
 									Row(
-										Column('names',css_class='form-group col-md-6 mbt-0'),
-										Column('keywords',css_class='form-group col-md-6 mbt-0'),
+										Column('names',css_class='form-group col-md-4 mbt-0'),
+										Column('keywords',css_class='form-group col-md-4 mbt-0'),
+										Column('children_ages',css_class='form-group col-md-4 mbt-0'),
 										),
 									Row(
 										Column('role_type',css_class='form-group col-md-2 mbt-0'),

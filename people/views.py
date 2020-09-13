@@ -1666,6 +1666,7 @@ def people(request):
 	trained_role = 'none'
 	ward = 0
 	include_people = 'in_project'
+	children_ages = ''
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1687,6 +1688,7 @@ def people(request):
 			trained_role = personsearchform.cleaned_data['trained_role']
 			ward = personsearchform.cleaned_data['ward']
 			include_people = personsearchform.cleaned_data['include_people']
+			children_ages = personsearchform.cleaned_data['children_ages']
 			# conduct a search
 			people = Person.search(
 									names=names,
@@ -1696,7 +1698,8 @@ def people(request):
 									age_status_id=age_status,
 									trained_role=trained_role,
 									street__post_code__ward_id=ward,
-									include_people=include_people
+									include_people=include_people,
+									children_ages=children_ages,
 									).order_by('last_name','first_name')
 			# if we got a request for a search, do the pagination
 			if personsearchform.cleaned_data['action'] == 'Search':
@@ -1745,6 +1748,7 @@ def people(request):
 				'search_error' : search_error,
 				'number_of_people' : number_of_people,
 				'search_attempted' : search_attempted,
+				'children_ages' : children_ages,
 				})
 	return HttpResponse(people_template.render(context=context, request=request))
 

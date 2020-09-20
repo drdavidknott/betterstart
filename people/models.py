@@ -444,10 +444,12 @@ class Person(DataAccessMixin,models.Model):
 		if self.ABSS_start_date:
 			# add to the description
 			desc += ', joined project on ' + self.ABSS_start_date.strftime('%b %d %Y')
-		# and the add the leaving date
+		# and the add the leaving date if we have one
 		if self.ABSS_end_date:
-			# add to the description
-			desc += ', left project on ' + self.ABSS_end_date.strftime('%b %d %Y')
+			if self.ABSS_end_date <= date.today():
+				desc += ', left project on ' + self.ABSS_end_date.strftime('%b %d %Y')
+			else:
+				desc += ', will leave project on ' + self.ABSS_end_date.strftime('%b %d %Y')
 		# return the value
 		return desc
 
@@ -633,9 +635,9 @@ class Person(DataAccessMixin,models.Model):
 
 		# filter further depending on whether we want people in the project, or those who have left
 		if include_people == 'in_project' or include_people == '':
-			results = results.exclude(ABSS_end_date__isnull=False)
+			results = results.exclude(ABSS_end_date__lte=datetime.today())
 		elif include_people == 'left_project':
-			results = results.exclude(ABSS_end_date__isnull=True)
+			results = results.exclude(ABSS_end_date__isnull=True).exclude(ABSS_end_date__gt=datetime.today())
 
 		# if we have names in the search terms, split on spaces and attempt to find matches in the name fields
 		# and the membership number field

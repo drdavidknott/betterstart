@@ -218,7 +218,7 @@ def get_age_status_exceptions():
 		# get the exceptions
 		age_exceptions = age_status.person_set.filter(
 								date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-								ABSS_end_date__isnull=True)
+								ABSS_end_date__lte=datetime.date.today())
 		# see whether we got any exceptions
 		if age_exceptions.count() > 0:
 			# add the count to the object
@@ -262,7 +262,7 @@ def get_trained_role_types_with_people_counts():
 	# now go through the role types
 	for role_type in role_types:
 		# set the count for trained
-		role_type.count = role_type.trained_people.exclude(ABSS_end_date__isnull=False).count()
+		role_type.count = role_type.trained_people.exclude(ABSS_end_date__lte=datetime.date.today()).count()
 		# and the key for trained
 		role_type.trained_role_key = 'trained_' + str(role_type.pk)
 		# and the name for trained
@@ -274,7 +274,7 @@ def get_trained_role_types_with_people_counts():
 		# now set the count for active
 		active_role_type.count = active_role_type.trained_role_set.filter(
 										active=True,
-										person__ABSS_end_date__isnull=False).count()
+										person__ABSS_end_date__lte=datetime.date.today()).count()
 		# and the key for the url
 		active_role_type.trained_role_key = 'active_' + str(active_role_type.pk)
 		# and the name for active
@@ -1850,7 +1850,7 @@ def age_exceptions(request, age_status_id=0):
 	# get the exceptions
 	age_exceptions = age_status.person_set.filter(
 							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-							ABSS_end_date__isnull=True).order_by('last_name','first_name')
+							ABSS_end_date__lte=datetime.date.today()).order_by('last_name','first_name')
 	# set the context from the person based on person id
 	context = build_context({
 				'age_status' : age_status,

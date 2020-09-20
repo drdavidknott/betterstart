@@ -970,6 +970,12 @@ class PeopleViewTest(TestCase):
 			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
 			# and save the record
 			person.save()
+		# and future leaving dates for another names
+		today = datetime.date.today()
+		people_to_include = Person.objects.filter(first_name__startswith='Another_Name_')
+		for person in people_to_include:
+			person.ABSS_end_date = today.replace(year=today.year+1)
+			person.save()
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
@@ -1090,6 +1096,44 @@ class PeopleViewTest(TestCase):
 											'ward' : '0',
 											'include_people' : 'left_project',
 											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),4)
+
+	def test_search_include_left_dont_include_future_leavers(self):
+		# set past leaving dates for different names
+		people_to_include = Person.objects.filter(first_name__startswith='Different_Name_')
+		for person in people_to_include:
+			person.ABSS_end_date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d')
+			person.save()
+		# and future leaving dates for another names
+		today = datetime.date.today()
+		people_to_include = Person.objects.filter(first_name__startswith='Another_Name_')
+		for person in people_to_include:
+			person.ABSS_end_date = today.replace(year=today.year+1)
+			person.save()
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : 'left_project',
+											'page' : '1'
 											}
 									)
 		# check that we got a response

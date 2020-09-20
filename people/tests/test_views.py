@@ -216,6 +216,20 @@ def set_up_test_options(name_root,question,number=1):
 											 question = question
 											)
 
+def set_up_relationship(person_from,person_to,relationship_from,relationship_to):
+	# create the relationships
+	Relationship.objects.create(
+									relationship_from=person_from,
+									relationship_to=person_to,
+									relationship_type=Relationship_Type.objects.get(relationship_type=relationship_from)
+								)
+	# and the other one
+	Relationship.objects.create(
+									relationship_from=person_to,
+									relationship_to=person_from,
+									relationship_type=Relationship_Type.objects.get(relationship_type=relationship_to)
+								)
+
 class LoginViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -3452,6 +3466,257 @@ class PeopleViewTest(TestCase):
 		self.assertEqual(len(response.context['people']),25)
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),4)
+
+class PeopleAgeSearchViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data
+		set_up_people_base_data()
+		set_up_relationship_base_data()
+		# create the Parent role
+		parent_role = Role_Type.objects.create(role_type_name='Parent',use_for_events=True,use_for_people=True)
+		child_role = Role_Type.objects.create(role_type_name='Child',use_for_events=True,use_for_people=True)
+		# and the parent champion role
+		parent_champion_role = Role_Type.objects.create(role_type_name='Parent Champion',use_for_events=True,use_for_people=True)
+		# build sets of people with different ages
+		today = datetime.date.today()
+		for age in range(5):
+			# creat a set of people with that age
+			name_root = 'age_' + str(age) + '_'
+			set_up_test_people(
+								name_root = name_root,
+								age_status = 'Child under four',
+								number = 50 + age
+								)
+			for person in Person.objects.filter(first_name__startswith=name_root):
+				person.date_of_birth = today.replace(year=today.year-age)
+				person.save()
+		# create parents and link to children
+		set_up_test_people(
+							name_root = 'parent_',
+							age_status = 'Adult',
+							number = 3
+							)
+		# parent with one child, aged 1
+		parent = Person.objects.get(first_name__startswith='parent_0')
+		child = Person.objects.get(first_name__startswith='age_1_0')
+		set_up_relationship(parent,child,'parent','child')
+		# parent with one child, aged 4
+		parent = Person.objects.get(first_name__startswith='parent_1')
+		child = Person.objects.get(first_name__startswith='age_4_0')
+		set_up_relationship(parent,child,'parent','child')
+		# parent with four children, aged 0,1,2,3 and 4
+		parent = Person.objects.get(first_name__startswith='parent_2')
+		for age in range(5):
+			child_name = 'age_' + str(age) + '_1'
+			child = Person.objects.get(first_name=child_name)
+			set_up_relationship(parent,child,'parent','child')
+		
+	def test_search_children_ages_specific_age(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1',
+											'children_ages' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],53)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),3)
+
+	def test_search_children_ages_second_page(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '2',
+											'children_ages' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],53)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),3)
+
+	def test_search_children_ages_age_range(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1',
+											'children_ages' : '1-3'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],158)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),7)
+
+	def test_search_children_ages_specific_age_and_age_range(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1',
+											'children_ages' : '1-2,4'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],160)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),7)
+
+	def test_search_children_ages_parent_specific_age(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1',
+											'children_ages' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],2)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),2)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_children_ages_parent_age_range(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1',
+											'children_ages' : '2-4'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],2)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),2)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_search_children_ages_parent_specific_age_and_age_range(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
+											'trained_role' : 'none',
+											'ward' : '0',
+											'include_people' : '',
+											'page' : '1',
+											'children_ages' : '1,3-5'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],3)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),3)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
 
 class PeopleQueryTest(TestCase):
 	@classmethod

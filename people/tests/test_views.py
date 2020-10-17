@@ -3761,7 +3761,6 @@ class PeopleAgeSearchViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
 
-
 class PeopleQueryTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -3942,7 +3941,7 @@ class EventsViewTest(TestCase):
 		set_up_test_events('Test_Event_Type_1_', test_event_type_1,50)
 		set_up_test_events('Test_Event_Type_2_', test_event_type_2,50)
 		set_up_test_events('Test_Event_Type_3_', test_event_type_3,50)
-		set_up_test_events('Test_Event_Type_4_', test_event_type_4,50,ward=Ward.objects.get(ward_name='Test ward'))
+		set_up_test_events('Test_Event_Type_4_', test_event_type_4,50)
 		# and 50 of each of the two test event types with different names
 		set_up_test_events('Different_Name_',test_event_type_1,50)
 		set_up_test_events('Another_Name_',test_event_type_2,50)
@@ -4308,33 +4307,6 @@ class EventsViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(response.context['page_list'],False)
 
-	def test_search_ward(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# attempt to get the events page
-		response = self.client.post(
-									reverse('events'),
-									data = { 
-											'action' : 'Search',
-											'name' : '',
-											'date_from' : '',
-											'date_to' : '',
-											'event_type' : '0',
-											'event_category' : '0',
-											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
-											'venue' : '0',
-											'page' : '1'
-											}
-									)
-		# check that we got a response
-		self.assertEqual(response.status_code, 200)
-		# check that we got the right number of people
-		self.assertEqual(response.context['number_of_events'],50)
-		# check how many we got for this page
-		self.assertEqual(len(response.context['events']),25)
-		# check that we got the right number of pages
-		self.assertEqual(len(response.context['page_list']),2)
-
 	def test_search_venue(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -4357,6 +4329,40 @@ class EventsViewTest(TestCase):
 											'event_category' : '0',
 											'ward' : '0',
 											'venue' : str(venue.pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_ward(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create venue data
+		set_up_venue_base_data()
+		# associate events with venues
+		venue = Venue.objects.get(name='test_venue')
+		for event in Event.objects.filter(name__startswith='Test_Event_Type_3_'):
+			event.venue = venue
+			event.save()
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'Search',
+											'name' : '',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
+											'venue' : '0',
 											'page' : '1'
 											}
 									)
@@ -6480,9 +6486,7 @@ class AddEventViewTest(TestCase):
 									data = { 
 												'name' : 'Testevent',
 												'description' : 'Testeventdesc',
-												'location' : 'Testeventloc',
 												'venue' : str(Venue.objects.get(name='test_venue').pk),
-												'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
 												'end_time' : '11:00',
@@ -6498,88 +6502,14 @@ class AddEventViewTest(TestCase):
 		# check the record contents
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
-		self.assertEqual(test_event.location,'Testeventloc')
 		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
 		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
 		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
 
-	def test_create_event_no_ward(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('addevent'),
-									data = { 
-												'name' : 'Testevent',
-												'description' : 'Testeventdesc',
-												'location' : 'Testeventloc',
-												'venue' : str(Venue.objects.get(name='test_venue').pk),
-												'ward' : '0',
-												'date' : '01/02/2010',
-												'start_time' : '10:00',
-												'end_time' : '11:00',
-												'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
-												'area_' + str(Area.objects.get(area_name='Test area').pk) : '',
-												'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
-											}
-									)
-		# check that we got a redirect response
-		self.assertRedirects(response, '/event_registration/' + str(Event.objects.get(name='Testevent').pk))
-		# get the record
-		test_event = Event.objects.get(name='Testevent')
-		# check the record contents
-		self.assertEqual(test_event.name,'Testevent')
-		self.assertEqual(test_event.description,'Testeventdesc')
-		self.assertEqual(test_event.location,'Testeventloc')
-		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,None)
-		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
-		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
-		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
-		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),False)
-		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
-
-	def test_create_event_no_ward_with_area(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('addevent'),
-									data = { 
-												'name' : 'Testevent',
-												'description' : 'Testeventdesc',
-												'location' : 'Testeventloc',
-												'venue' : str(Venue.objects.get(name='test_venue').pk),
-												'ward' : '0',
-												'date' : '01/02/2010',
-												'start_time' : '10:00',
-												'end_time' : '11:00',
-												'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
-												'area_' + str(Area.objects.get(area_name='Test area').pk) : 'on',
-												'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
-											}
-									)
-		# check that we got a redirect response
-		self.assertRedirects(response, '/event_registration/' + str(Event.objects.get(name='Testevent').pk))
-		# get the record
-		test_event = Event.objects.get(name='Testevent')
-		# check the record contents
-		self.assertEqual(test_event.name,'Testevent')
-		self.assertEqual(test_event.description,'Testeventdesc')
-		self.assertEqual(test_event.location,'Testeventloc')
-		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,None)
-		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
-		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
-		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
-		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
-		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
-
-	def test_create_event_ward_area_not_selected(self):
+	def test_create_event_area_not_selected(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# submit a post for a person who doesn't exist
@@ -6606,9 +6536,7 @@ class AddEventViewTest(TestCase):
 		# check the record contents
 		self.assertEqual(test_event.name,'Testevent')
 		self.assertEqual(test_event.description,'Testeventdesc')
-		self.assertEqual(test_event.location,'Testeventloc')
 		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
@@ -7950,9 +7878,7 @@ class EditEventViewTest(TestCase):
 									data = { 
 											'name' : 'updated_name',
 											'description' : 'updated_description',
-											'location' : 'updated_location',
 											'venue' : str(Venue.objects.get(name='test_venue').pk),
-											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
 											'end_time' : '14:00',
@@ -7968,9 +7894,7 @@ class EditEventViewTest(TestCase):
 		# check the record contents
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')
-		self.assertEqual(test_event.location,'updated_location')
 		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')
@@ -7994,9 +7918,7 @@ class EditEventViewTest(TestCase):
 									data = { 
 											'name' : 'updated_name',
 											'description' : 'updated_description',
-											'location' : 'updated_location',
 											'venue' : updated_venue.pk,
-											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
 											'end_time' : '14:00',
@@ -8012,16 +7934,14 @@ class EditEventViewTest(TestCase):
 		# check the record contents
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')
-		self.assertEqual(test_event.location,'updated_location')
 		self.assertEqual(test_event.venue.name,'updated_venue')
-		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')
 		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
 		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
 
-	def test_edit_event_no_ward(self):
+	def test_edit_event_area_not_selected(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# create an event
@@ -8032,9 +7952,7 @@ class EditEventViewTest(TestCase):
 									data = { 
 											'name' : 'updated_name',
 											'description' : 'updated_description',
-											'location' : 'updated_location',
 											'venue' : str(Venue.objects.get(name='test_venue').pk),
-											'ward' : '0',
 											'date' : '05/05/2019',
 											'start_time' : '13:00',
 											'end_time' : '14:00',
@@ -8050,47 +7968,7 @@ class EditEventViewTest(TestCase):
 		# check the record contents
 		self.assertEqual(test_event.name,'updated_name')
 		self.assertEqual(test_event.description,'updated_description')
-		self.assertEqual(test_event.location,'updated_location')
 		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,None)
-		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
-		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
-		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')
-		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),False)
-		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
-
-	def test_edit_event_ward_area_not_selected(self):
-		# log the user in
-		self.client.login(username='testuser', password='testword')
-		# create an event
-		set_up_test_events('Event_',Event_Type.objects.get(name='test_event_type'),1)
-		# submit a post for a person who doesn't exist
-		response = self.client.post(
-									reverse('edit_event',args=[Event.objects.get(name='Event_0').pk]),
-									data = { 
-											'name' : 'updated_name',
-											'description' : 'updated_description',
-											'location' : 'updated_location',
-											'venue' : str(Venue.objects.get(name='test_venue').pk),
-											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
-											'date' : '05/05/2019',
-											'start_time' : '13:00',
-											'end_time' : '14:00',
-											'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
-											'area_' + str(Area.objects.get(area_name='Test area').pk) : '',
-											'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
-											}
-									)
-		# check the response
-		self.assertEqual(response.status_code,302)
-		# get the record
-		test_event = Event.objects.get(name='updated_name')
-		# check the record contents
-		self.assertEqual(test_event.name,'updated_name')
-		self.assertEqual(test_event.description,'updated_description')
-		self.assertEqual(test_event.location,'updated_location')
-		self.assertEqual(test_event.venue.name,'test_venue')
-		self.assertEqual(test_event.ward,Ward.objects.get(ward_name='Test ward'))
 		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
 		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
 		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')

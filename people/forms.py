@@ -1331,14 +1331,6 @@ class EventForm(forms.Form):
 	end_time = forms.TimeField(
 									label="End Time",
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
-	location = forms.CharField(
-									label="Location (free format)",
-									max_length=50,
-									required=False, 
-									widget=forms.TextInput(attrs={'class' : 'form-control',}))
-	ward = forms.ChoiceField(
-									label="Ward in which event takes place",
-									widget=forms.Select())
 	venue = forms.ChoiceField(
 									label="Venue",
 									widget=forms.Select())
@@ -1348,11 +1340,6 @@ class EventForm(forms.Form):
 		super(EventForm, self).__init__(*args, **kwargs)
 		# build the choices
 		self.fields['event_type'].choices = build_choices(choice_class=Event_Type,choice_field='name')
-		self.fields['ward'].choices = build_choices(choice_class=Ward,
-													choice_field='ward_name',
-													default=True,
-													default_label='None')
-		self.fields['ward'].initial = 0
 		self.fields['venue'].choices = build_choices(choice_class=Venue,
 													choice_field='name',
 													default=True,
@@ -1371,8 +1358,9 @@ class EventForm(forms.Form):
 		self.helper = FormHelper()
 		self.helper.layout = Layout(
 									Row(
-										Column('name',css_class='form-group col-md-6 mb-0'),
-										Column('event_type',css_class='form-group col-md-6 mb-0'),
+										Column('name',css_class='form-group col-md-4 mb-0'),
+										Column('event_type',css_class='form-group col-md-4 mb-0'),
+										Column('venue',css_class='form-group col-md-4 mb-0'),
 										css_class='form-row'	
 										),
 									Row(
@@ -1383,12 +1371,6 @@ class EventForm(forms.Form):
 										Column('date',css_class='form-group col-md-4 mb-0'),
 										Column('start_time',css_class='form-group col-md-4 mb-0'),
 										Column('end_time',css_class='form-group col-md-4 mb-0'),
-										css_class='form-row'	
-										),
-									Row(
-										Column('venue',css_class='form-group col-md-4 mb-0'),
-										Column('location',css_class='form-group col-md-4 mb-0'),
-										Column('ward',css_class='form-group col-md-4 mb-0'),
 										css_class='form-row'	
 										),
 									Row(

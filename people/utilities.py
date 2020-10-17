@@ -224,7 +224,7 @@ def build_choices(
 					choice_class=False,
 					default=False,
 					default_value=0,
-					default_label=''
+					default_label='',
 					):
 	# create a blank list
 	choice_list = []

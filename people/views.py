@@ -671,14 +671,11 @@ def build_event(
 				start_time,
 				end_time,
 				event_type_id,
-				location,
 				venue,
-				ward_id,
 				areas
 				):
 	# get the related objects
 	event_type = Event_Type.try_to_get(pk=event_type_id)
-	ward = Ward.try_to_get(pk=ward_id) if ward_id != '0' else None
 	venue = Venue.try_to_get(pk=venue) if venue != '0' else None
 	# create the event
 	if event_type:
@@ -686,9 +683,7 @@ def build_event(
 		event = Event(
 						name = name,
 						description = description,
-						location = location,
 						venue = venue,
-						ward = ward,
 						date = date,
 						start_time = start_time,
 						end_time = end_time,
@@ -699,7 +694,7 @@ def build_event(
 		messages.success(request, 'New event (' + str(event) + ') created.')
 		# got through the areas and add them
 		for area_id in areas.keys():
-			if (areas[area_id] == True) or (ward and ward.area.pk == area_id):
+			if (areas[area_id] == True) or (venue and venue.street.post_code.ward.area.pk == area_id):
 				event.areas.add(Area.objects.get(id=area_id))
 	# otherwise set a message
 	else:
@@ -2848,8 +2843,6 @@ def addevent(request):
 								name = addeventform.cleaned_data['name'],
 								description = addeventform.cleaned_data['description'],
 								venue = addeventform.cleaned_data['venue'],
-								location = addeventform.cleaned_data['location'],
-								ward_id = addeventform.cleaned_data['ward'],
 								date = addeventform.cleaned_data['date'],
 								start_time = addeventform.cleaned_data['start_time'],
 								end_time = addeventform.cleaned_data['end_time'],
@@ -3005,7 +2998,7 @@ def events(request):
 									date__lte=date_to,
 									event_type_id=int(event_type),
 									event_type__event_category_id=int(event_category),
-									ward=int(ward),
+									venue__street__post_code__ward=int(ward),
 									venue=int(venue)
 									).order_by('-date')
 			# if we got a request for a search, do the pagination and add counts to events for display
@@ -3083,7 +3076,6 @@ def edit_event(request, event_id=0):
 			# update the event object
 			event.name = editeventform.cleaned_data['name']
 			event.description = editeventform.cleaned_data['description']
-			event.location = editeventform.cleaned_data['location']
 			event.date = editeventform.cleaned_data['date']
 			event.start_time = editeventform.cleaned_data['start_time']
 			event.end_time = editeventform.cleaned_data['end_time']
@@ -3093,20 +3085,6 @@ def edit_event(request, event_id=0):
 				event.event_type = event_type
 			else:
 				return make_banner(request, 'Event type does not exist.')
-			# validate the ward, crashing to a banner if it doesn't exist
-			ward_id = editeventform.cleaned_data['ward']
-			event.ward = Ward.try_to_get(pk=ward_id) if ward_id != '0' else None
-			"""
-			ward_id = editeventform.cleaned_data['ward']
-			if ward_id != '0':
-				ward = Ward.try_to_get(pk=ward_id)
-				if ward:
-					event.ward = ward
-				else:
-					return make_banner(request, 'Ward does not exist.')
-			else:
-				event.ward = None
-			"""
 			# get and set the venue
 			venue_id = editeventform.cleaned_data['venue']
 			if venue_id != '0':
@@ -3127,7 +3105,7 @@ def edit_event(request, event_id=0):
 			for area_id in area_dict.keys():
 				if not area_dict[area_id] and event.areas.filter(pk=area_id).exists():
 					event.areas.remove(Area.objects.get(pk=area_id))
-				if area_dict[area_id] or (event.ward and area_id == event.ward.area.pk):
+				if area_dict[area_id] or (venue and venue.street.post_code.ward.area.pk == area_id):
 					event.areas.add(Area.objects.get(pk=area_id))
 			# send the user back to the main event page
 			return redirect('/event/' + str(event.pk))
@@ -3139,8 +3117,6 @@ def edit_event(request, event_id=0):
 		event_dict = {
 						'name' : event.name,
 						'description' : event.description,
-						'location' : event.location,
-						'ward' : ward_id,
 						'venue' : venue_id,
 						'date' : event.date,
 						'start_time' : event.start_time,

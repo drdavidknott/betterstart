@@ -39,7 +39,6 @@ from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Person
 									Address_Invitation_Handler, Children_Invitation_Handler, \
 									Questions_Invitation_Handler, Introduction_Invitation_Handler, \
 									Signature_Invitation_Handler
-import matplotlib.pyplot as plt, mpld3
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django_otp.plugins.otp_static.models import StaticDevice
 from django.utils import timezone
@@ -50,7 +49,6 @@ from django.core.mail import send_mail, EmailMessage
 from django.utils import timezone
 import io
 from jsignature.utils import draw_signature
-from xhtml2pdf import pisa
 from django.contrib.staticfiles import finders
 from django.views.generic import ListView
 from django.core import serializers
@@ -2152,33 +2150,6 @@ def print_invitation_form(request,invitation_id):
 							})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))
-
-@login_required
-def review_invitation_pdf(request,invitation_id):
-	# attempt to get the invitation
-	invitation = Invitation.try_to_get(pk=invitation_id)
-	if not invitation:
-		return make_banner(request, 'Invitation does not exist.', public=True)
-	# get the data
-	invitation_url = request.build_absolute_uri(reverse('invitation', args=[invitation.code]))
-	# load the template
-	template = loader.get_template('people/review_invitation.html')
-	# Create a Django response object, and specify content_type as pdf
-	response = HttpResponse(content_type='application/pdf')
-	response['Content-Disposition'] = 'attachment; filename="report.pdf"'
-	# render the template
-	# set the context
-	context = build_context({
-								'invitation': invitation,
-								'invitation_url' : invitation_url
-							})
-	html = template.render(context)
-
-	result = io.BytesIO()
-	pdf = pisa.pisaDocument(io.BytesIO(html.encode("ISO-8859-1")), result)
-	if not pdf.err:
-		return HttpResponse(result.getvalue(), content_type='application/pdf')
-	return None
 
 @login_required
 def validate_invitation(request,invitation_id):

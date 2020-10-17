@@ -33,8 +33,6 @@ steps:
       python manage.py collectstatic --noinput
       python deployment/build_yaml.py
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &
-      echo "Waiting for SQL proxy"
-      wait 30
       python manage.py migrate --noinput
   id: prepare_for_deployment
 # deploy application to App Engine

@@ -1460,8 +1460,10 @@ def auth_log(
 	# update the profile
 	if success:
 		profile.successful_logins += 1
+		profile.failed_login_attempts = 0
 	else:
 		profile.unsuccessful_logins += 1
+		profile.failed_login_attempts += 1
 	if otp:
 		if success:
 			profile.successful_otp_logins += 1
@@ -1512,6 +1514,7 @@ def log_user_in(request):
 	# initialise variables
 	successful_login = False
 	site = Site.objects.all().first()
+	otp_login = False
 	password_reset_allowed = site.password_reset_allowed if site else False
 	# check whether user is already logged in
 	if request.user.is_authenticated:
@@ -1522,36 +1525,52 @@ def log_user_in(request):
 		if request.method == 'POST':
 			login_form = LoginForm(request.POST)
 			if login_form.is_valid():
-				# attempt to authenticate the user
-				user = authenticate(
-									request,
-									username=login_form.cleaned_data['email_address'],
-									password=login_form.cleaned_data['password']
-									)
-				# login the user if successful
-				if user is not None:
-					# see whether we need an otp
-					site = Site.objects.all().first()
-					if site and (
-									site.otp_required or 
-									(site.otp_practice and login_form.cleaned_data['token'])
-									):
-						# check the token
-						successful_login, message = verify_token(user,login_form.cleaned_data['token'])
-						if successful_login:
-							login(request,user)
-							auth_log(user=user,success=True,otp=True)
-						else:
-							login_form.add_error(None,message)
-							auth_log(user=user,success=False,otp=True)
-					else:
-						login(request,user)
-						successful_login = True
-						auth_log(user=user,success=True,otp=False)
-				else:
+				# determine whether this is an otp login
+				if site and (
+								site.otp_required or 
+								(site.otp_practice and login_form.cleaned_data['token'])
+								):
+					otp_login = True
+				# check whether max login attempts have been exceeded
+				profile = Profile.try_to_get(user__username = login_form.cleaned_data['email_address'])
+				if profile and profile.login_attempts_exceeded():
 					# set an error for the login failure
-					login_form.add_error(None, 'Email address or password not recognised.')
-					auth_log(username=login_form.cleaned_data['email_address'],success=False)
+					login_form.add_error(None, 'Maximum login attempts exceeded: please contact administrator.')
+					auth_log(
+								username=login_form.cleaned_data['email_address'],
+								otp=otp_login,
+								success=False
+								)
+				else:
+					# attempt to authenticate the user
+					user = authenticate(
+										request,
+										username=login_form.cleaned_data['email_address'],
+										password=login_form.cleaned_data['password']
+										)
+					# login the user if successful
+					if user is not None:
+						if otp_login:
+							# check the token
+							successful_login, message = verify_token(user,login_form.cleaned_data['token'])
+							if successful_login:
+								login(request,user)
+								auth_log(user=user,success=True,otp=True)
+							else:
+								login_form.add_error(None,message)
+								auth_log(user=user,success=False,otp=True)
+						else:
+							login(request,user)
+							successful_login = True
+							auth_log(user=user,success=True,otp=False)
+					else:
+						# set an error for the login failure
+						login_form.add_error(None, 'Email address or password not recognised.')
+						auth_log(
+									username=login_form.cleaned_data['email_address'],
+									otp=otp_login,
+									success=False
+									)
 		else:
 			# this is a first time submission, so create an empty form
 			login_form = LoginForm()

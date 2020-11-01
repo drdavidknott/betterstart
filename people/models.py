@@ -2190,6 +2190,8 @@ class Site(DataAccessMixin,models.Model):
 
 # Profile model: keeps track of additional information about the user
 class Profile(DataAccessMixin,models.Model):
+	# note that the first four login trackers keep track of all time attempts, whereas failed_login_attempts
+	# is reset on successful login, and used to check against max sequential failed attempts
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
 	successful_logins = models.IntegerField(default=0)
 	unsuccessful_logins = models.IntegerField(default=0)
@@ -2221,6 +2223,14 @@ class Profile(DataAccessMixin,models.Model):
 		reset_timeout = timezone.now() + timedelta(minutes=site_reset_timeout) if site_reset_timeout else None
 		# return the result
 		return reset_timeout
+
+	# check whether login attempts have been exceeded, based on the max defined in the site
+	def login_attempts_exceeded(self):
+		site = Site.objects.all().first()
+		if site.max_login_attempts and self.failed_login_attempts > site.max_login_attempts:
+			return True
+		else:
+			return False
 
 # Terms_And_Conditions model: used to store terms and conditions, bounded by dates
 class Terms_And_Conditions(DataAccessMixin,models.Model):

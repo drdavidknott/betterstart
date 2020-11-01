@@ -287,6 +287,7 @@ class LoginViewTest(TestCase):
 		self.assertEqual(profile.successful_logins,0)
 		self.assertEqual(profile.successful_otp_logins,0)
 		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,1)
 
 	def test_login_success_no_otp(self):
 		# attempt to get the event page
@@ -306,6 +307,7 @@ class LoginViewTest(TestCase):
 		self.assertEqual(profile.successful_logins,1)
 		self.assertEqual(profile.successful_otp_logins,0)
 		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,0)
 
 	def test_login_invalid_user_name_with_otp(self):
 		Site.objects.create(
@@ -349,7 +351,8 @@ class LoginViewTest(TestCase):
 		self.assertEqual(profile.unsuccessful_logins,1)
 		self.assertEqual(profile.successful_logins,0)
 		self.assertEqual(profile.successful_otp_logins,0)
-		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,1)
+		self.assertEqual(profile.failed_login_attempts,1)
 
 	def test_login_invalid_otp(self):
 		Site.objects.create(
@@ -374,6 +377,7 @@ class LoginViewTest(TestCase):
 		self.assertEqual(profile.successful_logins,0)
 		self.assertEqual(profile.successful_otp_logins,0)
 		self.assertEqual(profile.unsuccessful_otp_logins,1)
+		self.assertEqual(profile.failed_login_attempts,1)
 
 	def test_login_valid_totp(self):
 		Site.objects.create(
@@ -400,6 +404,7 @@ class LoginViewTest(TestCase):
 		self.assertEqual(profile.successful_logins,1)
 		self.assertEqual(profile.successful_otp_logins,1)
 		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,0)
 
 	def test_login_emergency_otp(self):
 		Site.objects.create(
@@ -424,6 +429,191 @@ class LoginViewTest(TestCase):
 		self.assertEqual(profile.successful_logins,1)
 		self.assertEqual(profile.successful_otp_logins,1)
 		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,0)
+
+	def test_max_logins_invalid_password_no_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=False,
+							max_login_attempts=3,
+							)
+		# attempt to login 4 times
+		for attempt in range(4):
+			response = self.client.post(
+										reverse('login'),
+										data = {
+												'email_address' : 'test@test.com',
+												'password' : 'invalid'
+												}
+										)
+			# check the response
+			self.assertEqual(response.status_code, 200)
+			self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,4)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,4)
+		# attempt to login again
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Maximum login attempts exceeded: please contact administrator.')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,5)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,5)
+
+	def test_max_logins_valid_password_with_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True,
+							max_login_attempts=3,
+							)
+		# attempt to login 4 times
+		for attempt in range(4):
+			response = self.client.post(
+										reverse('login'),
+										data = {
+												'email_address' : 'test@test.com',
+												'password' : 'testword',
+												'token' : '123456'
+												}
+										)
+			# check the response
+			self.assertEqual(response.status_code, 200)
+			self.assertContains(response,'Invalid token')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,4)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,4)
+		self.assertEqual(profile.failed_login_attempts,4)
+		# attempt to login again
+		totp_device = TOTPDevice.objects.get(name='test_totp')
+		token = totp(totp_device.bin_key)
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword',
+											'token' : str(token)
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Maximum login attempts exceeded: please contact administrator.')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,5)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,5)
+		self.assertEqual(profile.failed_login_attempts,5)
+
+	def test_failed_attempts_reset_no_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=False,
+							max_login_attempts=3,
+							)
+		# attempt to login twice
+		for attempt in range(2):
+			response = self.client.post(
+										reverse('login'),
+										data = {
+												'email_address' : 'test@test.com',
+												'password' : 'invalid'
+												}
+										)
+			# check the response
+			self.assertEqual(response.status_code, 200)
+			self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,2)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,2)
+		# attempt to login again
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword'
+											}
+									)
+		# check the response
+		self.assertRedirects(response, '/')
+		self.assertEqual(response.status_code, 302)
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,2)
+		self.assertEqual(profile.successful_logins,1)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,0)
+		self.assertEqual(profile.failed_login_attempts,0)
+
+	def test_failed_attempts_reset_with_otp(self):
+		Site.objects.create(
+							name='Test site',
+							otp_required=True,
+							max_login_attempts=3,
+							)
+		# attempt to login twice
+		for attempt in range(2):
+			response = self.client.post(
+										reverse('login'),
+										data = {
+												'email_address' : 'test@test.com',
+												'password' : 'invalid',
+												'token' : '123456'
+												}
+										)
+			# check the response
+			self.assertEqual(response.status_code, 200)
+			self.assertContains(response,'Email address or password not recognised')
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,2)
+		self.assertEqual(profile.successful_logins,0)
+		self.assertEqual(profile.successful_otp_logins,0)
+		self.assertEqual(profile.unsuccessful_otp_logins,2)
+		self.assertEqual(profile.failed_login_attempts,2)
+		# attempt to login again
+		totp_device = TOTPDevice.objects.get(name='test_totp')
+		token = totp(totp_device.bin_key)
+		response = self.client.post(
+									reverse('login'),
+									data = {
+											'email_address' : 'test@test.com',
+											'password' : 'testword',
+											'token' : str(token)
+											}
+									)
+		# check the response
+		self.assertRedirects(response, '/')
+		self.assertEqual(response.status_code, 302)
+		# check the profile
+		profile = Profile.objects.get(user__username='test@test.com')
+		self.assertEqual(profile.unsuccessful_logins,2)
+		self.assertEqual(profile.successful_logins,1)
+		self.assertEqual(profile.successful_otp_logins,1)
+		self.assertEqual(profile.unsuccessful_otp_logins,2)
+		self.assertEqual(profile.failed_login_attempts,0)
 
 class DisplayQRCodeViewTest(TestCase):
 	@classmethod

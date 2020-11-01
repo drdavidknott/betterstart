@@ -2183,6 +2183,7 @@ class Site(DataAccessMixin,models.Model):
 	password_reset_email_title = models.CharField(max_length=100, default='', blank=True)
 	password_reset_email_text = models.TextField(max_length=1000, default='', blank=True)
 	password_reset_timeout = models.IntegerField(default=15)
+	max_login_attempts = models.IntegerField(default=None, null=True, blank=True)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
@@ -2198,6 +2199,7 @@ class Profile(DataAccessMixin,models.Model):
 	successful_resets = models.IntegerField(default=0)
 	reset_code = models.CharField(max_length=16,default='',null=True,blank=True)
 	reset_timeout = models.DateTimeField(null=True, blank=True)
+	failed_login_attempts = models.IntegerField(default=0)
 
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):

@@ -21,6 +21,7 @@ from PIL import Image
 from io import BytesIO
 from django.urls import reverse, resolve
 from django.core import serializers
+import django_globals
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -2187,6 +2188,27 @@ class Site(DataAccessMixin,models.Model):
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
+
+# Project model: provides configuration for a project
+class Project(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	navbar_background = models.CharField(max_length=50, blank=True)
+	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
+	# define the function that will return the project name as the object reference
+	def __str__(self):
+		return self.name
+
+	# class method to get current project if one is set in the session
+	@classmethod
+	def current_project(cls):
+		# initialist varables
+		project = False
+		# attempt to get the project using the id from the session
+		project_id = django_globals.globals.request.session.get('project_id',False)
+		if project_id:
+			project = cls.try_to_get(id=int(project_id))
+		# return the results
+		return project
 
 # Profile model: keeps track of additional information about the user
 class Profile(DataAccessMixin,models.Model):

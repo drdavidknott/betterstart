@@ -39,8 +39,14 @@ $(document).ready(function() {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="{% url 'index' %}">{{ site_name }}</a>
+	  </button>
+	  
+		{% if project_name %}
+			<a class="navbar-brand" href="{% url 'index' %}">{{ site_name }}: {{ project_name }}</a>
+		{% else %}
+			<a class="navbar-brand" href="{% url 'index' %}">{{ site_name }}</a>
+		{% endif %}
+	  
     </div>
     <!-- And navigation links -->
     <div class="collapse navbar-collapse" id="navbar-collapse">

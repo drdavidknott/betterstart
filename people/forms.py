@@ -3,7 +3,8 @@
 from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
-							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site, Profile
+							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site, Profile, \
+							Project
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -1838,4 +1839,32 @@ class DashboardDatesForm(forms.Form):
 										Column('end_date',css_class='form-group col-md-2 mb-0'),
 										Column(Submit('submit', 'Submit'),css_class='col-md-2 mb-0')
 										)
+									)
+
+class SelectProjectForm(forms.Form):
+	# Define the fields that we need in the form.
+	project_id = forms.ChoiceField(
+										label="Project",
+										widget=forms.Select(attrs={'class' : 'form-control',}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(SelectProjectForm, self).__init__(*args, **kwargs)
+		# set the choices
+		self.fields['project_id'].choices = build_choices(
+															choice_class=Project,
+															choice_field='name',
+															default=True,
+															default_label='None',
+															)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('project_id',css_class='form-group col-xs-12 mbt-0'),
+										),
+									Row(
+										Column(Submit('submit', 'Submit'),css_class='col-xs-12 mb-0')
+										),
 									)

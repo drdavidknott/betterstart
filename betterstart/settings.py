@@ -66,6 +66,7 @@ MIDDLEWARE = [
 	'django_otp.middleware.OTPMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'django_globals.middleware.Global',
 ]
 
 ROOT_URLCONF = 'betterstart.urls'

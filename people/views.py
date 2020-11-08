@@ -5,7 +5,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
-					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column
+					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
+					Project
 import os
 import csv
 import copy
@@ -18,7 +19,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
-					ResetForgottenPasswordForm, DashboardDatesForm
+					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -52,6 +53,7 @@ from jsignature.utils import draw_signature
 from django.contrib.staticfiles import finders
 from django.views.generic import ListView
 from django.core import serializers
+import django_globals
 
 @login_required
 def index(request):
@@ -1243,23 +1245,31 @@ def build_context(context_dict):
 	show_messages = True
 	dob_offset = 0
 	this_site = False
+	# attempt to get the project
+	project = Project.current_project()
+	project_name = project.name if project else ''
 	# attempt to get the site
 	site = Site.objects.all().first()
 	# if we have a site, set the details
 	if site:
-		# set the details
 		site_name = site.name
-		navbar_background = site.navbar_background
-		navbar_text = site.navbar_text
 		show_messages = site.messages
 		dob_offset = site.dob_offset
 		this_site = site
+	# set the navbar colours depending on whether we have a site or a project
+	if project:
+		navbar_background = project.navbar_background
+		navbar_text = project.navbar_text
+	elif site:
+		navbar_background = site.navbar_background 
+		navbar_text = site.navbar_text
 	# now set the dictionary
 	context_dict['site_name'] = site_name
 	context_dict['navbar_background'] = navbar_background
 	context_dict['navbar_text'] = navbar_text
 	context_dict['show_messages'] = show_messages
 	context_dict['site'] = this_site
+	context_dict['project_name'] = project_name
 	# check whether we have a default date
 	if not context_dict.get('default_date', False):
 		# set the default date to the default
@@ -3782,3 +3792,28 @@ class Document_Link_List(ListView):
 		# add in the standard extra context
 		context = build_context(context)
 		return context
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def select_project(request):
+	# see whether we got a post or not
+	if request.method == 'POST':
+		# load and validate form
+		selectprojectform = SelectProjectForm(request.POST)
+		# if the form is valid, set the project id in the session
+		if selectprojectform.is_valid():
+			request.session['project_id'] = selectprojectform.cleaned_data['project_id']
+			# redirect to the home page in the new project
+			return redirect('index')
+	# otherwise create a fresh form
+	else:
+		# create the fresh form
+		selectprojectform = SelectProjectForm()
+	# get the template
+	template = loader.get_template('people/select_project.html')
+	# set the context
+	context = build_context({
+				'selectprojectform' : selectprojectform,
+				})
+	# return the HttpResponse
+	return HttpResponse(template.render(context=context, request=request))

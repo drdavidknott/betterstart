@@ -271,6 +271,7 @@ class DownloadDataForm(forms.Form):
 							('Event Summary','Event Summary'),
 							('Relationships','Relationships'),
 							('Registrations','Registrations'),
+							('Events and Registrations','Events and Registrations'),
 							('Questions','Questions'),
 							('Options','Options'),
 							('Answers','Answers'),
@@ -1077,12 +1078,12 @@ class VenueForm(forms.Form):
 									max_length=50,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	street_name = forms.CharField(
-									label="Street Name",
+									label="Street Name Search",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	post_code = forms.CharField(
-									label="Post Code",
+									label="Post Code Search",
 									max_length=10,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))

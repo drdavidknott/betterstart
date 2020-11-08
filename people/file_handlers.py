@@ -1093,19 +1093,14 @@ class Events_File_Handler(File_Handler):
 	def create_record(self,record):
 		# call the built in method
 		event = super(Events_File_Handler, self).create_record(record)
-		# and then create the areas
+		# and then create the areas, reporting with a message
 		for area_name in self.areas.value:
-			# get the area
 			area = Area.objects.get(area_name = area_name)
-			# create the area
 			event.areas.add(area)
-			# and add a message
 			self.add_record_results(record,[': area ' + area_name + ' created.'])
 		# add the area which the ward is in, if it hasn't been created already
 		if event.ward and event.ward.area.area_name not in self.areas.value:
-			# add the area
 			event.areas.add(event.ward.area)
-			# and add a message
 			self.add_record_results(record,[': area ' + event.ward.area.area_name + ' created.'])
 
 	def set_download_fields(self,event):

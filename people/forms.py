@@ -1848,14 +1848,20 @@ class SelectProjectForm(forms.Form):
 										widget=forms.Select(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
+		# pop out the extra parameters if we have them
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
 		# call the built in constructor
 		super(SelectProjectForm, self).__init__(*args, **kwargs)
+		# get the projects and set the default depending on the user profile
+		profile = Profile.try_to_get(user=user)
+		projects = profile.projects if profile else Project.objects.none()
+		default = True if user.is_superuser else False
 		# set the choices
 		self.fields['project_id'].choices = build_choices(
-															choice_class=Project,
+															choice_queryset=projects,
 															choice_field='name',
-															default=True,
-															default_label='None',
+															default=default,
+															default_label='All projects',
 															)
 		# define the crispy form helper
 		self.helper = FormHelper()

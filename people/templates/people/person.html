@@ -280,13 +280,14 @@
  		</div>
  		<div class="col-xs-11">
  			<div class="row">
-		 		{% if relationships_to %}
-					{% for relationship_to in relationships_to %}
-		 				<div>
-							{{ relationship_to.relationship_type|capfirst }} of
-							<a href="{% url 'person' relationship_to.pk %}"> 
-								{{ relationship_to }}
-							</a>
+				{% if person.relationships_from %}
+					{% for rel_from in person.relationships_from %}
+						<div>
+							{{ rel_from.relationship_type|capfirst }} of
+								<a href="{% url 'person' rel_from.relationship_to.pk %}"> 
+									{{ rel_from.relationship_to }}
+								</a>
+								({{ rel_from.relationship_to.age_status.status }})
 						</div>
 					{% endfor %}
 				{% else %}

@@ -6,7 +6,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
 					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
-					Project
+					Project, Membership, Membership_Type, Project_Permission
 import os
 import csv
 import copy
@@ -53,7 +53,6 @@ from jsignature.utils import draw_signature
 from django.contrib.staticfiles import finders
 from django.views.generic import ListView
 from django.core import serializers
-import django_globals
 
 @login_required
 def index(request):
@@ -73,11 +72,12 @@ def index(request):
 		dashboard = Dashboard.try_to_get(name='default_dashboard')
 		if not dashboard:
 			dashboard = Dashboard.build_default_dashboard()
-	# set the dummy dates
+	# set the dummy dates and add the request
 	dashboard.start_date = False
 	dashboard.end_date = False
+	dashboard.request = request
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'dashboard' : dashboard,
 								'show_title' : False
 								})
@@ -88,17 +88,20 @@ def index(request):
 # A set of functions which carry out simple and complex data access, filtering and updates.
 # These functions are kept as simple as possible.
 
-def get_relationships_to(person):
-	# this function gets all the Person objects via the relationship_to relationship from Perso
+def get_relationships_to(person,project):
+	# this function gets all the Person objects via the relationship_to relationship from Person
 	# it returns a list of people with realtionship type added
-	# create an empty list
+	# get the relationships from a person, filtered by project if we have one
+	if project:
+		relationships = person.rel_from.filter(relationship_to__projects=project)
+	else:
+		relationships = person.rel_from.all()
+	# set an empty list
 	relationships_to = []
-	# get the relationships using the foreign key
-	relationships = Relationship.objects.filter(relationship_from=person.pk)
 	# now go through the list and get the person
 	for relationship in relationships:
 		# get the person
-		person = Person.objects.get(pk=relationship.relationship_to.pk)
+		person = relationship.relationship_to
 		# add the relationship type to the person object
 		person.relationship_type = relationship.relationship_type.relationship_type
 		# and the counterpart
@@ -109,6 +112,13 @@ def get_relationships_to(person):
 		relationships_to.append(person)
 	# return the relationships
 	return relationships_to
+
+def get_relationships_from(person,project):
+	# get the relationships from a person, filtered by project if we have one
+	if project:
+		return person.rel_from.filter(relationship_to__projects=project)
+	else:
+		return person.rel_from.all()
 
 def get_trained_status(person,role_type):
 	# determine whether a person is trained to perform this role and whether they are active
@@ -131,29 +141,7 @@ def get_trained_date(person,role_type):
 	else:
 		return None
 
-def check_person_by_name_and_age_status(first_name,last_name,age_status_status):
-	# set a blank error
-	error = ''
-	# check whether the from person exists
-	try:
-		# attempt to get the record
-		person_from = Person.objects.get(
-											first_name = first_name,
-											last_name = last_name,
-											age_status__status = age_status_status
-										)
-	# deal with the record not existing
-	except (Person.DoesNotExist):
-		# set the error
-		error = ' does not exist.'
-	# deal with more than one match
-	except (Person.MultipleObjectsReturned):
-		# set the error
-		error = ' duplicate with name and age status.'
-	# return the errors
-	return error
-
-def get_parents_without_children():
+def get_parents_without_children(request):
 	# create an empty list
 	parents_with_no_children = []
 	parents_with_no_children_under_four = []
@@ -162,7 +150,10 @@ def get_parents_without_children():
 	# get the date four years ago
 	today_four_years_ago = today.replace(year=today.year-4)
 	# attempt to get parents with no children
-	parents = Person.search(default_role__role_type_name__contains='Parent')
+	parents = Person.search(
+							project=Project.current_project(request.session),
+							default_role__role_type_name__contains='Parent'
+							)
 	# exclude those with pregnancy dates in the future
 	parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
 	# order the list
@@ -194,39 +185,13 @@ def get_parents_without_children():
 	# return the results
 	return parents_with_no_children, parents_with_no_children_under_four
 
-def get_parents_with_overdue_children():
+def get_parents_with_overdue_children(request):
 	# return a list of parents with a pregnancy flag and a due date before today
 	return Person.search(
+							project=Project.current_project(request.session),
 							pregnant=True,
 							due_date__lt=datetime.date.today()
 							)
-
-def get_children_over_four():
-	# get today's date
-	today = datetime.date.today()
-	# return the results
-	return Person.search(date_of_birth__lt=today.replace(year=today.year-4),
-							age_status__status='Child under four')
-
-def get_age_status_exceptions():
-	# return a list of all the age statuses, supplemented with counts of people outside the age range
-	age_statuses = []
-	# get today's date
-	today = datetime.date.today()
-	# now go through the age statuses
-	for age_status in Age_Status.objects.all():
-		# get the exceptions
-		age_exceptions = age_status.person_set.filter(
-								date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-								ABSS_end_date__lte=datetime.date.today())
-		# see whether we got any exceptions
-		if age_exceptions.count() > 0:
-			# add the count to the object
-			age_status.count = age_exceptions.count()
-			# add the object to the list
-			age_statuses.append(age_status)
-	# return the results
-	return age_statuses
 
 def get_streets_by_name_and_post_code(name='',post_code=''):
 	# get the streets
@@ -241,48 +206,6 @@ def get_streets_by_name_and_post_code(name='',post_code=''):
 		streets = streets.filter(post_code__post_code__icontains=post_code)
 	# return the results
 	return streets
-
-def add_counts_to_events(events):
-	# take a list of events, and add the count of participated and volunteered numbers to them
-	for event in events:
-		# get the registrations
-		event.registered_count = event.event_registration_set.filter(registered=True).count()
-		# and the participations
-		event.participated_count = event.event_registration_set.filter(participated=True).count()
-		# and the apologies
-		event.apologies_count = event.event_registration_set.filter(apologies=True).count()
-	# return the results
-	return events
-
-def get_trained_role_types_with_people_counts():
-	# create the list
-	trained_role_list = []
-	# return a list of all the trained role type objects, supplemented with counts
-	role_types = Role_Type.objects.filter(trained=True)
-	# now go through the role types
-	for role_type in role_types:
-		# set the count for trained
-		role_type.count = role_type.trained_people.exclude(ABSS_end_date__lte=datetime.date.today()).count()
-		# and the key for trained
-		role_type.trained_role_key = 'trained_' + str(role_type.pk)
-		# and the name for trained
-		role_type.trained_role_name = 'Trained ' + role_type.role_type_name
-		# and append a copy of the object to the list
-		trained_role_list.append(role_type)
-		# create a new object
-		active_role_type = copy.deepcopy(role_type)
-		# now set the count for active
-		active_role_type.count = active_role_type.trained_role_set.filter(
-										active=True,
-										person__ABSS_end_date__lte=datetime.date.today()).count()
-		# and the key for the url
-		active_role_type.trained_role_key = 'active_' + str(active_role_type.pk)
-		# and the name for active
-		active_role_type.trained_role_name = 'Active ' + role_type.role_type_name
-		# and append the object to the list
-		trained_role_list.append(active_role_type)
-	# return the results
-	return trained_role_list
 
 def get_event_categories_with_counts(date_from=0, date_to=0):
 	# get the event categories
@@ -327,68 +250,6 @@ def get_role_types(events_or_people='all'):
 		role_types.filter(use_for_events=True)
 	# return the results
 	return role_types
-
-def get_role_types_with_people_counts():
-	# return a list of all the role type objects, supplemented with counts
-	role_types = get_role_types('people')
-	# now go through the role types
-	for role_type in role_types:
-		# get the count
-		role_type.count = Person.search(default_role=role_type).count()
-	# return the results
-	return role_types
-
-def get_wards_with_people_counts():
-	# return a list of all the wards with people counts
-	wards = Ward.objects.all()
-	# now go through the wards
-	for ward in wards:
-		# get the count
-		ward.count = Person.search(street__post_code__ward=ward).count()
-	# return the results
-	return wards
-
-def get_areas_with_people_counts():
-	# return a list of all the areas with people counts
-	areas = Area.objects.all()
-	# now go through the areas
-	for area in areas:
-		# get the count
-		area.count = Person.search(street__post_code__ward__area=area).count()
-	# return the results
-	return areas
-
-def get_wards_with_event_counts():
-	# return a list of all the wards with event counts
-	wards = Ward.objects.all()
-	# now go through the wards
-	for ward in wards:
-		# get the count
-		ward.count = Event.objects.filter(ward=ward).count()
-	# return the results
-	return wards
-
-def get_areas_with_event_counts():
-	# return a list of all the areas with people counts
-	areas = Area.objects.all()
-	# now go through the areas
-	for area in areas:
-		# get the count
-		area.count = Event.objects.filter(ward__area=area).count()
-	# return the results
-	return areas
-
-def get_ethnicity_list():
-	# return a list containing all of the ethnicity descriptions
-	ethnicity_list = []
-	# get the ethnicities
-	ethnicities = Ethnicity.objects.all()
-	# go through them all
-	for ethnicity in ethnicities:
-		# append to the list
-		ethnicity_list.append(ethnicity.description)
-	# return the list
-	return ethnicity_list
 
 def get_relationship(person_from, person_to):
 	# try to get a relationship
@@ -448,27 +309,8 @@ def get_questions_and_answers(person):
 	# return the results
 	return questions, answer_flag
 
-def get_ABSS_types_with_counts():
-	# define the list
-	ABSS_types = ABSS_Type.objects.all()
-	# go through the ABSS types
-	for ABSS_type in ABSS_types:
-		# get the count
-		ABSS_type.count = Person.search(ABSS_type=ABSS_type).count()
-	# return the results
-	return ABSS_types
-
-def get_age_statuses_with_counts():
-	# define the list
-	age_statuses = Age_Status.objects.all()
-	# now go through the ABSS types
-	for age_status in age_statuses:
-		# get the count
-		age_status.count = Person.search(age_status=age_status).count()
-	# return the results
-	return age_statuses
-
 def create_person(
+					request,
 					first_name,
 					last_name,
 					middle_names='',
@@ -517,14 +359,20 @@ def create_person(
 					age_status = age_status,
 					membership_number = membership_number
 						)
-	# save the record
 	person.save()
 	# create the role history
 	role_history = Role_History(
 								person = person,
 								role_type = default_role)
-	# and save it
 	role_history.save()
+	# add the person to the current project through the membership, if we have a project
+	project = Project.current_project(request.session)
+	if project:
+		membership = Membership(
+								person=person,
+								project=project,
+								)
+		membership.save()
 	# and return the person
 	return person
 
@@ -677,6 +525,9 @@ def build_event(
 	# get the related objects
 	event_type = Event_Type.try_to_get(pk=event_type_id)
 	venue = Venue.try_to_get(pk=venue) if venue != '0' else None
+	# get the project
+	project = Project.current_project(request.session)
+	project = project if project else None
 	# create the event
 	if event_type:
 		# create the event
@@ -687,7 +538,8 @@ def build_event(
 						date = date,
 						start_time = start_time,
 						end_time = end_time,
-						event_type = event_type
+						event_type = event_type,
+						project = project
 						)
 		event.save()
 		# set a message
@@ -703,9 +555,11 @@ def build_event(
 	return event
 
 def build_registration(request, event, person_id, registered, apologies, participated, role_type_id, show_messages=True):
+	# get the project
+	project = Project.current_project(request.session)
 	# attempt to create a new registration, checking first that the registration does not exit
 	# first get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if that didn't work, set an error and return
 	if not person:
 		# check whether messages are needed
@@ -794,9 +648,11 @@ def set_trained_role_to_active(person, role_type):
 	return trained_role
 
 def remove_registration(request, event, person_id):
+	# get the project
+	project = Project.current_project(request.session)
 	# attempt to remove a registration record, checking first that the registration exists
 	# first get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if that didn't work, set an error and return
 	if not person:
 		# set the message
@@ -1112,55 +968,46 @@ def build_trained_role(person,role_type_id,trained_status,date_trained):
 	return
 
 def build_activity(request, person, activity_type_id, date, hours):
+	# get the project
+	project = Project.current_project(request.session)
+	project = project if project else None
 	# attempt to get the activity type
 	activity_type = Activity_Type.try_to_get(pk=activity_type_id)
-	# deal with exceptions if we didn't get a valid activity type
 	if not activity_type:
-		# set the error
 		messages.error(
 						request,
 						'Could not create activity: activity type' + str(activity_type_id) + ' does not exist.'
 						)
-		# and crash out
 		return False
 	# see whether we already have an activity
-	activity = Activity.try_to_get(person=person,activity_type=activity_type,date=date)
+	activity = Activity.try_to_get(person=person,activity_type=activity_type,date=date,project=project)
 	# if we got an activity, check whether this is an update or delete
 	if activity:
-		# check the action
 		if hours == 0:
-			# get the description
+			# zero hours means that we should delete
 			activity_desc = str(activity)
-			# delete the record
 			activity.delete()
-			# set the message
 			messages.success(request,activity_desc + ' - deleted successfully.')
-		# otherwise do the update
 		else:
-			# set the hours
+			# non-zero hours means that we should update
 			activity.hours = hours
-			# and save the record
 			activity.save()
-			# and the message
 			messages.success(request,str(activity) + ' - updated successfully.')
 	# otherwise we have a new activity
 	else:
-		# check the action
 		if hours == 0:
-			# set a message to say that we haven't created anything
+			# zero hours means do nothing
 			messages.success(request,'Activity not created - hours set to zero.')
-		# otherwise create the record
 		else:
-			# create the object
+			# non-zero hours means that we should create
 			activity = Activity(
 								person = person,
 								activity_type = activity_type,
 								date = date,
-								hours = hours
+								hours = hours,
+								project=project
 								)
-			# and save it to the database
 			activity.save()
-			# and set a message
 			messages.success(request,str(activity) + ' - created successfully.')
 	# and we're done
 	return activity
@@ -1236,7 +1083,7 @@ def check_checkbox(field_dict, field_name):
 	# return the result
 	return result
 
-def build_context(context_dict):
+def build_context(request,context_dict):
 	# take a context dictionary and add additional items
 	# set the defaults
 	site_name = 'test site'
@@ -1246,7 +1093,7 @@ def build_context(context_dict):
 	dob_offset = 0
 	this_site = False
 	# attempt to get the project
-	project = Project.current_project()
+	project = Project.current_project(request.session)
 	project_name = project.name if project else ''
 	# attempt to get the site
 	site = Site.objects.all().first()
@@ -1584,17 +1431,20 @@ def log_user_in(request):
 		else:
 			# this is a first time submission, so create an empty form
 			login_form = LoginForm()
-	# see if we logged in succssfully
+	# if we logged in successfully, set a message, set the default project in the session, and redirect
 	if successful_login:
-		# set a success message
 		messages.success(request, 'Successfully logged in. Welcome back ' + str(request.user.first_name) + '!')
-		# redirect to the home page
+		project = Project.default_project(user)
+		request.session['project_id'] = project.pk if project else 0
 		return redirect('index')
 	# otherwsise, set the context and output a form
-	context = build_context({
+	context = build_context(
+								request,
+								{
 								'login_form' : login_form,
 								'password_reset_allowed' : password_reset_allowed,
-								})
+								}
+								)
 	# set the output
 	return HttpResponse(login_template.render(context, request))
 
@@ -1651,7 +1501,7 @@ def forgot_password(request):
 	else:
 		form = ForgotPasswordForm()
 	# otherwsise, set the context and output a form
-	context = build_context({
+	context = build_context(request,{
 								'forgotpasswordform' : form,
 								'request_submitted' : request_submitted,
 								})
@@ -1689,6 +1539,7 @@ def people(request):
 	ward = 0
 	include_people = 'in_project'
 	children_ages = ''
+	project = Project.current_project(request.session)
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -1713,6 +1564,7 @@ def people(request):
 			children_ages = personsearchform.cleaned_data['children_ages']
 			# conduct a search
 			people = Person.search(
+									project=project,
 									names=names,
 									keywords=keywords,
 									default_role_id=role_type,
@@ -1735,18 +1587,18 @@ def people(request):
 											)
 				previous_page = this_page - 1
 				people = people[previous_page*results_per_page:this_page*results_per_page]
-			# otherwise check whether we got a request for a download
+				# add relationships to people, filtered by project if we have a project
+				for person in people:
+					person.relationships_from = get_relationships_from(person,project)
+			# download summary data
 			elif personsearchform.cleaned_data['action'] == 'Download':
-				# get a file response using the search results and return it
 				response = build_download_file('People Limited',objects=people)
 				return response
-			# otherwise check whether we got a request for a download
+			# download full data if permitted
 			elif personsearchform.cleaned_data['action'] == 'Download Full Data':
-				# only superusers are allowed to perform full data downloads
 				if not request.user.is_superuser:
 					personsearchform.add_error(None, 'You do not have permission to download files.')
 				else:
-					# get a file response using the search results and return it
 					response = build_download_file('People',objects=people)
 					return response
 	# otherwise set a blank form
@@ -1754,7 +1606,7 @@ def people(request):
 		personsearchform = PersonSearchForm()
 	# build and return the response
 	people_template = loader.get_template('people/people.html')
-	context = build_context({
+	context = build_context(request,{
 				'personsearchform' : personsearchform,
 				'people' : people,
 				'page_list' : page_list,
@@ -1813,43 +1665,31 @@ def exceptions(request, page=1):
 	children = []
 	# get the path, and figure out what we have been called as
 	path = request.get_full_path()
-	# set variables based on the type of call
+	# get querysets and set template based on the type of call
 	if 'parents_with_no_children' in path:
-		# set the variables, starting with the relevant list of parents
-		parents, parents_with_no_children_under_four = get_parents_without_children()
-		# set the url
+		parents, parents_with_no_children_under_four = get_parents_without_children(request)
 		exceptions_template = loader.get_template('people/parents_without_children.html')
-	# otherwise check for parents with no children under four
 	elif 'parents_without_children_under_four' in path:
-		# set the variables, starting with the relevant list of parents
-		parents_with_no_children, parents = get_parents_without_children()
-		# set the url
+		parents_with_no_children, parents = get_parents_without_children(request)
 		exceptions_template = loader.get_template('people/parents_without_children_under_four.html')
-	# otherwise check for parents with overdue children
 	elif 'parents_with_overdue_children' in path:
-		# set the variables, starting with the relevant list of parents
-		parents = get_parents_with_overdue_children()
-		# set the url
+		parents = get_parents_with_overdue_children(request)
 		exceptions_template = loader.get_template('people/parents_with_overdue_children.html')
-	# and a blank page_list
+	# set other variables
 	page_list = []
-	# set the results per page
 	results_per_page = 25
-	# get the page number
 	page = int(page)
-	# figure out how many pages we have
+	# do pagination
 	page_list = build_page_list(
 								objects=parents,
 								page_length=results_per_page,
 								attribute='last_name',
 								length=3
 								)
-	# set the previous page
 	previous_page = page - 1
-	# sort and truncate the list of people
 	parents = parents[previous_page*results_per_page:page*results_per_page]
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'parents' : parents,
 				'children' : children,
 				'page_list' : page_list,
@@ -1874,7 +1714,7 @@ def age_exceptions(request, age_status_id=0):
 							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
 							ABSS_end_date__lte=datetime.date.today()).order_by('last_name','first_name')
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'age_status' : age_status,
 				'people' : age_exceptions,
 				})
@@ -1902,6 +1742,7 @@ def addperson(request):
 			if action == 'CONFIRM':
 				# create the person
 				person = create_person(
+										request = request,
 										first_name = first_name,
 										last_name = last_name,
 										age_status_id = age_status
@@ -1913,11 +1754,16 @@ def addperson(request):
 				# go to the profile of the person
 				return redirect('/profile/' + str(person.pk))
 		# otherwise see whether the person matches an existing person by name
-		matching_people = Person.objects.filter(first_name=first_name,last_name=last_name)
+		matching_people = Person.search(
+										project=Project.current_project(request.session),
+										first_name=first_name,
+										last_name=last_name
+										)
 		# if there aren't any matching people, also create the person
 		if not matching_people:
 			# create the person
 			person = create_person(
+									request = request,
 									first_name = first_name,
 									last_name = last_name,
 									age_status_id = age_status
@@ -1935,7 +1781,7 @@ def addperson(request):
 	# get the template
 	addperson_template = loader.get_template('people/addperson.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'addpersonform' : addpersonform,
 				'matching_people' : matching_people
 				})
@@ -1948,14 +1794,17 @@ def person(request, person_id=0):
 	completed_invitation_steps=False
 	invitation_step_types=False
 	invitation_url = False
+	project = Project.current_project(request.session)
 	# load the template
 	person_template = loader.get_template('people/person.html')
 	# tey to get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	if not person:
 		return make_banner(request, 'Person does not exist.')
+	# add the project to the person
+	person.project = project
 	# get additional info for the page
-	relationships_to = get_relationships_to(person)
+	person.relationships_from = get_relationships_from(person,project)
 	questions, answer_flag = get_questions_and_answers(person)
 	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=True)
 	unvalidated_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=False)
@@ -1966,12 +1815,18 @@ def person(request, person_id=0):
 		invitation_step_types=Invitation_Step_Type.objects.filter(active=True).exclude(invitation=invitation)
 		# get the absolute url for the invitation
 		invitation_url = request.build_absolute_uri(reverse('invitation',args=[invitation.code]))
+	# get additional data, and filter by project
+	registrations = person.event_registration_set.order_by('-event__date')
+	if project:
+		registrations = registrations.filter(event__project=project)
+	activities = person.activity_set.order_by('-date')
+	if project:
+		activities = activities.filter(project=project)
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'person' : person,
-				'relationships_to' : relationships_to,
-				'registrations' : person.event_registration_set.order_by('-event__date'),
-				'activities' : person.activity_set.order_by('-date'),
+				'registrations' : registrations,
+				'activities' : activities,
 				'questions' : questions,
 				'answer_flag' : answer_flag,
 				'role_history' : person.role_history_set.all(),
@@ -2023,7 +1878,7 @@ def invitation(request, code):
 	# load the template
 	invitation_template = loader.get_template(invitation_handler.template)
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'invitation' : invitation,
 				'invitation_handler' : invitation_handler,
 				'invitation_step_type' : next_step,
@@ -2045,7 +1900,7 @@ def review_invitation(request,invitation_id):
 	# load the template
 	template = loader.get_template('people/review_invitation.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'invitation': invitation,
 								'invitation_url' : invitation_url
 							})
@@ -2160,7 +2015,7 @@ def print_invitation_form(request,invitation_id):
 	# load the template
 	template = loader.get_template('people/print_invitation_form.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'invitation': invitation,
 								'registration_form' : registration_form,
 								'personal_details' : personal_details,
@@ -2210,10 +2065,12 @@ def display_signature(request,invitation_step_id):
 
 @login_required
 def profile(request, person_id=0):
+	# get the project
+	project = Project.current_project(request.session)
 	# set the old role to false: this indicates that the role hasn't changed yet
 	old_role = False
 	# try to get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if there isn't a person, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2299,7 +2156,7 @@ def profile(request, person_id=0):
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'profileform' : profileform,
 				'person' : person,
 				})
@@ -2329,6 +2186,7 @@ def add_relationship(request,person_id=0):
 			include_people = personsearchform.cleaned_data['include_people']
 			# conduct a search
 			people = Person.search(
+									project=Project.current_project(request.session),
 									names=names,
 									include_people=include_people
 									)
@@ -2358,12 +2216,14 @@ def add_relationship(request,person_id=0):
 
 	# edit relationships function: goes through the form and updates the relationship if it has changed or is new
 	def add_relationship_editrelationships(person,request):
+		# set the project
+		project = Project.current_project(request.session)
 		# go through the post
 		for field_name, field_value in request.POST.items():
 			# check whether this is a relevant field
 			if field_name.startswith('relationship_type'):
 				# try to find a person using the id at the end of the field name
-				person_to = Person.try_to_get(pk=int(extract_id(field_name)))
+				person_to = Person.try_to_get(projects=project,pk=int(extract_id(field_name)))
 				# if we got a person, edit the relationship
 				if person_to:
 					edit_relationship(request, person, person_to, int(field_value))
@@ -2386,6 +2246,7 @@ def add_relationship(request,person_id=0):
 		if addrelationshipform.is_valid():
 			# we now need to create the person
 			person_to = create_person(
+										request = request,
 										first_name = addrelationshipform.cleaned_data['first_name'],
 										middle_names = addrelationshipform.cleaned_data['middle_names'],
 										last_name = addrelationshipform.cleaned_data['last_name'],
@@ -2400,18 +2261,20 @@ def add_relationship(request,person_id=0):
 
 	# MAIN VIEW LOGIC
 	# initalise the forms which we might not need
+	# TO BE REFACTORED AND SIMPLIFIED
 	addrelationshipform = ''
 	addrelationshiptoexistingpersonform = ''
 	editexistingrelationshipsform = ''
+	project = Project.current_project(request.session)
 	# load the template
 	person_template = loader.get_template('people/add_relationship.html')
 	# get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
 	# get existing relationships
-	relationships_to = get_relationships_to(person)
+	relationships_to = get_relationships_to(person,project)
 	# set the search results
 	search_results = []
 	# set a blank search_error
@@ -2432,7 +2295,7 @@ def add_relationship(request,person_id=0):
 			if person_to:
 				return redirect('/profile/' + str(person_to.pk))
 	# update the existing relationships: there may be new ones
-	relationships_to = get_relationships_to(person)
+	relationships_to = get_relationships_to(person,project)
 	# if there are existing relationships, create an edit form
 	if relationships_to:
 		# build the form
@@ -2445,7 +2308,7 @@ def add_relationship(request,person_id=0):
 			relationship_to.select_name = 'relationship_type_' + str(relationship_to.pk)
 			relationship_to.hidden_name = 'original_relationship_type_' + str(relationship_to.pk)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'personsearchform' : personsearchform,
 				'addrelationshipform' : addrelationshipform,
 				'addrelationshiptoexistingpersonform' : addrelationshiptoexistingpersonform,
@@ -2461,10 +2324,12 @@ def add_relationship(request,person_id=0):
 @login_required
 def address(request,person_id=0):
 	# this view is used to set the address for a person, by searching on post code or street name
+	# get the project
+	project = Project.current_project(request.session)
 	# load the template
 	address_template = loader.get_template('people/address.html')
 	# get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2542,7 +2407,7 @@ def address(request,person_id=0):
 		# create a blank form
 		addresssearchform = AddressSearchForm()
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'addresssearchform' : addresssearchform,
 				'search_results' : search_results,
 				'search_number' : search_number,
@@ -2559,10 +2424,12 @@ def address(request,person_id=0):
 @login_required
 def address_to_relationships(request,person_id=0):
 	# this view is used to set the address for a person, by searching on post code or street name
+	# set variables
+	project = Project.current_project(request.session)
 	# load the template
 	person_template = loader.get_template('people/address_to_relationships.html')
 	# get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -2595,7 +2462,7 @@ def address_to_relationships(request,person_id=0):
 	people_at_same_address = []
 	people_not_at_same_address = []
 	# go through the peple
-	for relationship_to in get_relationships_to(person):
+	for relationship_to in get_relationships_to(person,project):
 		# check the address
 		if relationship_to.house_name_or_number == person.house_name_or_number and \
 			relationship_to.street == person.street:
@@ -2620,7 +2487,7 @@ def address_to_relationships(request,person_id=0):
 			# and set the delimiter
 			application_key_delimiter = ','
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'person' : person,
 				'people_at_same_address' : people_at_same_address,
 				'people_not_at_same_address' : people_not_at_same_address,
@@ -2668,7 +2535,7 @@ def add_venue(request):
 		# create a blank form
 		addvenueform = VenueForm()
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'addvenueform' : addvenueform,
 				})
 	# return the response
@@ -2733,7 +2600,7 @@ def edit_venue(request, venue_id=0):
 										venue_id = venue.pk
 									)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'editvenueform' : editvenueform,
 				'venue' : venue
 				})
@@ -2749,7 +2616,7 @@ def venue(request, venue_id=0):
 	if not venue:
 		return make_banner(request, 'Venue does not exist.')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'venue' : venue,
 				'events' : venue.event_set.all()
 				})
@@ -2814,7 +2681,7 @@ def venues(request):
 	# get the template
 	venues_template = loader.get_template('people/venues.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'venuesearchform' : venuesearchform,
 				'venues' : venues,
 				'page_list' : page_list,
@@ -2860,7 +2727,7 @@ def addevent(request):
 	# get the template
 	addevent_template = loader.get_template('people/addevent.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'addeventform' : addeventform,
 				'default_date' : datetime.date.today().strftime('%d/%m/%Y')
 				})
@@ -2872,15 +2739,17 @@ def event(request, event_id=0, page=1):
 	# initialise variables
 	results_per_page = 25
 	page = int(page)
+	project = Project.current_project(request.session)
 	# load the template
 	event_template = loader.get_template('people/event.html')
 	# get the event
-	event = Event.try_to_get(pk=event_id)
+	event = Event.try_to_get(project=project,pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
-	# get the registrations for the event
+	# get the registrations for the event, filtered by project
 	registrations = event.event_registration_set.all().order_by('person__last_name','person__first_name')
+	registrations = registrations.filter(person__projects=project) if project else registrations
 	# do the pagination and check whether we have mandatory roles
 	for registration in registrations:
 		registration.last_name = registration.person.last_name
@@ -2893,7 +2762,7 @@ def event(request, event_id=0, page=1):
 	previous_page = page - 1
 	registrations= registrations[previous_page*results_per_page:page*results_per_page]
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'event' : event,
 				'registrations' : registrations,
 				'page_list' : page_list,
@@ -2954,6 +2823,8 @@ def event_group(request, event_group='0'):
 
 @login_required
 def events(request):
+	# get the project
+	project = Project.current_project(request.session)
 	# set a blank list
 	events = []
 	# and a blank page_list
@@ -2999,9 +2870,10 @@ def events(request):
 									event_type_id=int(event_type),
 									event_type__event_category_id=int(event_category),
 									venue__street__post_code__ward=int(ward),
-									venue=int(venue)
+									venue=int(venue),
+									project=project
 									).order_by('-date')
-			# if we got a request for a search, do the pagination and add counts to events for display
+			# if we got a request for a search, do the pagination and add the project to events
 			if eventsearchform.cleaned_data['action'] == 'Search':
 				number_of_events = len(events)
 				page = int(request.POST['page'])
@@ -3012,7 +2884,6 @@ def events(request):
 										)
 				previous_page = page - 1
 				events = events[previous_page*results_per_page:page*results_per_page]
-				events = add_counts_to_events(events)
 			# otherwise check whether we got a request for a download
 			elif 'Download' in action:
 				# only superusers are allowed to perform downloads
@@ -3025,6 +2896,7 @@ def events(request):
 					elif action == 'Download Registrations':
 						# create a new query set of registrations, and build a file from it
 						registrations = Event_Registration.objects.filter(event__in=events)
+						registrations = registrations.filter(person__projects=project) if project else registrations
 						response = build_download_file('Events and Registrations',objects=registrations)
 					return response
 		# otherwise we have incorrect dates
@@ -3038,7 +2910,7 @@ def events(request):
 	# get the template
 	events_template = loader.get_template('people/events.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'events' : events,
 				'eventsearchform' : eventsearchform,
 				'name' : name,
@@ -3060,8 +2932,10 @@ def events(request):
 
 @login_required
 def edit_event(request, event_id=0):
+	# get the project
+	project = Project.current_project(request.session)
 	# try to get the event
-	event = Event.try_to_get(pk=event_id)
+	event = Event.try_to_get(project=project,pk=event_id)
 	# if there isn't an event, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
@@ -3136,7 +3010,7 @@ def edit_event(request, event_id=0):
 	# load the template
 	edit_event_template = loader.get_template('people/edit_event.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'editeventform' : editeventform,
 				'event' : event
 				})
@@ -3167,6 +3041,7 @@ def event_registration(request,event_id=0):
 			include_people = personsearchform.cleaned_data['include_people']
 			# conduct a search
 			people = Person.search(
+									project=Project.current_project(request.session),
 									names = names,
 									include_people = include_people
 									)
@@ -3307,6 +3182,7 @@ def event_registration(request,event_id=0):
 			# create the person
 			# we now need to create the person
 			person = create_person(
+									request = request,
 									first_name = addpersonandregistrationform.cleaned_data['first_name'],
 									last_name = addpersonandregistrationform.cleaned_data['last_name'],
 									age_status_id = addpersonandregistrationform.cleaned_data['age_status']
@@ -3374,7 +3250,7 @@ def event_registration(request,event_id=0):
 	registrations, registration_keys, editregistrationform, edit_page_list = \
 		event_registration_registrations(event,edit_page)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'personsearchform' : personsearchform,
 				'addregistrationform' : addregistrationform,
 				'editregistrationform' : editregistrationform,
@@ -3398,10 +3274,12 @@ def event_registration(request,event_id=0):
 @login_required
 def answer_questions(request,person_id=0):
 	# this view enables people to answer a dynamic set of questions from the database
+	# get the project
+	project = Project.current_project(request.session)
 	# load the template
 	answer_questions_template = loader.get_template('people/answer_questions.html')
 	# try to get the person, crashing to a banner if unsuccessful
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	if not person:
 		return make_banner(request, 'Person does not exist.')
 	# get the questions, with the answers included as an attribute
@@ -3431,7 +3309,7 @@ def answer_questions(request,person_id=0):
 		# create the empty form
 		answerquestionsform = AnswerQuestionsForm(questions=questions)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'person' : person,
 				'answerquestionsform' : answerquestionsform
 				})
@@ -3498,7 +3376,7 @@ def uploaddata(request):
 	# get the template
 	upload_data_template = loader.get_template('people/upload_data.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'uploaddataform' : uploaddataform,
 				'file_handler' : file_handler
 				})
@@ -3519,7 +3397,7 @@ def downloaddata(request):
 	else:
 		downloaddataform = DownloadDataForm()
 		download_data_template = loader.get_template('people/download_data.html')
-		context = build_context({
+		context = build_context(request,{
 					'downloaddataform' : downloaddataform,
 					})
 		response = HttpResponse(download_data_template.render(context=context, request=request))
@@ -3529,10 +3407,12 @@ def downloaddata(request):
 @login_required
 def activities(request,person_id=0):
 	# allow the user to add or edit an activity for a person
+	# get the project
+	project = Project.current_project(request.session)
 	# load the template
 	activities_template = loader.get_template('people/activities.html')
 	# get the person
-	person = Person.try_to_get(pk=person_id)
+	person = Person.try_to_get(projects=project,pk=person_id)
 	# if the person doesn't exist, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
@@ -3553,10 +3433,14 @@ def activities(request,person_id=0):
 	else:
 		# create a blank form
 		activityform = ActivityForm()
+	# get the current activities, filtering by project
+	activities = person.activity_set.order_by('-date')
+	if project:
+		activities = activities.filter(project=project)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'activityform' : activityform,
-				'activities' : person.activity_set.order_by('-date'),
+				'activities' : activities,
 				'person' : person,
 				'default_date' : datetime.date.today().strftime('%d/%m/%Y')
 				})
@@ -3572,21 +3456,23 @@ def dashboard(request,name=''):
 	# if we have a dashboard name, attempt to get the dashboard
 	if name:
 		dashboard = Dashboard.try_to_get(name=name)
-		dashboard.start_date = False
-		dashboard.end_date = False
-		template = loader.get_template('people/dashboard.html')
-		if dashboard.date_controlled:
-			if request.method == 'POST':
-				dashboard_dates_form = DashboardDatesForm(request.POST)
-				if dashboard_dates_form.is_valid():
-					dashboard.start_date = dashboard_dates_form.cleaned_data['start_date']
-					dashboard.end_date = dashboard_dates_form.cleaned_data['end_date']
-			else:
-				start_date, end_date = dashboard.get_dates()
-				dashboard_dates_form = DashboardDatesForm(
-															start_date=start_date,
-															end_date=end_date
-															)
+		if dashboard:
+			dashboard.start_date = False
+			dashboard.end_date = False
+			dashboard.request = request
+			template = loader.get_template('people/dashboard.html')
+			if dashboard.date_controlled:
+				if request.method == 'POST':
+					dashboard_dates_form = DashboardDatesForm(request.POST)
+					if dashboard_dates_form.is_valid():
+						dashboard.start_date = dashboard_dates_form.cleaned_data['start_date']
+						dashboard.end_date = dashboard_dates_form.cleaned_data['end_date']
+				else:
+					start_date, end_date = dashboard.get_dates()
+					dashboard_dates_form = DashboardDatesForm(
+																start_date=start_date,
+																end_date=end_date
+																)
 	# if we don't have a dashboard, get the list of dashboards
 	if not dashboard:
 		dashboards = Dashboard.objects.all().order_by('title')
@@ -3595,7 +3481,7 @@ def dashboard(request,name=''):
 		if not request.user.is_superuser:
 			dashboards = dashboards.exclude(live=False)
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'dashboard' : dashboard,
 								'dashboards' : dashboards,
 								'show_title' : True,
@@ -3651,6 +3537,8 @@ def chart(request,name=''):
 														start_date=start_date,
 														end_date=end_date
 														)
+		# set the request
+		chart.request = request
 		# get the chart to display
 		chart_display = chart.get_chart(start_date=start_date,end_date=end_date)
 	# if we don't have a chart, get the list of charts
@@ -3658,7 +3546,7 @@ def chart(request,name=''):
 		charts = Chart.objects.all().order_by('title','name')
 		template = loader.get_template('people/charts.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'chart' : chart,
 								'charts' : charts,
 								'chart_display' : chart_display,
@@ -3669,10 +3557,17 @@ def chart(request,name=''):
 
 @login_required
 def settings(request,):
+	# get the profile
+	profile = Profile.try_to_get(user=request.user)
 	# load the template
 	template = loader.get_template('people/settings.html')
 	# set the context
-	context = build_context({})
+	context = build_context(
+							request,
+							{
+								'profile' : profile
+							}
+							)
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))
 
@@ -3686,7 +3581,7 @@ def display_qrcode(request,):
 	# create a url for the qrcode image
 	qrcode_image_url = reverse('display_qrcode_image')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'device' : device,
 								'qrcode_image_url' : qrcode_image_url
 							})
@@ -3710,7 +3605,7 @@ def login_data(request,):
 	# load the template
 	template = loader.get_template('people/login_data.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 								'profiles' : Profile.objects.all().order_by('user__username'),
 							})
 	# return the response
@@ -3736,7 +3631,7 @@ def change_password(request):
 	else:
 		changepasswordform = ChangePasswordForm(user=user)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'changepasswordform' : changepasswordform,
 				'user' : user
 				})
@@ -3772,7 +3667,7 @@ def reset_password(request,reset_code):
 	else:
 		form = ResetForgottenPasswordForm(reset_code=reset_code)
 	# set the context from the person based on person id
-	context = build_context({
+	context = build_context(request,{
 				'resetpasswordform' : form,
 				'reset' : reset,
 				})
@@ -3790,16 +3685,15 @@ class Document_Link_List(ListView):
 		# Call the base implementation first to get a context
 		context = super().get_context_data(**kwargs)
 		# add in the standard extra context
-		context = build_context(context)
+		context = build_context(self.request,context)
 		return context
 
 @login_required
-@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
 def select_project(request):
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# load and validate form
-		selectprojectform = SelectProjectForm(request.POST)
+		selectprojectform = SelectProjectForm(request.POST,user=request.user)
 		# if the form is valid, set the project id in the session
 		if selectprojectform.is_valid():
 			request.session['project_id'] = selectprojectform.cleaned_data['project_id']
@@ -3808,11 +3702,11 @@ def select_project(request):
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		selectprojectform = SelectProjectForm()
+		selectprojectform = SelectProjectForm(user=request.user)
 	# get the template
 	template = loader.get_template('people/select_project.html')
 	# set the context
-	context = build_context({
+	context = build_context(request,{
 				'selectprojectform' : selectprojectform,
 				})
 	# return the HttpResponse

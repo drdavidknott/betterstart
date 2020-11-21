@@ -228,17 +228,19 @@ def build_choices(
 					):
 	# create a blank list
 	choice_list = []
+	choices = False
 	# set the default if we have one
 	if default:
 		choice_list.append((default_value,default_label))
 	# build the choices from a query set, or from all objects in a class
 	if choice_queryset:
 		choices = choice_queryset.order_by(choice_field)
-	else:
+	elif choice_class:
 		choices = choice_class.objects.all().order_by(choice_field)
 	# build the list for use in the form
-	for choice in choices:
-		choice_list.append((choice.pk, getattr(choice,choice_field)))
+	if choices:
+		for choice in choices:
+			choice_list.append((choice.pk, getattr(choice,choice_field)))
 	# return the list
 	return choice_list
 

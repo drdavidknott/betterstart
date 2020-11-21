@@ -21,7 +21,6 @@ from PIL import Image
 from io import BytesIO
 from django.urls import reverse, resolve
 from django.core import serializers
-import django_globals
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -45,6 +44,43 @@ def has_field(model,field_name):
 		return True
 	except models.FieldDoesNotExist:
 		return False
+
+# Project model: provides configuration for a project
+class Project(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	navbar_background = models.CharField(max_length=50, blank=True)
+	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
+	# define the function that will return the project name as the object reference
+	def __str__(self):
+		return self.name
+
+	# class method to get current project if one is set in the session
+	@classmethod
+	def current_project(cls,session):
+		# initialise variables
+		project = None
+		# attempt to get the project using the id from the session
+		project_id = session.get('project_id',None)
+		if project_id:
+			project = cls.try_to_get(id=int(project_id))
+		# return the results
+		return project
+
+	# class method to get default project based on the user
+	@classmethod
+	def default_project(cls,user):
+		# initialise variables
+		project = None
+		# try to get the default permission
+		project_permission = Project_Permission.try_to_get(profile__user=user,default=True)
+		# if we didn't get a default, use the first project
+		if not project_permission:
+			project_permission = Project_Permission.objects.filter(profile__user=user).first()
+		# set the project
+		if project_permission:
+			project = project_permission.project
+		# return the results
+		return project
 
 # Family model: represents a family.
 # Has a many to many relationship with Person
@@ -272,6 +308,7 @@ class Event(DataAccessMixin,models.Model):
 	ward = models.ForeignKey(Ward, null=True, blank=True, on_delete=models.SET_NULL)
 	areas = models.ManyToManyField(Area)
 	venue = models.ForeignKey(Venue, null=True, blank=True, on_delete=models.SET_NULL)
+	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
 	# define the function that will return the event name, date and time as the object reference
 	def __str__(self):
 		return self.name + ' on '  + self.date.strftime('%b %d %Y') + \
@@ -280,6 +317,29 @@ class Event(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'events'
 		ordering = ['-date']
+
+	# supplement the mixin search function to remove the project filter if it has no value
+	@classmethod
+	def search(cls,*args,**kwargs):
+		# take the project out if it is a null value
+		if 'project' in kwargs.keys() and not kwargs['project']:
+			del kwargs['project']
+		# call the mixin method
+		results = super().search(**kwargs)
+		# return the results
+		return results
+
+	# supplement the mixin search function, filtering by project
+	@classmethod
+	def try_to_get(cls,*args,**kwargs):
+		# initialise variables
+		if 'project' in kwargs.keys() and not kwargs['project']:
+			del kwargs['project']
+		# call the mixin method
+		result = super().try_to_get(**kwargs)
+		# return the result
+		return result
+
 	# define a function to return the areas as a comma separated string
 	def get_areas(self):
 		# set the string to blank
@@ -311,12 +371,22 @@ class Event(DataAccessMixin,models.Model):
 	def month_and_year(self):
 		return self.date.strftime('%Y %m %B')
 	# define a set of functions to return counts based on registration, participation and apologies
+	def registration_count(self,registration_type):
+		# create a dictionary to express the filter
+		filter_dict = {
+						registration_type : True
+						}
+		# add the project if we have one
+		if self.project:
+			filter_dict['person__projects'] = self.project
+		# return the count
+		return self.event_registration_set.filter(**filter_dict).count()
 	def registered_count(self):
-		return self.event_registration_set.filter(registered=True).count()
+		return self.registration_count('registered')
 	def apologies_count(self):
-		return self.event_registration_set.filter(apologies=True).count()
+		return self.registration_count('apologies')
 	def participated_count(self):
-		return self.event_registration_set.filter(participated=True).count()
+		return self.registration_count('participated')
 	# define a function to return the total number of hours participated for this event
 	def participation_hours(self):
 		participation = self.event_registration_set.filter(participated=True).count()
@@ -369,6 +439,17 @@ class Option(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'options'
 
+# Membership type model: represents different types of membership that a person can have in a project
+class Membership_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	membership_number_required = models.BooleanField(default=False)
+	# define the function that will return the person name as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'membership types'
+
 # Person model: represents a participant in the Betterstart scheme.
 # A person may be an adult or a child.
 class Person(DataAccessMixin,models.Model):
@@ -407,6 +488,7 @@ class Person(DataAccessMixin,models.Model):
 	datetime_created = models.DateTimeField(auto_now_add=True)
 	datetime_updated = models.DateTimeField(auto_now=True)
 	membership_number = models.IntegerField(default=0)
+	projects = models.ManyToManyField(Project, through='Membership')
 
 	# define the function that will return the person name as the object reference
 	def __str__(self):
@@ -522,6 +604,7 @@ class Person(DataAccessMixin,models.Model):
 			activity_type.hours = 0
 			# get the hours per activity type
 			for activity in Activity.objects.filter(
+													project=self.project,
 													person=self,
 													activity_type=activity_type):
 				# add the hours
@@ -529,21 +612,21 @@ class Person(DataAccessMixin,models.Model):
 		# return the results
 		return activity_types
 
-	# and the total activity hours
+	# get the total activity hours, filtering by project
 	def activity_hours(self):
-		# set the hours to zero
+		# initialise variables
 		hours = 0
-		# go through the activities
-		for activity in self.activity_set.all():
-			# add the hours
-			hours += activity.hours
-		# set the string
-		if hours:
-			# build a description
-			hours_desc = str(hours) + ' hours'
-		# otherwise set the string to the negative value
+		# get the activities
+		if self.project:
+			activities = self.activity_set.filter(project=self.project)
 		else:
-			# set the string
+			activities = self.activity_set.all()
+		# sum the hours and create a description
+		for activity in activities:
+			hours += activity.hours
+		if hours:
+			hours_desc = str(hours) + ' hours'
+		else:
 			hours_desc = ' no activities'
 		# return the string
 		return hours_desc
@@ -608,8 +691,9 @@ class Person(DataAccessMixin,models.Model):
 		names = False
 		keywords = False
 		children_ages = False
+		project = False
 
-		# get values from the search request if we have them
+		# get special values from the search request if we have them
 		if 'trained_role' in kwargs.keys():
 			trained_role = kwargs.pop('trained_role')
 		if 'include_people' in kwargs.keys():
@@ -620,6 +704,8 @@ class Person(DataAccessMixin,models.Model):
 			keywords = kwargs.pop('keywords')
 		if 'children_ages' in kwargs.keys():
 			children_ages = kwargs.pop('children_ages')
+		if 'project' in kwargs.keys():
+			project = kwargs.pop('project')
 
 		# call the mixin method
 		results = super().search(**kwargs)
@@ -675,6 +761,10 @@ class Person(DataAccessMixin,models.Model):
 					elif str_represents_int(person.age_in_years()):
 						if int(person.age_in_years()) not in children_ages_list:
 							results = results.exclude(pk=person.pk)
+
+		# if we have a project, filter by project membership
+		if project:
+			results = results.filter(projects=project)
 
 		# order the results by name
 		results = results.order_by('last_name','first_name')
@@ -743,6 +833,19 @@ class Person(DataAccessMixin,models.Model):
 		# return the results
 		return results
 
+	# supplement the mixin search function, filtering by project
+	@classmethod
+	def try_to_get(cls,*args,**kwargs):
+		# initialise variables
+		if 'projects' in kwargs.keys() and not kwargs['projects']:
+			del kwargs['projects']
+
+		# call the mixin method
+		result = super().try_to_get(**kwargs)
+
+		# return the result
+		return result
+
 	# class method to get the next membership number
 	@classmethod
 	def get_next_membership_number(cls,*args,**kwargs):
@@ -779,6 +882,20 @@ class Person(DataAccessMixin,models.Model):
 			children_ages_desc = list_to_punctuated_string(children_ages,final_term=' and ')
 		# return the results
 		return children_ages_desc
+
+# Membership model: records that a person is a member of a project
+class Membership(DataAccessMixin,models.Model):
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	project = models.ForeignKey(Project, on_delete=models.CASCADE)
+	membership_type = models.ForeignKey(Membership_Type, on_delete=models.CASCADE, null=True, blank=True)
+	date_joined = models.DateField(null=True, blank=True)
+	date_left = models.DateField(null=True, blank=True)
+	# define the function that will return a string showing the relationship as the object reference
+	def __str__(self):
+		return self.person.full_name() + ' in ' + self.project.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'memberships'
 
 # Relationship model: represents a relationship between two people.
 # This is an intermediate model for a many to many relationship between two Person objects.
@@ -1017,6 +1134,7 @@ class Activity(DataAccessMixin,models.Model):
 	activity_type = models.ForeignKey(Activity_Type, on_delete=models.CASCADE)
 	date = models.DateField()
 	hours = models.IntegerField()
+	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
 	# define the function that will return the name as the object reference
 	def __str__(self):
 		return self.activity_type.name + \
@@ -1025,6 +1143,16 @@ class Activity(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'activities'
+	# supplement the mixin search function, filtering by project
+	@classmethod
+	def try_to_get(cls,*args,**kwargs):
+		# initialise variables
+		if 'project' in kwargs.keys() and not kwargs['project']:
+			del kwargs['project']
+		# call the mixin method
+		result = super().try_to_get(**kwargs)
+		# return the result
+		return result
 
 class Filter_SpecManager(models.Manager):
 	def get_by_natural_key(self, term, filter_type, string_value, boolean_value, period, exclusion):
@@ -1408,6 +1536,13 @@ class Chart(DataAccessMixin,models.Model):
 					exclusion_dict = self.add_period_filters(filter, filter_dict)
 				elif filter.filter_type == 'object':
 					exclusion_dict[filter.term] = master_object
+		# filter by project
+		project = Project.current_project(self.request.session)
+		if project:
+			if queryset.model is Person:
+				filter_dict['projects']=project
+			if queryset.model in (Trained_Role, Event_Registration, Answer, Answer_Note):
+				filter_dict['person__projects']=project
 		# try to apply the filters
 		if filter_dict:
 			try:
@@ -1691,7 +1826,10 @@ class Panel(DataAccessMixin,models.Model):
 		# get the date four years ago
 		today_four_years_ago = today.replace(year=today.year-4)
 		# attempt to get parents with no children
-		parents = Person.search(default_role__role_type_name__contains='Parent')
+		parents = Person.search(
+								project=Project.current_project(self.request.session),
+								default_role__role_type_name__contains='Parent'
+								)
 		# exclude those with pregnancy dates in the future
 		parents = parents.exclude(pregnant=True, due_date__gte=today)
 		# order the list
@@ -1726,6 +1864,7 @@ class Panel(DataAccessMixin,models.Model):
 	def get_parents_with_overdue_children(self):
 		# return a list of parents with a pregnancy flag and a due date before today
 		return Person.search(
+								project=Project.current_project(self.request.session),
 								pregnant=True,
 								due_date__lt=date.today()
 								)
@@ -1836,6 +1975,17 @@ class Panel(DataAccessMixin,models.Model):
 					exclusion_dict = self.add_period_filters(filter, filter_dict)
 				elif filter.filter_type == 'object':
 					exclusion_dict[filter.term] = master_object
+		# filter by project
+		project = Project.current_project(self.request.session)
+		if project:
+			if queryset.model is Person:
+				filter_dict['projects']=project
+			if queryset.model in (Trained_Role, Event_Registration, Answer, Answer_Note):
+				filter_dict['person__projects']=project
+			if queryset.model is Event:
+				filter_dict['project']=project
+			if queryset.model in (Event_Registration,):
+				filter_dict['event__project']=project
 		# try to apply the filters
 		if filter_dict:
 			try:
@@ -1971,6 +2121,8 @@ class Column(DataAccessMixin,models.Model):
 			# if we have dates, add them
 			panel_in_column.panel.start_date = self.start_date if self.start_date else False
 			panel_in_column.panel.end_date = self.end_date if self.end_date else False
+			# add the request
+			panel_in_column.panel.request = self.request
 		# return the results
 		return panels
 
@@ -2025,6 +2177,9 @@ class Dashboard(DataAccessMixin,models.Model):
 								blank=True
 								)
 	objects = DashboardManager()
+
+	# ADD __init__ TO GET REQUEST
+
 	# define the function that will return the name
 	def __str__(self):
 		return self.name
@@ -2065,6 +2220,8 @@ class Dashboard(DataAccessMixin,models.Model):
 			# if we have dates, add them
 			column_in_dashboard.column.start_date = self.start_date if self.start_date else False
 			column_in_dashboard.column.end_date = self.end_date if self.end_date else False
+			# add the request
+			column_in_dashboard.column.request = self.request
 		# return the results
 		return columns
 
@@ -2189,27 +2346,6 @@ class Site(DataAccessMixin,models.Model):
 	def __str__(self):
 		return self.name
 
-# Project model: provides configuration for a project
-class Project(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
-	navbar_background = models.CharField(max_length=50, blank=True)
-	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
-	# define the function that will return the project name as the object reference
-	def __str__(self):
-		return self.name
-
-	# class method to get current project if one is set in the session
-	@classmethod
-	def current_project(cls):
-		# initialist varables
-		project = False
-		# attempt to get the project using the id from the session
-		project_id = django_globals.globals.request.session.get('project_id',False)
-		if project_id:
-			project = cls.try_to_get(id=int(project_id))
-		# return the results
-		return project
-
 # Profile model: keeps track of additional information about the user
 class Profile(DataAccessMixin,models.Model):
 	# note that the first four login trackers keep track of all time attempts, whereas failed_login_attempts
@@ -2224,6 +2360,7 @@ class Profile(DataAccessMixin,models.Model):
 	reset_code = models.CharField(max_length=16,default='',null=True,blank=True)
 	reset_timeout = models.DateTimeField(null=True, blank=True)
 	failed_login_attempts = models.IntegerField(default=0)
+	projects = models.ManyToManyField(Project, through='Project_Permission')
 
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
@@ -2253,6 +2390,18 @@ class Profile(DataAccessMixin,models.Model):
 			return True
 		else:
 			return False
+
+# Project Permission model: records that a profile is able to access a project
+class Project_Permission(DataAccessMixin,models.Model):
+	profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+	project = models.ForeignKey(Project, on_delete=models.CASCADE)
+	default = models.BooleanField(default=False)
+	# define the function that will return a string showing the relationship as the object reference
+	def __str__(self):
+		return self.profile.user.username + ' can access ' + self.project.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'project permissions'
 
 # Terms_And_Conditions model: used to store terms and conditions, bounded by dates
 class Terms_And_Conditions(DataAccessMixin,models.Model):

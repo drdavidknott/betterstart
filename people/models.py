@@ -1776,6 +1776,10 @@ class Panel(DataAccessMixin,models.Model):
 			age_exceptions = age_status.person_set.filter(
 									date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
 									ABSS_end_date__isnull=True)
+			# add the project filter if we have a project
+			project = Project.current_project(self.request.session)
+			if project:
+				age_exceptions = age_exceptions.filter(projects=project)
 			# add the exception count to the list if we got any
 			if age_exceptions.count() > 0:
 				# create a row and append it to the list of rows
@@ -2342,6 +2346,7 @@ class Site(DataAccessMixin,models.Model):
 	password_reset_email_text = models.TextField(max_length=1000, default='', blank=True)
 	password_reset_timeout = models.IntegerField(default=15)
 	max_login_attempts = models.IntegerField(default=None, null=True, blank=True)
+	projects_active = models.BooleanField(default=False)
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
@@ -2386,7 +2391,7 @@ class Profile(DataAccessMixin,models.Model):
 	# check whether login attempts have been exceeded, based on the max defined in the site
 	def login_attempts_exceeded(self):
 		site = Site.objects.all().first()
-		if site.max_login_attempts and self.failed_login_attempts > site.max_login_attempts:
+		if site and site.max_login_attempts and self.failed_login_attempts > site.max_login_attempts:
 			return True
 		else:
 			return False

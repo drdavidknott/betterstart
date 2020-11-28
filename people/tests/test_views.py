@@ -5,7 +5,8 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Trained_Role, Activity_Type, Activity, Dashboard, Column, Panel, Panel_In_Column, \
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
-							Terms_And_Conditions, Profile, Chart, Document_Link
+							Terms_And_Conditions, Profile, Chart, Document_Link, Project, Membership, \
+							Project_Permission
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -70,6 +71,7 @@ def set_up_test_people(
 						number=1,
 						ABSS_type='test_ABSS_type',
 						age_status='Adult',
+						project=False,
 						):
 	# create the number of people needed
 	for n in range(number):
@@ -95,12 +97,31 @@ def set_up_test_people(
 									person = test_person,
 									role_type = Role_Type.objects.get(role_type_name=role_type)
 									)
+		# add a membership if we have a project
+		if project:
+			Membership.objects.create(
+										person=test_person,
+										project=project
+										)
 
 def set_up_test_user():
-	# create a test user
+	# create a test user and profile
 	test_user = User.objects.create_user(username='testuser', password='testword')
+	profile = Profile.objects.create(user=test_user)
 	# return the user
 	return test_user
+
+def set_up_test_project_permission(username,project_name,default=True):
+	# get the user
+	profile = Profile.objects.get(user__username=username)
+	# create the project
+	project = Project.objects.create(name=project_name)
+	# add the membership
+	Project_Permission.objects.create(
+										profile=profile,
+										project=project,
+										default=default
+									)
 
 def set_up_test_superuser():
 	# create a test superuser
@@ -180,7 +201,7 @@ def set_up_venue_base_data():
 										street = Street.objects.get(name='venue_street0')
 										)
 
-def set_up_test_events(name_root,event_type,number,date='2019-01-01',ward=None):
+def set_up_test_events(name_root,event_type,number,date='2019-01-01',ward=None,project=None):
 	# set up the number of people asked for
 	# create the number of people needed
 	for n in range(number):
@@ -193,7 +214,8 @@ def set_up_test_events(name_root,event_type,number,date='2019-01-01',ward=None):
 											date = datetime.datetime.strptime(date,'%Y-%m-%d'),
 											start_time = datetime.datetime.strptime('10:00','%H:%M'),
 											end_time = datetime.datetime.strptime('11:00','%H:%M'),
-											location = 'Test location'
+											location = 'Test location',
+											project = project,
 											)
 
 def set_up_test_questions(name_root,number=1,notes=False,notes_label='',use_for_invitations=False):
@@ -3701,6 +3723,86 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),4)
 
+	def test_name_search_with_projects_active_no_results(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# create some extra people
+		set_up_test_people('not_member_','test role 1',30)
+		set_up_test_people('is_member_','test role 1',35,project=project)
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : 'not_member',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],0)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),0)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+
+	def test_name_search_with_projects_active_with_results(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# create some extra people
+		set_up_test_people('not_member_','test role 1',30)
+		set_up_test_people('is_member_','test role 1',35,project=project)
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : 'is_member',
+											'keywords' : '',
+											'role_type' : '0',
+											'ABSS_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 class PeopleAgeSearchViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -4077,6 +4179,35 @@ class PeopleQueryTest(TestCase):
 		# attempt to get the people page
 		response = self.client.get(reverse('ward',args=[str(Ward.objects.get(ward_name='Test ward').pk)]))
 		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_role_type_search_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# create a new type
+		test_role_type = Role_Type.objects.create(role_type_name='People Query Test',use_for_events=True,use_for_people=True)
+		# create some extra people
+		set_up_test_people('Role Type Query Test','People Query Test',30,'test_ABSS_type','Adult',project=project)
+		set_up_test_people('Role Type Query Test','People Query Test',25,'test_ABSS_type','Adult')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the people page
+		response = self.client.get(reverse('role_type',args=[test_role_type.pk]))
+		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of people
 		self.assertEqual(response.context['number_of_people'],30)
@@ -4674,6 +4805,46 @@ class EventsViewTest(TestCase):
 		self.assertContains(response,'Test_Event_Type_1_0,Test event description,test_event_type_1,')
 		self.assertContains(response,'test_reg_0,test_reg_0,Adult,True,False,True,test_role_type')
 
+	def test_search_name_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# set up some more events within the project
+		test_event_type_1 = Event_Type.objects.get(name='test_event_type_1')
+		set_up_test_events('Test_Event_Type_1_',test_event_type_1,50,project=project)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('events'),
+									data = { 
+											'action' : 'Search',
+											'name' : 'Test_Event_Type_1_',
+											'date_from' : '',
+											'date_to' : '',
+											'event_type' : '0',
+											'event_category' : '0',
+											'ward' : '0',
+											'venue' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 class EventViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -4713,7 +4884,8 @@ class EventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('event',args=[1]))
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		response = self.client.get(reverse('event',args=[event.pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
@@ -4725,7 +4897,8 @@ class EventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('event',args=[1]))
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		response = self.client.get(reverse('event',args=[event.pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'Event does not have a registration from a person with a role of second_test_role_type')
@@ -4738,7 +4911,8 @@ class EventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get(reverse('event',args=[1]))
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		response = self.client.get(reverse('event',args=[event.pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		self.assertNotContains(response,'WARNING')
@@ -4747,7 +4921,9 @@ class EventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get('/event/1')
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		page = '/event/' + str(event.pk)
+		response = self.client.get(page)
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# and the contents
@@ -4758,7 +4934,9 @@ class EventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get('/event/1/1')
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		page = '/event/' + str(event.pk) + '/1'
+		response = self.client.get(page)
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# and the contents
@@ -4769,12 +4947,56 @@ class EventViewTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the events page
-		response = self.client.get('/event/1/3')
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		page = '/event/' + str(event.pk) + '/3'
+		response = self.client.get(page)
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# and the contents
 		self.assertEqual(len(response.context['registrations']),5)
 		self.assertEqual(len(response.context['page_list']),3)
+
+	def test_error_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the events page
+		response = self.client.get(reverse('event',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Event does not exist')
+
+	def test_success_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# get the event and set the project
+		event = Event.objects.get(name='Test_Event_Type_1_0')
+		event.project = project
+		event.save()
+		# attempt to get the events page
+		response = self.client.get(reverse('event',args=[event.pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Test_Event_Type_1_0')
 
 class DashboardViewTest(TestCase):
 	@classmethod
@@ -5456,6 +5678,63 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 
+	def test_create_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('addperson'),
+									data = { 
+												'first_name' : 'Testfirst',
+												'last_name' : 'Testlast',
+												'age_status' : str(Age_Status.objects.get(status='Adult').pk)
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/profile/' + str(Person.objects.get(first_name='Testfirst').pk))
+		# get the record
+		test_person = Person.objects.get(first_name='Testfirst')
+		# check the record contents
+		self.assertEqual(test_person.first_name,'Testfirst')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Testlast')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_person.email_address,'')
+		self.assertEqual(test_person.home_phone,'')
+		self.assertEqual(test_person.mobile_phone,'')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'')
+		self.assertEqual(test_person.notes,'')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,False)
+		self.assertEqual(test_person.due_date,None)
+		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.membership_number,0)
+		# check that the membership exists
+		membership = Membership.objects.get(project=project,person=test_person)
+
 class ProfileViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -5487,6 +5766,50 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an error in the page
 		self.assertContains(response,'ERROR')
+
+	def test_invalid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# submit a post for a person who is not in the project
+		response = self.client.get(reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person does not exist')
+
+	def test_valid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person
+		set_up_test_people('Person_','test_role_type',1,project=project)
+		# submit a post for a person who is not in the project
+		response = self.client.get(reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person_0')
 
 	def test_update_profile(self):
 		# log the user in
@@ -6379,6 +6702,28 @@ class AddRelationshipViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
+	def test_invalid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# submit a post for a person who is not in the project
+		response = self.client.get(reverse('add_relationship',args=[Person.objects.get(first_name='Person_0').pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person does not exist')
+
 	def test_find_existing_person_for_relationship_in_project(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -6483,6 +6828,37 @@ class AddRelationshipViewTest(TestCase):
 		self.assertContains(response,'Test_left_project_0')
 		self.assertContains(response,'Test_in_project_0')
 
+	def test_find_existing_person_for_relationship_in_project_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create the person that we are connecting to
+		set_up_test_people('Test_target_','test_role_type',1,project=project)
+		# create a person to add the relationships to
+		set_up_test_people('Test_exists_','test_role_type',1,project=project)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_target_0').pk]),
+									data = { 
+											'action' : 'search',
+											'names' : 'Test_exists_0',
+											'include_people' : 'in_project'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# test that the result is contained within the response
+		self.assertContains(response,'Test_exists_0')
+
 	def test_add_relationship_to_new_person(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -6524,6 +6900,72 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.age_status.status,'Adult')
 		self.assertEqual(test_new_person.house_name_or_number,'')
 		self.assertEqual(test_new_person.street,None)
+		# get the original person
+		test_original_person = Person.objects.get(first_name='Test_from_0')
+		# get the relationship from 
+		relationship_from_original = Relationship.objects.get(relationship_from=test_original_person)
+		# check the contents
+		self.assertEqual(relationship_from_original.relationship_type.relationship_type,'parent')
+		self.assertEqual(relationship_from_original.relationship_to,test_new_person)
+		# get the relationship to 
+		relationship_from_new = Relationship.objects.get(relationship_from=test_new_person)
+		# check the contents
+		self.assertEqual(relationship_from_new.relationship_type.relationship_type,'child')
+		self.assertEqual(relationship_from_new.relationship_to,test_original_person)
+
+	def test_add_relationship_to_new_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person to add the relationships to
+		set_up_test_people('Test_from_','test_role_type',1,project=project)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_from_0').pk]),
+									data = { 
+											'action' : 'addrelationshiptonewperson',
+											'first_name' : 'new_first_name',
+											'middle_names' : 'new_middle_names',
+											'last_name' : 'new_last_name',
+											'relationship_type' : str(Relationship_Type.objects.get(relationship_type='parent').pk),
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk)
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the newly created person record
+		test_new_person = Person.objects.get(first_name='new_first_name')
+		# check the record contents
+		self.assertEqual(test_new_person.first_name,'new_first_name')
+		self.assertEqual(test_new_person.middle_names,'new_middle_names')
+		self.assertEqual(test_new_person.last_name,'new_last_name')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_new_person.email_address,'')
+		self.assertEqual(test_new_person.home_phone,'')
+		self.assertEqual(test_new_person.mobile_phone,'')
+		self.assertEqual(test_new_person.notes,'')
+		self.assertEqual(test_new_person.relationships.all().exists(),True)
+		self.assertEqual(test_new_person.children_centres.all().exists(),False)
+		self.assertEqual(test_new_person.events.all().exists(),False)
+		self.assertEqual(test_new_person.pregnant,False)
+		self.assertEqual(test_new_person.due_date,None)
+		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
+		self.assertEqual(test_new_person.families.all().exists(),False)
+		self.assertEqual(test_new_person.savs_id,None)
+		self.assertEqual(test_new_person.age_status.status,'Adult')
+		self.assertEqual(test_new_person.house_name_or_number,'')
+		self.assertEqual(test_new_person.street,None)
+		# check that the membership exists
+		membership = Membership.objects.get(project=project,person=test_new_person)
 		# get the original person
 		test_original_person = Person.objects.get(first_name='Test_from_0')
 		# get the relationship from 
@@ -6643,6 +7085,103 @@ class AddRelationshipViewTest(TestCase):
 		# check that all relationships have gone
 		self.assertEqual(Relationship.objects.all().exists(),False)
 
+	def test_find_existing_person_for_relationship_in_project_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create the person that we are connecting to
+		set_up_test_people('Test_target_','test_role_type',1,project=project)
+		# create a person to add the relationships to
+		set_up_test_people('Test_exists_','test_role_type',1,project=project)
+		# submit a post for a person who exists
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_target_0').pk]),
+									data = { 
+											'action' : 'search',
+											'names' : 'Test_exists_0',
+											'include_people' : 'in_project'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# test that the result is contained within the response
+		self.assertContains(response,'Test_exists_0')
+
+	def test_add_relationship_to_new_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person to add the relationships to
+		set_up_test_people('Test_from_','test_role_type',1,project=project)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('add_relationship',args=[Person.objects.get(first_name='Test_from_0').pk]),
+									data = { 
+											'action' : 'addrelationshiptonewperson',
+											'first_name' : 'new_first_name',
+											'middle_names' : 'new_middle_names',
+											'last_name' : 'new_last_name',
+											'relationship_type' : str(Relationship_Type.objects.get(relationship_type='parent').pk),
+											'age_status' : str(Age_Status.objects.get(status='Adult').pk)
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the newly created person record
+		test_new_person = Person.objects.get(first_name='new_first_name')
+		# check the record contents
+		self.assertEqual(test_new_person.first_name,'new_first_name')
+		self.assertEqual(test_new_person.middle_names,'new_middle_names')
+		self.assertEqual(test_new_person.last_name,'new_last_name')
+		# check the record contents which have not been set yet
+		self.assertEqual(test_new_person.email_address,'')
+		self.assertEqual(test_new_person.home_phone,'')
+		self.assertEqual(test_new_person.mobile_phone,'')
+		self.assertEqual(test_new_person.notes,'')
+		self.assertEqual(test_new_person.relationships.all().exists(),True)
+		self.assertEqual(test_new_person.children_centres.all().exists(),False)
+		self.assertEqual(test_new_person.events.all().exists(),False)
+		self.assertEqual(test_new_person.pregnant,False)
+		self.assertEqual(test_new_person.due_date,None)
+		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
+		self.assertEqual(test_new_person.families.all().exists(),False)
+		self.assertEqual(test_new_person.savs_id,None)
+		self.assertEqual(test_new_person.age_status.status,'Adult')
+		self.assertEqual(test_new_person.house_name_or_number,'')
+		self.assertEqual(test_new_person.street,None)
+		# check that the membership has been created
+		membership = Membership.objects.get(person=test_new_person,project=project)
+		# get the original person
+		test_original_person = Person.objects.get(first_name='Test_from_0')
+		# get the relationship from 
+		relationship_from_original = Relationship.objects.get(relationship_from=test_original_person)
+		# check the contents
+		self.assertEqual(relationship_from_original.relationship_type.relationship_type,'parent')
+		self.assertEqual(relationship_from_original.relationship_to,test_new_person)
+		# get the relationship to 
+		relationship_from_new = Relationship.objects.get(relationship_from=test_new_person)
+		# check the contents
+		self.assertEqual(relationship_from_new.relationship_type.relationship_type,'child')
+		self.assertEqual(relationship_from_new.relationship_to,test_original_person)
+
 class AddEventViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -6733,6 +7272,49 @@ class AddEventViewTest(TestCase):
 		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
 		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
 
+	def test_create_event_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# add an event
+		response = self.client.post(
+									reverse('addevent'),
+									data = { 
+												'name' : 'Testevent',
+												'description' : 'Testeventdesc',
+												'venue' : str(Venue.objects.get(name='test_venue').pk),
+												'date' : '01/02/2010',
+												'start_time' : '10:00',
+												'end_time' : '11:00',
+												'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
+												'area_' + str(Area.objects.get(area_name='Test area').pk) : 'on',
+												'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/event_registration/' + str(Event.objects.get(name='Testevent').pk))
+		# get the record
+		test_event = Event.objects.get(name='Testevent')
+		# check the record contents
+		self.assertEqual(test_event.name,'Testevent')
+		self.assertEqual(test_event.description,'Testeventdesc')
+		self.assertEqual(test_event.venue.name,'test_venue')
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'01/02/2010')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
+		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
+		self.assertEqual(test_event.project,project)
+
 class EventRegistrationViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -6757,7 +7339,30 @@ class EventRegistrationViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an error in the page
-		self.assertContains(response,'ERROR')
+		self.assertContains(response,'Event does not exist')
+
+	def test_invalid_event_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		test_event = Event.objects.get(name='test_event_0')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('event_registration',args=[test_event.pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Event does not exist')
 
 	def test_successful_response_if_logged_in(self):
 		# create an event
@@ -6978,6 +7583,70 @@ class EventRegistrationViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of events
 		self.assertContains(response,'More than 100 search results found: please refine search')
+
+	def test_event_registration_search_no_results_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1,project=project)
+		# create some people
+		set_up_test_people('Found_name_','test_role_type',50)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'Found'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],0)
+
+	def test_event_registration_search_with_results_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1,project=project)
+		# create some people
+		set_up_test_people('Found_name_','test_role_type',50,project=project)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# do a search
+		response = self.client.post(
+									reverse('event_registration',args=[Event.objects.get(name='test_event_0').pk]),
+									data = {
+												'action' : 'search',
+												'names' : 'Found'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of events
+		self.assertEqual(response.context['search_number'],50)
 
 	def test_event_registration_register_people_multiple_roles(self):
 		# create an event
@@ -8055,7 +8724,30 @@ class EditEventViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an error in the page
-		self.assertContains(response,'ERROR')
+		self.assertContains(response,'Event does not exist')
+
+	def test_invalid_event_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create an event
+		set_up_test_events('test_event_',Event_Type.objects.get(name='test_event_type'),1)
+		test_event = Event.objects.get(name='test_event_0')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('edit_event',args=[test_event.pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Event does not exist')
 
 	def test_edit_event(self):
 		# log the user in
@@ -10255,7 +10947,28 @@ class AddressToRelationshipsViewTest(TestCase):
 		# check that we got a valid response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an error in the page
-		self.assertContains(response,'ERROR')
+		self.assertContains(response,'Person does not exist')
+
+	def test_invalid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get an invalid person
+		test_person = Person.objects.get(first_name='address_test0')
+		response = self.client.get(reverse('address_to_relationships',args=[test_person.pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person does not exist')
 
 	def test_successful_response_if_logged_in(self):
 		# create a person
@@ -14793,6 +15506,27 @@ class ActivitiesViewTest(TestCase):
 		# check that we got an error in the page
 		self.assertContains(response,'ERROR')
 
+	def test_invalid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get an invalid person
+		test_person = Person.objects.get(first_name='activities_test0')
+		response = self.client.get(reverse('activities',args=[test_person.pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person does not exist')
+
 	def test_new_activity(self):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
@@ -14821,6 +15555,47 @@ class ActivitiesViewTest(TestCase):
 		self.assertEqual(activity.activity_type,test_activity_type_1)
 		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
 		self.assertEqual(activity.hours,1)
+
+	def test_new_activity_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a test person
+		set_up_test_people('project_test',number=1,project=project)
+		person = Person.objects.get(first_name='project_test0')
+		# get a test activity type
+		test_activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		# submit the page with no answers
+		response = self.client.post(
+									reverse('activities',args=[person.pk]),
+									data = { 
+
+											'activity_type' : str(test_activity_type_1.pk),
+											'date' : '01/01/2018',
+											'hours' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we only have one activity
+		self.assertEqual(Activity.objects.all().count(),1)
+		# get the activity
+		activity = Activity.objects.get(person=person)
+		# check that it has the right values
+		self.assertEqual(activity.person,person)
+		self.assertEqual(activity.activity_type,test_activity_type_1)
+		self.assertEqual(activity.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(activity.hours,1)
+		self.assertEqual(activity.project,project)
 
 	def test_activity_not_created_zero_hours(self):
 		# log the user in

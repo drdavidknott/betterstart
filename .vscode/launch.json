@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_views.LoginViewTest.test_failed_attempts_reset_with_otp",
+                "people.tests.test_views.AddPersonViewTest.test_create_person_in_project",
                 "--verbosity=2",
             ],
             "django": true,

@@ -1333,6 +1333,18 @@ def auth_log(
 	# save the record
 	profile.save()
 
+def determine_otp_login(site,form):
+	# function to determine whether a real or practice otp login is needed
+	if site and (
+					site.otp_required or 
+					(site.otp_practice and form.cleaned_data['token'])
+					):
+		otp_login = True
+	else:
+		otp_login = False
+	# return the results
+	return otp_login
+
 def link_callback(uri, rel):
 	"""
 	Convert HTML URIs to absolute system paths so xhtml2pdf can access those
@@ -1367,12 +1379,13 @@ def link_callback(uri, rel):
 # VIEW FUNCTIONS
 # A set of functions which implement the functionality of the site and serve pages.
 
-def log_user_in(request):
+def old_log_user_in(request):
 	# initialise variables
 	successful_login = False
 	site = Site.objects.all().first()
 	otp_login = False
 	password_reset_allowed = site.password_reset_allowed if site else False
+	projects_active = site.projects_active if site else False
 	# check whether user is already logged in
 	if request.user.is_authenticated:
 		successful_login = True
@@ -1411,12 +1424,11 @@ def log_user_in(request):
 							# check the token
 							successful_login, message = verify_token(user,login_form.cleaned_data['token'])
 							if successful_login:
-								login(request,user)
 								auth_log(user=user,success=True,otp=True)
 							else:
 								login_form.add_error(None,message)
 								auth_log(user=user,success=False,otp=True)
-						else:
+						
 							login(request,user)
 							successful_login = True
 							auth_log(user=user,success=True,otp=False)
@@ -1438,6 +1450,83 @@ def log_user_in(request):
 		request.session['project_id'] = project.pk if project else 0
 		return redirect('index')
 	# otherwsise, set the context and output a form
+	context = build_context(
+								request,
+								{
+								'login_form' : login_form,
+								'password_reset_allowed' : password_reset_allowed,
+								}
+								)
+	# set the output
+	return HttpResponse(login_template.render(context, request))
+
+def log_user_in(request):
+	# initialise variables
+	successful_login = True
+	site = Site.objects.all().first()
+	password_reset_allowed = site.password_reset_allowed if site else False
+	projects_active = site.projects_active if site else False
+	project = False
+	login_template = loader.get_template('people/login.html')
+	# check whether user is already logged in
+	if request.user.is_authenticated:
+		return redirect('index')
+	# if we haven't got a post, create an empty form
+	if request.method != 'POST':
+		login_form = LoginForm()
+	# if we have got a post, do the validation
+	else:
+		# handle the login request
+		login_form = LoginForm(request.POST)
+		if login_form.is_valid():
+			# determine whether otp login is required
+			otp_login = determine_otp_login(site=site,form=login_form)
+			# do basic authentication
+			user = authenticate(
+								request,
+								username=login_form.cleaned_data['email_address'],
+								password=login_form.cleaned_data['password']
+								)
+			if user is None:
+				# set an error for the login failure
+				login_form.add_error(None, 'Email address or password not recognised.')
+				auth_log(
+							username=login_form.cleaned_data['email_address'],
+							otp=otp_login,
+							success=False
+							)
+				successful_login = False
+			else:
+				# get the profile
+				profile = get_profile(user)
+				# check whether max logins have been exceeded
+				if profile.login_attempts_exceeded():
+					login_form.add_error(None, 'Maximum login attempts exceeded: please contact administrator.')
+					successful_login = False
+				else:
+					# check the otp if we need to
+					if otp_login:
+						successful_otp, message = verify_token(user,login_form.cleaned_data['token'])
+						if not successful_otp:
+							login_form.add_error(None,message)
+							successful_login = False
+					# check whether the user needs and has access to a project
+					if projects_active:
+						project = Project.default_project(user)
+						if not project and not user.is_superuser:
+							# set an error for the login failure
+							login_form.add_error(None, 'You do not have access to any projects.')
+							successful_login = False
+				# record the attempt
+				auth_log(user=user,otp=otp_login,success=successful_login)
+				# if successful, log the user in and set the project
+				if successful_login:
+					login(request,user)
+					messages.success(request, 'Successfully logged in. Welcome back ' + str(request.user.first_name) + '!')
+					if project:
+						request.session['project_id'] = project.pk if project else 0
+					return redirect('index')
+	# set the context and output a form
 	context = build_context(
 								request,
 								{
@@ -3206,7 +3295,10 @@ def event_registration(request,event_id=0):
 
 	# MAIN VIEW PROCESSING
 	# get the event
-	event = Event.try_to_get(pk=event_id)
+	# get the project
+	project = Project.current_project(request.session)
+	# try to get the event
+	event = Event.try_to_get(project=project,pk=event_id)
 	# if the event doesn't exist, crash to a banner
 	if not event:
 		return make_banner(request, 'Event does not exist.')
@@ -3565,7 +3657,8 @@ def settings(request,):
 	context = build_context(
 							request,
 							{
-								'profile' : profile
+								'profile' : Profile.try_to_get(user=request.user),
+								'site' : Site.objects.all().first()
 							}
 							)
 	# return the response

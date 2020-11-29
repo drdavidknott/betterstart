@@ -1689,9 +1689,10 @@ class Panel(DataAccessMixin,models.Model):
 
 	# build a chart
 	def get_chart(self):
-		# set dates if they have been set for the panel
+		# set date and request values if they have been set for the panel
 		start_date = self.start_date if hasattr(self,'start_date') else False
 		end_date = self.end_date if hasattr(self,'end_date') else False
+		self.chart.request = self.request
 		return self.chart.get_chart(start_date=start_date,end_date=end_date)
 
 	# return a set of column names

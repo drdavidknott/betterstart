@@ -124,8 +124,9 @@ def set_up_test_project_permission(username,project_name,default=True):
 									)
 
 def set_up_test_superuser():
-	# create a test superuser
+	# create a test superuser and profile
 	test_superuser = User.objects.create_user(username='testsuper', password='superword', is_superuser=True)
+	profile = Profile.objects.create(user=test_superuser)
 	# return the user
 	return test_superuser
 
@@ -14464,6 +14465,63 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
 		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
 		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+
+	def test_download_people_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC')
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0')
+		# create people in the project
+		set_up_test_people('test_project_adult_',number=2,age_status='Adult',project=project)
+		set_up_test_people('test_project_child_',number=1,age_status='Child under four',project=project)
+		# get the second test person
+		person = Person.objects.get(first_name='test_project_adult_1')
+		# set the values
+		person.other_names = 'test other_names'
+		person.home_phone = '123456'
+		person.mobile_phone = '789012'
+		person.pregnant = True
+		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
+		person.house_name_or_number = '123'
+		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		person.emergency_contact_details = 'test ecd'
+		person.street = Street.objects.get(name='ABC streets 10')
+		# save the record
+		person.save()
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'People',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
+		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+		self.assertNotContains(response,'test_adult_0')
+		self.assertNotContains(response,'test_adult_1')
+		self.assertNotContains(response,'test_child_0')
 
 	def test_download_people_via_search(self):
 		# create base data for addresses

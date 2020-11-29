@@ -318,28 +318,6 @@ class Event(DataAccessMixin,models.Model):
 		verbose_name_plural = 'events'
 		ordering = ['-date']
 
-	# supplement the mixin search function to remove the project filter if it has no value
-	@classmethod
-	def search(cls,*args,**kwargs):
-		# take the project out if it is a null value
-		if 'project' in kwargs.keys() and not kwargs['project']:
-			del kwargs['project']
-		# call the mixin method
-		results = super().search(**kwargs)
-		# return the results
-		return results
-
-	# supplement the mixin search function, filtering by project
-	@classmethod
-	def try_to_get(cls,*args,**kwargs):
-		# initialise variables
-		if 'project' in kwargs.keys() and not kwargs['project']:
-			del kwargs['project']
-		# call the mixin method
-		result = super().try_to_get(**kwargs)
-		# return the result
-		return result
-
 	# define a function to return the areas as a comma separated string
 	def get_areas(self):
 		# set the string to blank
@@ -833,19 +811,6 @@ class Person(DataAccessMixin,models.Model):
 		# return the results
 		return results
 
-	# supplement the mixin search function, filtering by project
-	@classmethod
-	def try_to_get(cls,*args,**kwargs):
-		# initialise variables
-		if 'projects' in kwargs.keys() and not kwargs['projects']:
-			del kwargs['projects']
-
-		# call the mixin method
-		result = super().try_to_get(**kwargs)
-
-		# return the result
-		return result
-
 	# class method to get the next membership number
 	@classmethod
 	def get_next_membership_number(cls,*args,**kwargs):
@@ -1143,16 +1108,7 @@ class Activity(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'activities'
-	# supplement the mixin search function, filtering by project
-	@classmethod
-	def try_to_get(cls,*args,**kwargs):
-		# initialise variables
-		if 'project' in kwargs.keys() and not kwargs['project']:
-			del kwargs['project']
-		# call the mixin method
-		result = super().try_to_get(**kwargs)
-		# return the result
-		return result
+
 
 class Filter_SpecManager(models.Manager):
 	def get_by_natural_key(self, term, filter_type, string_value, boolean_value, period, exclusion):

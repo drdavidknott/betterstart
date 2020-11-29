@@ -1263,7 +1263,7 @@ def verify_token(user,token):
 	# return the results
 	return verified, message
 
-def build_download_file(file_type,objects=None):
+def build_download_file(file_type,objects=None,project=False):
 	# takes a class name and optional queryset and returns a file download response
 	# initialise variables
 	file_handlers = {
@@ -1282,7 +1282,7 @@ def build_download_file(file_type,objects=None):
 						'Venues' : Venues_File_Handler,
 					}
 	# create the file handler
-	file_handler = file_handlers[file_type](objects=objects)
+	file_handler = file_handlers[file_type](objects=objects,project=project)
 	# build the download records
 	file_handler.handle_download()
 	records = file_handler.download_records
@@ -3294,7 +3294,6 @@ def event_registration(request,event_id=0):
 		return addpersonandregistrationform
 
 	# MAIN VIEW PROCESSING
-	# get the event
 	# get the project
 	project = Project.current_project(request.session)
 	# try to get the event
@@ -3413,6 +3412,7 @@ def answer_questions(request,person_id=0):
 def uploaddata(request):
 	# initialise variables
 	file_handler = False
+	project = Project.current_project(request.session)
 	# define the records that need simple file handlers
 	simple_file_handlers = {
 							'Areas' : {'file_class' : Area, 'field_name' : 'area_name'},
@@ -3455,11 +3455,11 @@ def uploaddata(request):
 			# handle a simple file
 			if file_type in simple_file_handlers.keys():
 				file_handler_kwargs = simple_file_handlers[file_type]
-				file_handler = File_Handler(**file_handler_kwargs)
+				file_handler = File_Handler(**file_handler_kwargs,project=project)
 				file_handler.handle_uploaded_file(file)
 			else:
 				# handle a complex file
-				file_handler = file_handlers[file_type]()
+				file_handler = file_handlers[file_type](project=project)
 				file_handler.handle_uploaded_file(file)
 	# otherwise create a fresh form
 	else:
@@ -3483,7 +3483,10 @@ def downloaddata(request):
 	if request.method == 'POST':
 		downloaddataform = DownloadDataForm(request.POST)
 		if downloaddataform.is_valid():
-			response = build_download_file(downloaddataform.cleaned_data['file_type'])
+			response = build_download_file(
+											downloaddataform.cleaned_data['file_type'],
+											project=Project.current_project(request.session)
+											)
 			return response
 	# otherwise create and return a blank form and page
 	else:

@@ -6,7 +6,8 @@ import csv, datetime
 from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
-					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue, Venue_Type
+					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue, Venue_Type, \
+					Project, Membership
 
 class File_Field():
 	# this class defines a field witin a file
@@ -299,6 +300,9 @@ class File_Handler():
 		# and the objects if we have received them
 		if 'objects' in kwargs.keys():
 			self.objects = kwargs['objects']
+		# and the project if we have received one
+		if 'project' in kwargs.keys():
+			self.project = kwargs['project']
 
 	# process an uploaded file
 	def handle_uploaded_file(self, file):
@@ -431,8 +435,15 @@ class File_Handler():
 		new_record.save()
 		# record the creation
 		self.add_record_results(record,[' created.'])
+		# if we have a project, add the project
+		if self.project:
+			self.add_project(new_record)
 		# return the created record
 		return new_record
+
+	def add_project(self):
+		# dummy function extended in sub-classes
+		return
 
 	def label(self,record):
 		# placeholder function to be replaced in sub-classes
@@ -756,6 +767,9 @@ class People_File_Handler(File_Handler):
 		self.additional_download_fields = [
 											'ward',
 											]
+		# filter people by people if we have one
+		if self.project:
+			self.objects = Person.objects.filter(projects=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -763,11 +777,13 @@ class People_File_Handler(File_Handler):
 		# check whether the person exists
 		if self.first_name.valid and self.last_name.valid and self.date_of_birth.valid:
 			# try to get the person
-			if Person.objects.filter(
-										first_name = self.first_name.value,
-										last_name = self.last_name.value,
-										date_of_birth = self.date_of_birth.value
-										).exists():
+			if Person.search(
+								first_name = self.first_name.value,
+								last_name = self.last_name.value,
+								date_of_birth = self.date_of_birth.value,
+								project = self.project,
+								include_people = 'all'
+								).exists():
 				# set the error
 				self.add_record_errors(record,[' not created: person already exists.'])
 				# and the flag
@@ -856,6 +872,15 @@ class People_File_Handler(File_Handler):
 		self.post_code.value = person.street.post_code.post_code if person.street else ''
 		self.ward.value = person.street.post_code.ward.ward_name if person.street else ''
 
+	def add_project(self,person):
+		# create the membership
+		membership = Membership(
+								person=person,
+								project=self.project,
+								)
+		membership.save()
+		return
+
 class Relationships_File_Handler(File_Handler):
 
 	def __init__(self,*args,**kwargs):
@@ -936,7 +961,8 @@ class Relationships_File_Handler(File_Handler):
 			person, message = Person.try_to_get_just_one(
 														first_name = self.from_first_name.value,
 														last_name = self.from_last_name.value,
-														age_status = self.from_age_status.value
+														age_status = self.from_age_status.value,
+														project = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -950,7 +976,8 @@ class Relationships_File_Handler(File_Handler):
 			person, message = Person.try_to_get_just_one(
 														first_name = self.to_first_name.value,
 														last_name = self.to_last_name.value,
-														age_status = self.to_age_status.value
+														age_status = self.to_age_status.value,
+														project = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -963,16 +990,18 @@ class Relationships_File_Handler(File_Handler):
 
 	def create_record(self,record):
 		# get the records, starting with the person from
-		person_from = Person.objects.get(
-										first_name = record['from_first_name'],
-										last_name = record['from_last_name'],
-										age_status__status = record['from_age_status']
-										)
+		person_from = Person.try_to_get(
+												first_name = record['from_first_name'],
+												last_name = record['from_last_name'],
+												age_status__status = record['from_age_status'],
+												project = self.project
+												)
 		# and the person to
-		person_to = Person.objects.get(
+		person_to = Person.try_to_get(
 										first_name = record['to_first_name'],
 										last_name = record['to_last_name'],
-										age_status__status = record['to_age_status']
+										age_status__status = record['to_age_status'],
+										project = self.project
 										)
 		# and the relationship type
 		relationship_type = Relationship_Type.objects.get(relationship_type = record['relationship_type'])
@@ -1066,15 +1095,19 @@ class Events_File_Handler(File_Handler):
 						'ward',
 						'areas',
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Event.search(project=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
 		valid = True
 		# now attempt to get a matching event
-		if self.name.valid and self.date.valid and Event.objects.filter(
-																		name = self.name.value,
-																		date = self.date.value,
-																		).exists():
+		if self.name.valid and self.date.valid and Event.search(
+																name = self.name.value,
+																date = self.date.value,
+																project = self.project
+																).exists():
 			# set the message to show that it exists
 			self.add_record_errors(record,[' not created: event already exists.'])
 			# and set the flag
@@ -1106,6 +1139,12 @@ class Events_File_Handler(File_Handler):
 	def set_download_fields(self,event):
 		# call the built in field setter
 		super(Events_File_Handler, self).set_download_fields(event)
+
+	def add_project(self,event):
+		# add the project to the event
+		event.project = self.project
+		event.save()
+		return
 
 	def label(self,record):
 		# return the label
@@ -1259,7 +1298,8 @@ class Venues_For_Events_File_Handler(File_Handler):
 		if self.event_date.valid:
 			event,message = Event.try_to_get_just_one(
 														name = self.event_name.value,
-														date = self.event_date.value
+														date = self.event_date.value,
+														project = self.project
 														)
 			# deal with the exception if we couldn't find an event
 			if not event:
@@ -1270,9 +1310,10 @@ class Venues_For_Events_File_Handler(File_Handler):
 
 	def create_record(self,record):
 		# get the records
-		event = Event.objects.get(
+		event = Event.try_to_get(
 									name = self.event_name.value,
-									date = self.event_date.value
+									date = self.event_date.value,
+									project = self.project
 									)
 		# update the event
 		event.venue = self.venue_name.value
@@ -1353,6 +1394,9 @@ class Registrations_File_Handler(File_Handler):
 						'participated',
 						'role_type'
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Event_Registration.objects.filter(event__project=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1363,7 +1407,8 @@ class Registrations_File_Handler(File_Handler):
 			person,message = Person.try_to_get_just_one(
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
-														age_status = self.age_status.value
+														age_status = self.age_status.value,
+														project = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1386,7 +1431,8 @@ class Registrations_File_Handler(File_Handler):
 			# try to get the event record
 			event,message = Event.try_to_get_just_one(
 														name = self.event_name.value,
-														date = self.event_date.value
+														date = self.event_date.value,
+														project = self.project
 														)
 			# see what we got
 			if not event:
@@ -1405,16 +1451,18 @@ class Registrations_File_Handler(File_Handler):
 
 	def create_record(self,record):
 		# get the records, starting with the person
-		person = Person.objects.get(
-									first_name = self.first_name.value,
-									last_name = self.last_name.value,
-									age_status = self.age_status.value
-									)
+		person = Person.try_to_get(
+											first_name = self.first_name.value,
+											last_name = self.last_name.value,
+											age_status = self.age_status.value,
+											project = self.project
+											)
 		# and the event
-		event = Event.objects.get(
-									name = self.event_name.value,
-									date = self.event_date.value
-									)
+		event = Event.try_to_get(
+											name = self.event_name.value,
+											date = self.event_date.value,
+											project = self.project
+											)
 		# attempt to get the existing registration
 		registration = Event_Registration.try_to_get(event=event,person=person)
 		# deal with the failure
@@ -1541,6 +1589,9 @@ class Events_And_Registrations_File_Handler(File_Handler):
 										corresponding_must_exist=True,
 										use_corresponding_for_download=True
 										)
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Event_Registration.objects.filter(event__project=self.project)
 
 		# and a list of the fields
 		self.fields = [
@@ -1708,6 +1759,9 @@ class Answers_File_Handler(File_Handler):
 						'question',
 						'option'
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Answers.objects.filter(person__projects=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1733,7 +1787,8 @@ class Answers_File_Handler(File_Handler):
 			person,message = Person.try_to_get_just_one(
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
-														age_status = self.age_status.value
+														age_status = self.age_status.value,
+														project = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1744,11 +1799,12 @@ class Answers_File_Handler(File_Handler):
 			# otherwise, check whether we have a duplicate
 			elif self.question.valid and self.option.valid:
 				# start by getting the person
-				person = Person.objects.get(
-											first_name = self.first_name.value,
-											last_name = self.last_name.value,
-											age_status = self.age_status.value
-											)
+				person = Person.try_to_get(
+													first_name = self.first_name.value,
+													last_name = self.last_name.value,
+													age_status = self.age_status.value,
+													project = self.project
+													)
 				# now check whether the answer already exists
 				if Answer.objects.filter(
 											person = person,
@@ -1764,11 +1820,12 @@ class Answers_File_Handler(File_Handler):
 
 	def create_record(self,record):
 		# get the records, starting with the person
-		person = Person.objects.get(
-									first_name = self.first_name.value,
-									last_name = self.last_name.value,
-									age_status = self.age_status.value
-									)
+		person = Person.try_to_get(
+											first_name = self.first_name.value,
+											last_name = self.last_name.value,
+											age_status = self.age_status.value,
+											project = self.project
+											)
 		# create the object
 		answer = Answer(
 						person = person,
@@ -1843,6 +1900,9 @@ class Answer_Notes_File_Handler(File_Handler):
 						'question',
 						'notes'
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Answers.objects.filter(person__projects=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1853,7 +1913,8 @@ class Answer_Notes_File_Handler(File_Handler):
 			person,message = Person.try_to_get_just_one(
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
-														age_status = self.age_status.value
+														age_status = self.age_status.value,
+														project = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1864,11 +1925,12 @@ class Answer_Notes_File_Handler(File_Handler):
 			# otherwise, do the other checks
 			elif self.question.valid:
 				# start by getting the person
-				person = Person.objects.get(
-											first_name = self.first_name.value,
-											last_name = self.last_name.value,
-											age_status = self.age_status.value
-											)
+				person = Person.try_to_get(
+													first_name = self.first_name.value,
+													last_name = self.last_name.value,
+													age_status = self.age_status.value,
+													project = self.project
+													)
 				# chec whether we have at least one answer
 				if not Answer.objects.filter(
 												person = person,
@@ -1892,11 +1954,12 @@ class Answer_Notes_File_Handler(File_Handler):
 
 	def create_record(self,record):
 		# get the records, starting with the person
-		person = Person.objects.get(
-									first_name = self.first_name.value,
-									last_name = self.last_name.value,
-									age_status = self.age_status.value
-									)
+		person = Person.try_to_get(
+											first_name = self.first_name.value,
+											last_name = self.last_name.value,
+											age_status = self.age_status.value,
+											project = self.project
+											)
 		# create the object
 		answer_note = Answer_Note(
 									person = person,
@@ -1973,6 +2036,9 @@ class Activities_File_Handler(File_Handler):
 						'date',
 						'hours',
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Activity.objects.filter(person__projects=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1983,7 +2049,8 @@ class Activities_File_Handler(File_Handler):
 			person,message = Person.try_to_get_just_one(
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
-														age_status = self.age_status.value
+														age_status = self.age_status.value,
+														project = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1996,11 +2063,12 @@ class Activities_File_Handler(File_Handler):
 
 	def create_record(self,record):
 		# get the records, starting with the person
-		person = Person.objects.get(
-									first_name = self.first_name.value,
-									last_name = self.last_name.value,
-									age_status = self.age_status.value
-									)
+		person = Person.try_to_get(
+											first_name = self.first_name.value,
+											last_name = self.last_name.value,
+											age_status = self.age_status.value,
+											project = self.project
+											)
 		# attempt to get the existing activity
 		activity = Activity.try_to_get(
 										person=person,
@@ -2033,6 +2101,12 @@ class Activities_File_Handler(File_Handler):
 		super(Activities_File_Handler, self).set_download_fields(activity)
 		# set the special fields
 		self.age_status.value = activity.person.age_status.status
+
+	def add_project(self,activity):
+		# add the project to the activity
+		activity.project = self.project
+		activity.save()
+		return
 
 	def label(self,record):
 		# return the label
@@ -2094,6 +2168,9 @@ class Event_Summary_File_Handler(File_Handler):
 						'participated',
 						'total'
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Event.search(project=self.project)
 
 class People_Limited_Data_File_Handler(File_Handler):
 
@@ -2130,6 +2207,9 @@ class People_Limited_Data_File_Handler(File_Handler):
 						'address',
 						'ward',
 						]
+		# set a filtered set of objects if we have a project
+		if self.project:
+			self.objects = Person.search(projects=self.project,include_people='all')
 
 	def set_download_fields(self,person):
 		# call the built in field setter

@@ -1761,7 +1761,7 @@ class Answers_File_Handler(File_Handler):
 						]
 		# set a filtered set of objects if we have a project
 		if self.project:
-			self.objects = Answers.objects.filter(person__projects=self.project)
+			self.objects = Answer.objects.filter(person__projects=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1902,7 +1902,7 @@ class Answer_Notes_File_Handler(File_Handler):
 						]
 		# set a filtered set of objects if we have a project
 		if self.project:
-			self.objects = Answers.objects.filter(person__projects=self.project)
+			self.objects = Answer_Note.objects.filter(person__projects=self.project)
 
 	def complex_validation_valid(self,record):
 		# set the value

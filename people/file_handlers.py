@@ -281,6 +281,7 @@ class File_Handler():
 		self.records_read = 0
 		self.records_created = 0
 		self.records_with_errors = 0
+		self.project_filter = {}
 		# set the file class if we have received one
 		if 'file_class' in kwargs.keys():
 			self.file_class = kwargs['file_class']
@@ -336,9 +337,11 @@ class File_Handler():
 	def handle_download(self):
 		# define empty records
 		self.download_records = []
-		# get the objects if we've not already been passed them
+		# get the objects if we've not already been passed them, filtering by project if we have a project filter
 		if not self.objects:
 			self.objects = self.file_class.objects.all()
+			if self.project_filter:
+				self.objects = self.objects.filter(**self.project_filter)
 		# go through the objects
 		for this_object in self.objects:
 			# set the fields
@@ -767,9 +770,9 @@ class People_File_Handler(File_Handler):
 		self.additional_download_fields = [
 											'ward',
 											]
-		# filter people by people if we have one
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Person.objects.filter(projects=self.project)
+			self.project_filter = { 'projects' : self.project }
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -951,6 +954,12 @@ class Relationships_File_Handler(File_Handler):
 						'to_age_status',
 						'relationship_type'
 						]
+		# set a project filter if we have a project
+		if self.project:
+			self.project_filter = { 
+									'relationship_from__projects' : self.project,
+									'relationship_to__projects' : self.project
+									}
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -962,7 +971,7 @@ class Relationships_File_Handler(File_Handler):
 														first_name = self.from_first_name.value,
 														last_name = self.from_last_name.value,
 														age_status = self.from_age_status.value,
-														project = self.project
+														projects = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -977,7 +986,7 @@ class Relationships_File_Handler(File_Handler):
 														first_name = self.to_first_name.value,
 														last_name = self.to_last_name.value,
 														age_status = self.to_age_status.value,
-														project = self.project
+														projects = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -994,14 +1003,14 @@ class Relationships_File_Handler(File_Handler):
 												first_name = record['from_first_name'],
 												last_name = record['from_last_name'],
 												age_status__status = record['from_age_status'],
-												project = self.project
+												projects = self.project
 												)
 		# and the person to
 		person_to = Person.try_to_get(
 										first_name = record['to_first_name'],
 										last_name = record['to_last_name'],
 										age_status__status = record['to_age_status'],
-										project = self.project
+										projects = self.project
 										)
 		# and the relationship type
 		relationship_type = Relationship_Type.objects.get(relationship_type = record['relationship_type'])
@@ -1095,9 +1104,9 @@ class Events_File_Handler(File_Handler):
 						'ward',
 						'areas',
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Event.search(project=self.project)
+			self.project_filter = { 'project' : self.project }
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1394,9 +1403,12 @@ class Registrations_File_Handler(File_Handler):
 						'participated',
 						'role_type'
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Event_Registration.objects.filter(event__project=self.project)
+			self.project_filter = {
+									'event__project' : self.project,
+									'person__projects' : self.project
+									}
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1408,7 +1420,7 @@ class Registrations_File_Handler(File_Handler):
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
 														age_status = self.age_status.value,
-														project = self.project
+														projects = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1455,7 +1467,7 @@ class Registrations_File_Handler(File_Handler):
 											first_name = self.first_name.value,
 											last_name = self.last_name.value,
 											age_status = self.age_status.value,
-											project = self.project
+											projects = self.project
 											)
 		# and the event
 		event = Event.try_to_get(
@@ -1589,9 +1601,9 @@ class Events_And_Registrations_File_Handler(File_Handler):
 										corresponding_must_exist=True,
 										use_corresponding_for_download=True
 										)
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Event_Registration.objects.filter(event__project=self.project)
+			self.project_filter = { 'event__project' : self.project }
 
 		# and a list of the fields
 		self.fields = [
@@ -1759,9 +1771,9 @@ class Answers_File_Handler(File_Handler):
 						'question',
 						'option'
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Answer.objects.filter(person__projects=self.project)
+			self.project_filter = { 'person__projects' : self.project }
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1788,7 +1800,7 @@ class Answers_File_Handler(File_Handler):
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
 														age_status = self.age_status.value,
-														project = self.project
+														projects = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1803,7 +1815,7 @@ class Answers_File_Handler(File_Handler):
 													first_name = self.first_name.value,
 													last_name = self.last_name.value,
 													age_status = self.age_status.value,
-													project = self.project
+													projects = self.project
 													)
 				# now check whether the answer already exists
 				if Answer.objects.filter(
@@ -1824,7 +1836,7 @@ class Answers_File_Handler(File_Handler):
 											first_name = self.first_name.value,
 											last_name = self.last_name.value,
 											age_status = self.age_status.value,
-											project = self.project
+											projects = self.project
 											)
 		# create the object
 		answer = Answer(
@@ -1900,9 +1912,9 @@ class Answer_Notes_File_Handler(File_Handler):
 						'question',
 						'notes'
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Answer_Note.objects.filter(person__projects=self.project)
+			self.project_filter = { 'person__projects' : self.project }
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -1914,7 +1926,7 @@ class Answer_Notes_File_Handler(File_Handler):
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
 														age_status = self.age_status.value,
-														project = self.project
+														projects = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -1929,7 +1941,7 @@ class Answer_Notes_File_Handler(File_Handler):
 													first_name = self.first_name.value,
 													last_name = self.last_name.value,
 													age_status = self.age_status.value,
-													project = self.project
+													projects = self.project
 													)
 				# chec whether we have at least one answer
 				if not Answer.objects.filter(
@@ -1958,7 +1970,7 @@ class Answer_Notes_File_Handler(File_Handler):
 											first_name = self.first_name.value,
 											last_name = self.last_name.value,
 											age_status = self.age_status.value,
-											project = self.project
+											projects = self.project
 											)
 		# create the object
 		answer_note = Answer_Note(
@@ -2036,9 +2048,9 @@ class Activities_File_Handler(File_Handler):
 						'date',
 						'hours',
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Activity.objects.filter(person__projects=self.project)
+			self.project_filter = { 'person__projects' : self.project }
 
 	def complex_validation_valid(self,record):
 		# set the value
@@ -2050,7 +2062,7 @@ class Activities_File_Handler(File_Handler):
 														first_name = self.first_name.value,
 														last_name = self.last_name.value,
 														age_status = self.age_status.value,
-														project = self.project
+														projects = self.project
 														)
 			# if there was an error, add it
 			if not person:
@@ -2067,7 +2079,7 @@ class Activities_File_Handler(File_Handler):
 											first_name = self.first_name.value,
 											last_name = self.last_name.value,
 											age_status = self.age_status.value,
-											project = self.project
+											projects = self.project
 											)
 		# attempt to get the existing activity
 		activity = Activity.try_to_get(
@@ -2168,9 +2180,9 @@ class Event_Summary_File_Handler(File_Handler):
 						'participated',
 						'total'
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Event.search(project=self.project)
+			self.project_filter = { 'project' : self.project }
 
 class People_Limited_Data_File_Handler(File_Handler):
 

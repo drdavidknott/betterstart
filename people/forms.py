@@ -390,10 +390,10 @@ class ProfileForm(forms.Form):
 																	}),
         							input_formats=('%d/%m/%Y',))
 	ABSS_type = forms.ChoiceField(
-									label="ABSS type",
+									label="Membership type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	ABSS_start_date = forms.DateField(
-									label="ABSS start date",
+									label="Project start date",
 									required=False,
 									widget=forms.DateInput(
 																format='%d/%m/%Y',
@@ -403,7 +403,7 @@ class ProfileForm(forms.Form):
 																	}),
 									input_formats=('%d/%m/%Y',))
 	ABSS_end_date = forms.DateField(
-									label="ABSS end date",
+									label="Project end date",
 									required=False,
 									widget=forms.DateInput(
 																format='%d/%m/%Y',

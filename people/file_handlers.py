@@ -444,7 +444,7 @@ class File_Handler():
 		# return the created record
 		return new_record
 
-	def add_project(self):
+	def add_project(self,record):
 		# dummy function extended in sub-classes
 		return
 

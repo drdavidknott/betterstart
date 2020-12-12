@@ -498,7 +498,7 @@ class Person(DataAccessMixin,models.Model):
 		return desc
 
 	# and a function to return a description of membership in the project
-	def project_description(self):
+	def project_description(self,session=False):
 		# create a description
 		desc = self.ABSS_type.name
 		# and add the joining date

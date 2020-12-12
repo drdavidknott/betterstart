@@ -253,6 +253,26 @@ def set_up_relationship(person_from,person_to,relationship_from,relationship_to)
 									relationship_type=Relationship_Type.objects.get(relationship_type=relationship_to)
 								)
 
+def project_login(client,username='testsuper',project_name='testproject'):
+	# create a project and permissions, and log the user into the project
+	set_up_test_project_permission(
+									username=username,
+									project_name=project_name
+									)
+	Site.objects.create(
+						name='Test site',
+						projects_active=True
+						)
+	project = Project.objects.get(name='testproject')
+	# log the user in and set the project session variable
+	client.login(username='testsuper', password='superword')
+	session = client.session
+	session['project_id'] = project.pk
+	session.save()
+	# return the project
+	return project
+
+
 class LoginViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -15332,6 +15352,146 @@ class DownloadEventSummaryDataViewTest(TestCase):
 		# check that we got an already exists message
 		self.assertContains(response,'test_event_0,01/01/2019,Test location,test_venue,2,2,2,3')
 
+	def test_download_summary_with_venue_with_projects_active_no_results(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# create the venue and add it to the event
+		set_up_address_base_data()
+		set_up_venue_base_data()
+		event = Event.objects.get(name='test_event_0')
+		event.venue = Venue.objects.get(name='test_venue')
+		event.save()
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+		# log out and log back in with a project
+		self.client.logout()
+		project = project_login(self.client)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Event Summary',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertNotContains(response,'test_event_0')
+
+	def test_download_summary_with_venue_with_projects_active_with_results(self):
+		# create a project and log in
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create the venue and add it to the event
+		set_up_address_base_data()
+		set_up_venue_base_data()
+		event = Event.objects.get(name='test_event_0')
+		event.venue = Venue.objects.get(name='test_venue')
+		event.project = project
+		event.save()
+		# add the people to the project
+		for person in Person.objects.all():
+			Membership.objects.create(
+										person=person,
+										project=project
+										)
+		# open the file
+		valid_file = open('people/tests/data/registrations.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Registrations',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and event records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		event = Event.objects.get(name='test_event_0')
+		# and the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# get the records
+		registration_adult_0 = Event_Registration.objects.get(person=adult_0,event=event)
+		# check the values
+		self.assertEqual(registration_adult_0.role_type,role_type)
+		self.assertEqual(registration_adult_0.registered,False)
+		self.assertEqual(registration_adult_0.participated,True)
+		# get the records
+		registration_adult_1 = Event_Registration.objects.get(person=adult_1,event=event)
+		# check the values
+		self.assertEqual(registration_adult_1.role_type,role_type)
+		self.assertEqual(registration_adult_1.registered,True)
+		self.assertEqual(registration_adult_1.participated,True)
+		# get the records
+		registration_child_0 = Event_Registration.objects.get(person=child_0,event=event)
+		# check the values
+		self.assertEqual(registration_child_0.role_type,role_type)
+		self.assertEqual(registration_child_0.registered,True)
+		self.assertEqual(registration_child_0.participated,False)
+		# check the count
+		self.assertEqual(Event_Registration.objects.all().count(),3)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Event Summary',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_event_0,01/01/2019,Test location,test_venue,2,2,2,3')
+
 class UploadDownloadAnswersViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -15516,6 +15676,151 @@ class UploadDownloadAnswersViewTest(TestCase):
 	def test_download_answers(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+		# download the answer data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test label')
+
+	def test_download_answers_with_projects_active_no_results(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+		# log out and log back in with a project
+		self.client.logout()
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# download the answer data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertNotContains(response,'test_adult_0')
+
+	def test_download_answers_with_projects_active_with_results(self):
+		# log the user in as a superuser in a project
+		project = project_login(self.client)
+		# add the people to the project
+		for person in Person.objects.all():
+			Membership.objects.create(
+										person=person,
+										project=project
+										)
 		# load a file to create the questions
 		valid_file = open('people/tests/data/questions.csv')
 		# submit the page to load the file
@@ -15779,6 +16084,141 @@ class UploadDownloadAnswerNotesViewTest(TestCase):
 	def test_download_answer_notes(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answer_notes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# download the answer note data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test notes')
+
+	def test_download_answer_notes_with_projects_active_no_results(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answer_notes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# logout and log back in again with a project
+		self.client.logout()
+		project = project_login(self.client)
+		# download the answer note data we have just created
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answer Notes',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertNotContains(response,'test_adult_0')
+
+	def test_download_answer_notes_with_projects_active_with_results(self):
+		# log the user in as a superuser in a project
+		project = project_login(self.client)
+		# add the people to the project
+		for person in Person.objects.all():
+			Membership.objects.create(
+										project=project,
+										person=person
+									)
 		# load a file to create the questions
 		valid_file = open('people/tests/data/questions.csv')
 		# submit the page to load the file
@@ -16416,6 +16856,136 @@ class DownloadActivitiesDataViewTest(TestCase):
 	def test_download_activities(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and activity records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,3)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,5)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,1)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 1,01/01/2019,4')
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 1,01/02/2019,3')
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 2,01/01/2019,2')
+		self.assertContains(response,'test_child_0,test_child_0,Child under four,Test activity type 1,01/01/2019,1')
+		self.assertContains(response,'test_adult_1,test_adult_1,Adult,Test activity type 1,01/01/2019,5')
+
+	def test_download_activities_with_projects_active_no_results(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/activities.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the people and activity records
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		child_0 = Person.objects.get(first_name='test_child_0')
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,3)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,5)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,1)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+		# log out and log back in with a project
+		self.client.logout()
+		project_login(self.client)
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertNotContains(response,'test_adult_0')
+		self.assertNotContains(response,'test_adult_1')
+
+	def test_download_activities_with_projects_active_with_results(self):
+		# log the user in as a superuser in a project
+		project = project_login(self.client)
+		# add the people to the project
+		for person in Person.objects.all():
+			Membership.objects.create(
+										project=project,
+										person=person
+									)
 		# open the file
 		valid_file = open('people/tests/data/activities.csv')
 		# submit the page to load the file

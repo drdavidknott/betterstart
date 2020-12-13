@@ -6,7 +6,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
 							Terms_And_Conditions, Profile, Chart, Document_Link, Project, Membership, \
-							Project_Permission
+							Project_Permission, Membership_Type
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -19,39 +19,30 @@ import json
 
 def set_up_people_base_data():
 	# set up base data needed to do tests for people
-	# first the ethnicity
+	# first the ethnicities
 	test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
-	# and a second test ethnicity
 	second_test_ethnicity = Ethnicity.objects.create(description='second_test_ethnicity')
-	# and another ethnicity
-	test_ethnicity = Ethnicity.objects.create(description='Prefer not to say')
+	test_ethnicity = Ethnicity.objects.create(description='Prefer not to say',default=True)
 	# and the capture type
 	test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
-	# create a test role
+	# create test role types
 	test_role = Role_Type.objects.create(role_type_name='test_role_type',
 											use_for_events=True,
 											use_for_people=True)
-	# and a second test role type
 	second_test_role = Role_Type.objects.create(role_type_name='second_test_role_type',use_for_events=True,use_for_people=True)
-	# and an UNKNOWN role type
 	unknown_test_role = Role_Type.objects.create(role_type_name='UNKNOWN',use_for_events=True,use_for_people=True)
-	# and a test role for an age status default
 	age_test_role = Role_Type.objects.create(role_type_name='age_test_role',use_for_events=True,use_for_people=True)
-	# and a test role for adults only
 	adult_test_role = Role_Type.objects.create(role_type_name='adult_test_role',use_for_events=True,use_for_people=True)
-	# create a test ABSS type
+	# create test ABSS types
 	test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type')
-	# create a second test ABSS type
 	second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type')
-	# and another type
-	test_ABSS_type = ABSS_Type.objects.create(name='ABSS beneficiary')
-	# create a test age status
+	test_ABSS_type = ABSS_Type.objects.create(name='ABSS beneficiary',default=True)
+	# and a test membership type
+	test_membership_type = Membership_Type.objects.create(name='test_membership_type',default=True)
+	# create test age statuses
 	test_age_status = Age_Status.objects.create(status='Adult',default_role_type=test_role)
-	# create a second test age status
 	test_age_status_2 = Age_Status.objects.create(status='Child under four',default_role_type=test_role,maximum_age=4)
-	# and a third test age status
 	test_age_status_3 = Age_Status.objects.create(status='Default role age status',default_role_type=age_test_role,default_role_type_only=True)
-	# and a child over foud
 	child_over_four = Age_Status.objects.create(status='Child over four',default_role_type=age_test_role,default_role_type_only=True,maximum_age=18)
 	# allow the role type of each age status
 	test_age_status.role_types.add(test_role)
@@ -101,7 +92,8 @@ def set_up_test_people(
 		if project:
 			Membership.objects.create(
 										person=test_person,
-										project=project
+										project=project,
+										membership_type=Membership_Type.objects.get(default=True)
 										)
 
 def set_up_test_user():
@@ -253,7 +245,7 @@ def set_up_relationship(person_from,person_to,relationship_from,relationship_to)
 									relationship_type=Relationship_Type.objects.get(relationship_type=relationship_to)
 								)
 
-def project_login(client,username='testsuper',project_name='testproject'):
+def project_login(client,username='testsuper',password='superword',project_name='testproject'):
 	# create a project and permissions, and log the user into the project
 	set_up_test_project_permission(
 									username=username,
@@ -263,9 +255,9 @@ def project_login(client,username='testsuper',project_name='testproject'):
 						name='Test site',
 						projects_active=True
 						)
-	project = Project.objects.get(name='testproject')
+	project = Project.objects.get(name=project_name)
 	# log the user in and set the project session variable
-	client.login(username='testsuper', password='superword')
+	client.login(username=username, password=password)
 	session = client.session
 	session['project_id'] = project.pk
 	session.save()
@@ -1053,6 +1045,8 @@ class PeopleViewTest(TestCase):
 		set_up_test_people('Ex_Parent_Champion_','Parent Champion',50)
 		# and a set that doesn't exactly fit two pagaes
 		set_up_test_people('Pagination_','test role 5',32)
+		# and a test membership type
+		test_membership_type = Membership_Type.objects.create(name='test_membership_type',default=True)
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
@@ -1081,7 +1075,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1108,7 +1102,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1142,7 +1136,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1177,7 +1171,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1218,7 +1212,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1253,7 +1247,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1288,7 +1282,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1323,7 +1317,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1361,7 +1355,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1390,7 +1384,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(parent_role_type.pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1425,7 +1419,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'in project',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1460,7 +1454,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'in project',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1494,7 +1488,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1530,7 +1524,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1561,7 +1555,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'parent',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1587,7 +1581,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1613,7 +1607,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Download Full Data',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1635,7 +1629,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Download Full Data',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1658,7 +1652,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Download',
 											'names' : 'Test_Role_1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1681,7 +1675,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'test_role_1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1715,7 +1709,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'name_search',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1749,7 +1743,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'NAME_SEARCH',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1783,7 +1777,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'name_search',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1814,7 +1808,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '999',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1845,7 +1839,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'email',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1880,7 +1874,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'first last',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1915,7 +1909,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'first other',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1958,7 +1952,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'first other',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -1984,7 +1978,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'Short',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2012,7 +2006,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'Different',
 											'role_type' : str(test_role_type_1.pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2048,7 +2042,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'Different difflast',
 											'role_type' : str(test_role_type_1.pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2077,7 +2071,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'Different',
 											'keywords' : 'test role 1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2114,7 +2108,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'Different difflast',
 											'keywords' : 'test role 1',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2140,7 +2134,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'No_results',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2168,7 +2162,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(test_role_type_4.pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2196,7 +2190,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'Test_Role_1_',
 											'role_type' : str(test_role_type_3.pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2224,7 +2218,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(test_role_type_5.pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2250,7 +2244,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'Pagination',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2278,7 +2272,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2307,7 +2301,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'second_test_ABSS_type',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2336,7 +2330,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2365,7 +2359,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2395,7 +2389,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2425,7 +2419,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'find',
 											'keywords' : 'second_test_ABSS_type',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2455,7 +2449,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'test role 2 second_test_ABSS_type',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2486,7 +2480,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'find',
 											'keywords' : 'test role 2 second_test_ABSS_type',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2514,7 +2508,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='Third test ABSS').pk),
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2542,7 +2536,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2571,7 +2565,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2600,7 +2594,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2630,7 +2624,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2661,7 +2655,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2690,7 +2684,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'child',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2720,7 +2714,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'find',
 											'keywords' : 'child',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2750,7 +2744,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'test role 2 child',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2781,7 +2775,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'find',
 											'keywords' : 'test role 2 child',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2813,7 +2807,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'find',
 											'keywords' : 'test role 2 second_test_ABSS_type child',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2841,7 +2835,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(age_status.pk),
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2879,7 +2873,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -2918,7 +2912,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'test role 1 adult',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -2957,7 +2951,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -2996,7 +2990,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -3035,7 +3029,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -3075,7 +3069,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -3116,7 +3110,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -3148,7 +3142,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'trained_' + str(role_type.pk),
 											'ward' : '0',
@@ -3186,7 +3180,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3229,7 +3223,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3268,7 +3262,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : str(Age_Status.objects.get(status='Child').pk),
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3307,7 +3301,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3346,7 +3340,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3386,7 +3380,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3427,7 +3421,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : 'find',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test role 2').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3459,7 +3453,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'active_' + str(role_type.pk),
 											'ward' : '0',
@@ -3501,7 +3495,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : str(Ward.objects.get(ward_name='Test ward').pk),
@@ -3544,7 +3538,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'Test ward',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -3586,7 +3580,7 @@ class PeopleViewTest(TestCase):
 											'action' : 'Search',
 											'names' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : str(Ward.objects.get(ward_name='Test ward 2').pk),
@@ -3629,7 +3623,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'keyword',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -3663,7 +3657,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'keyword',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -3690,7 +3684,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'invalid',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -3727,7 +3721,7 @@ class PeopleViewTest(TestCase):
 											'names' : '',
 											'keywords' : 'test_ethnicity_2',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -3768,7 +3762,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'not_member',
 											'keywords' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -3808,7 +3802,7 @@ class PeopleViewTest(TestCase):
 											'names' : 'is_member',
 											'keywords' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
@@ -4088,11 +4082,11 @@ class PeopleQueryTest(TestCase):
 		# check the response
 		self.assertRedirects(response, '/people/login?next=/role_type/1')
 
-	def test_ABSS_type_redirect_if_not_logged_in(self):
+	def test_membership_type_redirect_if_not_logged_in(self):
 		# get the response
-		response = self.client.get('/ABSS_type/1')
+		response = self.client.get('/membership_type/1')
 		# check the response
-		self.assertRedirects(response, '/people/login?next=/ABSS_type/1')
+		self.assertRedirects(response, '/people/login?next=/membership_type/1')
 
 	def test_age_status_redirect_if_not_logged_in(self):
 		# get the response
@@ -4112,7 +4106,7 @@ class PeopleQueryTest(TestCase):
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		# attempt to get the people page
-		response = self.client.get(reverse('ABSS_type',args=[ABSS_Type.objects.get(name='test_ABSS_type').pk]))
+		response = self.client.get(reverse('membership_type',args=[ABSS_Type.objects.get(name='test_ABSS_type').pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
@@ -4150,7 +4144,7 @@ class PeopleQueryTest(TestCase):
 		# create some extra people
 		set_up_test_people('ABSS Type Query Test','test_role_type',30,'People Query Test','Adult')
 		# attempt to get the people page
-		response = self.client.get(reverse('ABSS_type',args=[test_ABSS_type.pk]))
+		response = self.client.get(reverse('membership_type',args=[test_ABSS_type.pk]))
 		# check the response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right number of people
@@ -5854,12 +5848,12 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -5927,12 +5921,12 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -5992,12 +5986,12 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : '99',
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6056,12 +6050,12 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '1',
 											'action' : 'Submit'
 											}
@@ -6091,19 +6085,19 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '1',
 											'action' : 'Submit'
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
-		self.assertContains(response,'ABSS end date can only be entered if ABSS start date is entered.')
+		self.assertContains(response,'Date left project can only be entered if date joined project is entered.')
 
 	def test_update_profile_ABSS_end_date_before_start_date(self):
 		# log the user in
@@ -6126,19 +6120,19 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Child under four').pk),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2016',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2016',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
-		self.assertContains(response,'ABSS end date must be after ABSS start date.')
+		self.assertContains(response,'Date left project must be after date joined project.')
 
 	def test_update_profile_trained_role(self):
 		# log the user in
@@ -6169,13 +6163,13 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'trained',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6246,14 +6240,14 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'trained',
 											'trained_date_' + str(role_type.pk) : '01/01/2012',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6327,14 +6321,14 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'trained',
 											'trained_date_' + str(role_type.pk) : tomorrow.strftime('%d/%m/%Y'),
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6374,14 +6368,14 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'none',
 											'trained_date_' + str(role_type.pk) : '01/01/2010',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6419,13 +6413,13 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'active',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6496,13 +6490,13 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'none',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6574,14 +6568,14 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Adult').pk),
 											'trained_role_' + str(role_type.pk) : 'active',
 											'trained_date_' + str(role_type.pk) : '',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6653,13 +6647,13 @@ class ProfileViewTest(TestCase):
 											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
-											'ABSS_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
+											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
 											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
 											'trained_role_' + str(role_type.pk) : 'trained',
 											'notes' : 'updated notes',
 											'emergency_contact_details' : 'updated emergency contact details',
-											'ABSS_start_date' : '01/01/2010',
-											'ABSS_end_date' : '01/01/2015',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
 											'membership_number' : '0',
 											'action' : 'Submit'
 											}
@@ -6698,6 +6692,75 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.membership_number,0)
 		# check that no trained role records exist
 		self.assertEqual(test_person.trained_roles.all().exists(),False)
+
+	def test_update_profile_with_projects_active(self):
+		# log the user in
+		project = project_login(self.client,username='testuser',password='testword')
+		# create a person in a project
+		set_up_test_people('Person_','test_role_type',1,project=project)
+		# and an extra membership type
+		Membership_Type.objects.create(name='new_membership_type')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : 'updated_middle_names',
+											'last_name' : 'updated_last_name',
+											'other_names' : 'updated other_names',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'pregnant' : True,
+											'due_date' : '01/01/2020',
+											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'membership_type' : str(Membership_Type.objects.get(name='new_membership_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
+											'membership_number' : '0',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(first_name='updated_first_name')
+		test_membership = Membership.objects.get(person=test_person,project=project)
+		# check the record contents
+		self.assertEqual(test_person.first_name,'updated_first_name')
+		self.assertEqual(test_person.middle_names,'updated_middle_names')
+		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.other_names,'updated other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'age_test_role')
+		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'678901')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'updated notes')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.age_status.status,'Default role age status')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.membership_number,0)
+		self.assertEqual(test_membership.membership_type.name,'new_membership_type')
+		self.assertEqual(test_membership.date_joined.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_membership.date_left.strftime('%d/%m/%Y'),'01/01/2015')
 
 class AddRelationshipViewTest(TestCase):
 	@classmethod
@@ -13223,6 +13286,34 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
+	def test_upload_people_data_cross_field_validation_in_project(self):
+		# log the user in as a superuser
+		project = project_login(self.client)
+		# open the file
+		valid_file = open('people/tests/data/people_cross_field_validation_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Address missing house number not created: all of post code, street and name/number needed for address')
+		self.assertContains(response,'Address missing street not created: all of post code, street and name/number needed for address')
+		self.assertContains(response,'Address missing post code not created: all of post code, street and name/number needed for address')
+		self.assertContains(response,'Pregnant missing due date not created: has no due date but is pregnant')
+		self.assertContains(response,'Not pregnant with due date not created: has due date but is not pregnant')
+		self.assertContains(response,'Role invalid for age status not created: role type is not valid for age status')
+		self.assertContains(response,'Too old for age status not created: too old for age status')
+		self.assertContains(response,'Date left without date joined not created: date left is provided but not date joined')
+		self.assertContains(response,'Date left before date joined not created: date left is not greater than date joined')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
 	def test_upload_people_data_invalid_dates(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
@@ -13243,6 +13334,29 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'Invalid due date not created: due_date 01/01/19xx is invalid date or time')
 		self.assertContains(response,'Invalid ABSS start date not created: ABSS_start_date 01/xx/2001 is invalid date or time')
 		self.assertContains(response,'Invalid ABSS end date not created: ABSS_end_date 01/xx/2005 is invalid date or time')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
+	def test_upload_people_data_invalid_dates_in_project(self):
+		# log the user in as a superuser
+		project = project_login(self.client)
+		# open the file
+		valid_file = open('people/tests/data/people_invalid_dates_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Invalid date of birth not created: date_of_birth 01/01/19xx is invalid date or time')
+		self.assertContains(response,'Invalid due date not created: due_date 01/01/19xx is invalid date or time')
+		self.assertContains(response,'Invalid date joined not created: date_joined 01/xx/2001 is invalid date or time')
+		self.assertContains(response,'Invalid date left not created: date_left 01/xx/2005 is invalid date or time')
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
@@ -13377,6 +13491,127 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that we have two people
 		self.assertEqual(Person.objects.all().count(),3)
 
+	def test_upload_people_with_projects_active(self):
+		# log the user in as a superuser
+		project = project_login(self.client)
+		# open the file
+		valid_file = open('people/tests/data/people_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the second person
+		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no dob')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the third person
+		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no street')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# check that we have three people and three memberships
+		self.assertEqual(Person.objects.all().count(),3)
+		self.assertEqual(Membership.objects.all().count(),3)
+
 	def test_upload_people_already_exists(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
@@ -13498,6 +13733,389 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'already exists')
 		# check that no additional people have been created
 		self.assertEqual(Person.objects.all().count(),3)
+
+	def test_upload_people_already_exist_in_same_project(self):
+		# log the user in as a superuser
+		project = project_login(self.client)
+		# open the file
+		valid_file = open('people/tests/data/people_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the second person
+		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no dob')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the third person
+		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no street')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# check that we have three people and three memberships
+		self.assertEqual(Person.objects.all().count(),3)
+		self.assertEqual(Membership.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/people_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'already exists')
+		# check that no additional people or memberships have been created
+		self.assertEqual(Person.objects.all().count(),3)
+		self.assertEqual(Membership.objects.all().count(),3)
+
+	def test_upload_people_already_exist_in_different_project(self):
+		# log the user in as a superuser
+		project = project_login(self.client)
+		# open the file
+		valid_file = open('people/tests/data/people_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the first person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the second person
+		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no dob')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the third person
+		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no street')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# check that we have three people and three memberships
+		self.assertEqual(Person.objects.all().count(),3)
+		self.assertEqual(Membership.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# log out and long back in with a new project
+		self.client.logout()
+		project = project_login(self.client,project_name='newproject')
+		# reopen the file
+		valid_file = open('people/tests/data/people_in_project.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the first person
+		test_person = Person.objects.get(first_name='Test',last_name='Person',projects=project)
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the second person
+		test_person = Person.objects.get(first_name='Test no dob',last_name='Person',projects=project)
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no dob')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# and the third person
+		test_person = Person.objects.get(first_name='Test no street',last_name='Person',projects=project)
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test no street')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth,None)
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'ABSS beneficiary')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.notes,'test notes')
+		self.assertEqual(test_person.ABSS_start_date,None)
+		self.assertEqual(test_person.ABSS_end_date,None)
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		# and the membership
+		membership = Membership.objects.get(project=project,person=test_person)
+		self.assertEqual(membership.membership_type.name,'test_membership_type')
+		self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2005')
+		# check that we have three people and three memberships
+		self.assertEqual(Person.objects.all().count(),6)
+		self.assertEqual(Membership.objects.all().count(),6)
 
 	def test_upload_people_same_name_different_age_status(self):
 		# log the user in as a superuser
@@ -14478,13 +15096,10 @@ class DownloadPeopleDataViewTest(TestCase):
 									)
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
-		# check that we got an already exists message
-		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
-		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+		# check that we got the right records
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,test_ABSS_type,,,')
 
 	def test_download_people_with_projects_active(self):
 		# add the user to a project, and set projects active
@@ -14533,12 +15148,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,,')
-		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
-		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,test_membership_type,,,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,test_membership_type,,,')
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
@@ -14575,7 +15187,7 @@ class DownloadPeopleDataViewTest(TestCase):
 											'names' : '',
 											'keywords' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'include_people' : 'all',
@@ -14585,13 +15197,10 @@ class DownloadPeopleDataViewTest(TestCase):
 									)
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
-		# check that we got an already exists message
-		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,,,,test notes,,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Adult,123,ABC streets 10,ABC0,test notes,01/01/2011,02/02/2012,test ecd,Test ward')
-		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,')
-		self.assertContains(response,'test_ethnicity,test_ABSS_type,Child under four,,,,test notes,,,,')
+		# check that we got the right records
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,test_ABSS_type,,,')
 
 	def test_download_people_limited_via_search(self):
 		# create base data for addresses
@@ -14625,7 +15234,7 @@ class DownloadPeopleDataViewTest(TestCase):
 											'names' : '',
 											'keywords' : '',
 											'role_type' : '0',
-											'ABSS_type' : '0',
+											'membership_type' : '0',
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'include_people' : 'all',
@@ -14944,7 +15553,6 @@ class DownloadRelationshipsDataViewTest(TestCase):
 		# check that we got the right records
 		self.assertContains(response,'test_parent_0,test_parent_0,Adult,test_child_0,test_child_0,Child under four,parent')
 		self.assertContains(response,'test_child_0,test_child_0,Child under four,test_parent_0,test_parent_0,Adult,child')
-
 
 class DownloadRegistrationsDataViewTest(TestCase):
 	@classmethod

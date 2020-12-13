@@ -97,6 +97,7 @@ class Family(DataAccessMixin,models.Model):
 # Has a one to many relationship with Person
 class Ethnicity(DataAccessMixin,models.Model):
 	description = models.CharField(max_length=50)
+	default = models.BooleanField(default=False)
 	# define the function that will return the ethnicity name as the object reference
 	def __str__(self):
 		return self.description
@@ -137,6 +138,7 @@ class Relationship_Type(DataAccessMixin,models.Model):
 class ABSS_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	membership_number_required = models.BooleanField(default=False)
+	default = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.name
@@ -421,6 +423,7 @@ class Option(DataAccessMixin,models.Model):
 class Membership_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	membership_number_required = models.BooleanField(default=False)
+	default = models.BooleanField(default=False)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.name
@@ -498,19 +501,38 @@ class Person(DataAccessMixin,models.Model):
 		return desc
 
 	# and a function to return a description of membership in the project
-	def project_description(self,session=False):
+	def project_description(self):
+		# initialise variables
+		membership = False
+		# set the membership details depending on whether we have a project
+		if self.project:
+			membership = Membership.try_to_get(
+												person = self,
+												project = self.project
+												)
+			if not membership:
+				return 'MEMBERSHIP ERROR'
+		# set the names and dates
+		if membership:
+			name = membership.membership_type.name if membership.membership_type else 'Undefined membership type'
+			start_date = membership.date_joined
+			end_date = membership.date_left
+		else:
+			name = self.ABSS_type.name
+			start_date = self.ABSS_start_date
+			end_date = self.ABSS_end_date
 		# create a description
-		desc = self.ABSS_type.name
+		desc = name
 		# and add the joining date
-		if self.ABSS_start_date:
+		if start_date:
 			# add to the description
-			desc += ', joined project on ' + self.ABSS_start_date.strftime('%b %d %Y')
+			desc += ', joined project on ' + start_date.strftime('%b %d %Y')
 		# and the add the leaving date if we have one
-		if self.ABSS_end_date:
-			if self.ABSS_end_date <= date.today():
-				desc += ', left project on ' + self.ABSS_end_date.strftime('%b %d %Y')
+		if end_date:
+			if end_date <= date.today():
+				desc += ', left project on ' + end_date.strftime('%b %d %Y')
 			else:
-				desc += ', will leave project on ' + self.ABSS_end_date.strftime('%b %d %Y')
+				desc += ', will leave project on ' + end_date.strftime('%b %d %Y')
 		# return the value
 		return desc
 
@@ -699,10 +721,28 @@ class Person(DataAccessMixin,models.Model):
 						results = results.exclude(pk=person.pk)
 
 		# filter further depending on whether we want people in the project, or those who have left
+		# use ABSS dates if we don't have an active project, otherwise project membership
+		today = datetime.today()
 		if include_people == 'in_project' or include_people == '':
-			results = results.exclude(ABSS_end_date__lte=datetime.today())
+			if project:
+				results = results.exclude(
+											membership__date_left__lte=today,
+											membership__project=project
+											)
+			else:
+				results = results.exclude(ABSS_end_date__lte=today)
 		elif include_people == 'left_project':
-			results = results.exclude(ABSS_end_date__isnull=True).exclude(ABSS_end_date__gt=datetime.today())
+			if project:
+				results = results.exclude(
+										membership__date_left__isnull=True,
+										membership__project=project
+										)
+				results = results.exclude(
+										membership__date_left__gt=today,
+										membership__project=project
+										)
+			else:
+				results = results.exclude(ABSS_end_date__isnull=True).exclude(ABSS_end_date__gt=datetime.today())
 
 		# if we have names in the search terms, split on spaces and attempt to find matches in the name fields
 		# and the membership number field

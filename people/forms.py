@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
 							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site, Profile, \
-							Project
+							Project, Membership_Type
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -389,11 +389,11 @@ class ProfileForm(forms.Form):
 																	'autocomplete' : 'off',
 																	}),
         							input_formats=('%d/%m/%Y',))
-	ABSS_type = forms.ChoiceField(
+	membership_type = forms.ChoiceField(
 									label="Membership type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
-	ABSS_start_date = forms.DateField(
-									label="Project start date",
+	date_joined_project = forms.DateField(
+									label="Date joined project",
 									required=False,
 									widget=forms.DateInput(
 																format='%d/%m/%Y',
@@ -402,8 +402,8 @@ class ProfileForm(forms.Form):
 																	'autocomplete' : 'off'
 																	}),
 									input_formats=('%d/%m/%Y',))
-	ABSS_end_date = forms.DateField(
-									label="Project end date",
+	date_left_project = forms.DateField(
+									label="Date left project",
 									required=False,
 									widget=forms.DateInput(
 																format='%d/%m/%Y',
@@ -455,12 +455,15 @@ class ProfileForm(forms.Form):
 		# pop out the extra parameters if we have them
 		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
 		person = kwargs.pop('person') if 'person' in kwargs.keys() else False
+		project = kwargs.pop('project') if 'project' in kwargs.keys() else False
 		# call the built in constructor
 		super(ProfileForm, self).__init__(*args, **kwargs)
 		# set the choice fields
 		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
-		self.fields['ABSS_type'].choices = build_choices(choice_class=ABSS_Type,choice_field='name')
 		self.fields['ethnicity'].choices = build_choices(choice_class=Ethnicity,choice_field='description')
+		# set the membership type depending on whether we have a project
+		membership_type_class = Membership_Type if project else ABSS_Type
+		self.fields['membership_type'].choices = build_choices(choice_class=membership_type_class,choice_field='name')
 		# get the age status
 		if self.is_bound:
 			# we have an age status, so get the age status object
@@ -544,9 +547,9 @@ class ProfileForm(forms.Form):
 					)
 		rows.append(
 					Row(
-						Column('ABSS_type',css_class='form-group col-md-3 mb-0'),
-						Column('ABSS_start_date',css_class='form-group col-md-3 mb-0'),
-						Column('ABSS_end_date',css_class='form-group col-md-3 mb-0'),
+						Column('membership_type',css_class='form-group col-md-3 mb-0'),
+						Column('date_joined_project',css_class='form-group col-md-3 mb-0'),
+						Column('date_left_project',css_class='form-group col-md-3 mb-0'),
 						Column('membership_number',css_class='form-group col-md-3 mb-0'),
 						css_class='form-row'	
 						)
@@ -638,16 +641,16 @@ class ProfileForm(forms.Form):
 				self.cleaned_data['date_of_birth'] < today.replace(year=today.year-age_status.maximum_age):
 				self._errors['date_of_birth'] = ["Must be less than " + str(age_status.maximum_age) + " years old."]
 				valid = False
-		# if we have valid ABSS dates, check that they are valid in relation to each other
-		if 'ABSS_start_date' in self.cleaned_data and 'ABSS_end_date' in self.cleaned_data:
+		# if we have valid dates, check that they are valid in relation to each other
+		if 'date_joined_project' in self.cleaned_data and 'date_left_project' in self.cleaned_data:
 			# check that we don't have an ABSS end date without a start date
-			if self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] == None:
-				self._errors['ABSS_end_date'] = ['ABSS end date can only be entered if ABSS start date is entered.']
+			if self.cleaned_data['date_left_project'] != None and self.cleaned_data['date_joined_project'] == None:
+				self._errors['date_left_project'] = ['Date left project can only be entered if date joined project is entered.']
 				valid = False
 			# check that we don't have an ABSS end date before the start date
-			if (self.cleaned_data['ABSS_end_date'] != None and self.cleaned_data['ABSS_start_date'] != None 
-					and self.cleaned_data['ABSS_end_date'] <= self.cleaned_data['ABSS_start_date'] ):
-				self._errors['ABSS_end_date'] = ['ABSS end date must be after ABSS start date.']
+			if (self.cleaned_data['date_left_project'] != None and self.cleaned_data['date_joined_project'] != None 
+					and self.cleaned_data['date_left_project'] <= self.cleaned_data['date_joined_project'] ):
+				self._errors['date_left_project'] = ['Date left project must be after date joined project.']
 				valid = False
 		# go through the fields and check trained dates
 		for key in self.cleaned_data.keys():
@@ -691,8 +694,8 @@ class PersonSearchForm(forms.Form):
 									label="Role",
 									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
-	ABSS_type = forms.ChoiceField(
-									label="ABSS",
+	membership_type = forms.ChoiceField(
+									label="Membership Type",
 									required=False,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
 	age_status = forms.ChoiceField(
@@ -724,6 +727,7 @@ class PersonSearchForm(forms.Form):
 		# pull additional paramterts out of kwargs if provided
 		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
 		download = kwargs.pop('download') if 'download' in kwargs.keys() else False
+		project = kwargs.pop('project') if 'project' in kwargs.keys() else False
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# build the crispy form
@@ -758,7 +762,7 @@ class PersonSearchForm(forms.Form):
 										Column('age_status',css_class='form-group col-md-2 mbt-0'),
 										Column('trained_role',css_class='form-group col-md-2 mbt-0'),
 										Column('ward',css_class='form-group col-md-2 mbt-0'),
-										Column('ABSS_type',css_class='form-group col-md-2 mbt-0'),
+										Column('membership_type',css_class='form-group col-md-2 mbt-0'),
 										Column('include_people',css_class='form-group col-md-2 mbt-0'),
 										),
 									Hidden('page','1'),
@@ -767,11 +771,6 @@ class PersonSearchForm(forms.Form):
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
 											role_type_choices(Role_Type.objects.filter(use_for_people=True))
-		self.fields['ABSS_type'].choices = build_choices(
-															choice_class=ABSS_Type,
-															choice_field='name',
-															default=True,
-															default_label='Any')
 		self.fields['age_status'].choices = build_choices(
 															choice_class=Age_Status,
 															choice_field='status',
@@ -780,6 +779,13 @@ class PersonSearchForm(forms.Form):
 		self.fields['ward'].choices = build_choices(
 															choice_class=Ward,
 															choice_field='ward_name',
+															default=True,
+															default_label='Any')
+		# set membership or ABSS depending on whether we have a project
+		membership_type_class = Membership_Type if project else ABSS_Type
+		self.fields['membership_type'].choices = build_choices(
+															choice_class=membership_type_class,
+															choice_field='name',
 															default=True,
 															default_label='Any')
 		# build the choices for the trained roles, starting with a default entry, then adding trained and active

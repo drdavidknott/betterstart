@@ -314,35 +314,22 @@ def create_person(
 					first_name,
 					last_name,
 					middle_names='',
-					default_role_id=False,
-					date_of_birth=None,
-					gender='',
-					ethnicity_id=0,
-					ABSS_type_id=0,
 					age_status_id=0,
 					):
+	# attempt to get a project
+	project = Project.current_project(request.session)
 	# get the age status, defaulting to Adult if not supplied
 	if not age_status_id:
 		age_status = Age_Status.objects.get(status='Adult')
 	else:
 		age_status = Age_Status.try_to_get(pk=age_status_id)
-	# get the role, defaulting to the age status default if not supplied
-	if default_role_id:
-		default_role = Role_Type.try_to_get(pk=default_role_id)
-	else:
-		default_role = age_status.default_role_type
-	# get the ethnicity, defaulting to Prefer not to say if not supplied
-	if not ethnicity_id:
-		ethnicity = Ethnicity.objects.get(description='Prefer not to say')
-	else:
-		ethnicity = Ethnicity.try_to_get(pk=ethnicity_id)
-	# and the ABSS type
-	if not ABSS_type_id:
-		ABSS_type = ABSS_Type.objects.get(name='ABSS beneficiary')
-	else:
-		ABSS_type = ABSS_Type.try_to_get(pk=ABSS_type_id)
-	# and get a membership if the ABSS type needs it, otherwise set it to zero
-	if ABSS_type.membership_number_required:
+	# and the default role for the age status
+	default_role = age_status.default_role_type
+	# handle ABSS if we don't have a project
+	ABSS_type = ABSS_Type.objects.get(default=True)
+	membership_type = Membership_Type.objects.get(default=True) if project else None
+	# and get a membership if the ABSS type or project membership needs it, otherwise set it to zero
+	if ABSS_type.membership_number_required or (membership_type and membership_type.membership_number_required):
 		membership_number = Person.get_next_membership_number()
 	else:
 		membership_number = 0
@@ -351,12 +338,10 @@ def create_person(
 					first_name = first_name,
 					middle_names = middle_names,
 					last_name = last_name,
-					date_of_birth = date_of_birth,
-					gender = gender,
 					default_role = default_role,
-					ethnicity = ethnicity,
-					ABSS_type = ABSS_type,
+					ethnicity = Ethnicity.objects.get(default=True),
 					age_status = age_status,
+					ABSS_type = ABSS_type,
 					membership_number = membership_number
 						)
 	person.save()
@@ -366,11 +351,11 @@ def create_person(
 								role_type = default_role)
 	role_history.save()
 	# add the person to the current project through the membership, if we have a project
-	project = Project.current_project(request.session)
 	if project:
 		membership = Membership(
 								person=person,
 								project=project,
+								membership_type=membership_type
 								)
 		membership.save()
 	# and return the person
@@ -794,59 +779,46 @@ def update_person(
 					due_date,
 					default_role_id,
 					ethnicity_id,
-					ABSS_type_id,
-					ABSS_start_date,
-					ABSS_end_date,
+					membership_type_id,
+					date_joined_project,
+					date_left_project,
 					age_status_id,
 					notes,
 					membership_number
 				):
+	# find out whether we have a project
+	project = Project.current_project(request.session)
 	# set the role change flag to false: we don't know whether the role has changed
 	role_change = False
-	# attempt to get the ethnicity
+	# attempt to set ethnicity
 	ethnicity = Ethnicity.try_to_get(pk=ethnicity_id)
-	# set the value for the person
 	if ethnicity:
-		# set the value
 		person.ethnicity = ethnicity
-	# otherwise set a message
 	else:
-		# set the message
 		messages.error(request, 'Ethnicity does not exist.')
-	# attempt to get the ABSS type
-	ABSS_type = ABSS_Type.try_to_get(pk=ABSS_type_id)
-	# set the value for the person
-	if ABSS_type:
-		# set the value
-		person.ABSS_type = ABSS_type
-	# otherwise set a message
-	else:
-		# set the message
-		messages.error(request, 'ABSS Type does not exist.')
-	# attempt to get the age status
+	# attempt to set age status
 	age_status = Age_Status.try_to_get(pk=age_status_id)
-	# set the value for the person
 	if age_status:
-		# set the value
 		person.age_status = age_status
-	# otherwise set a message
 	else:
-		# set the message
 		messages.error(request, 'Age Status does not exist.')
-	# attempt to get the role type
+	# attempt to set role type
 	default_role = Role_Type.try_to_get(pk=default_role_id)
-	# set the value for the person
 	if default_role:
-		# check whether the role has changed
 		if person.default_role != default_role:
-			# set the role change flag
 			role_change = True
-		# set the value
 		person.default_role = default_role
-	# otherwise set a message
 	else:
-		# set the banner
 		messages.error(request, 'Role type does not exist.')
+	# attempt to set ABSS details if we don't have a project
+	if not project:
+		person.ABSS_start_date = date_joined_project
+		person.ABSS_end_date = date_left_project
+		ABSS_type = ABSS_Type.try_to_get(pk=membership_type_id)
+		if ABSS_type:
+			person.ABSS_type = ABSS_type
+		else:
+			messages.error(request, 'ABSS Type does not exist.')
 	# update the person record
 	person.first_name = first_name
 	person.middle_names = middle_names
@@ -860,8 +832,6 @@ def update_person(
 	person.pregnant = pregnant
 	person.due_date = due_date
 	person.notes = notes
-	person.ABSS_start_date = ABSS_start_date
-	person.ABSS_end_date = ABSS_end_date
 	person.emergency_contact_details = emergency_contact_details
 	person.membership_number = membership_number
 	# save the record
@@ -877,6 +847,19 @@ def update_person(
 		role_history.save()
 	# set a success message
 	messages.success(request, str(person) + ' profile updated.')
+	# update project membership details if we have a project
+	if project:
+		membership = Membership.try_to_get(person=person,project=project)
+		if membership:
+			membership.date_joined = date_joined_project
+			membership.date_left = date_left_project
+			membership_type = Membership_Type.try_to_get(pk=membership_type_id)
+			if membership_type:
+				membership.membership_type = membership_type
+			else:
+				messages.error(request, 'Membership Type does not exist.')
+			# save the changes
+			membership.save()
 	# return the person
 	return person
 
@@ -1623,6 +1606,7 @@ def people(request):
 	keywords = ''
 	role_type = 0
 	ABSS_type = 0
+	membership_type = 0
 	age_status = 0
 	trained_role = 'none'
 	ward = 0
@@ -1645,12 +1629,16 @@ def people(request):
 			names = personsearchform.cleaned_data['names']
 			keywords = personsearchform.cleaned_data['keywords']
 			role_type = personsearchform.cleaned_data['role_type']
-			ABSS_type = personsearchform.cleaned_data['ABSS_type']
 			age_status = personsearchform.cleaned_data['age_status']
 			trained_role = personsearchform.cleaned_data['trained_role']
 			ward = personsearchform.cleaned_data['ward']
 			include_people = personsearchform.cleaned_data['include_people']
 			children_ages = personsearchform.cleaned_data['children_ages']
+			# set the membership type or ABSS type dependent on whether we have a project
+			if project:
+				membership_type = personsearchform.cleaned_data['membership_type']
+			else:
+				ABSS_type = personsearchform.cleaned_data['membership_type']
 			# conduct a search
 			people = Person.search(
 									project=project,
@@ -1658,6 +1646,7 @@ def people(request):
 									keywords=keywords,
 									default_role_id=role_type,
 									ABSS_type_id=ABSS_type,
+									membership__membership_type_id=membership_type,
 									age_status_id=age_status,
 									trained_role=trained_role,
 									street__post_code__ward_id=ward,
@@ -1722,7 +1711,7 @@ def people_query(request, id):
 	# create a dictionary of items
 	form_values = {
 					'role_type' : '0',
-					'ABSS_type' : '0',
+					'membership_type' : '0',
 					'age_status' : '0',
 					'trained_role' : 'none',
 					'ward' : '0'
@@ -1735,7 +1724,7 @@ def people_query(request, id):
 	copy_POST['action'] = 'Search'
 	copy_POST['role_type'] = form_values['role_type']
 	copy_POST['names'] = ''
-	copy_POST['ABSS_type'] = form_values['ABSS_type']
+	copy_POST['membership_type'] = form_values['membership_type']
 	copy_POST['age_status'] = form_values['age_status']
 	copy_POST['trained_role'] = form_values['trained_role']
 	copy_POST['ward'] = form_values['ward']
@@ -2163,9 +2152,14 @@ def profile(request, person_id=0):
 	# if there isn't a person, crash to a banner
 	if not person:
 		return make_banner(request, 'Person does not exist.')
+	# get membership if we have a project
+	if project:
+		membership = Membership.objects.get(person=person,project=project)
+	else:
+		membership = False
 	# when the form is POSTed, validate it, then update the person
 	if request.method == 'POST':
-		profileform = ProfileForm(request.POST,user=request.user,person=person)
+		profileform = ProfileForm(request.POST,user=request.user,person=person,project=project)
 		if profileform.is_valid():
 			# update the person
 			person = update_person(
@@ -2185,9 +2179,9 @@ def profile(request, person_id=0):
 								due_date = profileform.cleaned_data['due_date'],
 								default_role_id = profileform.cleaned_data['role_type'],
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
-								ABSS_type_id = profileform.cleaned_data['ABSS_type'],
-								ABSS_start_date = profileform.cleaned_data['ABSS_start_date'],
-								ABSS_end_date = profileform.cleaned_data['ABSS_end_date'],
+								membership_type_id = profileform.cleaned_data['membership_type'],
+								date_joined_project = profileform.cleaned_data['date_joined_project'],
+								date_left_project = profileform.cleaned_data['date_left_project'],
 								age_status_id = profileform.cleaned_data['age_status'],
 								notes = profileform.cleaned_data['notes'],
 								membership_number = profileform.cleaned_data['membership_number']
@@ -2212,7 +2206,16 @@ def profile(request, person_id=0):
 			# send the user back to the main person page
 			return redirect('/person/' + str(person.pk))
 	else:
-		# there is a person, so build a dictionary of initial values we want to set
+		# set the project membership and dates depending on whether we have a project
+		if membership:
+			date_joined_project = membership.date_joined
+			date_left_project = membership.date_left
+			membership_type = membership.membership_type.pk
+		else:
+			date_joined_project = person.ABSS_start_date
+			date_left_project = person.ABSS_end_date
+			membership_type = person.ABSS_type.pk
+		# now build a dictionary of values for the from
 		profile_dict = {
 						'first_name' : person.first_name,
 						'middle_names' : person.middle_names,
@@ -2228,9 +2231,9 @@ def profile(request, person_id=0):
 						'gender' : person.gender,
 						'pregnant' : person.pregnant,
 						'due_date' : person.due_date,
-						'ABSS_type' : person.ABSS_type.pk,
-						'ABSS_start_date' : person.ABSS_start_date,
-						'ABSS_end_date' : person.ABSS_end_date,
+						'membership_type' : membership_type,
+						'date_joined_project' : date_joined_project,
+						'date_left_project' : date_left_project,
 						'age_status' : person.age_status.pk,
 						'notes' : person.notes,
 						'membership_number' : person.membership_number,
@@ -2241,7 +2244,7 @@ def profile(request, person_id=0):
 			profile_dict['trained_role_' + str(trained_role.pk)] = get_trained_status(person,trained_role)
 			profile_dict['trained_date_' + str(trained_role.pk)] = get_trained_date(person,trained_role)
 		# create the form
-		profileform = ProfileForm(profile_dict,user=request.user,person=person)
+		profileform = ProfileForm(profile_dict,user=request.user,person=person,project=project)
 	# load the template
 	profile_template = loader.get_template('people/profile.html')
 	# set the context

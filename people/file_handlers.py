@@ -7,7 +7,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue, Venue_Type, \
-					Project, Membership
+					Project, Membership, Membership_Type
 
 class File_Field():
 	# this class defines a field witin a file
@@ -703,14 +703,7 @@ class People_File_Handler(File_Handler):
 									corresponding_must_exist=True,
 									use_corresponding_for_download=True
 									)
-		self.ABSS_type = File_Field(
-									name='ABSS_type',
-									mandatory=True,
-									corresponding_model=ABSS_Type,
-									corresponding_field='name',
-									corresponding_must_exist=True,
-									use_corresponding_for_download=True
-									)
+		
 		self.age_status = File_Field(
 									name='age_status',
 									mandatory=True,
@@ -739,9 +732,51 @@ class People_File_Handler(File_Handler):
 								set_download_from_object=False,
 								)
 		self.notes = File_Field(name='notes')
-		self.ABSS_start_date = File_Datetime_Field(name='ABSS_start_date',datetime_format='%d/%m/%Y')
-		self.ABSS_end_date = File_Datetime_Field(name='ABSS_end_date',datetime_format='%d/%m/%Y')
 		self.emergency_contact_details = File_Field(name='emergency_contact_details')
+		# set membership fields depending on whether we have a project
+		if self.project:
+			self.membership_type = File_Field(
+										name='membership_type',
+										mandatory=True,
+										corresponding_model=Membership_Type,
+										corresponding_field='name',
+										corresponding_must_exist=True,
+										include_in_create=False,
+										set_download_from_object=False
+										)
+			self.date_joined = File_Datetime_Field(
+										name='date_joined',
+										datetime_format='%d/%m/%Y',
+										include_in_create=False,
+										set_download_from_object=False
+										)
+			self.date_left = File_Datetime_Field(
+										name='date_left',
+										datetime_format='%d/%m/%Y',
+										include_in_create=False,
+										set_download_from_object=False
+										)
+			membership_fields = [
+									'membership_type',
+									'date_joined',
+									'date_left'
+								]
+		else:
+			self.ABSS_type = File_Field(
+										name='ABSS_type',
+										mandatory=True,
+										corresponding_model=ABSS_Type,
+										corresponding_field='name',
+										corresponding_must_exist=True,
+										use_corresponding_for_download=True
+										)
+			self.ABSS_start_date = File_Datetime_Field(name='ABSS_start_date',datetime_format='%d/%m/%Y')
+			self.ABSS_end_date = File_Datetime_Field(name='ABSS_end_date',datetime_format='%d/%m/%Y')
+			membership_fields = [
+									'ABSS_type',
+									'ABSS_start_date',
+									'ABSS_end_date'
+								]
 		# and a list of the fields
 		self.fields = [
 						'first_name',
@@ -756,16 +791,15 @@ class People_File_Handler(File_Handler):
 						'due_date',
 						'default_role',
 						'ethnicity',
-						'ABSS_type',
 						'age_status',
 						'house_name_or_number',
 						'street',
 						'post_code',
 						'notes',
-						'ABSS_start_date',
-						'ABSS_end_date',
 						'emergency_contact_details'
 						]
+		# add in the membership fields
+		self.fields += membership_fields
 		# and additional download fields
 		self.additional_download_fields = [
 											'ward',
@@ -779,7 +813,6 @@ class People_File_Handler(File_Handler):
 		valid = True
 		# check whether the person exists
 		if self.first_name.valid and self.last_name.valid and self.date_of_birth.valid:
-			# try to get the person
 			if Person.search(
 								first_name = self.first_name.value,
 								last_name = self.last_name.value,
@@ -787,17 +820,13 @@ class People_File_Handler(File_Handler):
 								project = self.project,
 								include_people = 'all'
 								).exists():
-				# set the error
 				self.add_record_errors(record,[' not created: person already exists.'])
-				# and the flag
 				valid = False
 		# check whether the role is valid for the age status
 		if (self.age_status.exists 
 			and self.default_role.exists 
 			and not self.age_status.value.role_types.filter(pk=self.default_role.value.pk).exists()):
-			# set the error
 			self.add_record_errors(record,[' not created: role type is not valid for age status.'])
-			# and the flag
 			valid = False
 		# get today's date
 		today = datetime.date.today()
@@ -806,61 +835,56 @@ class People_File_Handler(File_Handler):
 			and self.age_status.valid
 			and self.date_of_birth.valid
 			and self.date_of_birth.value.date() < today.replace(year=today.year-self.age_status.value.maximum_age)):
-			# set the error
 			self.add_record_errors(record,[' not created: too old for age status'])
-			# and the flag
 			valid = False
 		# now check whether we have a due date without a pregnancy flag
 		if self.due_date.value and not self.pregnant.value:
-			# set the errors
 			self.add_record_errors(record,[' not created: has due date but is not pregnant.'])
-			# and the flag
 			valid = False
 		# now check the other way around
 		if not self.due_date.value and self.pregnant.value:
-			# set the messages
 			self.add_record_errors(record,[' not created: has no due date but is pregnant.'])
-			# and the flag
 			valid = False
 		# check whether we have any address details
 		if (self.post_code.value or self.street.value or self.house_name_or_number.value):
 			# now check whether we have ALL address details
 			if not (self.post_code.value and self.street.value and self.house_name_or_number.value):
-				# set the error
 				self.add_record_errors(record,[' not created: all of post code, street and name/number needed for address.'])
-				# and the flag
 				valid = False
 			# else check the details if the post code exists
 			elif self.post_code.exists:
-				# check the street and post code combination
 				street = Street.try_to_get(
 											name = self.street.value,
 											post_code = self.post_code.value
 											)
-				# deal with the exception
 				if not street:
-					# set the error
 					self.add_record_errors(record,[' not created: Street ' + self.street.value + ' does not exist.'])
-					# and the flag
 					valid = False
-				# otherwise set the value
 				else:
-					# set the value
 					self.street.value = street
-		# check whether we have an ABSS end date without a start date
-		if self.ABSS_end_date.value and not self.ABSS_start_date.value:
-			# set the message
-			self.add_record_errors(record,[' not created: ABSS end date is provided but not ABSS start date.'])
-			# and the flag
-			valid = False
-		# check whether the end date is greater than the start date
-		if (self.ABSS_start_date.value and self.ABSS_end_date.value
-			and self.ABSS_start_date.valid and self.ABSS_end_date.valid
-			and self.ABSS_start_date.value >= self.ABSS_end_date.value): 
-				# set the message
-				self.add_record_errors(record,[' not created: ABSS end date is not greater than ABSS start date.'])
-				# and the flag
+		# validate project dates if we have a project and ABSS dates if we don't
+		if self.project:
+			# check whether we have a left date without a joined date
+			if self.date_left.value and not self.date_joined.value:
+				self.add_record_errors(record,[' not created: date left is provided but not date joined.'])
 				valid = False
+			# check whether the end date is greater than the start date
+			if (self.date_joined.value and self.date_left.value
+				and self.date_joined.valid and self.date_left.valid
+				and self.date_joined.value >= self.date_left.value): 
+					self.add_record_errors(record,[' not created: date left is not greater than date joined.'])
+					valid = False
+		else:
+			# check whether we have a left date without a joined date
+			if self.ABSS_end_date.value and not self.ABSS_start_date.value:
+				self.add_record_errors(record,[' not created: ABSS end date is provided but not ABSS start date.'])
+				valid = False
+			# check whether the end date is greater than the start date
+			if (self.ABSS_start_date.value and self.ABSS_end_date.value
+				and self.ABSS_start_date.valid and self.ABSS_end_date.valid
+				and self.ABSS_start_date.value >= self.ABSS_end_date.value): 
+					self.add_record_errors(record,[' not created: ABSS end date is not greater than ABSS start date.'])
+					valid = False
 		# return the result
 		return valid
 
@@ -874,15 +898,34 @@ class People_File_Handler(File_Handler):
 		# set the post code and ward if we have a street
 		self.post_code.value = person.street.post_code.post_code if person.street else ''
 		self.ward.value = person.street.post_code.ward.ward_name if person.street else ''
+		# set the membership fields if we have a project
+		if self.project:
+			membership = Membership.objects.get(person=person,project=self.project)
+			self.membership_type.value = membership.membership_type.name
+			self.date_joined.value = membership.date_joined
+			self.date_left.value = membership.date_left 
 
 	def add_project(self,person):
 		# create the membership
 		membership = Membership(
 								person=person,
 								project=self.project,
+								membership_type = self.membership_type.value,
+								date_joined = self.date_joined.value,
+								date_left = self.date_left.value
 								)
 		membership.save()
 		return
+
+	def create_record(self,record):
+		# if we have a project, add an ABSS type field with a default value
+		# TEMPORARY UNTIL ABSS TYPE REMOVED ENTIRELY
+		if self.project:
+			self.ABSS_type = File_Field(name='ABSS_type')
+			self.ABSS_type.value = ABSS_Type.objects.get(default=True)
+			self.fields.append('ABSS_type')
+		# call the built in method
+		person = super(People_File_Handler, self).create_record(record)
 
 class Relationships_File_Handler(File_Handler):
 

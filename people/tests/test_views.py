@@ -17699,3 +17699,461 @@ class DocumentLinksViewTest(TestCase):
 		self.assertContains(response,'test document')
 		self.assertContains(response,'test desc')
 		self.assertContains(response,'test url')
+
+class ManageMembershipViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# set up an additional project
+		project_2 = Project.objects.create(name='testproject_2')
+		# set up base data: first the ethnicity
+		test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
+		# and the capture type
+		test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
+		# create the Parent role
+		parent_role = Role_Type.objects.create(role_type_name='Parent',use_for_events=True,use_for_people=True)
+		# and the parent champion role
+		parent_champion_role = Role_Type.objects.create(role_type_name='Parent Champion',use_for_events=True,use_for_people=True)
+		# create a test age status
+		test_age_status = Age_Status.objects.create(status='Adult')
+		# create a second test age status
+		test_age_status = Age_Status.objects.create(status='Child')
+		# and four more test role types
+		test_role_1 = Role_Type.objects.create(role_type_name='test role 1',use_for_events=True,use_for_people=True)
+		test_role_2 = Role_Type.objects.create(role_type_name='test role 2',use_for_events=True,use_for_people=True)
+		test_role_3 = Role_Type.objects.create(role_type_name='test role 3',use_for_events=True,use_for_people=True)
+		test_role_4 = Role_Type.objects.create(role_type_name='test role 4',use_for_events=True,use_for_people=True)
+		test_role_5 = Role_Type.objects.create(role_type_name='test role 5',use_for_events=True,use_for_people=True)
+		# create test membership types
+		test_membership_type = Membership_Type.objects.create(name='test_membership_type',default=True)
+		second_test_membership_type = Membership_Type.objects.create(name='second_test_membership_type')
+		# create a test ABSS type
+		test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type',membership_type=test_membership_type)
+		# create a second test ABSS type
+		second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type',membership_type=second_test_membership_type)
+		# Create 50 of each type
+		set_up_test_people('Parent_','Parent',50)
+		set_up_test_people('Parent_Champion_','Parent Champion',50)
+		set_up_test_people('Test_Role_1_','test role 1',50)
+		set_up_test_people('Test_Role_2_','test role 2',50)
+		# and 50 of each of the two test role types with different names
+		set_up_test_people('Different_Name_','test role 1',50,project=project)
+		set_up_test_people('Another_Name_','test role 2',50,project=project_2)
+		# and more with the roles swapped over
+		set_up_test_people('Different_Name_','test role 2',50)
+		set_up_test_people('Another_Name_','test role 1',50)
+		# and a short set to test a result set with less than a page
+		set_up_test_people('Short_Set_','test role 3',10)
+		# create 25 ex-parent champions
+		set_up_test_people('Ex_Parent_Champion_','Parent Champion',50)
+		# and a set that doesn't exactly fit two pagaes
+		set_up_test_people('Pagination_','test role 5',32)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/listpeople')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/listpeople')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/manage_membership')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_empty_page_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.get(reverse('manage_membership'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# the list of people passed in the context should be empty
+		self.assertEqual(len(response.context['people']),0)
+
+	def test_search_with_no_criteria(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],492)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),20)
+
+	def test_search_with_no_criteria_second_page(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'project_id' : '0',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],492)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),20)
+
+	def test_search_by_name(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Search',
+											'names' : 'Another',
+											'keywords' : '',
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],100)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),4)
+
+	def test_search_by_keyword(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : 'parent',
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_by_project(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Search',
+											'names' : '',
+											'keywords' : '',
+											'project_id' : str(Project.objects.get(name='testproject').pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_move_into_project(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertTrue(membership)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),110)
+
+	def test_move_into_project_without_dates(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'without_dates',
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertTrue(membership)
+			self.assertEqual(membership.date_joined,None)
+			self.assertEqual(membership.date_left,None)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),110)
+
+	def test_move_into_project_with_dates(self):
+		# set the dates
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			person.ABSS_start_date = datetime.datetime.strptime('2012-01-01','%Y-%m-%d')
+			person.ABSS_end_date = datetime.datetime.strptime('2025-01-01','%Y-%m-%d')
+			person.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertTrue(membership)
+			self.assertEqual(membership.date_joined.strftime('%d/%m/%Y'),'01/01/2012')
+			self.assertEqual(membership.date_left.strftime('%d/%m/%Y'),'01/01/2025')
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),110)
+
+	def test_move_into_project_already_members(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertTrue(membership)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),110)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertTrue(membership)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),110)
+		# and that we got the right text in the response
+		self.assertContains(response,'10 people not added: already members')
+
+	def test_remove_from_project(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertTrue(membership)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),110)
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'remove',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they don't have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertFalse(membership)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),100)
+
+	def test_remove_from_project_not_members(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_membership'),
+									data = { 
+											'action' : 'Move',
+											'names' : 'short_set',
+											'keywords' : '',
+											'target_project_id' : str(Project.objects.get(name='testproject').pk),
+											'date_type' : 'with_dates',
+											'move_type' : 'remove',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],10)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(response.context['page_list'],False)
+		# go through the people and check that they don't have a membership
+		project = Project.objects.get(name='testproject')
+		for person in Person.objects.filter(first_name__startswith='Short_Set_'):
+			membership = Membership.try_to_get(project=project,person=person)
+			self.assertFalse(membership)
+		# check that we have the right number of memberships
+		self.assertEqual(Membership.objects.all().count(),100)
+		# and that we got the right text in the response
+		self.assertContains(response,'10 people not removed: not members')

@@ -831,6 +831,93 @@ class PersonNameSearchForm(forms.Form):
 									Hidden('action','search'),
 									)
 
+class ManageMembershipSearchForm(forms.Form):
+	# Define the fields that we need in the form.
+	names = forms.CharField(
+									label="Names, membership number or email address",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	keywords = forms.CharField(
+									label="Keywords",
+									max_length=50,
+									required=False,
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	project_id = forms.ChoiceField(
+									label="Project",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	action = forms.CharField(
+									initial='action',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
+	page = forms.CharField(
+									initial='1',
+									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
+	# define the fields to manage a move
+	move_choices = (
+					('add','Add to'),
+					('remove' , 'Remove from'),
+					)
+	move_type = forms.ChoiceField(
+									label="Action",
+									choices=move_choices,
+									initial='add',
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	target_project_id = forms.ChoiceField(
+									label="Target Project",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	date_choices = (
+					('with_dates','with dates'),
+					('without_dates' , 'without dates'),
+					)	
+	date_type = forms.ChoiceField(
+									label="Dates",
+									choices=date_choices,
+									initial='with_dates',
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# pull additional paramterts out of kwargs if provided
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
+		# call the built in constructor
+		super(ManageMembershipSearchForm, self).__init__(*args, **kwargs)
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.form_action = reverse('manage_membership')
+		# define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column('names',css_class='form-group col-md-4 mbt-0'),
+										Column('keywords',css_class='form-group col-md-4 mbt-0'),
+										Column('project_id',css_class='form-group col-md-4 mbt-0'),
+										),
+									Hidden('page','1'),
+									FormActions(
+										Submit('action', 'Search'),
+												),
+									Row(
+										Column('move_type',css_class='form-group col-md-4 mbt-0'),
+										Column('target_project_id',css_class='form-group col-md-4 mbt-0'),
+										Column('date_type',css_class='form-group col-md-4 mbt-0'),
+										),
+									FormActions(
+										Submit('action', 'Move'),
+												)
+									)
+		# set the choices
+		self.fields['project_id'].choices = build_choices(
+															choice_class=Project,
+															choice_field='name',
+															default=True,
+															default_label='Any')
+		self.fields['target_project_id'].choices = build_choices(
+															choice_class=Project,
+															choice_field='name',
+															default=False)
+
 class PersonRelationshipSearchForm(forms.Form):
 	# Define the fields that we need in the form.
 	first_name = forms.CharField(

@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_views.DownloadPeopleDataViewTest.test_download_people_via_search",
+                "people.tests.test_views.ManageMembershipViewTest.test_move_into_project",
                 "--verbosity=2",
             ],
             "django": true,

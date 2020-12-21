@@ -19,7 +19,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					AnswerQuestionsForm, UpdateAddressForm, AddressToRelationshipsForm, UploadDataForm, \
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
-					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm
+					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
+					ManageMembershipSearchForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -1014,6 +1015,58 @@ def validate_invitations(person):
 		invitation.validated = True
 		invitation.save()
 
+def build_memberships(people,project,action,with_dates):
+	# initialise variables
+	results = ''
+	success = 0
+	error = 0
+	if action == 'add':
+		default_membership_type = Membership_Type.try_to_get(default=True)
+		if not default_membership_type:
+			return 'ERROR: no default membership type.'
+	# go through the people
+	for person in people:
+		membership = Membership.try_to_get(project=project,person=person)
+		# process additionas
+		if action == 'add':
+			if membership:
+				error += 1
+			else:
+				# set the values
+				date_joined = person.ABSS_start_date if with_dates else None
+				date_left = person.ABSS_end_date if with_dates else None
+				if person.ABSS_type.membership_type:
+					membership_type = person.ABSS_type.membership_type
+				else: 
+					membership_type = default_membership_type
+				# create the membership
+				Membership.objects.create(
+											person=person,
+											project=project,
+											date_joined=date_joined,
+											date_left=date_left,
+											membership_type=membership_type
+										)
+				success += 1
+		# process removals
+		if action == 'remove':
+			if not membership:
+				error += 1
+			else:
+				membership.delete()
+				success += 1
+	# set the results
+	if action == 'add':
+		results = str(success) + ' people added to project'
+		if error:
+			results += '; ' + str(error) + ' people not added: already members'
+	else:
+		results = str(success) + ' people removed from project'
+		if error:
+			results += '; ' + str(error) + ' people not removed: not members'
+	# return the results
+	return results
+				
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -3809,4 +3862,90 @@ def select_project(request):
 				'selectprojectform' : selectprojectform,
 				})
 	# return the HttpResponse
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def manage_membership(request):
+	# return a banner if projects are not active
+	site = Site.objects.first()
+	if not site.projects_active:
+		return make_banner(request, 'Projects are not active for this site')
+	# set a blank list
+	people = []
+	# and a blank page_list
+	pages = []
+	page_list = []
+	# and zero search results
+	number_of_people = 0
+	this_page = 0
+	search_attempted = False
+	build_results = False
+	# and blank search terms
+	names = ''
+	keywords = ''
+	project_id = 0
+	project = False
+	# set a blank search_error
+	search_error = ''
+	# set the results per page
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		search_form = ManageMembershipSearchForm(request.POST)
+		# set the flag to show that a search was attempted
+		search_attempted = True
+		# process the form if valid
+		if search_form.is_valid():
+			# get the fields
+			names = search_form.cleaned_data['names']
+			keywords = search_form.cleaned_data['keywords']
+			project_id = search_form.cleaned_data['project_id']
+			project = Project.try_to_get(pk=project_id) if project_id else ''
+			# conduct a search
+			people = Person.search(
+									project=project,
+									names=names,
+									keywords=keywords,
+									).order_by('last_name','first_name')
+			# if we got a request for a move, do the move
+			if search_form.cleaned_data['action'] == 'Move':
+				target_project = Project.try_to_get(pk=search_form.cleaned_data['target_project_id'])
+				with_dates = True if search_form.cleaned_data['date_type'] == 'with_dates' else False
+				build_results = build_memberships(
+													people=people,
+													project = target_project,
+													action = search_form.cleaned_data['move_type'],
+													with_dates= with_dates,
+													)
+			# do the pagination
+			number_of_people = len(people)
+			this_page = int(request.POST['page'])
+			page_list = build_page_list(
+										objects=people,
+										page_length=results_per_page,
+										attribute='last_name',
+										length=3
+										)
+			previous_page = this_page - 1
+			people = people[previous_page*results_per_page:this_page*results_per_page]
+	# otherwise set a blank form
+	else:
+		search_form = ManageMembershipSearchForm()
+	# build and return the response
+	template = loader.get_template('people/manage_membership.html')
+	context = build_context(request,{
+				'managemembershipsearchform' : search_form,
+				'people' : people,
+				'page_list' : page_list,
+				'this_page' : this_page,
+				'names' : names,
+				'keywords' : keywords,
+				'project_id' : project_id,
+				'build_results' : build_results,
+				'search_error' : search_error,
+				'number_of_people' : number_of_people,
+				'search_attempted' : search_attempted,
+				})
 	return HttpResponse(template.render(context=context, request=request))

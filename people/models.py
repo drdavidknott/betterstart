@@ -133,12 +133,25 @@ class Relationship_Type(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'relationship types'
 
+# Membership type model: represents different types of membership that a person can have in a project
+class Membership_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=50)
+	membership_number_required = models.BooleanField(default=False)
+	default = models.BooleanField(default=False)
+	# define the function that will return the person name as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'membership types'
+
 # ABSS type model: represents different types of relationship that a person can have with ABSS
 # This is reference data.
 class ABSS_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	membership_number_required = models.BooleanField(default=False)
 	default = models.BooleanField(default=False)
+	membership_type = models.ForeignKey(Membership_Type, on_delete=models.SET_NULL, null=True, blank=True)
 	# define the function that will return the person name as the object reference
 	def __str__(self):
 		return self.name
@@ -418,18 +431,6 @@ class Option(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'options'
-
-# Membership type model: represents different types of membership that a person can have in a project
-class Membership_Type(DataAccessMixin,models.Model):
-	name = models.CharField(max_length=50)
-	membership_number_required = models.BooleanField(default=False)
-	default = models.BooleanField(default=False)
-	# define the function that will return the person name as the object reference
-	def __str__(self):
-		return self.name
-	# set the name to be used in the admin console
-	class Meta:
-		verbose_name_plural = 'membership types'
 
 # Person model: represents a participant in the Betterstart scheme.
 # A person may be an adult or a child.
@@ -720,30 +721,6 @@ class Person(DataAccessMixin,models.Model):
 					if not person.trained_role_set.filter(role_type=role_type,active=True).exists():
 						results = results.exclude(pk=person.pk)
 
-		# filter further depending on whether we want people in the project, or those who have left
-		# use ABSS dates if we don't have an active project, otherwise project membership
-		today = datetime.today()
-		if include_people == 'in_project' or include_people == '':
-			if project:
-				results = results.exclude(
-											membership__date_left__lte=today,
-											membership__project=project
-											)
-			else:
-				results = results.exclude(ABSS_end_date__lte=today)
-		elif include_people == 'left_project':
-			if project:
-				results = results.exclude(
-										membership__date_left__isnull=True,
-										membership__project=project
-										)
-				results = results.exclude(
-										membership__date_left__gt=today,
-										membership__project=project
-										)
-			else:
-				results = results.exclude(ABSS_end_date__isnull=True).exclude(ABSS_end_date__gt=datetime.today())
-
 		# if we have names in the search terms, split on spaces and attempt to find matches in the name fields
 		# and the membership number field
 		if names:
@@ -783,6 +760,25 @@ class Person(DataAccessMixin,models.Model):
 		# if we have a project, filter by project membership
 		if project:
 			results = results.filter(projects=project)
+
+		# filter further depending on whether we want people in the project, or those who have left
+		# use ABSS dates if we don't have an active project, otherwise project membership
+		today = date.today()
+		if project:
+			if include_people in ('in_project','left_project',''):
+				for person in results:
+					membership = Membership.objects.get(project=project,person=person)
+					if include_people == 'in_project' or include_people == '':
+						if membership.date_left and membership.date_left <= today:
+							results = results.exclude(pk=person.pk)
+					elif include_people == 'left_project':
+						if membership.date_left is None or membership.date_left > today:
+							results = results.exclude(pk=person.pk)
+		else:
+			if include_people == 'in_project' or include_people == '':
+				results = results.exclude(ABSS_end_date__lte=today)
+			elif include_people == 'left_project':
+				results = results.exclude(ABSS_end_date__isnull=True).exclude(ABSS_end_date__gt=datetime.today())
 
 		# order the results by name
 		results = results.order_by('last_name','first_name')

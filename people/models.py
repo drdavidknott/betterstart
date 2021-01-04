@@ -304,6 +304,7 @@ class Event_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	description = models.TextField(max_length=500)
 	event_category = models.ForeignKey(Event_Category, default=1, on_delete=models.SET_DEFAULT)
+	projects = models.ManyToManyField(Project, through='Project_Event_Type')
 	# define the function that will return the event name and the owning category as the object reference
 	def __str__(self):
 		return self.name + ' (' + str(self.event_category.name) + ')'
@@ -402,6 +403,18 @@ class Event(DataAccessMixin,models.Model):
 			warnings.append('Event does not have a registration from a person with a role of ' + punctuated_string)
 		# return the result
 		return warnings
+
+# Project event type model: records that an event can be used for a project
+class Project_Event_Type(DataAccessMixin,models.Model):
+	event_type = models.ForeignKey(Event_Type, on_delete=models.CASCADE)
+	project = models.ForeignKey(Project, on_delete=models.CASCADE)
+	# define the function that will return a string showing the relationship as the object reference
+	def __str__(self):
+		return self.event_type.name + ' is valid for ' + self.project.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'project event types'
+
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):

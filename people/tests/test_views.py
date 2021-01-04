@@ -6,7 +6,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
 							Terms_And_Conditions, Profile, Chart, Document_Link, Project, Membership, \
-							Project_Permission, Membership_Type
+							Project_Permission, Membership_Type, Project_Event_Type
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -4828,9 +4828,15 @@ class EventsViewTest(TestCase):
 							projects_active=True
 							)
 		project = Project.objects.get(name='testproject')
+		# get the event type
+		event_type = Event_Type.objects.get(name='test_event_type_1')
+		# create a project event type
+		Project_Event_Type.objects.create(
+											project=project,
+											event_type=event_type
+										)
 		# set up some more events within the project
-		test_event_type_1 = Event_Type.objects.get(name='test_event_type_1')
-		set_up_test_events('Test_Event_Type_1_',test_event_type_1,50,project=project)
+		set_up_test_events('Test_Event_Type_1_',event_type,50,project=project)
 		# log the user in
 		self.client.login(username='testuser', password='testword')
 		session = self.client.session
@@ -7369,6 +7375,13 @@ class AddEventViewTest(TestCase):
 		session = self.client.session
 		session['project_id'] = project.pk
 		session.save()
+		# get the event type
+		event_type = Event_Type.objects.get(name='test_event_type')
+		# create a project event type
+		Project_Event_Type.objects.create(
+											project=project,
+											event_type=event_type
+										)
 		# add an event
 		response = self.client.post(
 									reverse('addevent'),
@@ -7379,7 +7392,7 @@ class AddEventViewTest(TestCase):
 												'date' : '01/02/2010',
 												'start_time' : '10:00',
 												'end_time' : '11:00',
-												'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
+												'event_type' : str(event_type.pk),
 												'area_' + str(Area.objects.get(area_name='Test area').pk) : 'on',
 												'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
 											}
@@ -8849,6 +8862,54 @@ class EditEventViewTest(TestCase):
 											'start_time' : '13:00',
 											'end_time' : '14:00',
 											'event_type' : str(Event_Type.objects.get(name='test_event_type').pk),
+											'area_' + str(Area.objects.get(area_name='Test area').pk) : 'on',
+											'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code,302)
+		# get the record
+		test_event = Event.objects.get(name='updated_name')
+		# check the record contents
+		self.assertEqual(test_event.name,'updated_name')
+		self.assertEqual(test_event.description,'updated_description')
+		self.assertEqual(test_event.venue.name,'test_venue')
+		self.assertEqual(test_event.date.strftime('%d/%m/%Y'),'05/05/2019')
+		self.assertEqual(test_event.start_time.strftime('%H:%M'),'13:00')
+		self.assertEqual(test_event.end_time.strftime('%H:%M'),'14:00')
+		self.assertEqual(test_event.areas.filter(area_name='Test area').exists(),True)
+		self.assertEqual(test_event.areas.filter(area_name='Test area 2').exists(),False)
+
+	def test_edit_event_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the event type
+		event_type = Event_Type.objects.get(name='test_event_type')
+		# create a project event type
+		Project_Event_Type.objects.create(
+											project=project,
+											event_type=event_type
+										)
+		# create an event
+		set_up_test_events('Event_',event_type,1)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('edit_event',args=[Event.objects.get(name='Event_0').pk]),
+									data = { 
+											'name' : 'updated_name',
+											'description' : 'updated_description',
+											'venue' : str(Venue.objects.get(name='test_venue').pk),
+											'date' : '05/05/2019',
+											'start_time' : '13:00',
+											'end_time' : '14:00',
+											'event_type' : str(event_type.pk),
 											'area_' + str(Area.objects.get(area_name='Test area').pk) : 'on',
 											'area_' + str(Area.objects.get(area_name='Test area 2').pk) : ''
 											}

@@ -1431,6 +1431,8 @@ class EventForm(forms.Form):
 									widget=forms.Select())
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
+		# pull the project out of the parameters
+		project = kwargs.pop('project') if 'project' in kwargs.keys() else False
 		# call the built in constructor
 		super(EventForm, self).__init__(*args, **kwargs)
 		# build the choices
@@ -1440,6 +1442,12 @@ class EventForm(forms.Form):
 													default=True,
 													default_label='None')
 		self.fields['venue'].initial = 0
+		# build event types, depending on whether we have a project or not
+		if project:
+			event_types = Event_Type.objects.filter(projects=project)
+			self.fields['event_type'].choices = build_choices(choice_queryset=event_types,choice_field='name')
+		else:
+			self.fields['event_type'].choices = build_choices(choice_class=Event_Type,choice_field='name')
 		# build the area selector
 		area_columns = []
 		for area in Area.objects.filter(use_for_events=True).order_by('area_name'):
@@ -1740,20 +1748,12 @@ class EventSearchForm(forms.Form):
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
-		# initialise variables
-		user = False
-		# pull the user out of the parameters if provided
-		if 'user' in kwargs.keys():
-			user = kwargs.pop('user')
+		# pull out the parameters
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
+		project = kwargs.pop('project') if 'project' in kwargs.keys() else False
 		# call the built in constructor
 		super(EventSearchForm, self).__init__(*args, **kwargs)
 		# set the choices
-		self.fields['event_type'].choices = build_choices(
-															choice_class=Event_Type,
-															choice_field='name',
-															default=True,
-															default_label='Any'
-															)
 		self.fields['event_category'].choices = build_choices(
 																choice_class=Event_Category,
 																choice_field='name',
@@ -1772,6 +1772,22 @@ class EventSearchForm(forms.Form):
 													default=True,
 													default_label='Any'
 													)
+		# build event types, depending on whether we have a project or not
+		if project:
+			event_types = Event_Type.objects.filter(projects=project)
+			self.fields['event_type'].choices = build_choices(
+																choice_queryset=event_types,
+																choice_field='name',
+																default=True,
+																default_label='Any'
+																)
+		else:
+			self.fields['event_type'].choices = build_choices(
+																choice_class=Event_Type,
+																choice_field='name',
+																default=True,
+																default_label='Any'
+																)
 		# build the crispy form
 		self.helper = FormHelper()
 		self.helper.form_action = reverse('events')

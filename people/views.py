@@ -2843,10 +2843,12 @@ def venues(request):
 
 @login_required
 def addevent(request):
+	# get the project
+	project = Project.current_project(request.session)
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
-		addeventform = EventForm(request.POST)
+		addeventform = EventForm(request.POST,project=project)
 		# check whether the form is valid
 		if addeventform.is_valid():
 			# create the event
@@ -2868,7 +2870,7 @@ def addevent(request):
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		addeventform = EventForm()
+		addeventform = EventForm(project=project)
 	# get the template
 	addevent_template = loader.get_template('people/addevent.html')
 	# set the context
@@ -2993,7 +2995,7 @@ def events(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		eventsearchform = EventSearchForm(request.POST,user=request.user)
+		eventsearchform = EventSearchForm(request.POST,user=request.user,project=project)
 		# set the flag to show that a search was attempted
 		search_attempted = True
 		# validate the form
@@ -3051,7 +3053,7 @@ def events(request):
 	# otherwise set a bank form
 	else:
 		# create the blank form
-		eventsearchform = EventSearchForm()
+		eventsearchform = EventSearchForm(project=project)
 	# get the template
 	events_template = loader.get_template('people/events.html')
 	# set the context
@@ -3089,6 +3091,7 @@ def edit_event(request, event_id=0):
 		# create a form
 		editeventform = EventForm(
 									request.POST,
+									project=project
 									)
 		# check whether the entry is valid
 		if editeventform.is_valid():
@@ -3151,6 +3154,7 @@ def edit_event(request, event_id=0):
 		# create the form
 		editeventform = EventForm(
 									event_dict,
+									project=project
 									)
 	# load the template
 	edit_event_template = loader.get_template('people/edit_event.html')

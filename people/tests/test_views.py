@@ -17821,9 +17821,9 @@ class ManageMembershipViewTest(TestCase):
 
 	def test_redirect_if_not_logged_in(self):
 		# get the response
-		response = self.client.get('/listpeople')
+		response = self.client.get('/manage_membership')
 		# check the response
-		self.assertRedirects(response, '/people/login?next=/listpeople')
+		self.assertRedirects(response, '/people/login?next=/manage_membership')
 
 	def test_redirect_if_not_superuser(self):
 		# log the user in
@@ -18218,3 +18218,753 @@ class ManageMembershipViewTest(TestCase):
 		self.assertEqual(Membership.objects.all().count(),100)
 		# and that we got the right text in the response
 		self.assertContains(response,'10 people not removed: not members')
+
+class ManageProjectEventsViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user and superuser
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# set up an additional project
+		project_2 = Project.objects.create(name='testproject_2')
+		# set up address base data
+		set_up_address_base_data()
+		# create an event category
+		test_event_category = Event_Category.objects.create(name='test_event_category',description='category desc')
+		# and another couple of event categories
+		test_event_category_2 = Event_Category.objects.create(name='test_event_category_2',description='category desc')
+		test_event_category_3 = Event_Category.objects.create(name='test_event_category_3',description='category desc')
+		# create a load of event types and add them to projects
+		test_event_type_1 = Event_Type.objects.create(
+														name = 'test_event_type_1',
+														description = 'type desc',
+														event_category = test_event_category)
+		Project_Event_Type.objects.create(project=project,event_type=test_event_type_1)
+		Project_Event_Type.objects.create(project=project_2,event_type=test_event_type_1)	
+		test_event_type_2 = Event_Type.objects.create(
+														name = 'test_event_type_2',
+														description = 'type desc',
+														event_category = test_event_category_2)
+		Project_Event_Type.objects.create(project=project,event_type=test_event_type_2)
+		Project_Event_Type.objects.create(project=project_2,event_type=test_event_type_2)	
+		test_event_type_3 = Event_Type.objects.create(
+														name = 'test_event_type_3',
+														description = 'type desc',
+														event_category = test_event_category)
+		Project_Event_Type.objects.create(project=project,event_type=test_event_type_3)
+		Project_Event_Type.objects.create(project=project_2,event_type=test_event_type_3)	
+		test_event_type_4 = Event_Type.objects.create(
+														name = 'test_event_type_4',
+														description = 'type desc',
+														event_category = test_event_category)
+		Project_Event_Type.objects.create(project=project,event_type=test_event_type_4)
+		test_event_type_5 = Event_Type.objects.create(
+														name = 'test_event_type_5',
+														description = 'type desc',
+														event_category = test_event_category)
+		Project_Event_Type.objects.create(project=project,event_type=test_event_type_5)
+		test_event_type_6 = Event_Type.objects.create(
+														name = 'test_event_type_6',
+														description = 'type desc',
+														event_category = test_event_category_3)
+		Project_Event_Type.objects.create(project=project,event_type=test_event_type_6)
+		test_event_type_7 = Event_Type.objects.create(
+														name = 'test_event_type_7',
+														description = 'type desc',
+														event_category = test_event_category)
+		# Create 50 of each type
+		set_up_test_events('Test_Event_Type_1_', test_event_type_1,50)
+		set_up_test_events('Test_Event_Type_2_', test_event_type_2,50)
+		set_up_test_events('Test_Event_Type_3_', test_event_type_3,50)
+		set_up_test_events('Test_Event_Type_4_', test_event_type_4,50)
+		# and 50 of each of the two test event types with different names
+		set_up_test_events('Different_Name_',test_event_type_1,50)
+		set_up_test_events('Another_Name_',test_event_type_2,50)
+		# and more with the types swapped over
+		set_up_test_events('Different_Name_',test_event_type_1,50)
+		set_up_test_events('Another_Name_',test_event_type_2,50)
+		# and a short set to test a result set with less than a page
+		set_up_test_events('Short_Set_',test_event_type_4,10)
+		# and a set that doesn't exactly fit two pagaes
+		set_up_test_events('Pagination_',test_event_type_5,32)
+		# and three sets with different dates
+		set_up_test_events('Dates_',test_event_type_6,10,date='2019-01-01')
+		set_up_test_events('Dates_',test_event_type_6,10,date='2019-02-01')
+		set_up_test_events('Dates_',test_event_type_6,10,date='2019-03-01')
+		# and three more
+		set_up_test_events('Dates_',test_event_type_7,10,date='2019-01-01')
+		set_up_test_events('Dates_',test_event_type_7,10,date='2019-02-01')
+		set_up_test_events('Dates_',test_event_type_7,10,date='2019-03-01')
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/manage_project_events')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/manage_project_events')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/manage_project_events')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_empty_page_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.get(reverse('manage_project_events'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# the list of people passed in the context should be empty
+		self.assertEqual(len(response.context['events']),0)
+
+	def test_search_with_no_criteria(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Search',
+											'name' : '',
+											'event_type' : '0',
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],502)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),21)
+
+	def test_search_with_no_criteria_second_page(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Search',
+											'name' : '',
+											'event_type' : '0',
+											'project_id' : '0',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],502)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),21)
+
+	def test_search_by_name(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Search',
+											'name' : 'Type_1',
+											'event_type' : '0',
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_by_event_type(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Search',
+											'name' : '',
+											'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],150)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),6)
+
+	def test_search_by_name_and_event_type(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Search',
+											'name' : 'Type_1',
+											'event_type' : str(Event_Type.objects.get(name='test_event_type_1').pk),
+											'project_id' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_search_by_project(self):
+		# add events to the project
+		project = Project.objects.get(name='testproject')
+		for event in Event.objects.filter(name__startswith='Test_Event_Type_1_'):
+			event.project = project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Search',
+											'name' : 'Type_1',
+											'event_type' : '0',
+											'project_id' : str(project.pk),
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
+	def test_add_to_project_invalid_event_type(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		event_type = Event_Type.objects.get(name='test_event_type_7')
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the events still have blank projects
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,None)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events not added: invalid event type')
+
+	def test_add_to_project_registrations_not_in_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# create a person and register them to all relevant events
+		set_up_people_base_data()
+		set_up_test_people('Not_in_project_',number=1)
+		person = Person.objects.get(first_name='Not_in_project_0')
+		role_type=Role_Type.objects.get(role_type_name='test_role_type')
+		for event in Event.objects.filter(event_type=event_type):
+			Event_Registration.objects.create(
+												event=event,
+												person=person,
+												role_type=role_type,
+												registered=True,
+												participated=False,
+												apologies=False
+												)
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the events still have blank projects
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,None)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events not added: registrations not in project')
+
+	def test_add_to_project_already_in_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# add the event to the project
+		for event in Event.objects.filter(event_type=event_type):
+			event.project = project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events have not changed
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,project)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events not added: already in project')
+
+	def test_add_to_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events is correct
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,project)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events added to project')
+
+	def test_move_between_projects_invalid_event_type(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		target_project = Project.objects.get(name='testproject_2')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# add the event to the project
+		for event in Event.objects.filter(event_type=event_type):
+			event.project = project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(target_project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events have not changed
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,project)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events not added: invalid event type')
+
+	def test_move_between_projects_registrations_not_in_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		target_project = Project.objects.get(name='testproject_2')
+		event_type = Event_Type.objects.get(name='test_event_type_3')
+		# create a person
+		set_up_people_base_data()
+		set_up_test_people('Not_in_project_',number=1)
+		person = Person.objects.get(first_name='Not_in_project_0')
+		role_type=Role_Type.objects.get(role_type_name='test_role_type')
+		# add each event to the project and register the person
+		for event in Event.objects.filter(event_type=event_type):
+			Event_Registration.objects.create(
+												event=event,
+												person=person,
+												role_type=role_type,
+												registered=True,
+												participated=False,
+												apologies=False
+												)
+			event.project = project
+			event.save()
+		# and add the person to the source project
+		Membership.objects.create(
+									person=person,
+									project=project,
+									membership_type=Membership_Type.objects.get(name='test_membership_type')
+								)
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(target_project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the events still have blank projects
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,project)
+		# and that we got the right text in the response
+		self.assertContains(response,'50 events not added: registrations not in project')
+
+	def test_move_between_projects(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		target_project = Project.objects.get(name='testproject_2')
+		event_type = Event_Type.objects.get(name='test_event_type_3')
+		# add the event to the project
+		for event in Event.objects.filter(event_type=event_type):
+			event.project = project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(target_project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events have not changed
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,target_project)
+		# and that we got the right text in the response
+		self.assertContains(response,'50 events added to project')
+
+	def test_move_between_projects_with_registrations(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		target_project = Project.objects.get(name='testproject_2')
+		event_type = Event_Type.objects.get(name='test_event_type_3')
+		# create a person
+		set_up_people_base_data()
+		set_up_test_people('Not_in_project_',number=1)
+		person = Person.objects.get(first_name='Not_in_project_0')
+		role_type=Role_Type.objects.get(role_type_name='test_role_type')
+		# add each event to the project and register the person
+		for event in Event.objects.filter(event_type=event_type):
+			Event_Registration.objects.create(
+												event=event,
+												person=person,
+												role_type=role_type,
+												registered=True,
+												participated=False,
+												apologies=False
+												)
+			event.project = project
+			event.save()
+		# and add the person to the source project and the target project
+		Membership.objects.create(
+									person=person,
+									project=project,
+									membership_type=Membership_Type.objects.get(name='test_membership_type')
+								)
+		Membership.objects.create(
+									person=person,
+									project=target_project,
+									membership_type=Membership_Type.objects.get(name='test_membership_type')
+								)
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(target_project.pk),
+											'move_type' : 'add',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],50)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the events still have blank projects
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,target_project)
+		# and that we got the right text in the response
+		self.assertContains(response,'50 events added to project')
+
+	def test_remove_from_project_not_in_any_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(project.pk),
+											'move_type' : 'remove',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events is correct
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,None)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events not removed: not in project')
+
+	def test_remove_from_project_not_in_target_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		target_project = Project.objects.get(name='testproject_2')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# add each event to the project and register the person
+		for event in Event.objects.filter(event_type=event_type):
+			event.project = project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(target_project.pk),
+											'move_type' : 'remove',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events is correct
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,project)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events not removed: not in project')
+
+	def test_remove_from_project_mixed_not_in_target_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		target_project = Project.objects.get(name='testproject_2')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# add each event to the project and register the person, adding three to a different project
+		for event in Event.objects.filter(event_type=event_type):
+			if event.name in ('Dates_0','Dates_1','Dates_2'):
+				event.project = project
+			else:
+				event.project = target_project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(target_project.pk),
+											'move_type' : 'remove',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events is correct
+		for event in Event.objects.filter(event_type=event_type):
+			if event.name in ('Dates_0','Dates_1','Dates_2'):
+				self.assertEqual(event.project,project)
+			else:
+				self.assertEqual(event.project,None)
+		# and that we got the right text in the response
+		self.assertContains(response,'9 events not removed: not in project')
+		self.assertContains(response,'21 events removed from project')
+
+	def test_remove_from_project(self):
+		# get the test records
+		project = Project.objects.get(name='testproject')
+		event_type = Event_Type.objects.get(name='test_event_type_6')
+		# add each event to the project and register the person
+		for event in Event.objects.filter(event_type=event_type):
+			event.project = project
+			event.save()
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('manage_project_events'),
+									data = { 
+											'action' : 'Move',
+											'name' : '',
+											'event_type' : str(event_type.pk),
+											'project_id' : '0',
+											'target_project_id' : str(project.pk),
+											'move_type' : 'remove',
+											'page' : '1'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_events'],30)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['events']),25)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+		# check that the project for the events is correct
+		for event in Event.objects.filter(event_type=event_type):
+			self.assertEqual(event.project,None)
+		# and that we got the right text in the response
+		self.assertContains(response,'30 events removed from project')
+

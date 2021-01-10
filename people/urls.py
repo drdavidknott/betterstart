@@ -67,6 +67,7 @@ urlpatterns = [
     url(r'^download_dashboard/(?P<name>[\w]+)$', views.download_dashboard, name='download_dashboard'),
     url(r'^settings$', views.settings, name='settings'),
     url(r'^manage_membership$', views.manage_membership, name='manage_membership'),
+    url(r'^manage_project_events$', views.manage_project_events, name='manage_project_events'),
     url(r'^change_password$', views.change_password, name='change_password'),
     url(r'^display_qrcode$', views.display_qrcode, name='display_qrcode'),
     url(r'^display_qrcode_image$', views.display_qrcode_image, name='display_qrcode_image'),

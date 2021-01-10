@@ -95,20 +95,33 @@
 		 	</div>
 		 </div>
 
-		 <div class="row">
+		<div class="row">
 			<div class='col-xs-1 text-right'>
 				<a href="{% url 'manage_membership' %}">
 					<span class="glyphicon glyphicon-user"></span>
 				</a>
 			</div>
 			<div class='col-xs-11'>
-			   <div class="row">
+			   	<div class="row">
 					<a href="{% url 'manage_membership' %}">
 						Manage Project Membership
 					</a>
 				</div>
-		   </div>
-	   	</div>
+		   	</div>
+
+			<div class='col-xs-1 text-right'>
+				<a href="{% url 'manage_project_events' %}">
+					<span class="glyphicon glyphicon-calendar"></span>
+				</a>
+			</div>
+		   	<div class='col-xs-11'>
+				<div class="row">
+					<a href="{% url 'manage_project_events' %}">
+						Manage Project Events
+					</a>
+				</div>
+			</div>
+		</div>
 
 		 <div class="row">
 	 		<div class='col-xs-1 text-right'>

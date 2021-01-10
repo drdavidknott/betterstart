@@ -1,0 +1,140 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+	<div class="row">
+ 		<div class="col-md-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-calendar"></span><span class="glyphicon glyphicon-search"></span>
+	 			Search for Events:{% if number_of_events or search_attempted %} ({{ number_of_events }} found){% endif %}
+ 			</h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+	<div class="row">
+ 		<div class="col-xs-12">
+		 	<div>{% crispy manageprojecteventssearchform %}</div>
+		</div>
+    </div>
+    
+    {% if build_results %}
+        <div class="row">
+            <div class="col-xs-12">
+                <hr>
+            </div>
+        </div>
+        <div class="col-md-12">
+            {{ build_results }}
+        </div>
+    {% endif %}
+
+	<div class="row">
+        <div class="col-xs-12">
+            <hr>
+        </div>
+	</div>
+
+	{% if events %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
+					<tbody>
+				 		{% for event in events %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'event' event.pk %}">
+										{{ event }}
+									</a>
+								</td>
+								<td>
+									{{ event.event_type.name }}
+                                </td>
+                                <td>
+                                    {% if event.project %}
+                                        <div>
+                                            {{ event.project.name }}
+                                        </div>
+                                    {% else %}
+                                        <div>
+                                            No project
+                                        </div>
+                                    {% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	{% endif %}
+
+	{% if page_list %}
+		
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+		<div class="row">
+	 		<div class="col-xs-12">
+	 			<h4>
+		 			<span class="glyphicon glyphicon-user"></span><span class="glyphicon glyphicon-search"></span>
+		 			More results
+	 			</h4>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<form action ="{% url 'manage_project_events' %}" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="Search">
+					<input type="hidden" name="names" value="{{ names }}">
+					<input type="hidden" name="event_type" value="{{ event_type }}">
+					<input type="hidden" name="project_id" value="{{ project_id }}">
+					{% for page in page_list %}
+							<button 
+								type="submit" 
+								name="page" 
+								value="{{ page.number }}" 
+								class="btn btn-sm btn-primary person-page-button"
+								{% if page.number == this_page %}
+									disabled
+								{% endif %}
+								>
+								{{ page }}
+							</button>
+					{% endfor %}
+				</form>
+			<div class="col-xs-12">
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+	 			<hr>
+		 	</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

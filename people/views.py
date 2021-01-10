@@ -6,7 +6,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
 					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
-					Project, Membership, Membership_Type, Project_Permission
+					Project, Membership, Membership_Type, Project_Permission, Project_Event_Type
 import os
 import csv
 import copy
@@ -20,7 +20,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
-					ManageMembershipSearchForm
+					ManageMembershipSearchForm, ManageProjectEventsSearchForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -1064,6 +1064,71 @@ def build_memberships(people,project,action,with_dates):
 		results = str(success) + ' people removed from project'
 		if error:
 			results += '; ' + str(error) + ' people not removed: not members'
+	# return the results
+	return results
+
+def build_project_events(events,project,action):
+	# initialise variables
+	results = ''
+	success = 0
+	in_project_error = 0
+	invalid_event_type = 0
+	registration_error = 0
+	# go through the events
+	for event in events:
+		# process additions
+		if action == 'add':
+			# check whether the event is already in the project
+			if event.project == project:
+				in_project_error += 1
+			# check whether the event type is valid
+			else:
+				project_event_type = Project_Event_Type.try_to_get(
+																	project=project,
+																	event_type=event.event_type
+																	)
+				if not project_event_type:
+					invalid_event_type += 1
+				else:
+					# check whether there are any registrations for people not in the project
+					person_not_member = False
+					for registration in event.event_registration_set.all():
+						membership = Membership.try_to_get(
+															person=registration.person,
+															project=project
+															)
+						if not membership:
+							person_not_member = True
+					# deal with the result
+					if person_not_member:
+						registration_error += 1
+					else:
+						event.project = project
+						event.save()
+						success += 1
+		# process removals
+		if action == 'remove':
+			# check whether the event is already in the project, and remove it if it is
+			if event.project == project:
+				event.project = None
+				event.save()
+				success += 1
+			# otherwise set the error
+			else:
+				in_project_error += 1
+	# set the results
+	if action == 'add':
+		results = str(success) + ' events added to project'
+		if registration_error:
+			results += '; ' + str(registration_error) + ' events not added: registrations not in project'
+		if in_project_error:
+			results += '; ' + str(in_project_error) + ' events not added: already in project'
+		if invalid_event_type:
+			results += '; ' + str(invalid_event_type) + ' events not added: invalid event type'
+	else:
+		results = str(success) + ' events removed from project'
+		if in_project_error:
+			results += '; ' + str(in_project_error) + ' events not removed: not in project'
 	# return the results
 	return results
 				
@@ -3953,3 +4018,88 @@ def manage_membership(request):
 				'search_attempted' : search_attempted,
 				})
 	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def manage_project_events(request):
+	# return a banner if projects are not active
+	site = Site.objects.first()
+	if not site.projects_active:
+		return make_banner(request, 'Projects are not active for this site')
+	# get the project
+	project = Project.current_project(request.session)
+	# set a blank list
+	events = []
+	# and a blank page_list
+	page_list = []
+	page = 0
+	# and blank search terms
+	name = ''
+	event_type = 0
+	search_attempted = False
+	build_results = False
+	# set a blank search_error
+	search_error = ''
+	# and a zero number of results
+	number_of_events = 0
+	# set the results per page
+	results_per_page = 25
+	# check whether this is a post
+	if request.method == 'POST':
+		# create a search form
+		form = ManageProjectEventsSearchForm(request.POST,user=request.user)
+		# set the flag to show that a search was attempted
+		search_attempted = True
+		# validate the form
+		if form.is_valid():
+			# get the values
+			name = form.cleaned_data['name']
+			event_type = form.cleaned_data['event_type']
+			project_id = form.cleaned_data['project_id']
+			project = Project.try_to_get(pk=project_id) if project_id else ''
+			action = form.cleaned_data['action']
+			# conduct a search
+			events = Event.search(
+									name__icontains=name,
+									event_type_id=int(event_type),
+									project=project
+									).order_by('name')
+			# if we got a request for a move, do the move
+			if form.cleaned_data['action'] == 'Move':
+				target_project = Project.try_to_get(pk=form.cleaned_data['target_project_id'])
+				build_results = build_project_events(
+													events=events,
+													project = target_project,
+													action = form.cleaned_data['move_type'],
+													)
+			# do the pagination
+			number_of_events = len(events)
+			page = int(request.POST['page'])
+			page_list = build_page_list(
+									objects=events,
+									page_length=results_per_page,
+									attribute='name',
+									length=3
+									)
+			previous_page = page - 1
+			events = events[previous_page*results_per_page:page*results_per_page]
+	else:
+		# create the blank form
+		form = ManageProjectEventsSearchForm()
+	# get the template
+	events_template = loader.get_template('people/manage_project_events.html')
+	# set the context
+	context = build_context(request,{
+				'events' : events,
+				'manageprojecteventssearchform' : form,
+				'name' : name,
+				'event_type' : event_type,
+				'page_list' : page_list,
+				'search_error' : search_error,
+				'build_results' : build_results,
+				'number_of_events' : number_of_events,
+				'this_page' : page,
+				'search_attempted' : search_attempted
+				})
+	# return the HttpResponse
+	return HttpResponse(events_template.render(context=context, request=request))

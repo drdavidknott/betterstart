@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_views.EventsViewTest.test_search_name",
+                "people.tests.test_views.ManageProjectEventsViewTest.test_remove_from_project_mixed_not_in_target_project",
                 "--verbosity=2",
             ],
             "django": true,

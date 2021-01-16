@@ -13447,6 +13447,26 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that no records have been created
 		self.assertFalse(Person.objects.all().exists())
 
+	def test_upload_people_data_invalid_integers(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people_invalid_integers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'Invalid Membership No not created: integer field membership_number XYZ is not integer')
+		# check that no records have been created
+		self.assertFalse(Person.objects.all().exists())
+
 	def test_upload_people(self):
 		# log the user in as a superuser
 		self.client.login(username='testsuper', password='superword')
@@ -13491,6 +13511,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the second person
 		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
 		# check the fields
@@ -13520,6 +13541,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the third person
 		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
 		# check the fields
@@ -13549,6 +13571,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# check that we have two people
 		self.assertEqual(Person.objects.all().count(),3)
 
@@ -13596,6 +13619,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.street.name,'test_street_0')
 		self.assertEqual(test_person.notes,'test notes')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -13630,6 +13654,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -13664,6 +13689,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -13716,6 +13742,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the second person
 		test_person = Person.objects.get(first_name='Test no dob',last_name='Person')
 		# check the fields
@@ -13745,6 +13772,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the third person
 		test_person = Person.objects.get(first_name='Test no street',last_name='Person')
 		# check the fields
@@ -13774,6 +13802,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# check that we have two people
 		self.assertEqual(Person.objects.all().count(),3)
 		# close the file
@@ -13839,6 +13868,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.street.name,'test_street_0')
 		self.assertEqual(test_person.notes,'test notes')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -13873,6 +13903,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -13907,6 +13938,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -13979,6 +14011,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.street.name,'test_street_0')
 		self.assertEqual(test_person.notes,'test notes')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -14013,6 +14046,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -14047,6 +14081,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -14101,6 +14136,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.street.name,'test_street_0')
 		self.assertEqual(test_person.notes,'test notes')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -14135,6 +14171,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -14169,6 +14206,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date,None)
 		self.assertEqual(test_person.ABSS_end_date,None)
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# and the membership
 		membership = Membership.objects.get(project=project,person=test_person)
 		self.assertEqual(membership.membership_type.name,'test_membership_type')
@@ -14221,6 +14259,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# get the second person
 		test_person = Person.objects.get(first_name='Test',last_name='Person',age_status__status='Child under four')
 		# check the fields
@@ -14249,6 +14288,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
 		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
 		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
 		# check that we only have two people
 		self.assertEqual(Person.objects.all().count(),2)
 
@@ -15144,6 +15184,7 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')
+		person.membership_number = 12345
 		# save the record
 		person.save()
 		# log the user in as a superuser
@@ -15158,9 +15199,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right records
-		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,test_ABSS_type,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
-		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_ABSS_type,,,')
 
 	def test_download_people_with_projects_active(self):
 		# add the user to a project, and set projects active
@@ -15197,6 +15238,7 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')
+		person.membership_number = 12345
 		# save the record
 		person.save()
 		# submit the page to download the file
@@ -15209,9 +15251,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,test_membership_type,,,')
-		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,test_membership_type,,,Test ward')
-		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,,,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
@@ -15236,6 +15278,7 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')
+		person.membership_number = 12345
 		# save the record
 		person.save()
 		# log the user in as a superuser
@@ -15259,9 +15302,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right records
-		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,test_ABSS_type,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
-		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_ABSS_type,,,')
 
 	def test_download_people_limited_via_search(self):
 		# create base data for addresses

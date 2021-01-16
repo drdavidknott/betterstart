@@ -67,8 +67,8 @@
 										{{ event.name }}
 									</a>
 									on {{ event.date|date:"M d Y" }}
-									{% if event.location %}
-										at {{ event.location }}
+									{% if event.venue %}
+										at {{ event.venue.name }}
 									{% endif %}
 								</td>
 								<td align='center'>

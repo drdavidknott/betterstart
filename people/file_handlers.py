@@ -232,7 +232,7 @@ class File_Delimited_List_Field(File_Field):
 		self.value = delimited_list
 
 class File_Boolean_Field(File_Field):
-	# this class defines a field within a file of datetime format
+	# this class defines a field within a file of boolean format
 	# over-ride the built in __init__ method to add additional values
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -245,6 +245,17 @@ class File_Boolean_Field(File_Field):
 		super(File_Boolean_Field, self).validate_upload_value(*args, **kwargs)
 		# set the value
 		self.value = (self.value in self.true_values)
+
+class File_Integer_Field(File_Field):
+	# this class defines a field within a file of integer format, with validation and conversion
+	def validate_upload_value(self):
+		# check whether we have an integer value
+		try: 
+			self.value = int(self.value)
+			self.valid = True
+		except ValueError:
+			self.errors.append(' not created: integer field ' + self.name + ' ' + self.value + ' is not integer')
+			self.valid = False
 
 class File_Count_Field(File_Field):
 	# this class defines a field within a file that contains a count 
@@ -733,6 +744,7 @@ class People_File_Handler(File_Handler):
 								)
 		self.notes = File_Field(name='notes')
 		self.emergency_contact_details = File_Field(name='emergency_contact_details')
+		self.membership_number = File_Integer_Field(name='membership_number')
 		# set membership fields depending on whether we have a project
 		if self.project:
 			self.membership_type = File_Field(
@@ -796,7 +808,8 @@ class People_File_Handler(File_Handler):
 						'street',
 						'post_code',
 						'notes',
-						'emergency_contact_details'
+						'emergency_contact_details',
+						'membership_number'
 						]
 		# add in the membership fields
 		self.fields += membership_fields

@@ -89,17 +89,31 @@
 		{% endif %}
 
 		{% if file_handler.results %}
-			<div class="row">
-		 		<div class="col-xs-12">
-			 		<div>
-			 			<h4>
-				 			<span class="glyphicon glyphicon-cloud-upload"></span>
-				 			<span class="glyphicon glyphicon-ok"></span>
-				 			Upload Records Created: {{ file_hander.records_created }}
-			 			<h4>
-			 		</div>
+			{% if update %}
+				<div class="row">
+					<div class="col-xs-12">
+						<div>
+							<h4>
+								<span class="glyphicon glyphicon-cloud-upload"></span>
+								<span class="glyphicon glyphicon-ok"></span>
+							Records Updated: {{ file_handler.records_updated }}
+							<h4>
+						</div>
+					</div>
 				</div>
-			</div>
+			{% else %}
+				<div class="row">
+					<div class="col-xs-12">
+						<div>
+							<h4>
+								<span class="glyphicon glyphicon-cloud-upload"></span>
+								<span class="glyphicon glyphicon-ok"></span>
+								Records Created: {{ file_handler.records_created }}
+							<h4>
+						</div>
+					</div>
+				</div>
+			{% endif %}
 
 			<div class="form-row">
 				<div class="col-xs-12">

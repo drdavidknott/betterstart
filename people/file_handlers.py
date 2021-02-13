@@ -21,6 +21,7 @@ class File_Field():
 					corresponding_must_not_exist=False,
 					use_corresponding_for_download=False,
 					include_in_create=True,
+					include_in_update=True,
 					set_download_from_object=True,
 					corresponding_relationship_field=False,
 					default='',
@@ -34,6 +35,7 @@ class File_Field():
 		self.corresponding_must_not_exist = corresponding_must_not_exist
 		self.use_corresponding_for_download = use_corresponding_for_download
 		self.include_in_create = include_in_create
+		self.include_in_update = include_in_update
 		self.set_download_from_object = set_download_from_object
 		self.corresponding_record = None
 		self.default = default
@@ -41,6 +43,7 @@ class File_Field():
 		self.errors = []
 		self.converter = False
 		self.valid = False
+		self.update = False
 		# and set the corresponding  field if we have one
 		if corresponding_field:
 			# set the attribute
@@ -288,9 +291,11 @@ class File_Handler():
 		self.additional_download_fields = []
 		self.file_class = ''
 		self.upload = True
+		self.update = False
 		self.objects = None
 		self.records_read = 0
 		self.records_created = 0
+		self.records_updated = 0
 		self.records_with_errors = 0
 		self.project_filter = {}
 		# set the file class if we have received one
@@ -362,6 +367,37 @@ class File_Handler():
 		# placeholder for now
 		return
 
+	# process an uploaded file
+	def handle_update(self, file):
+		# clear the results
+		self.results = []
+		# check whhether we are allowed to upload this file
+		if self.update:
+			# read the file as a csv file
+			records = csv.DictReader(file)
+			# check that we have the fields we were expecting
+			if self.file_format_valid(records.fieldnames.copy()):
+				# go through the records
+				for record in records:
+					# count the read
+					self.records_read += 1
+					# get the database entry to update
+					self.get_existing_record(record)
+					# do the validation
+					if self.existing_record:
+						fields_valid = self.fields_valid(record,update=True)
+						update_valid = self.update_validation_valid(record)
+						# update the record if all is valid; increment counts in either case
+						if (fields_valid and update_valid):
+							self.update_record(record)
+							self.records_updated += 1
+						else:
+							self.records_with_errors += 1
+			# print(self.results)
+		else:
+			# set the message to say that upload is not allowed
+			self.results.append('This file type cannot be used for updates.')
+
 	# set the download fields
 	def set_download_fields(self,this_object):
 		# go through the fields, getting and setting the value
@@ -417,14 +453,19 @@ class File_Handler():
 		for error in errors:
 			self.errors.append(error)
 
-	def fields_valid(self,record):
+	def fields_valid(self,record,update=False):
 		# set the result to True
 		success = True
 		# attempt to validate the field, setting the value in the process
 		for field in self.fields:
 			file_field = getattr(self,field)
 			file_field.set_upload_value(record)
-			file_field.validate_upload_value()
+			# validate the field if this is not an update or if we have a value
+			if not update or file_field.value != '':
+				file_field.validate_upload_value()
+				file_field.update = True
+			else:
+				file_field.value = False
 			# if there are errors, append them to the file errors
 			if file_field.errors: 
 				self.add_record_errors(record,file_field.errors)
@@ -433,6 +474,30 @@ class File_Handler():
 		return success
 
 	def complex_validation_valid(self,record):
+		# placeholder function to be replaced in sub-classess
+		return True
+
+	def update_validation_valid(self,record):
+		# set the results
+		valid = True
+		this_type = 'test'
+		# set values for complex validation
+		for field_name in self.fields:
+			file_field = getattr(self,field_name)
+			if not file_field.value and file_field.include_in_update:
+				value = getattr(self.existing_record,field_name)
+				# convert dates to datetimes for validation
+				if isinstance(value,datetime.date):
+					value = datetime.datetime.combine(value, datetime.datetime.min.time())
+				file_field.value = value
+				file_field.exists = True
+				file_field.valid = True
+		# do the complex validation
+		valid = self.complex_validation_valid(record,update=True)
+		# return the result
+		return valid
+
+	def get_existing_record(self,record):
 		# placeholder function to be replaced in sub-classess
 		return True
 
@@ -454,6 +519,19 @@ class File_Handler():
 			self.add_project(new_record)
 		# return the created record
 		return new_record
+
+	def update_record(self,record):
+		# set the fields
+		for field in self.fields:
+			file_field = getattr(self,field)
+			if file_field.update and file_field.include_in_update:
+				setattr(self.existing_record,field,file_field.value)
+		# update the record
+		self.existing_record.save()
+		# record the creation
+		self.add_record_results(record,[' updated.'])
+		# return the created record
+		return self.existing_record
 
 	def add_project(self,record):
 		# dummy function extended in sub-classes
@@ -687,6 +765,9 @@ class People_File_Handler(File_Handler):
 		super(People_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
 		self.file_class = Person
+		# and the file attributes
+		self.update = True
+		self.existing_record = False
 		# set the file fields
 		self.first_name = File_Field(name='first_name',mandatory=True,max_length=50)
 		self.last_name = File_Field(name='last_name',mandatory=True,max_length=50)
@@ -728,6 +809,7 @@ class People_File_Handler(File_Handler):
 									name='street',
 									use_corresponding_for_download=True,
 									corresponding_field='name',
+									include_in_update=False,
 									default=None
 									)
 		self.post_code = File_Field(
@@ -736,6 +818,7 @@ class People_File_Handler(File_Handler):
 									corresponding_field='post_code',
 									corresponding_must_exist=True,
 									include_in_create=False,
+									include_in_update=False,
 									set_download_from_object=False
 									)
 		self.ward = File_Field(
@@ -754,18 +837,21 @@ class People_File_Handler(File_Handler):
 										corresponding_field='name',
 										corresponding_must_exist=True,
 										include_in_create=False,
+										include_in_update=False,
 										set_download_from_object=False
 										)
 			self.date_joined = File_Datetime_Field(
 										name='date_joined',
 										datetime_format='%d/%m/%Y',
 										include_in_create=False,
+										include_in_update=False,
 										set_download_from_object=False
 										)
 			self.date_left = File_Datetime_Field(
 										name='date_left',
 										datetime_format='%d/%m/%Y',
 										include_in_create=False,
+										include_in_update=False,
 										set_download_from_object=False
 										)
 			membership_fields = [
@@ -821,11 +907,45 @@ class People_File_Handler(File_Handler):
 		if self.project:
 			self.project_filter = { 'projects' : self.project }
 
-	def complex_validation_valid(self,record):
+	def get_existing_record(self,record):
+		# initialise variables
+		person = False
+		# set the fields
+		first_name = record['first_name']
+		last_name = record['last_name']
+		# check the value against the date
+		try:
+			date_of_birth = datetime.datetime.strptime(record['date_of_birth'], self.date_of_birth.datetime_format)
+		# deal with the exception
+		except ValueError:
+			date_of_birth = False
+			self.add_record_errors(
+									record,
+									[' not updated: date of birth ' 
+										+ str(record['date_of_birth']) + ' is invalid date or time.'])
+		# set the validity flag
+		self.valid = (not self.errors)
+		# attempt to get the person record
+		if first_name and last_name and date_of_birth:
+			person, message = Person.try_to_get_just_one(
+														first_name = first_name,
+														last_name = last_name,
+														date_of_birth = date_of_birth)
+			# if we have a set the attribute, otherwise raise an error
+			if person:
+				self.existing_record = person
+			else:
+				self.add_record_errors(
+										record,
+										[' not created: ' + message]
+										)
+		return
+
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether the person exists
-		if self.first_name.valid and self.last_name.valid and self.date_of_birth.valid:
+		if self.first_name.valid and self.last_name.valid and self.date_of_birth.valid and not update:
 			if Person.search(
 								first_name = self.first_name.value,
 								last_name = self.last_name.value,
@@ -859,7 +979,7 @@ class People_File_Handler(File_Handler):
 			self.add_record_errors(record,[' not created: has no due date but is pregnant.'])
 			valid = False
 		# check whether we have any address details
-		if (self.post_code.value or self.street.value or self.house_name_or_number.value):
+		if (self.post_code.value or self.street.value or self.house_name_or_number.value) and not update:
 			# now check whether we have ALL address details
 			if not (self.post_code.value and self.street.value and self.house_name_or_number.value):
 				self.add_record_errors(record,[' not created: all of post code, street and name/number needed for address.'])
@@ -900,7 +1020,7 @@ class People_File_Handler(File_Handler):
 					valid = False
 		# return the result
 		return valid
-
+	
 	def label(self,record):
 		# return the label
 		return record['first_name'] + ' ' + record['last_name']

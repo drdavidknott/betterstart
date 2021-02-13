@@ -14292,6 +14292,405 @@ class UploadPeopleDataViewTest(TestCase):
 		# check that we only have two people
 		self.assertEqual(Person.objects.all().count(),2)
 
+class UpdatePeopleDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and other base data
+		set_up_address_base_data()
+		set_up_test_post_codes('test_pc_')
+		set_up_test_streets('test_street_','test_pc_0')
+		invalid_test_role = Role_Type.objects.create(role_type_name='invalid_test_role',use_for_events=True,use_for_people=True)
+		# and some additional records
+		test_age_status_limit = Age_Status.objects.create(
+															status='Under five',
+															default_role_type=Role_Type.objects.get(
+																				role_type_name='test_role_type'),
+															maximum_age=5
+															)
+
+	def test_update_people_no_match(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
+		# check that we have one person
+		self.assertEqual(Person.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/update_people_no_match.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'not created')
+		# check that no additional people have been created
+		self.assertEqual(Person.objects.all().count(),3)
+
+	def test_update_people_invalid_dob(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
+		# check that we have one person
+		self.assertEqual(Person.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/update_people_invalid_dob.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'is invalid date or time')
+		# check that no additional people have been created
+		self.assertEqual(Person.objects.all().count(),3)
+
+	def test_update_people_invalid_role_type(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
+		# check that we have one person
+		self.assertEqual(Person.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/update_people_invalid_role_type.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'not created: role type is not valid for age status')
+		# check that no additional people have been created
+		self.assertEqual(Person.objects.all().count(),3)
+
+	def test_update_people(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
+		# check that we have one person
+		self.assertEqual(Person.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/update_people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test emailz')
+		self.assertEqual(test_person.home_phone,'1234567')
+		self.assertEqual(test_person.mobile_phone,'7891234')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Female')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,123456)
+		# check that no additional people have been created
+		self.assertEqual(Person.objects.all().count(),3)
+
+	def test_update_people_single_field(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/people.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,12345)
+		# check that we have one person
+		self.assertEqual(Person.objects.all().count(),3)
+		# close the file
+		valid_file.close()
+		# reopen the file
+		valid_file = open('people/tests/data/update_people_single_field.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update People',
+											'file' : valid_file
+											}
+									)
+		# check that we got an error response
+		self.assertEqual(response.status_code, 200)
+		# get the person
+		test_person = Person.objects.get(first_name='Test',last_name='Person')
+		# check the fields
+		self.assertEqual(test_person.first_name,'Test')
+		self.assertEqual(test_person.middle_names,'')
+		self.assertEqual(test_person.last_name,'Person')
+		self.assertEqual(test_person.other_names,'test other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'test_role_type')
+		self.assertEqual(test_person.email_address,'test email')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'789123')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/1990')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.pregnant,True)
+		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
+		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.ABSS_type.name,'test_ABSS_type')
+		self.assertEqual(test_person.age_status.status,'Adult')
+		self.assertEqual(test_person.house_name_or_number,'999')
+		self.assertEqual(test_person.street.name,'test_street_0')
+		self.assertEqual(test_person.ABSS_start_date.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.ABSS_end_date.strftime('%d/%m/%Y'),'01/01/2005')
+		self.assertEqual(test_person.emergency_contact_details,'test emergency contact details')
+		self.assertEqual(test_person.membership_number,67890)
+		# check that no additional people have been created
+		self.assertEqual(Person.objects.all().count(),3)
+
 class UploadEventsDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

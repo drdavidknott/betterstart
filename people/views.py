@@ -3538,6 +3538,7 @@ def uploaddata(request):
 	# initialise variables
 	file_handler = False
 	project = Project.current_project(request.session)
+	update = False
 	# define the records that need simple file handlers
 	simple_file_handlers = {
 							'Areas' : {'file_class' : Area, 'field_name' : 'area_name'},
@@ -3568,6 +3569,10 @@ def uploaddata(request):
 						'Venues' : Venues_File_Handler,
 						'Venues for Events' : Venues_For_Events_File_Handler
 					}
+	# define the records that have update file handlers
+	update_file_handlers = {
+							'Update People' : People_File_Handler,
+							}
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# create a form from the POST to retain data and trigger validation
@@ -3582,6 +3587,10 @@ def uploaddata(request):
 				file_handler_kwargs = simple_file_handlers[file_type]
 				file_handler = File_Handler(**file_handler_kwargs,project=project)
 				file_handler.handle_uploaded_file(file)
+			elif file_type in update_file_handlers.keys():
+				file_handler = update_file_handlers[file_type](project=project)
+				file_handler.handle_update(file)
+				update = True
 			else:
 				# handle a complex file
 				file_handler = file_handlers[file_type](project=project)
@@ -3595,7 +3604,8 @@ def uploaddata(request):
 	# set the context
 	context = build_context(request,{
 				'uploaddataform' : uploaddataform,
-				'file_handler' : file_handler
+				'file_handler' : file_handler,
+				'update' : update,
 				})
 	# return the HttpResponse
 	return HttpResponse(upload_data_template.render(context=context, request=request))

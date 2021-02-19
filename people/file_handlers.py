@@ -909,6 +909,7 @@ class People_File_Handler(File_Handler):
 
 	def get_existing_record(self,record):
 		# initialise variables
+		self.existing_record = False
 		person = False
 		# set the fields
 		first_name = record['first_name']

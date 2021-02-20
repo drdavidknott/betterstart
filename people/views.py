@@ -1819,6 +1819,7 @@ def people(request):
 				'number_of_people' : number_of_people,
 				'search_attempted' : search_attempted,
 				'children_ages' : children_ages,
+				'project' : project,
 				})
 	return HttpResponse(people_template.render(context=context, request=request))
 
@@ -1990,6 +1991,7 @@ def person(request, person_id=0):
 	completed_invitation_steps=False
 	invitation_step_types=False
 	invitation_url = False
+	memberships = False
 	project = Project.current_project(request.session)
 	# load the template
 	person_template = loader.get_template('people/person.html')
@@ -2018,6 +2020,8 @@ def person(request, person_id=0):
 	activities = person.activity_set.order_by('-date')
 	if project:
 		activities = activities.filter(project=project)
+	if not project:
+		memberships = person.membership_set.all()
 	# set the context
 	context = build_context(request,{
 				'person' : person,
@@ -2031,7 +2035,8 @@ def person(request, person_id=0):
 				'invitation_step_types': invitation_step_types,
 				'invitation_url' : invitation_url,
 				'completed_invitations' : completed_invitations,
-				'unvalidated_invitations' : unvalidated_invitations
+				'unvalidated_invitations' : unvalidated_invitations,
+				'memberships' : memberships,
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))

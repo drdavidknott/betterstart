@@ -110,10 +110,10 @@
  		<div class='col-xs-11'>
 			<div class="row">
 	 			<strong>Age status: </strong>{{ person.age_description }}
-	 		</div>
+			 </div>
 	 		<div class="row">
 	 			<strong>Project status: </strong>{{ person.project_description }}
-	 		</div>
+			</div>
 	 		{% if person.pregnant %}
 				<div class="row">
 	 				<strong>Pregnancy status: </strong>{{ person.pregnancy_description }}&nbsp
@@ -154,6 +154,34 @@
 			{% endfor %}
 		</div>
 	</div>
+
+	{% if memberships %}
+		<div class="row">
+			<div class="col-xs-12">
+				<hr>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class='col-xs-1 text-right'>
+					<span class="glyphicon glyphicon-book"></span>
+				</a>
+			</div>
+			<div class="col-xs-11">
+				{% for membership in memberships %}
+					<div class="row">
+						{{ membership.membership_type.name }} in project {{ membership.project.name }}
+						{% if membership.date_joined %}
+							from {{ membership.date_joined }}
+						{% endif %}
+						{% if membership.date_left %}
+							to {{ membership.date_left }}
+						{% endif %}
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+	{% endif %}
 	
 	{% if person.age_status.can_have_contact_details %}
 

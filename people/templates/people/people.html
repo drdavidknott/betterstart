@@ -75,6 +75,21 @@
 										</div>
 									{% endfor %}
 								</td>
+								{% if not project %}
+									<td>
+										{% if person.membership_set.exists %}
+											{% for membership in person.membership_set.all %}
+												<div>
+													{{ membership.project.name }}
+												</div>
+											{% endfor %}
+										{% else %}
+											<div>
+												No project
+											</div>
+										{% endif %}
+									</td>
+								{% endif %}
 							</tr>
 						{% endfor %}
 					</tbody>

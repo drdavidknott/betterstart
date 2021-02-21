@@ -55,6 +55,7 @@
 				<table class="table table-striped">
 					<thead>
 						<th></th>
+						<td></td>
 						<td align='center'>Registered</td>
 						<td align='center'>Apologies</td>
 						<td align='center'>Participated</td>
@@ -69,6 +70,11 @@
 									on {{ event.date|date:"M d Y" }}
 									{% if event.venue %}
 										at {{ event.venue.name }}
+									{% endif %}
+								</td>
+								<td>
+									{% if not project and event.project %}
+										{{ event.project.name }}
 									{% endif %}
 								</td>
 								<td align='center'>

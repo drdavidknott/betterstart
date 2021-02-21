@@ -170,7 +170,7 @@
 			<div class="col-xs-11">
 				{% for membership in memberships %}
 					<div class="row">
-						{{ membership.membership_type.name }} in project {{ membership.project.name }}
+						{{ membership.membership_type.name }} in {{ membership.project.name }}
 						{% if membership.date_joined %}
 							from {{ membership.date_joined }}
 						{% endif %}

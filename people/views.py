@@ -2984,6 +2984,7 @@ def event(request, event_id=0, page=1):
 				'registrations' : registrations,
 				'page_list' : page_list,
 				'this_page' : page,
+				'project' : project,
 				})
 	# return the response
 	return HttpResponse(event_template.render(context=context, request=request))
@@ -3142,7 +3143,8 @@ def events(request):
 				'default_date' : datetime.date.today().strftime('%d/%m/%Y'),
 				'number_of_events' : number_of_events,
 				'this_page' : page,
-				'search_attempted' : search_attempted
+				'search_attempted' : search_attempted,
+				'project' : project,
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))

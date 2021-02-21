@@ -61,7 +61,17 @@
 	 		</div>
 	 		<div class="row">
 	 			<strong>Type: </strong>{{ event.event_type.name }}
-	 		</div>
+			</div>
+			{% if not project %}
+				<div class="row">
+					<strong>Project: </strong>
+					{% if event.project %}
+						{{ event.project.name }}
+					{% else %}
+						No project
+					{% endif %}
+				</div>
+			{% endif %}
 	 	</div>
 	</div>
 

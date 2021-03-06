@@ -1897,6 +1897,8 @@ def exceptions(request, page=1):
 
 @login_required
 def age_exceptions(request, age_status_id=0):
+	# initialise variables
+	project = Project.current_project(request.session)
 	# load the template
 	age_exceptions_template = loader.get_template('people/age_exceptions.html')
 	# get the age status
@@ -1906,10 +1908,13 @@ def age_exceptions(request, age_status_id=0):
 		return make_banner(request, 'Age status does not exist.')
 	# get today's date
 	today = datetime.date.today()
+	earliest_date = today.replace(year=today.year-age_status.maximum_age)
 	# get the exceptions
-	age_exceptions = age_status.person_set.filter(
-							date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-							ABSS_end_date__lte=datetime.date.today()).order_by('last_name','first_name')
+	age_exceptions = Person.search(
+									age_status=age_status,
+									date_of_birth__lt=earliest_date,
+									project=project
+									)
 	# set the context from the person based on person id
 	context = build_context(request,{
 				'age_status' : age_status,

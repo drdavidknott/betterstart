@@ -1774,18 +1774,17 @@ class Panel(DataAccessMixin,models.Model):
 
 	def build_age_status_exceptions(self):
 		# initialise the variables
-		age_statuses = []
 		today = date.today()
+		project = Project.current_project(self.request.session)
 		self.rows = []
 		# now go through the age statuses and get the exceptions
 		for age_status in Age_Status.objects.all():
-			age_exceptions = age_status.person_set.filter(
-									date_of_birth__lt=today.replace(year=today.year-age_status.maximum_age),
-									ABSS_end_date__isnull=True)
-			# add the project filter if we have a project
-			project = Project.current_project(self.request.session)
-			if project:
-				age_exceptions = age_exceptions.filter(projects=project)
+			earliest_date = today.replace(year=today.year-age_status.maximum_age)
+			age_exceptions = Person.search(
+											age_status=age_status,
+											date_of_birth__lt=earliest_date,
+											project = project
+											)
 			# add the exception count to the list if we got any
 			if age_exceptions.count() > 0:
 				# create a row and append it to the list of rows

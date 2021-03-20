@@ -12,7 +12,7 @@ django-crispy-forms==1.8.0
 django-jsignature==0.9
 django-otp==0.8.1
 django-zxcvbn-password==2.1.0
-djangorestframework==3.10.3
+djangorestframework==3.11.2
 entrypoints==0.3
 flake8==3.7.9
 html5lib==1.1

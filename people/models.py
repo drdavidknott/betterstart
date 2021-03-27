@@ -951,7 +951,7 @@ class Relationship(DataAccessMixin,models.Model):
 			self.relationship_to.first_name + ' ' + self.relationship_to.last_name
 	# set the order
 	class Meta:
-		verbose_name_plural = 'memberships'
+		verbose_name_plural = 'relationships'
 		ordering = (
 					'relationship_from__last_name',
 					'relationship_from__first_name',

@@ -280,3 +280,12 @@ def append_new_items_to_list(append_list,new_list):
 	for item in new_list:
 		append_once(append_list,item)
 	return append_list
+
+def build_choices_from_list(source_list,to_sort=True):
+	# take a list of choices, create and return a list of lists, sorted if requests
+	target_list = []
+	if to_sort:
+		source_list.sort()
+	for item in source_list:
+		target_list.append((item,item))
+	return target_list

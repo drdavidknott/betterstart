@@ -1417,7 +1417,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : '',
-											'keywords' : 'in project',
+											'keywords' : "'in project'",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -1452,7 +1452,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : '',
-											'keywords' : 'in project',
+											'keywords' : "'in project'",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -1492,7 +1492,7 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
-											'keywords' : 'left project',
+											'keywords' : "'left project'",
 											'include_people' : 'all',
 											'page' : '1'
 											}
@@ -1528,7 +1528,7 @@ class PeopleViewTest(TestCase):
 											'age_status' : '0',
 											'trained_role' : 'none',
 											'ward' : '0',
-											'keywords' : 'left project',
+											'keywords' : "'left project'",
 											'include_people' : 'all',
 											'page' : '2'
 											}
@@ -2069,7 +2069,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : 'Different',
-											'keywords' : 'test role 1',
+											'keywords' : "'test role 1'",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2106,7 +2106,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : 'Different difflast',
-											'keywords' : 'test role 1',
+											'keywords' : "'test role 1'",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2447,7 +2447,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : '',
-											'keywords' : 'test role 2 second_test_ABSS_type',
+											'keywords' : "'test role 2' second_test_ABSS_type",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2478,7 +2478,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : 'find',
-											'keywords' : 'test role 2 second_test_ABSS_type',
+											'keywords' : "'test role 2' second_test_ABSS_type",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2742,7 +2742,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : '',
-											'keywords' : 'test role 2 child',
+											'keywords' : "'test role 2' child",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2773,7 +2773,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : 'find',
-											'keywords' : 'test role 2 child',
+											'keywords' : "'test role 2' child",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2805,7 +2805,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : 'find',
-											'keywords' : 'test role 2 second_test_ABSS_type child',
+											'keywords' : "'test role 2' second_test_ABSS_type child",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -2910,7 +2910,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : '',
-											'keywords' : 'test role 1 adult',
+											'keywords' : "'test role 1' adult",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',
@@ -3536,7 +3536,7 @@ class PeopleViewTest(TestCase):
 									data = { 
 											'action' : 'Search',
 											'names' : '',
-											'keywords' : 'Test ward',
+											'keywords' : "'Test ward'",
 											'role_type' : '0',
 											'membership_type' : '0',
 											'age_status' : '0',

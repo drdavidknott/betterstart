@@ -11,7 +11,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field
 from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
-from .utilities import build_choices, extract_id
+from .utilities import build_choices, extract_id, build_choices_from_list
 from zxcvbn_password.fields import PasswordField, PasswordConfirmationField
 from django.contrib.auth.hashers import check_password
 
@@ -230,62 +230,62 @@ class ResetForgottenPasswordForm(forms.Form):
 
 class UploadDataForm(forms.Form):
 	# Define the choices for file type
-	file_type_choices = (
-							('Event Categories','Event Categories'),
-							('Event Types','Event Types'),
-							('Areas','Areas'),
-							('Wards','Wards'),
-							('Post Codes','Post Codes'),
-							('Streets','Streets'),
-							('Age Statuses','Age Statuses'),
-							('Ethnicities','Ethnicities'),
-							('ABSS Types','ABSS Types'),
-							('Relationship Types','Relationship Types'),
-							('Role Types','Role Types'),
-							('People','People'),
-							('Events','Events'),
-							('Relationships','Relationships'),
-							('Registrations','Registrations'),
-							('Questions','Questions'),
-							('Options','Options'),
-							('Answers','Answers'),
-							('Answer Notes','Answer Notes'),
-							('Activity Types','Activity Types'),
-							('Activities','Activities'),
-							('Venue Types','Venue Types'),
-							('Venues','Venues'),
-							('Venues for Events','Venues for Events'),
-							('Update People','Update People'),
-						)
+	file_type_list = [
+						'Event Categories',
+						'Event Types',
+						'Areas',
+						'Wards',
+						'Post Codes',
+						'Streets',
+						'Age Statuses',
+						'Ethnicities',
+						'ABSS Types',
+						'Relationship Types',
+						'Role Types',
+						'People',
+						'Events',
+						'Relationships',
+						'Registrations',
+						'Questions',
+						'Options',
+						'Answers',
+						'Answer Notes',
+						'Activity Types',
+						'Activities',
+						'Venue Types',
+						'Venues',
+						'Venues for Events',
+						'Update People'
+						]
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(
 									label="File Type",
 									widget=forms.Select(attrs={'class' : 'form-control'}),
-									choices=file_type_choices)
+									choices=build_choices_from_list(file_type_list))
 	file = forms.FileField(
 									label="Data File")
 
 class DownloadDataForm(forms.Form):
 	# Define the choices for file type
-	file_type_choices = (
-							('People','People'),
-							('Events','Events'),
-							('Event Summary','Event Summary'),
-							('Relationships','Relationships'),
-							('Registrations','Registrations'),
-							('Events and Registrations','Events and Registrations'),
-							('Questions','Questions'),
-							('Options','Options'),
-							('Answers','Answers'),
-							('Answer Notes','Answer Notes'),
-							('Activities','Activities'),
-							('Venues','Venues')
-						)
+	file_type_list = [
+							'People',
+							'Events',
+							'Event Summary',
+							'Relationships',
+							'Registrations',
+							'Events and Registrations',
+							'Questions',
+							'Options',
+							'Answers',
+							'Answer Notes',
+							'Activities',
+							'Venues',
+							]
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(
 									label="File Type",
 									widget=forms.Select(attrs={'class' : 'form-control'}),
-									choices=file_type_choices)
+									choices=build_choices_from_list(file_type_list))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# call the built in constructor
@@ -1060,9 +1060,7 @@ class AddRelationshipForm(forms.Form):
 													choice_queryset=person.age_status.relationship_types.all(),
 													choice_field='relationship_type'
 													)
-		self.fields['relationship_type'].initial = Relationship_Type.objects.get(relationship_type='parent').pk
 		self.fields['age_status'].choices = build_choices(choice_class=Age_Status,choice_field='status')
-		self.fields['age_status'].initial = Age_Status.objects.get(status='Child under four').pk
 		self.fields['first_name'].initial = first_name
 		self.fields['last_name'].initial = last_name
 		# and the label for the relationship field
@@ -1517,7 +1515,6 @@ class EventForm(forms.Form):
 		# call the built in constructor
 		super(EventForm, self).__init__(*args, **kwargs)
 		# build the choices
-		self.fields['event_type'].choices = build_choices(choice_class=Event_Type,choice_field='name')
 		self.fields['venue'].choices = build_choices(choice_class=Venue,
 													choice_field='name',
 													default=True,

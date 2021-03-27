@@ -21,6 +21,7 @@ from PIL import Image
 from io import BytesIO
 from django.urls import reverse, resolve
 from django.core import serializers
+import shlex
 
 # function to derive a class from a string
 def class_from_str(class_str):
@@ -53,6 +54,10 @@ class Project(DataAccessMixin,models.Model):
 	# define the function that will return the project name as the object reference
 	def __str__(self):
 		return self.name
+
+	# set the name and ordering to be used in the admin console
+	class Meta:
+		ordering = ('name',)
 
 	# class method to get current project if one is set in the session
 	@classmethod
@@ -104,6 +109,7 @@ class Ethnicity(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'ethnicities'
+		ordering = ('description',)
 
 # Role_Type model: represents different types of role that a person can play, including staff, volunteer, parent, child ec.
 # This is reference data.
@@ -119,6 +125,7 @@ class Role_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'role types'
+		ordering = ('role_type_name',)
 
 # Relationship_Type model: represents different types of relationship
 # This is reference data.
@@ -132,6 +139,7 @@ class Relationship_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'relationship types'
+		ordering = ('relationship_type',)
 
 # Membership type model: represents different types of membership that a person can have in a project
 class Membership_Type(DataAccessMixin,models.Model):
@@ -144,6 +152,7 @@ class Membership_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'membership types'
+		ordering = ('name',)
 
 # ABSS type model: represents different types of relationship that a person can have with ABSS
 # This is reference data.
@@ -158,6 +167,7 @@ class ABSS_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'ABSS types'
+		ordering = ('name',)
 
 # Age status type model: represents the person's status dependent on age (adult or child)
 # This is reference data.
@@ -181,6 +191,7 @@ class Age_Status(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'Age statuses'
+		ordering = ('status',)
 
 # Capture Type model: represents the way in which the person's details were captured
 class Capture_Type(DataAccessMixin,models.Model):
@@ -213,6 +224,7 @@ class Area(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'areas'
+		ordering = ('area_name',)
 
 # Wards model: represents valid wards (which contain post codes)
 class Ward(DataAccessMixin,models.Model):
@@ -224,6 +236,7 @@ class Ward(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'wards'
+		ordering = ('ward_name',)
 
 # Post Code model: represents valid post codes
 class Post_Code(DataAccessMixin,models.Model):
@@ -259,6 +272,7 @@ class Venue_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'venue types'
+		ordering = ('name',)
 
 # Venue model: represents the list of venues in which events can take place.
 # Has a many to one relationship with venue type.
@@ -284,6 +298,7 @@ class Venue(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'venues'
+		ordering = ('name',)
 
 # Event Type model: represents categories of event types.
 # This is reference data
@@ -296,6 +311,7 @@ class Event_Category(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'event categories'
+		ordering = ('name',)
 
 # Event Type model: represents types of events.
 # Types of events are further grouped into categories.
@@ -311,6 +327,7 @@ class Event_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'event types'
+		ordering = ('name',)
 
 # Event model: represents events which people register for and attend
 class Event(DataAccessMixin,models.Model):
@@ -414,7 +431,7 @@ class Project_Event_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'project event types'
-
+		ordering = ('event_type__name',)
 
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):
@@ -444,6 +461,7 @@ class Option(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'options'
+		ordering = ('option_label',)
 
 # Person model: represents a participant in the Betterstart scheme.
 # A person may be an adult or a child.
@@ -496,7 +514,7 @@ class Person(DataAccessMixin,models.Model):
 		# return the name
 		return name
 
-	# set the name to be used in the admin console
+	# set the name and ordering to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'people'
 		ordering = ('last_name','first_name')
@@ -753,6 +771,7 @@ class Person(DataAccessMixin,models.Model):
 		# if we have any terms in keywords, call the function to search by keywords
 		if keywords:
 			results = Person.search_by_keywords(keywords,results)
+			test = len(results)
 
 		# if we have a children_ages term, convert it into a list of ages, then go through the results and exclude any
 		# which don't match the term
@@ -845,8 +864,11 @@ class Person(DataAccessMixin,models.Model):
 
 		# split the keywords, then go through the search terms looking for matches, converting keywords to 
 		# lower case to avoid case sensitivity
+		# use shlex to split by space, preserving strings in quotes
+		keywords = keywords.lower()
+		keyword_list = shlex.split(keywords)
 		for keyword in keyword_filters.keys():
-			if keyword.lower() in keywords.lower():
+			if keyword.lower() in keyword_list:
 				# go through the terms in the dictionary, adding them to the filter
 				for keyword_filter in keyword_filters[keyword].keys():
 					filter_dict[keyword_filter] = keyword_filters[keyword][keyword_filter]
@@ -858,6 +880,7 @@ class Person(DataAccessMixin,models.Model):
 			results = Person.objects.none()
 
 		# return the results
+		test = len(results)
 		return results
 
 	# class method to get the next membership number
@@ -910,6 +933,7 @@ class Membership(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'memberships'
+		ordering = ('person__last_name','person__first_name')
 
 # Relationship model: represents a relationship between two people.
 # This is an intermediate model for a many to many relationship between two Person objects.
@@ -925,6 +949,14 @@ class Relationship(DataAccessMixin,models.Model):
 	def short_desc(self):
 		return self.relationship_type.relationship_type + ' of ' + \
 			self.relationship_to.first_name + ' ' + self.relationship_to.last_name
+	# set the order
+	class Meta:
+		verbose_name_plural = 'memberships'
+		ordering = (
+					'relationship_from__last_name',
+					'relationship_from__first_name',
+					'relationship_type__relationship_type'
+					)
 	# define the class method to create both sides of a relationship
 	@classmethod
 	def create_relationship(cls, person_from, person_to, relationship_type_from):
@@ -1034,6 +1066,11 @@ class Trained_Role(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'trained roles'
+		ordering = (
+					'person__last_name',
+					'person__first_name',
+					'role_type__role_type_name'
+					)
 
 # Role history model: records that a person has played a particular type of role
 # Records whether the person has been trained in the role, and whether the person is active in the role
@@ -1048,6 +1085,7 @@ class Role_History(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'role histories'
+		ordering = ('person__last_name','person__first_name','started')
 
 # CC Registration model: records that a person is registered at a Children Centre
 class CC_Registration(DataAccessMixin,models.Model):
@@ -1075,6 +1113,9 @@ class Event_Registration(DataAccessMixin,models.Model):
 		return self.person.first_name + ' ' + self.person.last_name + ': ' + self.role_type.role_type_name \
 			+ ' at ' + self.event.name + ' on ' + self.event.date.strftime('%b %d %Y') + \
 			' (' + self.description() + ')'
+	# set the ordering
+	class Meta:
+		ordering = ('event__name','person__last_name','person__first_name')
 	# define a function for returning active status as a string
 	def registered_status(self):
 		if self.registered:
@@ -1119,6 +1160,7 @@ class Answer(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'answers'
+		ordering = ('person__first_name','person__last_name','question__order')
 
 # Answer note model: adds supplementary notes to a question
 class Answer_Note(DataAccessMixin,models.Model):
@@ -1131,6 +1173,7 @@ class Answer_Note(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'answer notes'
+		ordering = ('person__first_name','person__last_name','question__order')
 
 # Activity Type model: represents types of activity
 class Activity_Type(DataAccessMixin,models.Model):
@@ -1141,6 +1184,7 @@ class Activity_Type(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'activity types'
+		ordering = ('name',)
 
 # Activity model: represents an activity
 class Activity(DataAccessMixin,models.Model):
@@ -1157,6 +1201,7 @@ class Activity(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'activities'
+		ordering = ('person__last_name','person__first_name','activity_type__name')
 
 
 class Filter_SpecManager(models.Manager):
@@ -2154,6 +2199,7 @@ class Panel_In_Column(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'panels in columns'
+		ordering = ('column__name','panel__name','order')
 
 	def natural_key(self):
 		return self.panel.natural_key() + self.column.natural_key()
@@ -2309,6 +2355,7 @@ class Column_In_Dashboard(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'columns in dashboards'
+		ordering = ('dashboard__name','column__name','order')
 
 	def natural_key(self):
 		return self.dashboard.natural_key() + self.column.natural_key()
@@ -2355,6 +2402,9 @@ class Site(DataAccessMixin,models.Model):
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.name
+	# set the ordering to be used in the admin console
+	class Meta:
+		ordering = ('name',)
 
 # Profile model: keeps track of additional information about the user
 class Profile(DataAccessMixin,models.Model):
@@ -2375,6 +2425,10 @@ class Profile(DataAccessMixin,models.Model):
 	# define the function that will return the SITE name as the object reference
 	def __str__(self):
 		return self.user.username
+
+	# set the ordering to be used in the admin console
+	class Meta:
+		ordering = ('user__username',)
 
 	# class method to generate a code
 	@classmethod
@@ -2412,6 +2466,7 @@ class Project_Permission(DataAccessMixin,models.Model):
 	# set the name to be used in the admin console
 	class Meta:
 		verbose_name_plural = 'project permissions'
+		ordering = ('profile__user__username','project__name')
 
 # Terms_And_Conditions model: used to store terms and conditions, bounded by dates
 class Terms_And_Conditions(DataAccessMixin,models.Model):
@@ -2424,6 +2479,7 @@ class Terms_And_Conditions(DataAccessMixin,models.Model):
 
 	class Meta:
 		verbose_name_plural = 'terms and conditions'
+		ordering = ('name',)
 
 # Terms_And_Conditions model: used to store terms and conditions, bounded by dates
 class Registration_Form(DataAccessMixin,models.Model):
@@ -2438,6 +2494,7 @@ class Registration_Form(DataAccessMixin,models.Model):
 
 	class Meta:
 		verbose_name_plural = 'registration forms'
+		ordering = ('name',)
 
 # Invitation_Step_Type model: contains the steps to be followed for an invitation
 class Invitation_Step_Type(DataAccessMixin,models.Model):
@@ -2492,6 +2549,7 @@ class Invitation(DataAccessMixin,models.Model):
  
 	class Meta:
 		verbose_name_plural = 'invitations'
+		ordering = ('person__last_name','person__first_name','datetime_created')
 
 	# class method to generate a code
 	@classmethod
@@ -2540,8 +2598,11 @@ class Invitation_Step(DataAccessMixin,models.Model):
 
 	class Meta:
 		verbose_name_plural = 'invitation steps'
-		ordering = (['invitation_step_type__order'])
-
+		ordering = (
+					'invitation__person__last_name',
+					'invitation__person__first_name',
+					'invitation_step_type__order'
+					)
 	# return data for display
 	def get_display_data(self):
 		# initialise variables
@@ -2597,6 +2658,7 @@ class Printform_Data_Type(DataAccessMixin,models.Model):
 
 	class Meta:
 		verbose_name_plural = 'printform data types'
+		ordering = ('name',)
 
 # Printform Data model: contains data for printable forms
 class Printform_Data(DataAccessMixin,models.Model):

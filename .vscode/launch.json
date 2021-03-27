@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_views.UpdatePeopleDataViewTest.test_update_people_invalid_role_type",
+                "people.tests.test_views.PeopleViewTest.test_ABSS_search_on_type_keywords",
                 "--verbosity=2",
             ],
             "django": true,

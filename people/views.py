@@ -3975,8 +3975,15 @@ def manage_membership(request):
 	# and blank search terms
 	names = ''
 	keywords = ''
+	role_type = 0
+	ABSS_type = 0
+	membership_type = 0
+	age_status = 0
+	trained_role = 'none'
+	ward = 0
+	include_people = 'in_project'
+	children_ages = ''
 	project_id = 0
-	project = False
 	# set a blank search_error
 	search_error = ''
 	# set the results per page
@@ -3984,30 +3991,49 @@ def manage_membership(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		search_form = ManageMembershipSearchForm(request.POST)
+		personsearchform = PersonSearchForm(request.POST,user=request.user,membership=True)
 		# set the flag to show that a search was attempted
 		search_attempted = True
-		# process the form if valid
-		if search_form.is_valid():
+		# validate the form
+		if personsearchform.is_valid():
 			# get the fields
-			names = search_form.cleaned_data['names']
-			keywords = search_form.cleaned_data['keywords']
-			project_id = search_form.cleaned_data['project_id']
-			project = Project.try_to_get(pk=project_id) if project_id else ''
+			names = personsearchform.cleaned_data['names']
+			keywords = personsearchform.cleaned_data['keywords']
+			role_type = personsearchform.cleaned_data['role_type']
+			age_status = personsearchform.cleaned_data['age_status']
+			trained_role = personsearchform.cleaned_data['trained_role']
+			ward = personsearchform.cleaned_data['ward']
+			include_people = personsearchform.cleaned_data['include_people']
+			children_ages = personsearchform.cleaned_data['children_ages']
+			project_id = personsearchform.cleaned_data['project_id']
+			project = Project.try_to_get(pk=project_id)
+			# set the membership type or ABSS type dependent on whether we have a project
+			if project:
+				membership_type = personsearchform.cleaned_data['membership_type']
+			else:
+				ABSS_type = personsearchform.cleaned_data['membership_type']
 			# conduct a search
 			people = Person.search(
 									project=project,
 									names=names,
 									keywords=keywords,
+									default_role_id=role_type,
+									ABSS_type_id=ABSS_type,
+									membership__membership_type_id=membership_type,
+									age_status_id=age_status,
+									trained_role=trained_role,
+									street__post_code__ward_id=ward,
+									include_people=include_people,
+									children_ages=children_ages,
 									).order_by('last_name','first_name')
 			# if we got a request for a move, do the move
-			if search_form.cleaned_data['action'] == 'Move':
-				target_project = Project.try_to_get(pk=search_form.cleaned_data['target_project_id'])
-				with_dates = True if search_form.cleaned_data['date_type'] == 'with_dates' else False
+			if personsearchform.cleaned_data['action'] == 'Move':
+				target_project = Project.try_to_get(pk=personsearchform.cleaned_data['target_project_id'])
+				with_dates = True if personsearchform.cleaned_data['date_type'] == 'with_dates' else False
 				build_results = build_memberships(
 													people=people,
 													project = target_project,
-													action = search_form.cleaned_data['move_type'],
+													action = personsearchform.cleaned_data['move_type'],
 													with_dates= with_dates,
 													)
 			# do the pagination
@@ -4023,21 +4049,28 @@ def manage_membership(request):
 			people = people[previous_page*results_per_page:this_page*results_per_page]
 	# otherwise set a blank form
 	else:
-		search_form = ManageMembershipSearchForm()
+		personsearchform = PersonSearchForm(membership=True)
 	# build and return the response
 	template = loader.get_template('people/manage_membership.html')
 	context = build_context(request,{
-				'managemembershipsearchform' : search_form,
+				'managemembershipsearchform' : personsearchform,
 				'people' : people,
 				'page_list' : page_list,
 				'this_page' : this_page,
 				'names' : names,
 				'keywords' : keywords,
-				'project_id' : project_id,
-				'build_results' : build_results,
+				'role_type' : role_type,
+				'ABSS_type' : ABSS_type,
+				'age_status' : age_status,
+				'trained_role' : trained_role,
+				'ward' : ward,
+				'include_people' : include_people,
 				'search_error' : search_error,
 				'number_of_people' : number_of_people,
 				'search_attempted' : search_attempted,
+				'children_ages' : children_ages,
+				'project_id' : project_id,
+				'build_results' : build_results
 				})
 	return HttpResponse(template.render(context=context, request=request))
 

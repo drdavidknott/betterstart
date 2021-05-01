@@ -677,7 +677,7 @@ class PersonSearchForm(forms.Form):
 								)
 	# Define the fields that we need in the form.
 	names = forms.CharField(
-									label="Names, membership number or email address",
+									label="Names, membership no or email",
 									max_length=50,
 									required=False,
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
@@ -725,6 +725,10 @@ class PersonSearchForm(forms.Form):
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# define the fields to manage a move for use in manageing project memberships
 	# these fields will only be used if membership = True
+	project_id = forms.ChoiceField(
+									label="Project",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	move_choices = (
 					('add','Add to'),
 					('remove' , 'Remove from'),
@@ -760,9 +764,12 @@ class PersonSearchForm(forms.Form):
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# build the crispy form
 		self.helper = FormHelper()
-		self.helper.form_action = reverse('listpeople')
+		if membership:
+			self.helper.form_action = reverse('manage_membership')
+		else:
+			self.helper.form_action = reverse('listpeople')
 		# define the row containing buttons, depending on whether the user is allowed to download or not
-		if not download:
+		if membership or not download:
 			button_row = FormActions(
 										Submit('action', 'Search'),
 									)
@@ -780,13 +787,23 @@ class PersonSearchForm(forms.Form):
 										)
 		# define the layout
 		rows = []
-		rows.append(
-					Row(
-						Column('names',css_class='form-group col-md-4 mbt-0'),
-						Column('keywords',css_class='form-group col-md-4 mbt-0'),
-						Column('children_ages',css_class='form-group col-md-4 mbt-0'),
+		if membership:
+			rows.append(
+						Row(
+							Column('project_id',css_class='form-group col-md-3 mbt-0'),
+							Column('names',css_class='form-group col-md-3 mbt-0'),
+							Column('keywords',css_class='form-group col-md-3 mbt-0'),
+							Column('children_ages',css_class='form-group col-md-3 mbt-0'),
+							)
 						)
-					)
+		else:
+			rows.append(
+						Row(
+							Column('names',css_class='form-group col-md-4 mbt-0'),
+							Column('keywords',css_class='form-group col-md-4 mbt-0'),
+							Column('children_ages',css_class='form-group col-md-4 mbt-0'),
+							)
+						)
 		rows.append(
 					Row(
 						Column('role_type',css_class='form-group col-md-2 mbt-0'),
@@ -799,6 +816,19 @@ class PersonSearchForm(forms.Form):
 					)
 		rows.append(Hidden('page','1'))
 		rows.append(button_row)
+		if membership:
+			rows.append(
+						Row(
+							Column('move_type',css_class='form-group col-md-4 mbt-0'),
+							Column('target_project_id',css_class='form-group col-md-4 mbt-0'),
+							Column('date_type',css_class='form-group col-md-4 mbt-0'),
+							)
+						)
+			rows.append(
+						FormActions(
+									Submit('action', 'Move'),
+									)
+						)			
 		self.helper.layout = Layout(*rows)
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
@@ -813,8 +843,18 @@ class PersonSearchForm(forms.Form):
 															choice_field='ward_name',
 															default=True,
 															default_label='Any')
+		if membership:
+			self.fields['project_id'].choices = build_choices(
+															choice_class=Project,
+															choice_field='name',
+															default=True,
+															default_label='Any')
+			self.fields['target_project_id'].choices = build_choices(
+															choice_class=Project,
+															choice_field='name',
+															default=False)
 		# set membership or ABSS depending on whether we have a project
-		membership_type_class = Membership_Type if project else ABSS_Type
+		membership_type_class = Membership_Type if project or membership else ABSS_Type
 		self.fields['membership_type'].choices = build_choices(
 															choice_class=membership_type_class,
 															choice_field='name',

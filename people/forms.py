@@ -723,12 +723,39 @@ class PersonSearchForm(forms.Form):
 	page = forms.CharField(
 									initial='1',
 									widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
+	# define the fields to manage a move for use in manageing project memberships
+	# these fields will only be used if membership = True
+	move_choices = (
+					('add','Add to'),
+					('remove' , 'Remove from'),
+					)
+	move_type = forms.ChoiceField(
+									label="Action",
+									choices=move_choices,
+									initial='add',
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	target_project_id = forms.ChoiceField(
+									label="Target Project",
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	date_choices = (
+					('with_dates','with dates'),
+					('without_dates' , 'without dates'),
+					)	
+	date_type = forms.ChoiceField(
+									label="Dates",
+									choices=date_choices,
+									initial='with_dates',
+									required=False,
+									widget=forms.Select(attrs={'class' : 'form-control'}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# pull additional paramterts out of kwargs if provided
 		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
 		download = kwargs.pop('download') if 'download' in kwargs.keys() else False
 		project = kwargs.pop('project') if 'project' in kwargs.keys() else False
+		membership = kwargs.pop('membership') if 'membership' in kwargs.keys() else False
 		# call the built in constructor
 		super(PersonSearchForm, self).__init__(*args, **kwargs)
 		# build the crispy form
@@ -752,23 +779,27 @@ class PersonSearchForm(forms.Form):
 											Submit('action', 'Download'),
 										)
 		# define the layout
-		self.helper.layout = Layout(
-									Row(
-										Column('names',css_class='form-group col-md-4 mbt-0'),
-										Column('keywords',css_class='form-group col-md-4 mbt-0'),
-										Column('children_ages',css_class='form-group col-md-4 mbt-0'),
-										),
-									Row(
-										Column('role_type',css_class='form-group col-md-2 mbt-0'),
-										Column('age_status',css_class='form-group col-md-2 mbt-0'),
-										Column('trained_role',css_class='form-group col-md-2 mbt-0'),
-										Column('ward',css_class='form-group col-md-2 mbt-0'),
-										Column('membership_type',css_class='form-group col-md-2 mbt-0'),
-										Column('include_people',css_class='form-group col-md-2 mbt-0'),
-										),
-									Hidden('page','1'),
-									button_row,
-									)
+		rows = []
+		rows.append(
+					Row(
+						Column('names',css_class='form-group col-md-4 mbt-0'),
+						Column('keywords',css_class='form-group col-md-4 mbt-0'),
+						Column('children_ages',css_class='form-group col-md-4 mbt-0'),
+						)
+					)
+		rows.append(
+					Row(
+						Column('role_type',css_class='form-group col-md-2 mbt-0'),
+						Column('age_status',css_class='form-group col-md-2 mbt-0'),
+						Column('trained_role',css_class='form-group col-md-2 mbt-0'),
+						Column('ward',css_class='form-group col-md-2 mbt-0'),
+						Column('membership_type',css_class='form-group col-md-2 mbt-0'),
+						Column('include_people',css_class='form-group col-md-2 mbt-0'),
+						)
+					)
+		rows.append(Hidden('page','1'))
+		rows.append(button_row)
+		self.helper.layout = Layout(*rows)
 		# set the choices
 		self.fields['role_type'].choices = [(0,'Any')] + \
 											role_type_choices(Role_Type.objects.filter(use_for_people=True))

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import FieldDoesNotExist
 from .django_extensions import DataAccessMixin
 from .utilities import extract_id, add_description, append_once, append_new_items_to_list, list_to_punctuated_string, \
 	free_format_range_to_list, str_represents_int
@@ -43,7 +44,7 @@ def has_field(model,field_name):
 	try:
 		model._meta.get_field(field_name)
 		return True
-	except models.FieldDoesNotExist:
+	except FieldDoesNotExist:
 		return False
 
 # Project model: provides configuration for a project

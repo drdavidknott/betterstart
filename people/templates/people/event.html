@@ -116,14 +116,14 @@
  					</a>
 	 			</div>
 			{% endif %}
-			{% if event.ward %}
+			{% if event.venue %}
 				<div class="row">
-	 				<strong>Ward: </strong>{{ event.ward.ward_name }}
+	 				<strong>Ward: </strong>{{ event.venue.street.post_code.ward.ward_name }}
 	 			</div>
 			{% endif %}
 			{% if event.get_areas %}
 		 		<div class="row">
-			 		<strong>Areas: </strong>{{ event.get_areas }}
+			 		<strong>Areas which benefit: </strong>{{ event.get_areas }}
 			 	</div>
 			{% endif %}
 			{% if not event.location and not event.ward and not event.get_areas and not event.venue %}

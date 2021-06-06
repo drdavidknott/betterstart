@@ -3156,6 +3156,8 @@ def events(request):
 
 @login_required
 def edit_event(request, event_id=0):
+	# initiliase variables
+	venue = None
 	# get the project
 	project = Project.current_project(request.session)
 	# try to get the event
@@ -3188,12 +3190,9 @@ def edit_event(request, event_id=0):
 			venue_id = editeventform.cleaned_data['venue']
 			if venue_id != '0':
 				venue = Venue.try_to_get(pk=venue_id)
-				if venue:
-					event.venue = venue
-				else:
+				if not venue:
 					return make_banner(request, 'Venue does not exist.')
-			else:
-				event.venue = None
+			event.venue = venue
 			# save the record
 			event.save()
 			# set a success message

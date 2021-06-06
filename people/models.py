@@ -443,6 +443,7 @@ class Question(DataAccessMixin,models.Model):
 	use_for_invitations_additional_info = models.BooleanField(default=False)
 	use_for_children_form = models.BooleanField(default=False)
 	order = models.IntegerField(default=0)
+	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
 	# define the function that will return the question text as the object reference
 	def __str__(self):
 		return self.question_text

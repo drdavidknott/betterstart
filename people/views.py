@@ -276,12 +276,13 @@ def get_relationship_from_and_to(person_from, person_to):
 	# return the results
 	return relationship_from, relationship_to
 
-def get_questions_and_answers(person):
+def get_questions_and_answers(person,project=None):
 	# this function gets a list of questions, and adds the answers relevant to the person
 	# set the flag to false to show whether we have answers for this person
 	answer_flag = False
 	# get the list of questions
-	questions = Question.objects.all().order_by('order')
+	questions = Question.objects.all()
+	questions = questions.order_by('order')
 	# get the options for each question
 	for question in questions:
 		# set defaults
@@ -3510,7 +3511,7 @@ def answer_questions(request,person_id=0):
 	if not person:
 		return make_banner(request, 'Person does not exist.')
 	# get the questions, with the answers included as an attribute
-	questions, answer_flag = get_questions_and_answers(person)
+	questions, answer_flag = get_questions_and_answers(person,project=project)
 	# build the form
 	if request.method == 'POST':
 		answerquestionsform = AnswerQuestionsForm(request.POST,questions=questions)

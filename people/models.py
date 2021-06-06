@@ -443,7 +443,6 @@ class Question(DataAccessMixin,models.Model):
 	use_for_invitations_additional_info = models.BooleanField(default=False)
 	use_for_children_form = models.BooleanField(default=False)
 	order = models.IntegerField(default=0)
-	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
 	# define the function that will return the question text as the object reference
 	def __str__(self):
 		return self.question_text
@@ -1204,7 +1203,6 @@ class Activity(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'activities'
 		ordering = ('person__last_name','person__first_name','activity_type__name')
-
 
 class Filter_SpecManager(models.Manager):
 	def get_by_natural_key(self, term, filter_type, string_value, boolean_value, period, exclusion):

@@ -11288,15 +11288,11 @@ class QuestionsViewTest(TestCase):
 		user = set_up_test_user()
 		# create a question without notes
 		set_up_test_questions('q_no_notes')
-		# get the question
 		q_no_notes = Question.objects.get(question_text='q_no_notes0')
-		# create the options
 		set_up_test_options('q_no_notes_option_',question=q_no_notes,number=2)
 		# create a question with notes
 		set_up_test_questions('q_with_notes',notes=True)
-		# get the question
 		q_with_notes = Question.objects.get(question_text='q_with_notes0')
-		# create the options
 		set_up_test_options('q_with_notes_option_',question=q_with_notes,number=2)
 		# create base data for people
 		set_up_people_base_data()
@@ -11642,6 +11638,38 @@ class QuestionsViewTest(TestCase):
 		answer_note = Answer_Note.objects.get(person=person,question=question_with_notes)
 		# check the note is as expected
 		self.assertEqual(answer_note.notes,'test_notes')
+
+	def test_questions_if_logged_in_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# add project related data
+		set_up_test_people('question_project_test',project=project)
+		question = Question.objects.get(question_text='q_no_notes0')
+		question.projects.add(project)
+		# create a question for a different project
+		set_up_test_questions('q_different_project')
+		question = Question.objects.get(question_text='q_different_project0')
+		set_up_test_options('q_no_notes_option_',question=question,number=2)
+		different_project = Project.objects.create(name='different_project')
+		question.projects.add(different_project)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the events page
+		response = self.client.get(reverse('answer_questions',args=[Person.objects.get(first_name='question_project_test0').pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the questions
+		self.assertContains(response,'q_no_notes0')
+		self.assertContains(response,'q_with_notes0')
+		self.assertNotContains(response,'q_different_project0')
 
 class UploadDataViewTest(TestCase):
 	@classmethod

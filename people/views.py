@@ -281,7 +281,10 @@ def get_questions_and_answers(person,project=None):
 	# set the flag to false to show whether we have answers for this person
 	answer_flag = False
 	# get the list of questions
-	questions = Question.objects.all()
+	if project:
+		questions = Question.objects.filter(projects=None) | Question.objects.filter(projects=project)
+	else:
+		questions = Question.objects.all()
 	questions = questions.order_by('order')
 	# get the options for each question
 	for question in questions:
@@ -2009,7 +2012,7 @@ def person(request, person_id=0):
 	person.project = project
 	# get additional info for the page
 	person.relationships_from = get_relationships_from(person,project)
-	questions, answer_flag = get_questions_and_answers(person)
+	questions, answer_flag = get_questions_and_answers(person,project=project)
 	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=True)
 	unvalidated_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=False)
 	# get invitation data if an uncompleted invitation exists

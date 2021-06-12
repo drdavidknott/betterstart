@@ -9,7 +9,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Column, Panel_In_Column, Dashboard, Column_In_Dashboard, Venue_Type, Venue, \
 					Invitation, Invitation_Step, Invitation_Step_Type, Terms_And_Conditions, Profile, Chart, \
 					Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Project, Membership, \
-					Membership_Type, Project_Permission, Project_Event_Type
+					Membership_Type, Project_Permission, Project_Event_Type, Question_Section
 
 class PersonAdmin(admin.ModelAdmin):
     search_fields = ['first_name','last_name']
@@ -80,3 +80,4 @@ admin.site.register(Membership)
 admin.site.register(Membership_Type)
 admin.site.register(Project_Permission)
 admin.site.register(Project_Event_Type)
+admin.site.register(Question_Section)

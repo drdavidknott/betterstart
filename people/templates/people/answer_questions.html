@@ -1,5 +1,7 @@
 {% extends "people/base.html" %}
 
+{% load crispy_forms_tags %}
+
 <!-- Home page -->
  
 {% block title %}Better Start{% endblock %}
@@ -23,37 +25,11 @@
 	 	</div>
 	</div>
 
-	<form action ="{% url 'answer_questions' person.pk %}" method="post">
-		{% csrf_token %}
-	 	<div class="form-row">
-	 		<div class="col-xs-12">
-	 			<table class="table table-striped" id="people">
-					<tbody>
-						{% for field in answerquestionsform %}
-							{% if 'question' in field.name %}
-								<tr>
-									<td>{{ field.label }}</td>
-									<td>{{ field }}</td>
-							{% elif 'notes' in field.name %}
-									<td>{{ field.label }}:</td>
-									<td>{{ field }}</td>
-								</tr>
-							{% else %}
-									<td>{{ field }}</td>
-									<td></td>
-								</tr>
-							{% endif %}
-						{% endfor %}
-					</tbody>
-				</table>
-			</div>
-		</div>
-		<div class = "form-row">
-			<div class = "col-xs-2">
-				<input type="submit" class="btn btn-primary" value="Submit">
-			</div>
-		</div>
-	</form>
+	<div class="row">
+		<div class="col-xs-12">
+			<div>{% crispy answerquestionsform %}</div>
+	   </div>
+   	</div>
 
 	<div class="row">
 		<div class="col-xs-12">

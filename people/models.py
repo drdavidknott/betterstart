@@ -434,6 +434,18 @@ class Project_Event_Type(DataAccessMixin,models.Model):
 		verbose_name_plural = 'project event types'
 		ordering = ('event_type__name',)
 
+# Question_Section model: represents sections which organise questions for display
+class Question_Section(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=150)
+	order = models.IntegerField(default=0)
+	# define the function that will return the question text as the object reference
+	def __str__(self):
+		return self.name
+	# set the name to be used in the admin console
+	class Meta:
+		verbose_name_plural = 'question sections'
+		ordering = ('order',)
+
 # Question model: represents questions
 class Question(DataAccessMixin,models.Model):
 	question_text = models.CharField(max_length=150)
@@ -444,6 +456,7 @@ class Question(DataAccessMixin,models.Model):
 	use_for_children_form = models.BooleanField(default=False)
 	order = models.IntegerField(default=0)
 	projects = models.ManyToManyField(Project, blank=True)
+	question_section = models.ForeignKey(Question_Section, null=True, blank=True, on_delete=models.SET_NULL)
 	# define the function that will return the question text as the object reference
 	def __str__(self):
 		return self.question_text

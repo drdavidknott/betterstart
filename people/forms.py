@@ -8,7 +8,7 @@ from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field
+from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field, HTML
 from crispy_forms.bootstrap import FormActions
 from django.urls import reverse
 from .utilities import build_choices, extract_id, build_choices_from_list
@@ -2014,50 +2014,68 @@ class AnswerQuestionsForm(forms.Form):
 	# over-ride the built in __init__ method so that we can add fields dynamically
 	def __init__(self, *args, **kwargs):
 		# pull the questions out of the parameters
-		questions = kwargs.pop('questions')
+		question_sections = kwargs.pop('question_sections')
 		# call the built in constructor
 		super(AnswerQuestionsForm, self).__init__(*args, **kwargs)
 		# now through the questions and build fields
-		for question in questions:
-			# set the field name
-			field_name = 'question_' + str(question.pk)
-			# and the notes names
-			notes_name = 'notes_' + str(question.pk)
-			# and the spacer name
-			spacer_name = 'spacer_' + str(question.pk)
-			# set an empty option list
-			option_list = []
-			# set the non-answer
-			option_list.append((0,'No answer'))
-			# now build the options
-			for option in question.options:
-				# set the value
-				option_list.append((option.pk,option.option_label))
-			# create the field
-			self.fields[field_name]= forms.ChoiceField(
-														label=question.question_text,
-														widget=forms.Select(attrs={'class' : 'form-control'}),
-														choices=option_list,
-														initial=question.answer
-														)
-			# if the question has notes, also create a notes field
-			if question.notes:
-				# create the field
-				self.fields[notes_name]= forms.CharField(
-										label=question.notes_label,
-										max_length=50,
-										widget=forms.TextInput(attrs={'class' : 'form-control',}),
-										required=False,
-										initial=question.note
+		self.helper = FormHelper()
+		# define the layout
+		rows = []
+		# build and append the rows
+		for question_section in question_sections:
+			if question_section.questions:
+				# add the section header
+				rows.append(
+							Row(
+								HTML('<h3>' + question_section.name + '</h3>')
+								)
+							)	
+				# add the questions
+				for question in question_section.questions:
+					field_name = 'question_' + str(question.pk)
+					notes_name = 'notes_' + str(question.pk)
+					spacer_name = 'spacer_' + str(question.pk)
+					option_list = []
+					option_list.append((0,'No answer'))
+					for option in question.options:
+						option_list.append((option.pk,option.option_label))
+					# create the field and column
+					self.fields[field_name]= forms.ChoiceField(
+																label=question.question_text,
+																widget=forms.Select(attrs={'class' : 'form-control'}),
+																choices=option_list,
+																initial=question.answer
+																)
+					# if the question has notes, also create a notes field
+					if question.notes:
+						self.fields[notes_name]= forms.CharField(
+												label=question.notes_label,
+												max_length=50,
+												widget=forms.TextInput(attrs={'class' : 'form-control',}),
+												required=False,
+												initial=question.note
+												)
+					# create the row
+					if question.notes:
+						rows.append(
+									Row(
+										Column(field_name,css_class='form-group col-md-6 mbt-0'),
+										Column(notes_name,css_class='form-group col-md-6 mbt-0'),
 										)
-			# otherwise create a spacer field
-			else:
-				self.fields[spacer_name]= forms.CharField(
-										label='spacer',
-										max_length=50,
-										widget=forms.HiddenInput(attrs={'class' : 'form-control',}),
-										initial='spacer'
+									)
+					else:
+						rows.append(
+									Row(
+										Column(field_name,css_class='form-group col-md-12 mbt-0'),
 										)
+									)
+		# add the button
+		rows.append(
+					FormActions(
+								Submit('action', 'Submit'),
+								)
+					)			
+		self.helper.layout = Layout(*rows)
 
 class DashboardDatesForm(forms.Form):
 	# Define the fields that we need in the form to capture the event

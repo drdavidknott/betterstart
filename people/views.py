@@ -6,7 +6,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
 					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
-					Project, Membership, Membership_Type, Project_Permission, Project_Event_Type
+					Project, Membership, Membership_Type, Project_Permission, Project_Event_Type, \
+					Question_Section
 import os
 import csv
 import copy
@@ -276,6 +277,7 @@ def get_relationship_from_and_to(person_from, person_to):
 	# return the results
 	return relationship_from, relationship_to
 
+# TO DO: REMOVE ONCE TESTING IN SYSTEST COMPLETE
 def get_questions_and_answers(person,project=None):
 	# this function gets a list of questions, and adds the answers relevant to the person
 	# set the flag to false to show whether we have answers for this person
@@ -313,6 +315,56 @@ def get_questions_and_answers(person,project=None):
 			answer_flag = True
 	# return the results
 	return questions, answer_flag
+
+def get_question_sections_and_answers(person,project=None):
+	# this function gets a list of questions, and adds the answers relevant to the person
+	# set the flag to false to show whether we have answers for this person
+	answer_flag = False
+	question_sections = []
+	# get all the sections, add the questions, and then add the section to the list
+	for question_section in Question_Section.objects.all().order_by('order'):
+		question_section.questions = question_section.question_set.all().order_by('order')
+		question_section.answers = False
+		question_sections.append(question_section)
+	# now add the questions that don't belong to a section to an empty section
+	other_section = Question_Section(name='Other')
+	other_section.questions = Question.objects.filter(question_section=None).order_by('order')
+	other_section.answers = False
+	question_sections.append(other_section)
+	# now go through the sections again, filtering the questions by project and adding answers
+	for question_section in question_sections:
+		if project:
+			question_section.questions = question_section.questions.filter(projects=None) | \
+											question_section.questions.filter(projects=project)
+		# get the options for each question
+		for question in question_section.questions:
+			# set defaults
+			question.answer = 0
+			question.answer_text = 'No answer'
+			question.note = ''
+			# get the options and stash them in the object
+			question.options = question.option_set.all().order_by('option_label')
+			# add the answer, if we already have one
+			answer = Answer.try_to_get(
+										person=person,
+										question=question
+										)
+			if answer:
+				question.answer = answer.option.pk
+				question.answer_text = answer.option.option_label
+				answer_flag = True
+				question_section.answers = True
+			# add notes, if we already have them 
+			answer_note = Answer_Note.try_to_get(
+												person=person,
+												question=question
+												)
+			if answer_note:
+				question.note = answer_note.notes
+				answer_flag = True
+				question_section.answers = True
+	# return the results
+	return question_sections, answer_flag
 
 def create_person(
 					request,
@@ -2012,7 +2064,7 @@ def person(request, person_id=0):
 	person.project = project
 	# get additional info for the page
 	person.relationships_from = get_relationships_from(person,project)
-	questions, answer_flag = get_questions_and_answers(person,project=project)
+	question_sections, answer_flag = get_question_sections_and_answers(person,project=project)
 	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=True)
 	unvalidated_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=False)
 	# get invitation data if an uncompleted invitation exists
@@ -2036,7 +2088,7 @@ def person(request, person_id=0):
 				'person' : person,
 				'registrations' : registrations,
 				'activities' : activities,
-				'questions' : questions,
+				'question_sections' : question_sections,
 				'answer_flag' : answer_flag,
 				'role_history' : person.role_history_set.all(),
 				'invitation' : invitation,
@@ -3514,10 +3566,10 @@ def answer_questions(request,person_id=0):
 	if not person:
 		return make_banner(request, 'Person does not exist.')
 	# get the questions, with the answers included as an attribute
-	questions, answer_flag = get_questions_and_answers(person,project=project)
-	# build the form
+	question_sections, answer_flag = get_question_sections_and_answers(person,project=project)
+	# process the action
 	if request.method == 'POST':
-		answerquestionsform = AnswerQuestionsForm(request.POST,questions=questions)
+		answerquestionsform = AnswerQuestionsForm(request.POST,question_sections=question_sections)
 		# go through the fields
 		for field in answerquestionsform.fields:
 			# get the question id from the field name
@@ -3537,9 +3589,8 @@ def answer_questions(request,person_id=0):
 		return redirect('/person/' + str(person.pk))
 	# otherwise create an empty form
 	else:
-		# create the empty form
-		answerquestionsform = AnswerQuestionsForm(questions=questions)
-	# set the context from the person based on person id
+		answerquestionsform = AnswerQuestionsForm(question_sections=question_sections)
+	# set the context
 	context = build_context(request,{
 				'person' : person,
 				'answerquestionsform' : answerquestionsform

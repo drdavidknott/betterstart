@@ -340,15 +340,27 @@
  		<div class="col-xs-11">
  			<div class="row">
 		 		{% if answer_flag %}
-		 			{% for question in questions %}
-			 			{% if question.answer or question.note %}
-			 				<div>
-								<strong>Question: </strong>{{ question }}&nbsp{{ question.answer_text }}
+				 	{% for question_section in question_sections %}
+					 	{% if question_section.answers %}
+							<div>
+								<strong>{{ question_section.name }}:</strong>
 							</div>
-						{% endif %}
-			 			{% if question.note %}
-			 				<div>
-								<strong>{{ question.notes_label }}: </strong>{{ question.note }}
+							{% for question in question_section.questions %}
+								{% if question.answer or question.note %}
+									<div class='tab'>
+										{{ question }}&nbsp{{ question.answer_text }}
+									</div>
+								{% endif %}
+								{% if question.note %}
+									<div>
+										&nbsp;-&nbsp;{{ question.notes_label }}: {{ question.note }}
+									</div>
+								{% endif %}
+							{% endfor %}
+							<div class="row">
+								<div class="col-xs-12">
+									&nbsp;
+								</div>
 							</div>
 						{% endif %}
 					{% endfor %}

@@ -27,6 +27,9 @@ class AnswerAdmin(admin.ModelAdmin):
 class StreetAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
+class MembershipAdmin(admin.ModelAdmin):
+	search_fields = ['person__last_name','project__name']
+
 admin.site.register(Person, PersonAdmin)
 admin.site.register(Relationship_Type)
 admin.site.register(Relationship)
@@ -76,7 +79,7 @@ admin.site.register(Printform_Data_Type)
 admin.site.register(Printform_Data)
 admin.site.register(Document_Link)
 admin.site.register(Project)
-admin.site.register(Membership)
+admin.site.register(Membership, MembershipAdmin)
 admin.site.register(Membership_Type)
 admin.site.register(Project_Permission)
 admin.site.register(Project_Event_Type)

@@ -1794,7 +1794,7 @@ def people(request):
 	# check whether this is a post
 	if request.method == 'POST':
 		# create a search form
-		personsearchform = PersonSearchForm(request.POST,user=request.user,download=True)
+		personsearchform = PersonSearchForm(request.POST,user=request.user,download=True,project=project)
 		# set the flag to show that a search was attempted
 		search_attempted = True
 		# validate the form
@@ -1820,7 +1820,7 @@ def people(request):
 									keywords=keywords,
 									default_role_id=role_type,
 									ABSS_type_id=ABSS_type,
-									membership__membership_type_id=membership_type,
+									membership_type_id=membership_type,
 									age_status_id=age_status,
 									trained_role=trained_role,
 									street__post_code__ward_id=ward,
@@ -1855,7 +1855,7 @@ def people(request):
 					return response
 	# otherwise set a blank form
 	else:
-		personsearchform = PersonSearchForm()
+		personsearchform = PersonSearchForm(project=project)
 	# build and return the response
 	people_template = loader.get_template('people/people.html')
 	context = build_context(request,{

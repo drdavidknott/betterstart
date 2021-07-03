@@ -739,6 +739,7 @@ class Person(DataAccessMixin,models.Model):
 		keywords = False
 		children_ages = False
 		project = False
+		membership_type_id = False
 
 		# get special values from the search request if we have them
 		if 'trained_role' in kwargs.keys():
@@ -753,6 +754,8 @@ class Person(DataAccessMixin,models.Model):
 			children_ages = kwargs.pop('children_ages')
 		if 'project' in kwargs.keys():
 			project = kwargs.pop('project')
+		if 'membership_type_id' in kwargs.keys():
+			membership_type_id = int(kwargs.pop('membership_type_id'))
 
 		# call the mixin method
 		results = super().search(**kwargs)
@@ -812,14 +815,19 @@ class Person(DataAccessMixin,models.Model):
 		# use ABSS dates if we don't have an active project, otherwise project membership
 		today = date.today()
 		if project:
-			if include_people in ('in_project','left_project',''):
+			if include_people in ('in_project','left_project','') or membership_type_id:
 				for person in results:
 					membership = Membership.objects.get(project=project,person=person)
+					# check whether person is still in project
 					if include_people == 'in_project' or include_people == '':
 						if membership.date_left and membership.date_left <= today:
 							results = results.exclude(pk=person.pk)
 					elif include_people == 'left_project':
 						if membership.date_left is None or membership.date_left > today:
+							results = results.exclude(pk=person.pk)
+					# check whether they have the right membership type
+					if membership_type_id:
+						if not membership.membership_type or membership.membership_type.pk != membership_type_id:
 							results = results.exclude(pk=person.pk)
 		else:
 			if include_people == 'in_project' or include_people == '':

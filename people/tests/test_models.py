@@ -140,21 +140,21 @@ class PersonModelTest(TestCase):
 		# get the person
 		person = Person.objects.get(first_name='First')
 		# test whether the try to get function works
-		result, message = Person.try_to_get_just_one(first_name='First')
+		result, message, multiples = Person.try_to_get_just_one(first_name='First')
 		# check that we got the right results
 		self.assertEqual(result,person)
 		self.assertEqual(message,'matching Person record exists')
 
 	def test_try_to_get_just_one_failure_none(self):
 		# test whether the try to get function works
-		result, message = Person.try_to_get_just_one(first_name='Nonexistent')
+		result, message, multiples = Person.try_to_get_just_one(first_name='Nonexistent')
 		# check that we got the right results
 		self.assertFalse(result)
 		self.assertEqual(message,'matching Person record does not exist')
 
 	def test_try_to_get_just_one_failure_multiple(self):
 		# test whether the try to get function works
-		result, message = Person.try_to_get_just_one(other_names__icontains='N')
+		result, message, multiples = Person.try_to_get_just_one(other_names__icontains='N')
 		# check that we got the right results
 		self.assertFalse(result)
 		self.assertEqual(message,'multiple matching Person records exist')

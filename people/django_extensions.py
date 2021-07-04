@@ -27,6 +27,7 @@ class DataAccessMixin ():
 		# try to get a record using get, and return false and a message if there is no record or multiple records
 		# start by setting the result
 		result = False
+		multiples = False
 		# remove nullable terms if they are null
 		kwargs = remove_null_terms(kwargs)
 		# attempt success
@@ -39,8 +40,9 @@ class DataAccessMixin ():
 		# deal with multiple records
 		except (cls.MultipleObjectsReturned):
 			message = 'multiple matching ' + cls.__name__ + ' records exist'
+			multiples = True
 		# return the result
-		return result, message
+		return result, message, multiples
 	@classmethod
 	def search(cls,**kwargs):
 		# conduct a search using optional parameters

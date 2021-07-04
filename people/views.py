@@ -321,6 +321,7 @@ def get_question_sections_and_answers(person,project=None):
 	# set the flag to false to show whether we have answers for this person
 	answer_flag = False
 	question_sections = []
+	mutliples_flag = False
 	# get all the sections, add the questions, and then add the section to the list
 	for question_section in Question_Section.objects.all().order_by('order'):
 		question_section.questions = question_section.question_set.all().order_by('order')
@@ -345,15 +346,23 @@ def get_question_sections_and_answers(person,project=None):
 			# get the options and stash them in the object
 			question.options = question.option_set.all().order_by('option_label')
 			# add the answer, if we already have one
-			answer = Answer.try_to_get(
-										person=person,
-										question=question
-										)
+			answer,message,multiples = Answer.try_to_get_just_one(
+																	person=person,
+																	question=question
+																	)
+			# procss a valid answer
 			if answer:
 				question.answer = answer.option.pk
 				question.answer_text = answer.option.option_label
 				answer_flag = True
 				question_section.answers = True
+			# deal with multiple answers for the same question
+			elif multiples:
+				question.answer = True
+				question.answer_text = 'ERROR: multiple answers'
+				answer_flag = True
+				question_section.answers = True
+			question.multiples = multiples
 			# add notes, if we already have them 
 			answer_note = Answer_Note.try_to_get(
 												person=person,
@@ -722,55 +731,30 @@ def remove_registration(request, event, person_id):
 	return
 
 def build_answer(request, person, question_id, option_id):
+	# initialise variables
+	answer = False
 	# attempt to get the question
 	question = Question.try_to_get(pk=question_id)
 	# deal with exceptions if we didn't get a question
 	if not question:
-		# set the error
 		messages.error(request,'Could not create answer: question' + str(question_id) + ' does not exist.')
-		# and crash out
 		return False
 	# check that we have a valid option
-	if option_id != 0:
-		# get the option
+	if option_id:
 		option = Option.try_to_get(pk=option_id)
-		# deal with exceptions if we didn't get an option
 		if not option:
-			# set the error
 			messages.error(request,'Could not create answer: option ' + str(option_id) + ' does not exist.')
-			# and crash out
 			return False
-	# see whether we have an answer
-	answer = Answer.try_to_get(person=person,question=question)
-	# if we got an answer, check what we have been asked to do to it
-	if answer:
-		# see whether we have an option id
-		if option_id == 0:
-			# save the answer text
-			answer_text = str(answer)
-			# we have been asked to delete the answer
-			answer.delete()
-			# and set the message
-			messages.success(request,answer_text + ' - deleted successfully.')
-		# otherwise we have been asked to set an option
-		elif answer.option.pk != option_id:
-			# we have been asked to update the answer
-			answer.option = option
-			# save the answer
-			answer.save()
-			# and set the message
-			messages.success(request,str(answer) + ' - updated successfully.')
-	# otherwise we have to do a creation if we have an option id
-	elif option_id != 0:
-		# create the answer
+	# clear out existing answers - or answers if we have more than one in error
+	Answer.objects.filter(person=person,question=question).delete()
+	# create a new answer if we have an option id
+	if option_id:
 		answer = Answer(
 						person = person,
 						option = option,
 						question = question
 						)
-		# save the answer
 		answer.save()
-		# and set the message
 		messages.success(request,str(answer) + ' - created successfully.')
 	# and we're done
 	return answer

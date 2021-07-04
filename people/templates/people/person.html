@@ -347,13 +347,18 @@
 							</div>
 							{% for question in question_section.questions %}
 								{% if question.answer or question.note %}
-									<div class='tab'>
-										{{ question }}&nbsp{{ question.answer_text }}
+									<div>
+										{{ question }}&nbsp
+										{% if question.multiples %}
+											<span class="text-danger">{{ question.answer_text }}</span>
+										{% else %}
+											<em>{{ question.answer_text }}</em>
+										{% endif %}
 									</div>
 								{% endif %}
 								{% if question.note %}
 									<div>
-										&nbsp;-&nbsp;{{ question.notes_label }}: {{ question.note }}
+										&nbsp;-&nbsp;{{ question.notes_label }}: <em>{{ question.note }}</em>
 									</div>
 								{% endif %}
 							{% endfor %}

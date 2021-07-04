@@ -480,7 +480,6 @@ class File_Handler():
 	def update_validation_valid(self,record):
 		# set the results
 		valid = True
-		this_type = 'test'
 		# set values for complex validation
 		for field_name in self.fields:
 			file_field = getattr(self,field_name)
@@ -928,10 +927,11 @@ class People_File_Handler(File_Handler):
 		self.valid = (not self.errors)
 		# attempt to get the person record
 		if first_name and last_name and date_of_birth:
-			person, message = Person.try_to_get_just_one(
-														first_name = first_name,
-														last_name = last_name,
-														date_of_birth = date_of_birth)
+			person, message, multiples  = Person.try_to_get_just_one(
+																		first_name = first_name,
+																		last_name = last_name,
+																		date_of_birth = date_of_birth
+																	)
 			# if we have a set the attribute, otherwise raise an error
 			if person:
 				self.existing_record = person
@@ -1144,12 +1144,12 @@ class Relationships_File_Handler(File_Handler):
 		# check whether we had a valid from age status
 		if self.from_age_status.exists:
 			# check whether the from person exists
-			person, message = Person.try_to_get_just_one(
-														first_name = self.from_first_name.value,
-														last_name = self.from_last_name.value,
-														age_status = self.from_age_status.value,
-														projects = self.project
-														)
+			person, message, multiples = Person.try_to_get_just_one(
+																	first_name = self.from_first_name.value,
+																	last_name = self.from_last_name.value,
+																	age_status = self.from_age_status.value,
+																	projects = self.project
+																	)
 			# if there was an error, add it
 			if not person:
 				# append the error message
@@ -1159,12 +1159,12 @@ class Relationships_File_Handler(File_Handler):
 		# check whether we had a valid to age status
 		if self.to_age_status:
 			# check whether the to person exists
-			person, message = Person.try_to_get_just_one(
-														first_name = self.to_first_name.value,
-														last_name = self.to_last_name.value,
-														age_status = self.to_age_status.value,
-														projects = self.project
-														)
+			person, message, multiples  = Person.try_to_get_just_one(
+																		first_name = self.to_first_name.value,
+																		last_name = self.to_last_name.value,
+																		age_status = self.to_age_status.value,
+																		projects = self.project
+																		)
 			# if there was an error, add it
 			if not person:
 				# append the error message
@@ -1482,11 +1482,11 @@ class Venues_For_Events_File_Handler(File_Handler):
 		valid = True
 		# check whether a matching event exists
 		if self.event_date.valid:
-			event,message = Event.try_to_get_just_one(
-														name = self.event_name.value,
-														date = self.event_date.value,
-														project = self.project
-														)
+			event, message, multiples  = Event.try_to_get_just_one(
+																	name = self.event_name.value,
+																	date = self.event_date.value,
+																	project = self.project
+																	)
 			# deal with the exception if we couldn't find an event
 			if not event:
 				self.add_record_errors(record,[' not created: ' + message])
@@ -1593,12 +1593,12 @@ class Registrations_File_Handler(File_Handler):
 		# check whether we have a valid age status
 		if self.age_status.exists:
 			# check whether the person exists
-			person,message = Person.try_to_get_just_one(
-														first_name = self.first_name.value,
-														last_name = self.last_name.value,
-														age_status = self.age_status.value,
-														projects = self.project
-														)
+			person, message, multiples  = Person.try_to_get_just_one(
+																	first_name = self.first_name.value,
+																	last_name = self.last_name.value,
+																	age_status = self.age_status.value,
+																	projects = self.project
+																	)
 			# if there was an error, add it
 			if not person:
 				# append the error message
@@ -1618,11 +1618,11 @@ class Registrations_File_Handler(File_Handler):
 		# check whether a matching event exists
 		if self.event_date.valid:
 			# try to get the event record
-			event,message = Event.try_to_get_just_one(
-														name = self.event_name.value,
-														date = self.event_date.value,
-														project = self.project
-														)
+			event, message, multiples  = Event.try_to_get_just_one(
+																	name = self.event_name.value,
+																	date = self.event_date.value,
+																	project = self.project
+																	)
 			# see what we got
 			if not event:
 				# append the error message
@@ -1904,6 +1904,7 @@ class Answers_File_Handler(File_Handler):
 		super(Answers_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
 		self.file_class = Answer
+		self.update = True
 		# set the file fields
 		self.first_name = File_Field(
 										name='first_name',
@@ -1958,47 +1959,37 @@ class Answers_File_Handler(File_Handler):
 		# check whether the option already exists
 		if self.question.valid:
 			# check whether the option is valid
-			self.option.value,message = Option.try_to_get_just_one(
-														question = self.question.value,
-														option_label = self.option.value
-														)
-			# see what we got
+			self.option.value, message, multiples  = Option.try_to_get_just_one(
+																				question = self.question.value,
+																				option_label = self.option.value
+																				)
 			if not self.option.value:
-				# set the message
 				self.add_record_errors(record,[' not created: ' + message])
-				# and set the flag
 				valid = False
-				# and the option flag
 				self.option.valid = False
 		# check whether we have a valid age status
 		if self.age_status.exists:
 			# check whether the person exists
-			person,message = Person.try_to_get_just_one(
-														first_name = self.first_name.value,
-														last_name = self.last_name.value,
-														age_status = self.age_status.value,
-														projects = self.project
-														)
-			# if there was an error, add it
+			person, message, multiples  = Person.try_to_get_just_one(
+																		first_name = self.first_name.value,
+																		last_name = self.last_name.value,
+																		age_status = self.age_status.value,
+																		projects = self.project
+																		)
 			if not person:
-				# append the error message
 				self.add_record_errors(record,[' not created: ' + message])
-				# and set the flag
 				valid = False
 			# otherwise, check whether we have a duplicate
 			elif self.question.valid and self.option.valid:
-				# start by getting the person
 				person = Person.try_to_get(
 													first_name = self.first_name.value,
 													last_name = self.last_name.value,
 													age_status = self.age_status.value,
 													projects = self.project
 													)
-				# now check whether the answer already exists
 				if Answer.objects.filter(
 											person = person,
-											question = self.question.value,
-											option = self.option.value
+											question = self.question.value
 										).exists():
 					# set the error message
 					self.add_record_errors(record,[' not created: answer already exists.'])
@@ -2099,12 +2090,12 @@ class Answer_Notes_File_Handler(File_Handler):
 		# check whether we have a valid age status
 		if self.age_status.valid:
 			# check whether the person exists
-			person,message = Person.try_to_get_just_one(
-														first_name = self.first_name.value,
-														last_name = self.last_name.value,
-														age_status = self.age_status.value,
-														projects = self.project
-														)
+			person, message, multiples  = Person.try_to_get_just_one(
+																	first_name = self.first_name.value,
+																	last_name = self.last_name.value,
+																	age_status = self.age_status.value,
+																	projects = self.project
+																	)
 			# if there was an error, add it
 			if not person:
 				# append the error message
@@ -2235,12 +2226,12 @@ class Activities_File_Handler(File_Handler):
 		# check whether we the person exists, if we have a valid age status
 		if self.age_status.exists:
 			# check whether the person exists
-			person,message = Person.try_to_get_just_one(
-														first_name = self.first_name.value,
-														last_name = self.last_name.value,
-														age_status = self.age_status.value,
-														projects = self.project
-														)
+			person, message, multiples  = Person.try_to_get_just_one(
+																		first_name = self.first_name.value,
+																		last_name = self.last_name.value,
+																		age_status = self.age_status.value,
+																		projects = self.project
+																		)
 			# if there was an error, add it
 			if not person:
 				# append the error message

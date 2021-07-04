@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_views.PeopleViewTest.test_ABSS_search_on_type_keywords",
+                "people.tests.test_file_handlers.UpdateAnswersViewTest",
                 "--verbosity=2",
             ],
             "django": true,

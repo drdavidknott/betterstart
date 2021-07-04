@@ -1914,6 +1914,8 @@ class Answers_File_Handler(File_Handler):
 		super(Answers_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
 		self.file_class = Answer
+		self.update = True
+		self.existing_record = False
 		# set the file fields
 		self.first_name = File_Field(
 										name='first_name',
@@ -1962,7 +1964,7 @@ class Answers_File_Handler(File_Handler):
 		if self.project:
 			self.project_filter = { 'person__projects' : self.project }
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether the option already exists
@@ -1996,16 +1998,71 @@ class Answers_File_Handler(File_Handler):
 													age_status = self.age_status.value,
 													projects = self.project
 													)
-				if Answer.objects.filter(
-											person = person,
-											question = self.question.value
-										).exists():
+				if not update and  Answer.objects.filter(
+															person = person,
+															question = self.question.value
+														).exists():
 					# set the error message
 					self.add_record_errors(record,[' not created: answer already exists.'])
 					# and the flag
 					valid = False
 		# return the result
 		return valid
+
+	def get_existing_record(self,record):
+		# initialise variables
+		self.existing_record = False
+		person = False
+		question = False
+		answer = False
+		# set the fields
+		first_name = record['first_name']
+		last_name = record['last_name']
+		age_status = record['age_status']
+		# attempt to get the person record
+		person, message, multiples = Person.try_to_get_just_one(
+																	first_name = first_name,
+																	last_name = last_name,
+																	age_status__status = age_status
+																)
+		# attempt to get the question record
+		question_text = record['question']
+		question, message, multiples = Question.try_to_get_just_one(
+																	question_text = question_text
+																)
+		# attempt to get the answer
+		if person and question:
+			answer, message, multiples = Answer.try_to_get_just_one(
+																		person = person,
+																		question = question
+																	)
+		# if we have a set the attribute, otherwise raise an error
+		if answer or multiples:
+			self.existing_record = True
+			self.person = person
+		else:
+			self.add_record_errors(
+									record,
+									[' not created: ' + message]
+									)
+		return
+
+	def update_record(self,record):
+		# clear the answers
+		Answer.objects.filter(person=self.person,question=self.question.value).delete()
+		# create the new answer
+		answer = Answer(
+						person = self.person,
+						question = self.question.value,
+						option = self.option.value
+		)
+		# save the record
+		answer.save()
+		self.existing_record = answer
+		# record the creation
+		self.add_record_results(record,[' updated.'])
+		# return the created record
+		return self.existing_record
 
 	def create_record(self,record):
 		# get the records, starting with the person

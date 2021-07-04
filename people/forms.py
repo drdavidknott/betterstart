@@ -255,7 +255,8 @@ class UploadDataForm(forms.Form):
 						'Venue Types',
 						'Venues',
 						'Venues for Events',
-						'Update People'
+						'Update People',
+						'Update Answers',
 						]
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

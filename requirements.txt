@@ -24,7 +24,7 @@ MarkupSafe==1.1.1
 mccabe==0.6.1
 mpld3==0.3
 mysqlclient==1.4.2.post1
-Pillow==8.1.1
+Pillow==8.2.0
 pycodestyle==2.5.0
 pycparser==2.20
 pyflakes==2.1.1

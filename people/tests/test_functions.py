@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.core import mail
 import json
 
+
 def set_up_people_base_data():
 	# set up base data needed to do tests for people
 	# first the ethnicities

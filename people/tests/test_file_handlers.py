@@ -2753,7 +2753,7 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'not created')
-        # get the person
+		# get the person
 		test_person = Person.objects.get(first_name='Test',last_name='Personz')
 		# check the fields
 		self.assertEqual(test_person.first_name,'Test')
@@ -5615,6 +5615,101 @@ class UploadDownloadAnswersViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test label')
+
+class UpdateAnswersViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_people_base_data()
+		# and create an adult
+		set_up_test_people('test_adult_',number=2,age_status='Adult')		
+
+	def test_update_answers(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options_for_update.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that we only have one record
+		self.assertEqual(Answer.objects.all().count(),1)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers_update.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# get the person, the question and the option for the updated answer
+		person = Person.objects.get(first_name='test_adult_0')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label 2')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# get the person, the question and the option for the updated answer
+		person = Person.objects.get(first_name='test_adult_1')
+		question = Question.objects.get(question_text='test question with notes')
+		option = Option.objects.get(option_label='test label')
+		# get the answer
+		answer = Answer.objects.get(person=person)
+		# check the results
+		self.assertEqual(answer.question,question)
+		self.assertEqual(answer.option,option)
+		# and that have the right number of records
+		self.assertEqual(Answer.objects.all().count(),2)
 
 class UploadDownloadAnswerNotesViewTest(TestCase):
 	@classmethod

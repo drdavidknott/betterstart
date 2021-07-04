@@ -3582,11 +3582,12 @@ def uploaddata(request):
 						'Answer Notes' : Answer_Notes_File_Handler,
 						'Activities' : Activities_File_Handler,
 						'Venues' : Venues_File_Handler,
-						'Venues for Events' : Venues_For_Events_File_Handler
+						'Venues for Events' : Venues_For_Events_File_Handler,
 					}
 	# define the records that have update file handlers
 	update_file_handlers = {
 							'Update People' : People_File_Handler,
+							'Update Answers' : Answers_File_Handler,
 							}
 	# see whether we got a post or not
 	if request.method == 'POST':

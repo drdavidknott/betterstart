@@ -350,10 +350,9 @@
 									<div>
 										{{ question }}&nbsp
 										{% if question.multiples %}
-											<span class="text-danger">{{ question.answer_text }}</span>
-										{% else %}
-											<em>{{ question.answer_text }}</em>
+											<span class="text-danger">ERROR - multiple answers: </span>
 										{% endif %}
+										<em>{{ question.answer_text }}</em>
 									</div>
 								{% endif %}
 								{% if question.note %}

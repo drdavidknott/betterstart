@@ -393,6 +393,16 @@ class File_Handler():
 							self.records_updated += 1
 						else:
 							self.records_with_errors += 1
+					else:
+						# process a new record
+						fields_valid = self.fields_valid(record)
+						complex_valid = self.complex_validation_valid(record)
+						# create the record if all is valid; increment counts in either case
+						if (fields_valid and complex_valid):
+							self.create_record(record)
+							self.records_created += 1
+						else:
+							self.records_with_errors += 1
 			# print(self.results)
 		else:
 			# set the message to say that upload is not allowed
@@ -1904,7 +1914,6 @@ class Answers_File_Handler(File_Handler):
 		super(Answers_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
 		self.file_class = Answer
-		self.update = True
 		# set the file fields
 		self.first_name = File_Field(
 										name='first_name',

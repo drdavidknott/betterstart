@@ -277,45 +277,6 @@ def get_relationship_from_and_to(person_from, person_to):
 	# return the results
 	return relationship_from, relationship_to
 
-# TO DO: REMOVE ONCE TESTING IN SYSTEST COMPLETE
-def get_questions_and_answers(person,project=None):
-	# this function gets a list of questions, and adds the answers relevant to the person
-	# set the flag to false to show whether we have answers for this person
-	answer_flag = False
-	# get the list of questions
-	if project:
-		questions = Question.objects.filter(projects=None) | Question.objects.filter(projects=project)
-	else:
-		questions = Question.objects.all()
-	questions = questions.order_by('order')
-	# get the options for each question
-	for question in questions:
-		# set defaults
-		question.answer = 0
-		question.answer_text = 'No answer'
-		question.note = ''
-		# get the options and stash them in the object
-		question.options = question.option_set.all().order_by('option_label')
-		# add the answer, if we already have one
-		answer = Answer.try_to_get(
-									person=person,
-									question=question
-									)
-		if answer:
-			question.answer = answer.option.pk
-			question.answer_text = answer.option.option_label
-			answer_flag = True
-		# add notes, if we already have them 
-		answer_note = Answer_Note.try_to_get(
-											person=person,
-											question=question
-											)
-		if answer_note:
-			question.note = answer_note.notes
-			answer_flag = True
-	# return the results
-	return questions, answer_flag
-
 def get_question_sections_and_answers(person,project=None):
 	# this function gets a list of questions, and adds the answers relevant to the person
 	# set the flag to false to show whether we have answers for this person
@@ -359,9 +320,13 @@ def get_question_sections_and_answers(person,project=None):
 			# deal with multiple answers for the same question
 			elif multiples:
 				question.answer = True
-				question.answer_text = 'ERROR: multiple answers'
 				answer_flag = True
 				question_section.answers = True
+				# build a string of answers
+				answer_text_list = []
+				for answer in Answer.objects.filter(person=person,question=question):
+					answer_text_list.append(answer.option.option_label)
+				question.answer_text = ' / '.join(answer_text_list)
 			question.multiples = multiples
 			# add notes, if we already have them 
 			answer_note = Answer_Note.try_to_get(

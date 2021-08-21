@@ -2710,3 +2710,13 @@ class Document_Link(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'document links'
 		ordering = (['order','name'])
+
+
+# Case_Notes model: used to capture case notes about a person
+class Case_Notes(DataAccessMixin,models.Model):
+	# note that the first four login trackers keep track of all time attempts, whereas failed_login_attempts
+	# is reset on successful login, and used to check against max sequential failed attempts
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	notes = models.TextField(max_length=1000, default='', blank=True)
+	notes_date = models.DateField(null=True, blank=True)

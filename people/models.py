@@ -2718,5 +2718,11 @@ class Case_Notes(DataAccessMixin,models.Model):
 	# is reset on successful login, and used to check against max sequential failed attempts
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	person = models.ForeignKey(Person, on_delete=models.CASCADE)
-	notes = models.TextField(max_length=1000, default='', blank=True)
-	notes_date = models.DateField(null=True, blank=True)
+	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
+	title = models.CharField(max_length=200, default='', blank=True)
+	notes = models.TextField(max_length=1500, default='', blank=True)
+	date = models.DateField(null=True, blank=True)
+
+	class Meta:
+		verbose_name_plural = 'case notes'
+		ordering = (['-date'])

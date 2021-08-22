@@ -6,7 +6,7 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
 							Terms_And_Conditions, Profile, Chart, Document_Link, Project, Membership, \
-							Project_Permission, Membership_Type, Project_Event_Type
+							Project_Permission, Membership_Type, Project_Event_Type, Case_Notes
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -13092,3 +13092,364 @@ class ManageProjectEventsViewTest(TestCase):
 		# and that we got the right text in the response
 		self.assertContains(response,'30 events removed from project')
 
+class AddCaseNotesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# create a test person
+		set_up_people_base_data()
+		set_up_test_people('test_person_',number=1)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/add_case_notes/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/add_case_notes/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		person = Person.objects.get(first_name='test_person_0')
+		response = self.client.get(reverse('add_case_notes',args=[person.pk]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_error_person_does_not_exist(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('add_case_notes',args=[99]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Person does not exist')
+
+	def test_add_case_notes(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the reference data
+		person = Person.objects.get(first_name='test_person_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,None)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+
+	def test_add_case_notes_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# set and get the reference data
+		set_up_test_people('test_project_',number=1,project=project)
+		person = Person.objects.get(first_name='test_project_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,project)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+
+class EditCaseNotesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		user = set_up_test_user(username='otheruser')
+		user = set_up_test_user(username='superuser',is_superuser=True)
+		# create a test person
+		set_up_people_base_data()
+		set_up_test_people('test_person_',number=1)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/edit_case_notes/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/edit_case_notes/1')
+
+	def test_error_case_notes_do_not_exist(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('edit_case_notes',args=[99]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Case notes do not exist')
+
+	def test_edit_case_notes_error_different_user(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the reference data
+		person = Person.objects.get(first_name='test_person_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,None)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+		# log in as a different user
+		self.client.login(username='otheruser', password='testword')
+		# submit the request
+		response = self.client.post(
+									reverse('edit_case_notes',args=[str(test_case_notes.pk)]),
+									data = { 
+												'title' : 'Test title change',
+												'date' : '01/02/2010',
+												'notes' : 'Test notes change',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'You do not have permission')
+
+	def test_edit_case_notes(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the reference data
+		person = Person.objects.get(first_name='test_person_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,None)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+		# submit the request
+		response = self.client.post(
+									reverse('edit_case_notes',args=[str(test_case_notes.pk)]),
+									data = { 
+												'title' : 'Test title change',
+												'date' : '01/02/2010',
+												'notes' : 'Test notes change',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# check the record contents
+		test_case_notes = Case_Notes.objects.get(person=person)
+		self.assertEqual(test_case_notes.project,None)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title change')
+		self.assertEqual(test_case_notes.notes,'Test notes change')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/02/2010')
+
+	def test_edit_case_notes_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the reference data
+		person = Person.objects.get(first_name='test_person_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,None)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+		# log in as a superuser
+		self.client.login(username='superuser', password='testword')
+		# submit the request
+		response = self.client.post(
+									reverse('edit_case_notes',args=[str(test_case_notes.pk)]),
+									data = { 
+												'title' : 'Test title change',
+												'date' : '01/02/2010',
+												'notes' : 'Test notes change',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# check the record contents
+		test_case_notes = Case_Notes.objects.get(person=person)
+		self.assertEqual(test_case_notes.project,None)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title change')
+		self.assertEqual(test_case_notes.notes,'Test notes change')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/02/2010')
+
+	def test_edit_case_notes_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# set and get the reference data
+		set_up_test_people('test_project_',number=1,project=project)
+		person = Person.objects.get(first_name='test_project_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,project)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+		# submit the request
+		response = self.client.post(
+									reverse('edit_case_notes',args=[str(test_case_notes.pk)]),
+									data = { 
+												'title' : 'Test title change',
+												'date' : '01/02/2010',
+												'notes' : 'Test notes change',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# check the record contents
+		test_case_notes = Case_Notes.objects.get(person=person)
+		self.assertEqual(test_case_notes.project,project)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title change')
+		self.assertEqual(test_case_notes.notes,'Test notes change')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/02/2010')
+
+	def test_edit_case_notes_with_projects_active_different_project(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		set_up_test_project_permission(username='testuser',project_name='otherproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# set and get the reference data
+		set_up_test_people('test_project_',number=1,project=project)
+		person = Person.objects.get(first_name='test_project_0')
+		user = User.objects.get(username='testuser')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# get the record
+		test_case_notes = Case_Notes.objects.get(person=person)
+		# check the record contents
+		self.assertEqual(test_case_notes.project,project)
+		self.assertEqual(test_case_notes.user,user)
+		self.assertEqual(test_case_notes.title,'Test title')
+		self.assertEqual(test_case_notes.notes,'Test notes')
+		self.assertEqual(test_case_notes.date.strftime('%d/%m/%Y'),'01/01/2010')
+		# swtich to a different project
+		project = Project.objects.get(name='otherproject')
+		session['project_id'] = project.pk
+		session.save()
+		# submit the request
+		response = self.client.post(
+									reverse('edit_case_notes',args=[str(test_case_notes.pk)]),
+									data = { 
+												'title' : 'Test title change',
+												'date' : '01/02/2010',
+												'notes' : 'Test notes change',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'You do not have permission')
+		

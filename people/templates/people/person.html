@@ -325,7 +325,7 @@
 		</div>
 	 </div>
 
-	 <div class="row">
+	<div class="row">
 		<div class="col-xs-12">
 				<hr>
 	 	</div>
@@ -484,6 +484,67 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+				<hr>
+	 	</div>
+	</div>
+
+ 	<div class="row">
+ 		<div class='col-xs-1 text-right'>
+ 			<a href="{% url 'add_case_notes' person.pk %}">
+ 				<span class="glyphicon glyphicon-plus"></span>
+ 			</a>
+ 		</div>
+ 		<div class="col-xs-11">
+			<div class = "row">
+				<strong>Add new case note</strong>
+			</div>
+		</div>
+	</div>
+	{% if case_notes %}
+		<div class="row">
+			<div class='col-xs-1 text-right'>
+				<a href="{% url 'view_case_notes' person.pk %}">
+					<span class="glyphicon glyphicon-eye-open"></span>
+				</a>
+			</div>
+			<div class="col-xs-11">
+				<div class = "row">
+					<strong>View all case notes</strong>
+				</div>
+				<div class = "row">&nbsp;</div>
+			</div>
+		</div>
+		{% for case_note in case_notes %}
+			<div class="row">
+				<div class='col-xs-1 text-right'>
+					{% if request.user.is_superuser or request.user == case_note.user %}
+						<a href="{% url 'edit_case_notes' case_note.pk %}">
+							<span class="glyphicon glyphicon-pencil"></span>
+						</a>
+					{% endif %}
+				</div>
+				<div class="col-xs-11">
+					<div class="row">
+						<div>
+							{% if case_note.user.first_name or case_note.user.last_name %}
+								<strong>{{ case_note.date|date:"M d Y" }} 
+									- created by {{ case_note.user.first_name }} {{ case_note.user.last_name }}</strong>
+							{% else %}
+								<strong>{{ case_note.date|date:"M d Y" }} - created by {{ case_note.user.username }}</strong>
+							{% endif %}
+							{% if not project and case_note.project %}
+								<strong> in {{ case_note.project.name }}</strong>
+							{% endif %}
+							<strong>: </strong>{{ case_note.title }}
+						</div>
+					</div>
+				</div>
+			</div>
+		{% endfor %}
+	{% endif %}
 
 	<div class="row">
 		<div class="col-xs-12">

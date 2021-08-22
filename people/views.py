@@ -7,7 +7,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
 					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
 					Project, Membership, Membership_Type, Project_Permission, Project_Event_Type, \
-					Question_Section
+					Question_Section, Case_Notes
 import os
 import csv
 import copy
@@ -21,7 +21,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
-					ManageMembershipSearchForm, ManageProjectEventsSearchForm
+					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -2032,6 +2032,9 @@ def person(request, person_id=0):
 		activities = activities.filter(project=project)
 	if not project:
 		memberships = person.membership_set.all()
+	case_notes = person.case_notes_set.order_by('-date')
+	if project:
+		case_notes = case_notes.filter(project=project)
 	# set the context
 	context = build_context(request,{
 				'person' : person,
@@ -2047,6 +2050,8 @@ def person(request, person_id=0):
 				'completed_invitations' : completed_invitations,
 				'unvalidated_invitations' : unvalidated_invitations,
 				'memberships' : memberships,
+				'case_notes' : case_notes,
+				'project' : project
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -4162,3 +4167,114 @@ def manage_project_events(request):
 				})
 	# return the HttpResponse
 	return HttpResponse(events_template.render(context=context, request=request))
+
+@login_required
+def add_case_notes(request,person_id=0):
+	# this view is used to create new case notes for a person
+	# get the project
+	project = Project.current_project(request.session)
+	# load the template
+	template = loader.get_template('people/case_notes.html')
+	# get the person
+	person = Person.try_to_get(projects=project,pk=person_id)
+	# if the person doesn't exist, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# if this is a post, validate the form and attempt to create the record
+	if request.method == 'POST':
+		casenotesform = CaseNotesForm(request.POST)
+		if casenotesform.is_valid():
+			title = casenotesform.cleaned_data['title']
+			date = casenotesform.cleaned_data['date']
+			notes = casenotesform.cleaned_data['notes']
+			case_notes = Case_Notes(
+									person = person,
+									project = project if project else None,
+									user = request.user,
+									title = title,
+									notes = notes,
+									date = date
+									)
+			case_notes.save()
+			# redirect to the profile of the person
+			return redirect('/view_case_notes/' + str(person.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a blank form
+		casenotesform = CaseNotesForm()
+	# set the context
+	context = build_context(request,{
+				'casenotesform' : casenotesform,
+				'person' : person,
+				'action_desc' : 'ADD'
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def edit_case_notes(request,case_notes_id=0):
+	# this view is used to create new case notes for a person
+	# get the project
+	project = Project.current_project(request.session)
+	# load the template
+	template = loader.get_template('people/case_notes.html')
+	# get the case notes record
+	case_notes = Case_Notes.try_to_get(pk=case_notes_id)
+	# if the case notes doesn't exist, crash to a banner
+	if not case_notes:
+		return make_banner(request, 'Case notes do not exist.')
+	# check whether the user is in the right project and has permissions to access the case note
+	if ( ( project and case_notes.project != project ) or
+			( request.user != case_notes.user and not request.user.is_superuser ) ):
+		return make_banner(request, 'You do not have permission to edit this case note.')
+	# if this is a post, validate the form and attempt to create the record
+	if request.method == 'POST':
+		casenotesform = CaseNotesForm(request.POST)
+		if casenotesform.is_valid():
+			case_notes.title = casenotesform.cleaned_data['title']
+			case_notes.date = casenotesform.cleaned_data['date']
+			case_notes.notes = casenotesform.cleaned_data['notes']
+			case_notes.save()
+			# redirect to the profile of the person
+			return redirect('/view_case_notes/' + str(case_notes.person.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a form, passing existing values as a dict
+		case_notes_dict = {
+							'title' : case_notes.title,
+							'date' : case_notes.date,
+							'notes' : case_notes.notes
+							}
+		casenotesform = CaseNotesForm(case_notes_dict)
+	# set the context
+	context = build_context(request,{
+				'casenotesform' : casenotesform,
+				'person' : person,
+				'action_desc' : 'EDIT'
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def view_case_notes(request,person_id=0):
+	# this view is used to view all case notes
+	# get the project
+	project = Project.current_project(request.session)
+	# load the template
+	template = loader.get_template('people/view_case_notes.html')
+	# attempt to get the person, crashing to a banner on failure
+	person = Person.try_to_get(projects=project,pk=person_id)
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# get the case notes, filtered by project if necessary
+	if project:
+		case_notes = Case_Notes.objects.filter(person=person,project=project)
+	else:
+		case_notes = Case_Notes.objects.filter(person=person)
+	# set the context
+	context = build_context(request,{
+				'person' : person,
+				'case_notes' : case_notes,
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))

@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_file_handlers.UpdateAnswersViewTest",
+                "people.tests.test_views.AddCaseNotesViewTest.test_add_case_notes",
                 "--verbosity=2",
             ],
             "django": true,

@@ -97,9 +97,13 @@ def set_up_test_people(
 										membership_type=Membership_Type.objects.get(default=True)
 										)
 
-def set_up_test_user():
+def set_up_test_user(username='testuser',is_superuser=False):
 	# create a test user and profile
-	test_user = User.objects.create_user(username='testuser', password='testword')
+	test_user = User.objects.create_user(
+											username=username,
+											password='testword',
+											is_superuser=is_superuser,
+										)
 	profile = Profile.objects.create(user=test_user)
 	# return the user
 	return test_user

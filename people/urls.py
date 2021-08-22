@@ -79,4 +79,7 @@ urlpatterns = [
     url(r'^charts$', views.chart, name='charts'),
     url(r'^document_links$', views.Document_Link_List.as_view(), name='document_links'),
     url(r'^select_project$', views.select_project, name='select_project'),
+    url(r'^add_case_notes/(?P<person_id>[0-9]+)$', views.add_case_notes, name='add_case_notes'),
+    url(r'^edit_case_notes/(?P<case_notes_id>[0-9]+)$', views.edit_case_notes, name='edit_case_notes'),
+    url(r'^view_case_notes/(?P<person_id>[0-9]+)$', views.view_case_notes, name='view_case_notes'),
 ]

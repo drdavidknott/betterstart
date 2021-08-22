@@ -2151,3 +2151,45 @@ class SelectProjectForm(forms.Form):
 										Column(Submit('submit', 'Submit'),css_class='col-xs-12 mb-0')
 										),
 									)
+
+class CaseNotesForm(forms.Form):
+	# Define the fields that we need in the form to capture the event
+	title = forms.CharField(
+									label="Title",
+									max_length=50, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	date = forms.DateField(
+							label="Date",
+							widget=forms.DateInput(		format='%d/%m/%Y',
+														attrs={
+															'class' : 'form-control datepicker',
+															'autocomplete' : 'off'
+															}),
+							input_formats=('%d/%m/%Y',)
+							)
+	notes = forms.CharField(
+								label="Notes",
+								max_length=1500,
+								widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
+								)
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(CaseNotesForm, self).__init__(*args, **kwargs)
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+									Row(
+										Column('title',css_class='form-group col-md-4 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('date',css_class='form-group col-md-4 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('notes',css_class='form-group col-md-12 mb-0'),
+										css_class='form-row'	
+										),
+									Row(Column(Submit('submit', 'Submit'),css_class='col-md-12 mb-0'))
+									)

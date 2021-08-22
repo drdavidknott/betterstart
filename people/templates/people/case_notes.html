@@ -1,0 +1,32 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+    {% include "people/person_header.html" %}
+
+	<div class="row">
+ 		<div class="col-md-12">
+	 		<div class="panel panel-default">
+	 			<div class="panel-heading">
+	 				<h4 class="panel-title">{{ action }} CASE NOTES:</h4>
+	 			</div>
+		 		<div class="panel-body">
+					{% crispy casenotesform %}
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+
+{% endblock %}
+

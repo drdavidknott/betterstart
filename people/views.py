@@ -4206,7 +4206,7 @@ def add_case_notes(request,person_id=0):
 	context = build_context(request,{
 				'casenotesform' : casenotesform,
 				'person' : person,
-				'action_desc' : 'ADD'
+				'action_desc' : 'Add'
 				})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))
@@ -4250,7 +4250,7 @@ def edit_case_notes(request,case_notes_id=0):
 	context = build_context(request,{
 				'casenotesform' : casenotesform,
 				'person' : person,
-				'action_desc' : 'EDIT'
+				'action_desc' : 'Edit'
 				})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))

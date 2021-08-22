@@ -13,15 +13,24 @@
     {% include "people/person_header.html" %}
 
 	<div class="row">
- 		<div class="col-md-12">
-	 		<div class="panel panel-default">
-	 			<div class="panel-heading">
-	 				<h4 class="panel-title">{{ action }} CASE NOTES:</h4>
-	 			</div>
-		 		<div class="panel-body">
-					{% crispy casenotesform %}
-				</div>
+		<div class="col-xs-12">
+			<div>
+				<h4>
+					<span class="glyphicon glyphicon-list-alt"></span>
+					{% if action_desc == 'Add' %}
+						<span class="glyphicon glyphicon-plus"></span>
+					{% else %}
+						<span class="glyphicon glyphicon-pencil"></span>
+					{% endif %}
+					{{ action_desc }} Case Note:
+				<h4>
 			</div>
+	   </div>
+   </div>
+
+	<div class="row">
+ 		<div class="col-md-12">
+			{% crispy casenotesform %}
 		</div>
 	</div>
 

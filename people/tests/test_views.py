@@ -3575,6 +3575,46 @@ class PeopleViewTest(TestCase):
 		# check that we got the right number of pages
 		self.assertEqual(len(response.context['page_list']),2)
 
+	def test_name_search_with_projects_active_with_results_second_page(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# create some extra people
+		set_up_test_people('not_member_','test role 1',30)
+		set_up_test_people('is_member_','test role 1',35,project=project)
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to get the people page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Search',
+											'names' : 'is_member',
+											'keywords' : '',
+											'role_type' : '0',
+											'membership_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'ward' : '0',
+											'page' : '2'
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of people
+		self.assertEqual(response.context['number_of_people'],35)
+		# check how many we got for this page
+		self.assertEqual(len(response.context['people']),10)
+		# check that we got the right number of pages
+		self.assertEqual(len(response.context['page_list']),2)
+
 class PeopleAgeSearchViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

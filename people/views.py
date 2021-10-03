@@ -1816,6 +1816,7 @@ def people(request):
 				'keywords' : keywords,
 				'role_type' : role_type,
 				'ABSS_type' : ABSS_type,
+				'membership_type' : membership_type,
 				'age_status' : age_status,
 				'trained_role' : trained_role,
 				'ward' : ward,

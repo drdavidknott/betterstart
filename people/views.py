@@ -3946,7 +3946,7 @@ def select_project(request):
 	# see whether we got a post or not
 	if request.method == 'POST':
 		# load and validate form
-		selectprojectform = SelectProjectForm(request.POST,user=request.user)
+		selectprojectform = SelectProjectForm(request.POST,user=request.user,all_projects=True)
 		# if the form is valid, set the project id in the session
 		if selectprojectform.is_valid():
 			request.session['project_id'] = selectprojectform.cleaned_data['project_id']
@@ -3955,7 +3955,7 @@ def select_project(request):
 	# otherwise create a fresh form
 	else:
 		# create the fresh form
-		selectprojectform = SelectProjectForm(user=request.user)
+		selectprojectform = SelectProjectForm(user=request.user,all_projects=True)
 	# get the template
 	template = loader.get_template('people/select_project.html')
 	# set the context
@@ -4082,6 +4082,38 @@ def manage_membership(request):
 				'project_id' : project_id,
 				'build_results' : build_results
 				})
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def manage_unassigned_activities(request):
+	# initialise variables
+	activities_assigned = 0
+	project = None
+	# if we got a post, validate the form and update the activities
+	if request.method == 'POST':
+		# load and validate form
+		selectprojectform = SelectProjectForm(request.POST,user=request.user,all_projects=False)
+		# if the form is valid, get the project and assign the activities to the project
+		if selectprojectform.is_valid():
+			project = Project.objects.get(id=int(selectprojectform.cleaned_data['project_id']))
+			for activity in Activity.objects.filter(project=None):
+				activity.project = project
+				activity.save()
+				activities_assigned += 1
+	# otherwise create a fresh form
+	else:
+		selectprojectform = SelectProjectForm(user=request.user,all_projects=False)
+	# get the template
+	template = loader.get_template('people/manage_unassigned_activities.html')
+	# set the context
+	context = build_context(request,{
+				'selectprojectform' : selectprojectform,
+				'activities_assigned' : activities_assigned,
+				'unassigned_activities' : Activity.objects.filter(project=None).count(),
+				'project' : project,
+				})
+	# return the HttpResponse
 	return HttpResponse(template.render(context=context, request=request))
 
 @login_required

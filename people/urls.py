@@ -68,6 +68,7 @@ urlpatterns = [
     url(r'^settings$', views.settings, name='settings'),
     url(r'^manage_membership$', views.manage_membership, name='manage_membership'),
     url(r'^manage_project_events$', views.manage_project_events, name='manage_project_events'),
+    url(r'^manage_unassigned_activities$', views.manage_unassigned_activities, name='manage_unassigned_activities'),
     url(r'^change_password$', views.change_password, name='change_password'),
     url(r'^display_qrcode$', views.display_qrcode, name='display_qrcode'),
     url(r'^display_qrcode_image$', views.display_qrcode_image, name='display_qrcode_image'),

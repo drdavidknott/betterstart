@@ -13493,3 +13493,86 @@ class EditCaseNotesViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response,'You do not have permission')
 		
+class ManageUnassignedActivitiesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user and superuser
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# set up an additional project
+		project_2 = Project.objects.create(name='testproject_2')
+		# create base data for people
+		set_up_people_base_data()
+		# and a test person
+		set_up_test_people('activities_test',number=1)
+		# get the person
+		person = Person.objects.get(first_name='activities_test0')
+		# get a test activity type
+		activity_type = Activity_Type.objects.get(name='Test activity type 1')
+		# create an unassigned activity
+		Activity.objects.create(
+									person = person,
+									activity_type = activity_type,
+									date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
+									hours = 1,
+									project = None
+								)
+		# create two assigned activities
+		Activity.objects.create(
+									person = person,
+									activity_type = activity_type,
+									date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
+									hours = 2,
+									project = project_2
+								)
+		Activity.objects.create(
+									person = person,
+									activity_type = activity_type,
+									date = datetime.datetime.strptime('2000-01-01','%Y-%m-%d'),
+									hours = 3,
+									project = project
+								)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/manage_unassigned_activities')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/manage_unassigned_activities')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/manage_unassigned_activities')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_assign_activities(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the projects
+		project = Project.objects.get(name='testproject')
+		project_2 = Project.objects.get(name='testproject_2')
+		# attempt to get the events page
+		response = response = self.client.post(
+									reverse('manage_unassigned_activities'),
+									data = { 
+											'project_id' : str(project.pk),
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# check that the activities are as expected
+		activity = Activity.objects.get(hours=1)
+		self.assertEqual(activity.project,project)
+		activity = Activity.objects.get(hours=2)
+		self.assertEqual(activity.project,project_2)
+		activity = Activity.objects.get(hours=3)
+		self.assertEqual(activity.project,project)

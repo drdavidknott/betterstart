@@ -1,9 +1,9 @@
 asgiref==3.3.4
 astroid==2.4.2
-cairocffi==1.1.0
+cairocffi==1.2.0
 CairoSVG==2.5.1
 certifi==2018.11.29
-cffi==1.14.0
+cffi==1.14.6
 cssselect2==0.3.0
 cycler==0.10.0
 defusedxml==0.6.0
@@ -40,7 +40,7 @@ six==1.13.0
 sqlparse==0.3.0
 tinycss2==1.0.2
 toml==0.10.1
-typed-ast==1.4.1
+typed-ast==1.4.3
 typing-extensions==3.7.4.3
 webencodings==0.5.1
 wrapt==1.12.1

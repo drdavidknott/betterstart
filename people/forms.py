@@ -2051,7 +2051,7 @@ class AnswerQuestionsForm(forms.Form):
 					if question.notes:
 						self.fields[notes_name]= forms.CharField(
 												label=question.notes_label,
-												max_length=50,
+												max_length=500,
 												widget=forms.TextInput(attrs={'class' : 'form-control',}),
 												required=False,
 												initial=question.note

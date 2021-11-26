@@ -222,13 +222,9 @@ def get_event_categories_with_counts(date_from=0, date_to=0):
 def get_role_types(events_or_people='all'):
 	# get a list of the role type objects
 	role_types = Role_Type.objects.all().order_by('role_type_name')
-	# now filter if necessary
 	if events_or_people == 'events':
-		# filter on event flag
 		role_types.filter(use_for_events=True)
-	# otherwise check for people
 	elif events_or_people == 'people':
-		# filter on people flag
 		role_types.filter(use_for_events=True)
 	# return the results
 	return role_types

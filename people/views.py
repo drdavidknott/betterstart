@@ -232,14 +232,11 @@ def get_role_types(events_or_people='all'):
 def get_relationship(person_from, person_to):
 	# try to get a relationship
 	try:
-		# do the database query
 		relationship = Relationship.objects.get(
 												relationship_from=person_from.pk,
 												relationship_to=person_to.pk
 												)
-	# handle the exception
 	except Relationship.DoesNotExist:
-		# set a false value
 		relationship = False
 	# return the value
 	return relationship

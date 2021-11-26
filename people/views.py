@@ -243,9 +243,7 @@ def get_relationship(person_from, person_to):
 
 def get_relationship_from_and_to(person_from, person_to):
 	# get both sides of a relationship
-	# start with the from side
 	relationship_from = get_relationship(person_from, person_to)
-	# and the to side
 	relationship_to = get_relationship(person_to, person_from)
 	# return the results
 	return relationship_from, relationship_to

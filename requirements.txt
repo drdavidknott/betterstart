@@ -32,7 +32,7 @@ Pyphen==0.9.5
 python-dateutil==2.8.1
 pytz==2018.9
 qrcode==6.1
-reportlab==3.5.44
+reportlab==3.5.55
 six==1.13.0
 sqlparse==0.3.0
 tinycss2==1.0.2

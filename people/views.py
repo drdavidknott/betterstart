@@ -144,45 +144,31 @@ def get_trained_date(person,role_type):
 		return None
 
 def get_parents_without_children(request):
-	# create an empty list
+	# initialise variables, including today's date and four year old date
 	parents_with_no_children = []
 	parents_with_no_children_under_four = []
-	# get today's date
 	today = datetime.date.today()
-	# get the date four years ago
 	today_four_years_ago = today.replace(year=today.year-4)
-	# attempt to get parents with no children
+	# attempt to get parents with no children or who are not currently pregnant
 	parents = Person.search(
 							project=Project.current_project(request.session),
 							default_role__role_type_name__contains='Parent'
 							)
-	# exclude those with pregnancy dates in the future
 	parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
-	# order the list
 	parents = parents.order_by('last_name','first_name')
 	# now exclude those where we can find a child relationship
 	for parent in parents:
-		# attempt to get parent relationships
 		parent_relationships = parent.rel_from.filter(relationship_type__relationship_type='parent')
-		# if we didn't get a parent relationship, add the parent to the no children list
 		if not parent_relationships:
-			# append to the no children list
 			parents_with_no_children.append(parent)
 		# otherwise check how old the children are
 		else:
-			# set a flag
 			child_under_four = False
-			# go through the relationships
 			for relationship in parent_relationships:
-				# check whether the child has a date of birth
 				if relationship.relationship_to.date_of_birth != None:
-					# and whether the date is less than four years ago
 					if relationship.relationship_to.date_of_birth >= today_four_years_ago:
-						# set the flag
 						child_under_four = True
-			# see whether we got a child
 			if not child_under_four:
-				# add the parent to the list
 				parents_with_no_children_under_four.append(parent)
 	# return the results
 	return parents_with_no_children, parents_with_no_children_under_four
@@ -200,11 +186,9 @@ def get_streets_by_name_and_post_code(name='',post_code=''):
 	streets = Street.objects.all()
 	# if there is a name, filter by name
 	if name:
-		# apply the filter
 		streets = streets.filter(name__icontains=name)
 	# if there is a post code, filter by post code
 	if post_code:
-		# apply the filter
 		streets = streets.filter(post_code__post_code__icontains=post_code)
 	# return the results
 	return streets
@@ -223,15 +207,11 @@ def get_event_categories_with_counts(date_from=0, date_to=0):
 																participated=True)
 		# if we have a from date, filter further
 		if date_from:
-			# filter the registrations
 			event_registrations = event_registrations.filter(event__date__gte=date_from)
-			# and the participations
 			event_participations = event_participations.filter(event__date__gte=date_from)
 		# if we have a before date, filter further
 		if date_to:
-			# filter the registrations
 			event_registrations = event_registrations.filter(event__date__lte=date_to)
-			# and the participations
 			event_participations = event_participations.filter(event__date__lte=date_to)
 		# set the counts
 		event_category.registered_count = event_registrations.count()

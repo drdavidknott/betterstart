@@ -1,7 +1,0 @@
-#!/bin/bash
-export BETTERSTART_DB="local"
-export BETTERSTART_NAME="LOCAL"
-export BETTERSTART_DEBUG="True"
-export BETTERSTART_OTP_ADMIN="False"
-export BETTERSTART_OTP_ISSUER="Betterstart Local Test"
-export SENDGRID_API_KEY="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"

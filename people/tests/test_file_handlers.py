@@ -2752,7 +2752,7 @@ class UpdatePeopleDataViewTest(TestCase):
 		# check that we got an error response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'not created')
+		self.assertContains(response,'not updated')
 		# get the person
 		test_person = Person.objects.get(first_name='Test',last_name='Personz')
 		# check the fields
@@ -6537,3 +6537,113 @@ class DownloadActivitiesDataViewTest(TestCase):
 		self.assertContains(response,'test_adult_0,test_adult_0,Adult,Test activity type 2,01/01/2019,2')
 		self.assertContains(response,'test_child_0,test_child_0,Child under four,Test activity type 1,01/01/2019,1')
 		self.assertContains(response,'test_adult_1,test_adult_1,Adult,Test activity type 1,01/01/2019,5')
+
+class UpdatePostCodesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# and a test superuser
+		superuser = set_up_test_superuser()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/uploaddata')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/uploaddata')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/uploaddata')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_no_redirect_if_superuser(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# get the response
+		response = self.client.get('/uploaddata')
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+
+	def test_update_postcodes(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		areas_file = open('people/tests/data/areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Areas',
+											'file' : areas_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the test areas that should have been loaded
+		test_area_1 = Area.objects.get(area_name='test area 1')
+		test_area_2 = Area.objects.get(area_name='test area 2')
+		# now load wards
+		# open the file
+		wards_file = open('people/tests/data/wards_with_valid_areas.csv')
+		# load areas first
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Wards',
+											'file' : wards_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_ward_1 = Ward.objects.get(ward_name = 'test ward 1')
+		test_ward_2 = Ward.objects.get(ward_name = 'test ward 2')
+		# check the area
+		self.assertEqual(test_ward_1.area,test_area_1)
+		self.assertEqual(test_ward_2.area,test_area_2)
+		# now load postcodes
+		# open the file
+		postcodes_file = open('people/tests/data/postcodes_with_valid_wards.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Post Codes',
+											'file' : postcodes_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
+		# check the area
+		self.assertEqual(test_postcode_1.ward,test_ward_1)
+		self.assertEqual(test_postcode_2.ward,test_ward_2)
+		# now update postcodes
+		# open the file
+		postcodes_file = open('people/tests/data/update_postcodes.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update Post Codes',
+											'file' : postcodes_file
+											}
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# get the results
+		test_postcode_1 = Post_Code.objects.get(post_code = 'test pc 1')
+		test_postcode_2 = Post_Code.objects.get(post_code = 'test pc 2')
+		# check the ward
+		self.assertEqual(test_postcode_1.ward,test_ward_2)
+		self.assertEqual(test_postcode_2.ward,test_ward_2)
+		# check that we got a ward does not exist
+		self.assertContains(response,'ward does not exist')

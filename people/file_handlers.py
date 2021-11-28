@@ -20,6 +20,7 @@ class File_Field():
 					corresponding_must_exist=False,
 					corresponding_must_not_exist=False,
 					use_corresponding_for_download=False,
+					use_corresponding_for_update=True,
 					include_in_create=True,
 					include_in_update=True,
 					set_download_from_object=True,
@@ -34,6 +35,7 @@ class File_Field():
 		self.corresponding_must_exist = corresponding_must_exist
 		self.corresponding_must_not_exist = corresponding_must_not_exist
 		self.use_corresponding_for_download = use_corresponding_for_download
+		self.use_corresponding_for_update = use_corresponding_for_update
 		self.include_in_create = include_in_create
 		self.include_in_update = include_in_update
 		self.set_download_from_object = set_download_from_object
@@ -75,7 +77,7 @@ class File_Field():
 				# set the default
 				self.value = self.default
 
-	def validate_upload_value(self):
+	def validate_upload_value(self,update=False):
 		# check whether we have a value for a mandatory field
 		if self.mandatory and self.value == '':
 			self.errors.append(' not created: mandatory field ' + self.name + ' not provided')
@@ -87,9 +89,10 @@ class File_Field():
 								' is longer than maximum length of ' + str(self.max_length))
 		# if we have a corresponding record, attempt to get it
 		if self.corresponding_model:
-			self.corresponding_exists()
+			self.corresponding_exists(update=update)
 		# check whether we have a corresponding record that should not exist
-		if self.value and self.corresponding_must_not_exist and self.exists:
+		# but allow existence if this is an update
+		if (not update) and self.value and self.corresponding_must_not_exist and self.exists:
 			self.errors.append(
 								' not created: ' + 
 								str(self.corresponding_model.__name__) + ' ' +
@@ -129,15 +132,17 @@ class File_Field():
 			# set the default
 			self.value = self.default
 
-	def corresponding_exists(self):
+	def corresponding_exists(self,update=False):
 		# check whether we have a value
 		if self.value != '':
 			# define the query dict
 			filter_dict = { self.corresponding_field : self.value }
 			# attempt to get the record
 			try:
-				self.value = self.corresponding_model.objects.get(**filter_dict)
+				corresponding_object = self.corresponding_model.objects.get(**filter_dict)
 				exists = True
+				if (not update) or (update and self.use_corresponding_for_update):
+					self.value = corresponding_object
 			# deal with the exception
 			except (self.corresponding_model.DoesNotExist):
 				exists = False
@@ -251,7 +256,7 @@ class File_Boolean_Field(File_Field):
 
 class File_Integer_Field(File_Field):
 	# this class defines a field within a file of integer format, with validation and conversion
-	def validate_upload_value(self):
+	def validate_upload_value(self,update=False):
 		# check whether we have an integer value
 		try: 
 			self.value = int(self.value)
@@ -472,7 +477,7 @@ class File_Handler():
 			file_field.set_upload_value(record)
 			# validate the field if this is not an update or if we have a value
 			if not update or file_field.value != '':
-				file_field.validate_upload_value()
+				file_field.validate_upload_value(update=update)
 				file_field.update = True
 			else:
 				file_field.value = False
@@ -483,7 +488,7 @@ class File_Handler():
 		# return the result
 		return success
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# placeholder function to be replaced in sub-classess
 		return True
 
@@ -642,6 +647,9 @@ class Post_Codes_File_Handler(File_Handler):
 		super(Post_Codes_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
 		self.file_class = Post_Code
+		# and the file attributes
+		self.update = True
+		self.existing_record = False
 		# set the file fields
 		self.post_code = File_Field(
 								name='post_code',
@@ -649,6 +657,7 @@ class Post_Codes_File_Handler(File_Handler):
 								corresponding_model=Post_Code,
 								corresponding_field='post_code',
 								corresponding_must_not_exist=True,
+								use_corresponding_for_update=False,
 								max_length=10
 								)
 		self.ward = File_Field(
@@ -660,6 +669,23 @@ class Post_Codes_File_Handler(File_Handler):
 								)
 		# and a list of the fields
 		self.fields = ['post_code','ward']
+
+	def get_existing_record(self,record):
+		# initialise variables
+		self.existing_record = False
+		# attempt to get the post_code record
+		post_code, message, multiples  = Post_Code.try_to_get_just_one(
+																		post_code = record['post_code']
+																	)
+		# if we have a record set the attribute, otherwise raise an error
+		if post_code:
+			self.existing_record = post_code
+		else:
+			self.add_record_errors(
+									record,
+									[' not updated: ' + message]
+									)
+		return
 
 	def label(self,record):
 		# return the label
@@ -688,7 +714,7 @@ class Streets_File_Handler(File_Handler):
 		# and a list of the fields
 		self.fields = ['name','post_code']
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether the option exists
@@ -948,7 +974,7 @@ class People_File_Handler(File_Handler):
 			else:
 				self.add_record_errors(
 										record,
-										[' not created: ' + message]
+										[' not updated: ' + message]
 										)
 		return
 
@@ -1148,7 +1174,7 @@ class Relationships_File_Handler(File_Handler):
 									'relationship_to__projects' : self.project
 									}
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether we had a valid from age status
@@ -1295,7 +1321,7 @@ class Events_File_Handler(File_Handler):
 		if self.project:
 			self.project_filter = { 'project' : self.project }
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# now attempt to get a matching event
@@ -1418,7 +1444,7 @@ class Venues_File_Handler(File_Handler):
 						'notes',
 						]
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether we have all address details
@@ -1487,7 +1513,7 @@ class Venues_For_Events_File_Handler(File_Handler):
 						'venue_name'
 						]
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether a matching event exists
@@ -1597,7 +1623,7 @@ class Registrations_File_Handler(File_Handler):
 									'person__projects' : self.project
 									}
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether we have a valid age status
@@ -1850,7 +1876,7 @@ class Questions_File_Handler(File_Handler):
 		# and a list of the fields
 		self.fields = ['question_text','notes','notes_label']
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether we had a valid from age status
@@ -1886,7 +1912,7 @@ class Options_File_Handler(File_Handler):
 		# and a list of the fields
 		self.fields = ['question','option_label']
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether the option exists
@@ -2150,7 +2176,7 @@ class Answer_Notes_File_Handler(File_Handler):
 		if self.project:
 			self.project_filter = { 'person__projects' : self.project }
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether we have a valid age status
@@ -2286,7 +2312,7 @@ class Activities_File_Handler(File_Handler):
 		if self.project:
 			self.project_filter = { 'person__projects' : self.project }
 
-	def complex_validation_valid(self,record):
+	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
 		# check whether we the person exists, if we have a valid age status

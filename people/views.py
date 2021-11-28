@@ -3565,6 +3565,7 @@ def uploaddata(request):
 	update_file_handlers = {
 							'Update People' : People_File_Handler,
 							'Update Answers' : Answers_File_Handler,
+							'Update Post Codes' : Post_Codes_File_Handler,
 							}
 	# see whether we got a post or not
 	if request.method == 'POST':

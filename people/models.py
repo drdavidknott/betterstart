@@ -2726,3 +2726,43 @@ class Case_Notes(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'case notes'
 		ordering = (['-date'])
+
+# Survey_Series model: represents a series of surveys with similar questions
+class Survey_Series(DataAccessMixin,models.Model):
+	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
+	title = models.CharField(max_length=200, default='', blank=True)
+	description = models.TextField(max_length=1500, default='', blank=True)
+	date_created = models.DateField(null=True, blank=True)
+
+	class Meta:
+		verbose_name_plural = 'survey series'
+		ordering = (['title'])
+
+# Survey model: represents a survey within a survey series
+class Survey(DataAccessMixin,models.Model):
+	survey_series = models.ForeignKey(Survey_Series, on_delete=models.CASCADE)
+	title = models.CharField(max_length=200, default='', blank=True)
+	description = models.TextField(max_length=1500, default='', blank=True)
+	date_created = models.DateField(null=True, blank=True)
+
+	class Meta:
+		verbose_name_plural = 'survey'
+		ordering = (['title'])
+
+	# define the function that will return the full name, including the series name
+	def __str__(self):
+		return self.survey_series.title + ': ' + self.title
+
+# Survey Section model: represents a section within a survey
+class Survey_Section(DataAccessMixin,models.Model):
+	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
+	title = models.CharField(max_length=200, default='', blank=True)
+	order = models.IntegerField(default=0)
+
+	class Meta:
+		verbose_name_plural = 'survey sections'
+		ordering = (['order'])
+
+	# define the function that will return the full name, including the series name
+	def __str__(self):
+		return self.survey.title + ': ' + self.title

@@ -86,4 +86,8 @@ urlpatterns = [
     url(r'^survey_series_list$', views.survey_series_list, name='survey_series_list'),
     url(r'^survey_series$', views.survey_series, name='survey_series'),
     url(r'^survey_series/(?P<survey_series_id>[0-9]+)$', views.survey_series, name='survey_series'),
+    url(r'^survey/(?P<survey_series_id>[0-9]+)$', views.survey, name='survey'),
+    url(r'^survey/(?P<survey_series_id>[0-9]+)/(?P<survey_id>[0-9]+)$', views.survey, name='survey'),
+    url(r'^survey_section/(?P<survey_id>[0-9]+)$', views.survey_section, name='survey_section'),
+    url(r'^survey_section/(?P<survey_id>[0-9]+)/(?P<survey_section_id>[0-9]+)$', views.survey_section, name='survey_section'),
 ]

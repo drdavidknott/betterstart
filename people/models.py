@@ -2758,7 +2758,6 @@ class Survey(DataAccessMixin,models.Model):
 		return self.survey_series.name + ': ' + self.name
 
 # Survey Section model: represents a section within a survey
-# Every survey will have a 'General' section by default
 class Survey_Section(DataAccessMixin,models.Model):
 	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
 	name = models.CharField(max_length=200, default='', blank=True)
@@ -2787,6 +2786,7 @@ class Survey_Question_Type(DataAccessMixin,models.Model):
 # Survey Question model: represents a question within a survey section
 class Survey_Question(DataAccessMixin,models.Model):
 	survey_section = models.ForeignKey(Survey_Section, on_delete=models.CASCADE)
+	survey_question_type = models.ForeignKey(Survey_Question_Type, on_delete=models.SET_NULL, blank=True, null=True)
 	number = models.IntegerField(default=0)
 	question = models.CharField(max_length=500, default='', blank=True)
 

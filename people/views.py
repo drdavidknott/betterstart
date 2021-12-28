@@ -1,13 +1,14 @@
 from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
-from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Survey_Series, Trained_Role, Role_Type, \
+from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Survey_Section, Survey_Series, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
 					Venue_Type, Venue, Invitation, Invitation_Step, Invitation_Step_Type, Profile, Chart, \
 					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
 					Project, Membership, Membership_Type, Project_Permission, Project_Event_Type, \
-					Question_Section, Case_Notes
+					Question_Section, Case_Notes, Survey, Survey_Submission, Survey_Question_Type, \
+					Survey_Question, Survey_Answer, Survey_Section
 import os
 import csv
 import copy
@@ -22,7 +23,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
 					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm, \
-					SurveySeriesForm
+					SurveySeriesForm, SurveyForm, SurveySectionForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -1109,6 +1110,36 @@ def build_project_events(events,project,action):
 	# return the results
 	return results
 				
+def build_survey(survey_series,name,description):
+	# build a survey, copying sections and questions from the last survey if they exist
+	# get the latest survey in the series
+	if survey_series.survey_set.exists():
+		latest_survey = survey_series.survey_set.first()
+	# create the survey
+	survey = Survey.objects.create(
+									survey_series = survey_series,
+									name = name,
+									description = description,
+									date_created = datetime.date.today()
+									)
+	# if there is a latest survey, go through and create the sections and questions
+	if latest_survey:
+		for latest_survey_section in latest_survey.survey_section_set.all():
+			survey_section = Survey_Section.objects.create(
+															survey = survey,
+															name = latest_survey_section.name,
+															order = latest_survey_section.order,
+															)
+			for latest_survey_question in latest_survey_section.survey_question_set.all():
+				survey_question = Survey_Question.objects.create(
+																	survey_section = survey_section,
+																	survey_question_type = latest_survey_question.survey_question_type,
+																	question = latest_survey_question.question,
+																	number = latest_survey_question.number,												
+																	)
+	# return the results
+	return survey
+
 # UTILITY FUNCTIONS
 # A set of functions which perform basic utility tasks such as string handling and list editing
 
@@ -4337,6 +4368,7 @@ def survey_series(request,survey_series_id=0):
 	# set the context
 	context = build_context(request,{
 				'surveyseriesform' : surveyseriesform,
+				'survey_series' : survey_series,
 				'action_desc' : action_desc
 				})
 	# return the response
@@ -4357,6 +4389,130 @@ def survey_series_list(request):
 	# set the context
 	context = build_context(request,{
 				'survey_series_list' : survey_series_list,
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def survey(request,survey_series_id=0,survey_id=0):
+	# this view is used to create or amend a survey
+	# this view can only be called if a current project is selected
+	project = Project.current_project(request.session)
+	if not project:
+		return make_banner(request, 'No project selected: survey can only be created within a project.')
+	# we need a valid survey series
+	survey_series = Survey_Series.try_to_get(project=project,pk=survey_series_id)
+	if not survey_series:
+		return make_banner(request, 'Survey series does not exist.')
+	# if we have a survey id it must be valid
+	survey = False
+	action_desc = 'Add'
+	if survey_id:
+		survey = Survey.try_to_get(survey_series=survey_series,pk=survey_id)
+		action_desc = 'Edit'
+		if not survey:
+			return make_banner(request, 'Survey does not exist.')
+	# load the template
+	template = loader.get_template('people/survey.html')
+	# if this is a post, validate the form and attempt to create the record
+	if request.method == 'POST':
+		surveyform = SurveyForm(request.POST)
+		if surveyform.is_valid(survey_series=survey_series,survey=survey):
+			name = surveyform.cleaned_data['name']
+			description = surveyform.cleaned_data['description']
+			if survey:
+				survey.name = name
+				survey.description = description
+				survey.save()
+			else:
+				survey = build_survey(
+										name = name,
+										survey_series = survey_series,
+										description = description,
+										)
+			# redirect to the survey series page
+			return redirect('/survey_series/' + str(survey_series.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a blank or filled form depending on whether we are editing or creating
+		if survey:
+			# create a form, passing existing values as a dict
+			survey_dict = {
+								'name' : survey.name,
+								'description' : survey.description,
+								}
+			surveyform = SurveyForm(survey_dict)
+		else:
+			surveyform = SurveyForm()
+	# set the context
+	context = build_context(request,{
+										'surveyform' : surveyform,
+										'action_desc' : action_desc,
+										'survey_series' : survey_series,
+										'survey' : survey			
+										})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def survey_section(request,survey_id=0,survey_section_id=0):
+	# this view is used to create or amend a survey section
+	# this view can only be called if a current project is selected
+	project = Project.current_project(request.session)
+	if not project:
+		return make_banner(request, 'No project selected: survey can only be managed within a project.')
+	# we need a valid survey
+	survey = Survey.try_to_get(survey_series__project=project,pk=survey_id)
+	if not survey_series:
+		return make_banner(request, 'Survey series does not exist.')
+	# if we have a survey section id it must be valid
+	survey_section = False
+	action_desc = 'Add'
+	if survey_section_id:
+		survey_section = Survey_Section.try_to_get(survey=survey,pk=survey_section_id)
+		action_desc = 'Edit'
+		if not survey_section:
+			return make_banner(request, 'Survey section does not exist.')
+	# load the template
+	template = loader.get_template('people/survey_section.html')
+	# if this is a post, validate the form and attempt to create the record
+	if request.method == 'POST':
+		surveysectionform = SurveySectionForm(request.POST)
+		if surveysectionform.is_valid(survey=survey,survey_section=survey_section):
+			name = surveysectionform.cleaned_data['name']
+			order = surveysectionform.cleaned_data['order']
+			if survey_section:
+				survey_section.name = name
+				survey_section.order = order
+				survey_section.save()
+			else:
+				survey_section = Survey_Section.objects.create(
+																name = name,
+																survey = survey,
+																order = order,
+																)
+			# redirect to the survey page
+			return redirect('/survey/' + str(survey.survey_series.pk) + '/' + str(survey.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a blank or filled form depending on whether we are editing or creating
+		if survey_section:
+			# create a form, passing existing values as a dict
+			survey_section_dict = {
+									'name' : survey_section.name,
+									'order' : survey_section.order,
+									}
+			surveysectionform = SurveySectionForm(survey_section_dict)
+		else:
+			surveysectionform = SurveySectionForm()
+	# set the context
+	context = build_context(request,{
+				'surveysectionform' : surveysectionform,
+				'action_desc' : action_desc,
+				'survey_section' : survey_section,
+				'survey' : survey
 				})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))

@@ -2730,33 +2730,33 @@ class Case_Notes(DataAccessMixin,models.Model):
 # Survey_Series model: represents a series of surveys with similar questions
 class Survey_Series(DataAccessMixin,models.Model):
 	project = models.ForeignKey(Project, on_delete=models.SET_NULL, blank=True, null=True)
-	title = models.CharField(max_length=200, default='', blank=True)
+	name = models.CharField(max_length=200, default='', blank=True)
 	description = models.TextField(max_length=1500, default='', blank=True)
 	date_created = models.DateField(null=True, blank=True)
 
 	class Meta:
 		verbose_name_plural = 'survey series'
-		ordering = (['title'])
+		ordering = (['name'])
 
 # Survey model: represents a survey within a survey series
 class Survey(DataAccessMixin,models.Model):
 	survey_series = models.ForeignKey(Survey_Series, on_delete=models.CASCADE)
-	title = models.CharField(max_length=200, default='', blank=True)
+	name = models.CharField(max_length=200, default='', blank=True)
 	description = models.TextField(max_length=1500, default='', blank=True)
 	date_created = models.DateField(null=True, blank=True)
 
 	class Meta:
 		verbose_name_plural = 'survey'
-		ordering = (['title'])
+		ordering = (['name'])
 
 	# define the function that will return the full name, including the series name
 	def __str__(self):
-		return self.survey_series.title + ': ' + self.title
+		return self.survey_series.name + ': ' + self.name
 
 # Survey Section model: represents a section within a survey
 class Survey_Section(DataAccessMixin,models.Model):
 	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
-	title = models.CharField(max_length=200, default='', blank=True)
+	name = models.CharField(max_length=200, default='', blank=True)
 	order = models.IntegerField(default=0)
 
 	class Meta:
@@ -2765,4 +2765,4 @@ class Survey_Section(DataAccessMixin,models.Model):
 
 	# define the function that will return the full name, including the series name
 	def __str__(self):
-		return self.survey.title + ': ' + self.title
+		return self.survey.name + ': ' + self.name

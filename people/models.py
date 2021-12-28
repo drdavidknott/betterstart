@@ -2738,6 +2738,10 @@ class Survey_Series(DataAccessMixin,models.Model):
 		verbose_name_plural = 'survey series'
 		ordering = (['name'])
 
+	# define the function that will return the series name
+	def __str__(self):
+		return self.name
+
 # Survey model: represents a survey within a survey series
 class Survey(DataAccessMixin,models.Model):
 	survey_series = models.ForeignKey(Survey_Series, on_delete=models.CASCADE)

@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
 							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site, Profile, \
-							Project, Membership_Type
+							Project, Membership_Type, Survey_Question_Type, Survey_Series
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
@@ -2200,3 +2200,52 @@ class CaseNotesForm(forms.Form):
 										),
 									Row(Column(Submit('submit', 'Submit'),css_class='col-md-12 mb-0'))
 									)
+
+class SurveySeriesForm(forms.Form):
+	# Define the fields that we need in the form.
+	name = forms.CharField(
+									label="Name",
+									max_length=200, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	description = forms.CharField(
+									label="Description",
+									max_length=1500,
+									widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
+									)
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(SurveySeriesForm, self).__init__(*args, **kwargs)
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+									Row(
+										Column('name',css_class='form-group col-md-12 mb-0'),
+										css_class='form-row'	
+										),
+									Row(
+										Column('description',css_class='form-group col-md-12 mb-0'),
+										css_class='form-row'	
+										),
+									Row(Column(Submit('submit', 'Submit'),css_class='col-md-12 mb-0'))
+									)
+
+	# override the validation to provide additional checks	
+	def is_valid(self,project,survey_series):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(SurveySeriesForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# for new survey series, check that we do not have a duplicate name
+		if not survey_series:
+			survey_series_duplicate = Survey_Series.try_to_get(
+																project = project,
+																name = self.cleaned_data['name']
+																)
+			if survey_series_duplicate:
+				self.add_error('name','Survey series with this name already exists for this project.')
+				valid = False
+		# return the result
+		return valid

@@ -1,0 +1,39 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+ {% block title %}Better Start{% endblock %}
+
+ {% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+			<div>
+				<h3>
+					<span class="glyphicon glyphicon-list"></span>
+					{% if action_desc == 'Add' %}
+						<span class="glyphicon glyphicon-plus"></span>
+					{% else %}
+						<span class="glyphicon glyphicon-pencil"></span>
+					{% endif %}
+					{{ action_desc }} Survey Series:
+				<h3>
+			</div>
+	   </div>
+   </div>
+
+	<div class="row">
+ 		<div class="col-md-12">
+			{% crispy surveyseriesform %}
+		</div>
+	</div>
+
+</div>
+
+
+{% endblock %}
+

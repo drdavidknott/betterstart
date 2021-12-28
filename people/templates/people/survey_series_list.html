@@ -1,0 +1,69 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3>
+                <span class="glyphicon glyphicon-list"></span>
+                Survey Series
+            </h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <hr>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="col-xs-12">
+            <a href="{% url 'survey_series' %}">
+                <span class="glyphicon glyphicon-plus"></span>
+            </a>
+            Create new survey series
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <hr>
+        </div>
+    </div>
+
+	{% if survey_series_list %}
+
+		<div class="form-row">
+            {% for survey_series in survey_series_list %}
+                <div class="col-xs-12">
+                    <a href="{% url 'survey_series' survey_series.pk %}">
+                        <span class="glyphicon glyphicon-pencil"></span>
+                    </a>
+                    {{ survey_series.name }}
+                </div>
+            {% endfor %}
+		</div>
+
+	{% else %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				No survey series
+			</div>
+		</div>
+	
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

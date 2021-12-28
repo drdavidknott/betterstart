@@ -1,6 +1,6 @@
 from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
-from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
+from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Survey_Series, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
@@ -21,7 +21,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					DownloadDataForm, PersonRelationshipSearchForm, ActivityForm, AddPersonAndRegistrationForm, \
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
-					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm
+					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm, \
+					SurveySeriesForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -4280,6 +4281,82 @@ def view_case_notes(request,person_id=0):
 	context = build_context(request,{
 				'person' : person,
 				'case_notes' : case_notes,
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def survey_series(request,survey_series_id=0):
+	# this view is used to create or amend a survey series
+	# this view can only be called if a current project is selected
+	project = Project.current_project(request.session)
+	if not project:
+		return make_banner(request, 'No project selected: survey series can only be created within a project.')
+	# if we have a survey series, then it must be valid
+	survey_series = False
+	action_desc = 'Add'
+	if survey_series_id:
+		survey_series = Survey_Series.try_to_get(project=project,pk=survey_series_id)
+		action_desc = 'Edit'
+		if not survey_series:
+			return make_banner(request, 'Survey series does not exist.')
+	# load the template
+	template = loader.get_template('people/survey_series.html')
+	# if this is a post, validate the form and attempt to create the record
+	if request.method == 'POST':
+		surveyseriesform = SurveySeriesForm(request.POST)
+		if surveyseriesform.is_valid(project=project,survey_series=survey_series):
+			name = surveyseriesform.cleaned_data['name']
+			description = surveyseriesform.cleaned_data['description']
+			if survey_series:
+				survey_series.name = name
+				survey_series.description = description
+			else:
+				survey_series = Survey_Series(
+												name = name,
+												project = project,
+												description = description,
+												date_created = datetime.date.today(),
+												)
+			survey_series.save()
+			# redirect to the survey series page
+			return redirect('/survey_series_list')
+	# otherwise we didn't get a post
+	else:
+		# create a blank or filled form depending on whether we are editing or creating
+		if survey_series:
+			# create a form, passing existing values as a dict
+			survey_series_dict = {
+								'name' : survey_series.name,
+								'description' : survey_series.description,
+								}
+			surveyseriesform = SurveySeriesForm(survey_series_dict)
+		else:
+			surveyseriesform = SurveySeriesForm()
+	# set the context
+	context = build_context(request,{
+				'surveyseriesform' : surveyseriesform,
+				'action_desc' : action_desc
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def survey_series_list(request):
+	# this view is used to create or amend a survey series
+	# this view can only be called if a current project is selected
+	project = Project.current_project(request.session)
+	if not project:
+		return make_banner(request, 'No project selected: survey series can only be viewed within a project.')
+	# get the survey series list
+	survey_series_list = Survey_Series.objects.filter(project=project)
+	# load the template
+	template = loader.get_template('people/survey_series_list.html')
+	# set the context
+	context = build_context(request,{
+				'survey_series_list' : survey_series_list,
 				})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))

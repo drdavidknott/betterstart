@@ -2345,3 +2345,60 @@ class SurveySectionForm(forms.Form):
 				valid = False
 		# return the result
 		return valid
+
+class SurveyQuestionForm(forms.Form):
+	# Define the fields that we need in the form.
+	question = forms.CharField(
+									label="Name",
+									max_length=500, 
+									widget=forms.TextInput(attrs={'class' : 'form-control',}))
+	number = forms.IntegerField(
+									label="Number",
+									widget=forms.NumberInput(attrs={'class' : 'form-control'})
+									)
+	question_type = forms.ChoiceField(
+									label="Question Type",
+									widget=forms.Select(attrs={'class' : 'form-control'}))
+	# over-ride the __init__ method to set the choices
+	def __init__(self, *args, **kwargs):
+		# TO DO: allow question to be moved between survey sections
+		# survey = kwargs.pop('survey')
+		# call the built in constructor
+		super(SurveyQuestionForm, self).__init__(*args, **kwargs)
+		# set the choice fields
+		self.fields['question_type'].choices = build_choices(choice_class=Survey_Question_Type,choice_field='name')
+		# build the crispy form
+		self.helper = FormHelper()
+		self.helper.layout = Layout(
+
+									Row(
+										Column('number',css_class='form-group col-md-2 mb-0'),
+										Column('question_type',css_class='form-group col-md-4 mb-0'),
+										css_class='form-row'	
+										),
+									Row(	
+										Column('question',css_class='form-group col-md-12 mb-0'),
+										css_class='form-row'	
+										),
+									Row(Column(Submit('submit', 'Submit'),css_class='col-md-12 mb-0'))
+									)
+
+	# override the validation to provide additional checks	
+	def is_valid(self,survey_section,survey_question):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(SurveyQuestionForm, self).is_valid()
+		# set the return value if the built in validation function fails
+		if valid == False:
+			return valid
+		# for new survey series, check that we do not have a duplicate name
+		if not survey_question:
+			survey_question_duplicate = Survey_Question.try_to_get(
+																	survey_section = survey_section,
+																	question = self.cleaned_data['question']
+																	)
+			if survey_question_duplicate:
+				self.add_error('question','This question already exists for this survey section.')
+				valid = False
+		# return the result
+		return valid

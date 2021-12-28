@@ -18,6 +18,9 @@
                     <a href="{% url 'survey' survey.survey_series.pk survey.pk %}"></a>
 					    {{ survey.name }}
                     </a>
+                    <a href="{% url 'survey_section' survey.pk survey_section.pk %}"></a>
+					    {{ survey_section.name }}
+                    </a>
 				<h3>
 			</div>
 	   </div>
@@ -27,13 +30,13 @@
 		<div class="col-xs-12">
 			<div>
 				<h4>
-					<span class="glyphicon glyphicon-list-alt"></span>
+					<span class="glyphicon glyphicon-question-sign"></span>
 					{% if action_desc == 'Add' %}
 						<span class="glyphicon glyphicon-plus"></span>
 					{% else %}
 						<span class="glyphicon glyphicon-pencil"></span>
 					{% endif %}
-					{{ action_desc }} Section:
+					{{ action_desc }} Question:
 				<h4>
 			</div>
 	   </div>
@@ -41,7 +44,7 @@
 
 	<div class="row">
  		<div class="col-md-12">
-			{% crispy surveysectionform %}
+			{% crispy surveyquestionform %}
 		</div>
 	</div>
 
@@ -50,30 +53,6 @@
             <hr>
         </div>
     </div>
-
-    {% if survey_section %}
-
-		<div class="form-row">
-			{% for survey_question in survey_section.survey_question_set.all %}
-				<div class="col-xs-12">
-					<a href="{% url 'survey_question' survey_section.pk survey_question.pk %}">
-						<span class="glyphicon glyphicon-pencil"></span>
-					</a>
-					{{ survey_question.number }}: {{ survey_question.question }}
-				</div>
-			{% endfor %}
-		</div>
-
-		<div class="form-row">
-			<div class="col-xs-12">
-				<a href="{% url 'survey_question' survey_section.pk %}">
-					<span class="glyphicon glyphicon-plus"></span>
-				</a>
-				Create new question
-			</div>
-		</div>
-
-	{% endif %}
 
 </div>
 

@@ -23,7 +23,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
 					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm, \
-					SurveySeriesForm, SurveyForm, SurveySectionForm
+					SurveySeriesForm, SurveyForm, SurveySectionForm, SurveyQuestionForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -4513,6 +4513,73 @@ def survey_section(request,survey_id=0,survey_section_id=0):
 				'action_desc' : action_desc,
 				'survey_section' : survey_section,
 				'survey' : survey
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
+def survey_question(request,survey_section_id=0,survey_question_id=0):
+	# this view is used to create or amend a survey question
+	# this view can only be called if a current project is selected
+	project = Project.current_project(request.session)
+	if not project:
+		return make_banner(request, 'No project selected: survey can only be managed within a project.')
+	# we need a valid survey section
+	survey_section = Survey_Section.try_to_get(survey__survey_series__project=project,pk=survey_section_id)
+	if not survey_section:
+		return make_banner(request, 'Survey section does not exist.')
+	# if we have a survey question id it must be valid
+	survey_question = False
+	action_desc = 'Add'
+	if survey_question_id:
+		survey_question = Survey_Question.try_to_get(survey_section=survey_section,pk=survey_question_id)
+		action_desc = 'Edit'
+		if not survey_question:
+			return make_banner(request, 'Survey question does not exist.')
+	# load the template
+	template = loader.get_template('people/survey_question.html')
+	# if this is a post, validate the form and attempt to create the record
+	if request.method == 'POST':
+		surveyquestionform = SurveyQuestionForm(request.POST)
+		if surveyquestionform.is_valid(survey_section=survey_section,survey_question=survey_question):
+			question = surveyquestionform.cleaned_data['question']
+			number = surveyquestionform.cleaned_data['number']
+			survey_question_type = Survey_Question_Type.objects.get(pk=surveyquestionform.cleaned_data['question_type'])
+			if survey_question:
+				survey_question.question = question
+				survey_question.number = number
+				survey_question.survey_question_type = survey_question_type
+				survey_section.save()
+			else:
+				survey_question = Survey_Question.objects.create(
+																survey_section = survey_section,
+																question = question,
+																number = number,
+																survey_question_type = survey_question_type
+																)
+			# redirect to the survey page
+			return redirect('/survey/' + str(survey_section.survey.survey_series.pk) + '/' + str(survey_section.survey.pk))
+	# otherwise we didn't get a post
+	else:
+		# create a blank or filled form depending on whether we are editing or creating
+		if survey_question:
+			# create a form, passing existing values as a dict
+			survey_question_dict = {
+									'question' : survey_question.question,
+									'number' : survey_question.number,
+									'question_type' : str(survey_question.survey_question_type.pk),
+									}
+			surveyquestionform = SurveyQuestionForm(survey_question_dict)
+		else:
+			surveyquestionform = SurveyQuestionForm()
+	# set the context
+	context = build_context(request,{
+				'surveyquestionform' : surveyquestionform,
+				'action_desc' : action_desc,
+				'survey_question' : survey_question,
+				'survey_section' : survey_section,
+				'survey' : survey_section.survey,
 				})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))

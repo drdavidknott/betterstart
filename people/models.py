@@ -2754,6 +2754,7 @@ class Survey(DataAccessMixin,models.Model):
 		return self.survey_series.name + ': ' + self.name
 
 # Survey Section model: represents a section within a survey
+# Every survey will have a 'General' section by default
 class Survey_Section(DataAccessMixin,models.Model):
 	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
 	name = models.CharField(max_length=200, default='', blank=True)
@@ -2766,3 +2767,58 @@ class Survey_Section(DataAccessMixin,models.Model):
 	# define the function that will return the full name, including the series name
 	def __str__(self):
 		return self.survey.name + ': ' + self.name
+
+# Survey Question Type model: represents the type of a survey question (initially range or free text)
+class Survey_Question_Type(DataAccessMixin,models.Model):
+	name = models.CharField(max_length=200, default='', blank=True)
+
+	class Meta:
+		verbose_name_plural = 'survey question types'
+		ordering = (['name'])
+
+	# define the function that will return the full name, including the series name
+	def __str__(self):
+		return self.name
+
+# Survey Question model: represents a question within a survey section
+class Survey_Question(DataAccessMixin,models.Model):
+	survey_section = models.ForeignKey(Survey_Section, on_delete=models.CASCADE)
+	number = models.IntegerField(default=0)
+	question = models.CharField(max_length=500, default='', blank=True)
+
+	class Meta:
+		verbose_name_plural = 'survey questions'
+		ordering = (['survey_section__survey__name','survey_section__name','number'])
+
+	# define the function that will return the full name, including the series name
+	def __str__(self):
+		return self.survey_section.section.name + ': ' + self.survey_section.name + ': ' + str(self.number) + '. ' + self.question
+
+# Survey Submission model: represents completion of a survey by a person
+class Survey_Submission(DataAccessMixin,models.Model):
+	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
+	person = models.ForeignKey(Person, on_delete=models.CASCADE)
+	date = models.DateField(null=True, blank=True)
+
+	class Meta:
+		verbose_name_plural = 'survey submissions'
+		ordering = (['-date'])
+
+	# define the function that will return the full name, including the series name
+	def __str__(self):
+		return self.survey.name + ': ' + self.person.full_name()
+
+# Survey Answer model: represents an answer to a survey question as part of a submission
+class Survey_Answer(DataAccessMixin,models.Model):
+	survey_question = models.ForeignKey(Survey_Question, on_delete=models.CASCADE)
+	survey_submission = models.ForeignKey(Survey_Submission, on_delete=models.CASCADE)
+	range_answer = models.IntegerField(default=0)
+	text_answer = models.CharField(max_length=500, default='', blank=True)
+
+	class Meta:
+		verbose_name_plural = 'survey answers'
+		ordering = (['-survey_submission__date','-survey_question__number'])
+
+	# define the function that will return the full name, including the series name
+	def __str__(self):
+		return self.survey_question.question + ': ' + self.survey_submission.person.full_name()

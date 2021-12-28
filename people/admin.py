@@ -10,7 +10,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Invitation, Invitation_Step, Invitation_Step_Type, Terms_And_Conditions, Profile, Chart, \
 					Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Project, Membership, \
 					Membership_Type, Project_Permission, Project_Event_Type, Question_Section, Case_Notes, \
-					Survey_Series, Survey, Survey_Section
+					Survey_Series, Survey, Survey_Section, Survey_Question, Survey_Question_Type, Survey_Submission, \
+					Survey_Answer
 
 class PersonAdmin(admin.ModelAdmin):
     search_fields = ['first_name','last_name']
@@ -89,3 +90,7 @@ admin.site.register(Case_Notes)
 admin.site.register(Survey_Series)
 admin.site.register(Survey)
 admin.site.register(Survey_Section)
+admin.site.register(Survey_Question_Type)
+admin.site.register(Survey_Question)
+admin.site.register(Survey_Submission)
+admin.site.register(Survey_Answer)

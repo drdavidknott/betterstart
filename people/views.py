@@ -4546,18 +4546,21 @@ def survey_question(request,survey_section_id=0,survey_question_id=0):
 		if surveyquestionform.is_valid(survey_section=survey_section,survey_question=survey_question):
 			question = surveyquestionform.cleaned_data['question']
 			number = surveyquestionform.cleaned_data['number']
+			options = surveyquestionform.cleaned_data['options']
 			survey_question_type = Survey_Question_Type.objects.get(pk=surveyquestionform.cleaned_data['question_type'])
 			if survey_question:
 				survey_question.question = question
 				survey_question.number = number
 				survey_question.survey_question_type = survey_question_type
+				survey_question.options = options
 				survey_section.save()
 			else:
 				survey_question = Survey_Question.objects.create(
 																survey_section = survey_section,
 																question = question,
 																number = number,
-																survey_question_type = survey_question_type
+																survey_question_type = survey_question_type,
+																options = options,
 																)
 			# redirect to the survey page
 			return redirect('/survey/' + str(survey_section.survey.survey_series.pk) + '/' + str(survey_section.survey.pk))
@@ -4570,6 +4573,7 @@ def survey_question(request,survey_section_id=0,survey_question_id=0):
 									'question' : survey_question.question,
 									'number' : survey_question.number,
 									'question_type' : str(survey_question.survey_question_type.pk),
+									'options' : survey_question.options,
 									}
 			surveyquestionform = SurveyQuestionForm(survey_question_dict)
 		else:

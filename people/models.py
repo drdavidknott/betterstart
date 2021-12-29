@@ -2774,6 +2774,8 @@ class Survey_Section(DataAccessMixin,models.Model):
 # Survey Question Type model: represents the type of a survey question (initially range or free text)
 class Survey_Question_Type(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=200, default='', blank=True)
+	options_required = models.BooleanField(default=False)
+	text_required = models.BooleanField(default=False)
 
 	class Meta:
 		verbose_name_plural = 'survey question types'
@@ -2788,7 +2790,7 @@ class Survey_Question(DataAccessMixin,models.Model):
 	survey_section = models.ForeignKey(Survey_Section, on_delete=models.CASCADE)
 	survey_question_type = models.ForeignKey(Survey_Question_Type, on_delete=models.SET_NULL, blank=True, null=True)
 	number = models.IntegerField(default=0)
-	options = models.IntegerField(default=0)
+	options = models.IntegerField(default=0, null=True)
 	question = models.CharField(max_length=500, default='', blank=True)
 
 	class Meta:

@@ -2349,7 +2349,7 @@ class SurveySectionForm(forms.Form):
 class SurveyQuestionForm(forms.Form):
 	# Define the fields that we need in the form.
 	question = forms.CharField(
-									label="Name",
+									label="Question",
 									max_length=500, 
 									widget=forms.TextInput(attrs={'class' : 'form-control',}))
 	number = forms.IntegerField(
@@ -2359,6 +2359,14 @@ class SurveyQuestionForm(forms.Form):
 	question_type = forms.ChoiceField(
 									label="Question Type",
 									widget=forms.Select(attrs={'class' : 'form-control'}))
+	options = forms.IntegerField(
+									label="Number of Options",
+									required=False,
+									widget=forms.NumberInput(attrs={
+																	'class' : 'form-control',
+																	'min' : '1',
+																	'max' : '10'
+																	}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# TO DO: allow question to be moved between survey sections
@@ -2374,6 +2382,7 @@ class SurveyQuestionForm(forms.Form):
 									Row(
 										Column('number',css_class='form-group col-md-2 mb-0'),
 										Column('question_type',css_class='form-group col-md-4 mb-0'),
+										Column('options',css_class='form-group col-md-2 mb-0'),
 										css_class='form-row'	
 										),
 									Row(	
@@ -2400,5 +2409,10 @@ class SurveyQuestionForm(forms.Form):
 			if survey_question_duplicate:
 				self.add_error('question','This question already exists for this survey section.')
 				valid = False
+		# check whether options are required and we have options
+		question_type = Survey_Question_Type.objects.get(pk=self.cleaned_data['question_type'])
+		if question_type.options_required and not self.cleaned_data['options']:
+			self.add_error('options','Options are mandatory for this question type.')
+			valid = False
 		# return the result
 		return valid

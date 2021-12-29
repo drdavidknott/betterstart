@@ -1113,6 +1113,7 @@ def build_project_events(events,project,action):
 def build_survey(survey_series,name,description):
 	# build a survey, copying sections and questions from the last survey if they exist
 	# get the latest survey in the series
+	latest_survey = False
 	if survey_series.survey_set.exists():
 		latest_survey = survey_series.survey_set.first()
 	# create the survey

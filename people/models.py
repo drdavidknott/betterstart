@@ -2788,6 +2788,7 @@ class Survey_Question(DataAccessMixin,models.Model):
 	survey_section = models.ForeignKey(Survey_Section, on_delete=models.CASCADE)
 	survey_question_type = models.ForeignKey(Survey_Question_Type, on_delete=models.SET_NULL, blank=True, null=True)
 	number = models.IntegerField(default=0)
+	options = models.IntegerField(default=0)
 	question = models.CharField(max_length=500, default='', blank=True)
 
 	class Meta:

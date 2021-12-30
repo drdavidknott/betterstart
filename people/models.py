@@ -2757,6 +2757,11 @@ class Survey(DataAccessMixin,models.Model):
 	def __str__(self):
 		return self.survey_series.name + ': ' + self.name
 
+	# define a function to indicate whether the survey has questions
+	def has_questions(self):
+		# return the results
+		return Survey_Question.objects.filter(survey_section__survey=self).exists()
+
 # Survey Section model: represents a section within a survey
 class Survey_Section(DataAccessMixin,models.Model):
 	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)
@@ -2799,7 +2804,7 @@ class Survey_Question(DataAccessMixin,models.Model):
 
 	# define the function that will return the full name, including the series name
 	def __str__(self):
-		return self.survey_section.section.name + ': ' + self.survey_section.name + ': ' + str(self.number) + '. ' + self.question
+		return self.survey_section.survey.name + ': ' + self.survey_section.name + ': ' + str(self.number) + '. ' + self.question
 
 # Survey Submission model: represents completion of a survey by a person
 class Survey_Submission(DataAccessMixin,models.Model):

@@ -23,7 +23,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
 					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm, \
-					SurveySeriesForm, SurveyForm, SurveySectionForm, SurveyQuestionForm
+					SurveySeriesForm, SurveyForm, SurveySectionForm, SurveyQuestionForm, SubmitSurveyForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -429,6 +429,26 @@ def get_profile(user):
 		profile = Profile.objects.create(user=user)
 	# return the device
 	return profile
+
+def get_survey_list_for_person(person,project):
+	# get and return a list of surveys for a person, with the submission attached if there is one
+	# get the list depending on whether we have a project or not
+	if project:
+		surveys = Survey.objects.filter(survey_series__project=project)
+	else:
+		surveys = Survey.objects.filter(project__in=person.projects.all())
+	# go through the surveys and add the submissions
+	for survey in surveys:
+		survey_submission = Survey_Submission.try_to_get(
+															survey=survey,
+															person=person
+														)
+		if survey_submission:
+			survey.survey_submission = survey_submission
+		else:
+			survey.survey_submission = False
+	# return the results
+	return surveys
 
 # BUILD FUNCTIONS
 # These are slightly more sophisticated creation functions which do additional work such as looking up values and 
@@ -2040,6 +2060,7 @@ def person(request, person_id=0):
 	case_notes = person.case_notes_set.order_by('-date')
 	if project:
 		case_notes = case_notes.filter(project=project)
+	surveys = get_survey_list_for_person(person=person,project=project)
 	# set the context
 	context = build_context(request,{
 				'person' : person,
@@ -2056,7 +2077,8 @@ def person(request, person_id=0):
 				'unvalidated_invitations' : unvalidated_invitations,
 				'memberships' : memberships,
 				'case_notes' : case_notes,
-				'project' : project
+				'project' : project,
+				'surveys' : surveys,
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -4588,3 +4610,72 @@ def survey_question(request,survey_section_id=0,survey_question_id=0):
 				})
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))
+
+@login_required
+def submit_survey(request,person_id=0,survey_id=0):
+	# this view enables people to answer a dynamic set of questions from the database
+	# get the project
+	project = Project.current_project(request.session)
+	# load the template
+	template = loader.get_template('people/submit_survey.html')
+	# try to get the person adn the survey, crashing to a banner if unsuccessful
+	person = Person.try_to_get(projects=project,pk=person_id)
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	survey = Survey.try_to_get(survey_series__project=project,pk=survey_id)
+	if not survey:
+		return make_banner(request, 'Survey does not exist.')
+	# get a previous survey submission if there was one
+	survey_submission = Survey_Submission.try_to_get(person=person,survey=survey)
+	# process the action
+	if request.method == 'POST':
+		submitsurveyform = SubmitSurveyForm(request.POST,survey=survey,survey_submission=survey_submission)
+		# if we don't have a survey submssion, create one
+		if not survey_submission:
+			survey_submission = Survey_Submission.objects.create(
+																	survey = survey,
+																	person = person,
+																	date =datetime.date.today()
+																	)
+		# go through the fields
+		for field in submitsurveyform.fields:
+			# get the question from the id in the field name
+			survey_question_id = int(extract_id(field))
+			survey_question = Survey_Question.objects.get(pk=survey_question_id)
+			# set the answer value
+			if survey_question.survey_question_type.options_required:
+				range_answer = int(submitsurveyform.data[field])
+				text_answer = ''
+			else:
+				text_answer = submitsurveyform.data[field]
+				range_answer = 0
+			# check whether we have an existing answer, then update if we do, or create if we don't
+			survey_answer = Survey_Answer.try_to_get(
+														survey_submission=survey_submission,
+														survey_question=survey_question,
+													)
+			if survey_answer:
+				survey_answer.range_answer = range_answer
+				survey_answer.text_answer = text_answer
+				survey_answer.save()
+			else:
+				survey_answer = Survey_Answer.objects.create(
+																survey_submission=survey_submission,
+																survey_question=survey_question,
+																range_answer=range_answer,
+																text_answer=text_answer,
+																)
+		# send the user back to the main person page
+		return redirect('/person/' + str(person.pk))
+	# otherwise create an empty form
+	else:
+		submitsurveyform = SubmitSurveyForm(survey=survey,survey_submission=survey_submission)
+	# set the context
+	context = build_context(request,{
+				'person' : person,
+				'survey' : survey,
+				'submitsurveyform' : submitsurveyform
+				})
+	# return the response
+	return HttpResponse(template.render(context=context, request=request))
+

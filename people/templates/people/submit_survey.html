@@ -1,0 +1,38 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<h3>
+ 				<span class="glyphicon glyphicon-list-alt"></span>
+                 <a href="{% url 'survey' survey.survey_series.pk survey.pk %}">{{ survey }}</a>
+ 				<a href="{% url 'person' person.pk %}">{{ person }}</a>
+ 			</h3>
+	 	</div>
+	 </div>
+
+	<div class="row">
+		<div class="col-xs-12">
+			<div>{% crispy submitsurveyform %}</div>
+	   </div>
+   	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+</div>
+
+{% endblock %}
+

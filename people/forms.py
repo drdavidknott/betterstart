@@ -5,12 +5,12 @@ from django.contrib.auth.models import User
 from people.models import Role_Type, Age_Status, ABSS_Type, Role_Type, Ethnicity, Relationship_Type, Event_Type, \
 							Event_Category, Ward, Area, Activity_Type, Venue_Type, Venue, Street, Site, Profile, \
 							Project, Membership_Type, Survey_Question_Type, Survey_Series, Survey, Survey_Section, \
-							Survey_Question
+							Survey_Question, Survey_Answer
 from django.contrib.auth import authenticate
 import datetime
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Hidden, ButtonHolder, Field, HTML
-from crispy_forms.bootstrap import FormActions
+from crispy_forms.bootstrap import FormActions, InlineRadios
 from django.urls import reverse
 from .utilities import build_choices, extract_id, build_choices_from_list
 from zxcvbn_password.fields import PasswordField, PasswordConfirmationField
@@ -2416,3 +2416,83 @@ class SurveyQuestionForm(forms.Form):
 			valid = False
 		# return the result
 		return valid
+
+class SubmitSurveyForm(forms.Form):
+	# over-ride the built in __init__ method so that we can add fields dynamically
+	def __init__(self, *args, **kwargs):
+		# pull the questions out of the parameters
+		survey = kwargs.pop('survey')
+		survey_submission = kwargs.pop('survey_submission')
+		# call the built in constructor
+		super(SubmitSurveyForm, self).__init__(*args, **kwargs)
+		# now through the questions and build fields
+		self.helper = FormHelper()
+		# define the layout
+		rows = []
+		# build and append the rows
+		for survey_section in survey.survey_section_set.all():
+			if survey_section.survey_question_set.all().exists():
+				# add the section header
+				rows.append(
+							Row(
+								HTML('<hr><h3>' + survey_section.name + '</h3>')
+								)
+							)	
+				# add the questions
+				for survey_question in survey_section.survey_question_set.all():
+					field_name = 'survey_question_' + str(survey_question.pk)
+					# get the answer if there is one
+					if survey_submission:
+						survey_answer = Survey_Answer.try_to_get(
+																	survey_submission=survey_submission,
+																	survey_question=survey_question
+																	)
+					else:
+						survey_answer = False
+					# set the answer value if we have one
+					if survey_answer:
+						range_answer = survey_answer.range_answer
+						text_answer = survey_answer.text_answer
+					else:
+						range_answer = 0
+						text_answer = ''
+					# create the option field if required
+					if survey_question.survey_question_type.options_required:
+						option_list = []
+						option_list.append((0,'No answer'))
+						for option in range(1,survey_question.options+1):
+							option_list.append((str(option),str(option)))
+						# create the field and column
+						self.fields[field_name]= forms.ChoiceField(
+																	label=str(survey_question.number) + '. ' + survey_question.question,
+																	choices=option_list,
+																	initial=range_answer,
+																	)
+						# create the row
+						rows.append(
+								Row(
+									Column(InlineRadios(field_name),css_class='form-group col-md-12 mbt-0'),
+									)
+								)
+					# otherwise create a text field
+					else:
+						self.fields[field_name]= forms.CharField(
+												label=str(survey_question.number) + '. ' + survey_question.question,
+												max_length=500,
+												widget=forms.TextInput(attrs={'class' : 'form-control',}),
+												required=False,
+												initial=text_answer
+												)
+						# create the row
+						rows.append(
+									Row(
+										Column(field_name,css_class='form-group col-md-12 mbt-0'),
+										)
+									)
+		# add the button
+		rows.append(
+					FormActions(
+								Submit('action', 'Submit'),
+								)
+					)			
+		self.helper.layout = Layout(*rows)

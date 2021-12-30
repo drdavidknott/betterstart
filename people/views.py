@@ -1,6 +1,6 @@
 from django.shortcuts import render, HttpResponse, redirect
 from django.template import loader
-from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Survey_Section, Survey_Series, Trained_Role, Role_Type, \
+from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, Trained_Role, Role_Type, \
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Site, Activity_Type, Activity, Dashboard, \
@@ -8,7 +8,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Filter_Spec, Registration_Form, Printform_Data_Type, Printform_Data, Document_Link, Column, \
 					Project, Membership, Membership_Type, Project_Permission, Project_Event_Type, \
 					Question_Section, Case_Notes, Survey, Survey_Submission, Survey_Question_Type, \
-					Survey_Question, Survey_Answer, Survey_Section
+					Survey_Question, Survey_Answer, Survey_Section, Survey_Series
 import os
 import csv
 import copy
@@ -4553,7 +4553,7 @@ def survey_question(request,survey_section_id=0,survey_question_id=0):
 				survey_question.number = number
 				survey_question.survey_question_type = survey_question_type
 				survey_question.options = options
-				survey_section.save()
+				survey_question.save()
 			else:
 				survey_question = Survey_Question.objects.create(
 																survey_section = survey_section,

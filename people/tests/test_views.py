@@ -13731,3 +13731,353 @@ class SurveySeriesViewTest(TestCase):
 		self.assertContains(response,'Survey series with this name already exists for this project')
 		# check that only one record still exists
 		self.assertEqual(Survey_Series.objects.all().count(),1)
+
+	def test_survey_series_update(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# attempt to create the survey series
+		response = self.client.post(
+									reverse('survey_series'),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series_list')
+		# check that the survey series was created
+		survey_series = Survey_Series.objects.get(name='test name')
+		# check that we got the right values
+		self.assertEqual(survey_series.project,project)
+		self.assertEqual(survey_series.name,'test name')
+		self.assertEqual(survey_series.description,'test description')
+		# check that only one record was created
+		self.assertEqual(Survey_Series.objects.all().count(),1)
+		# attempt to create the survey again
+		response = self.client.post(
+									reverse('survey_series',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name update',
+											'description' : 'test desc update',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series_list')
+		# check that the survey series was created
+		survey_series = Survey_Series.objects.get(name='test name update')
+		# check that we got the right values
+		self.assertEqual(survey_series.project,project)
+		self.assertEqual(survey_series.name,'test name update')
+		self.assertEqual(survey_series.description,'test desc update')
+		# check that only one record was created
+		self.assertEqual(Survey_Series.objects.all().count(),1)
+
+class SurveyViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		# set up two survey series
+		project = Project.objects.get(name='testproject')
+		Survey_Series.objects.create(
+										project = project,
+										name = 'test survey series',
+										description = 'test description'
+									)
+		Survey_Series.objects.create(
+										project = project,
+										name = 'test survey series 2',
+										description = 'test description'
+									)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/survey/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/survey/1')
+
+	def test_invalid_survey(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('survey',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/survey/1')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_survey_create_no_existing_survey(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the survey series
+		survey_series = Survey_Series.objects.get(name='test survey series')
+		# attempt to create the survey
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series/' + str(survey_series.pk))
+		# check that the survey series was created
+		survey = Survey.objects.get(name='test name')
+		# check that we got the right values
+		self.assertEqual(survey.survey_series,survey_series)
+		self.assertEqual(survey.name,'test name')
+		self.assertEqual(survey.description,'test description')
+		# check that only one record was created
+		self.assertEqual(Survey.objects.all().count(),1)
+
+	def test_survey_create_with_existing_survey(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the survey series
+		survey_series = Survey_Series.objects.get(name='test survey series')
+		# create an existing survey that the new survey will copy from
+		today = datetime.date.today()
+		today_one_year_ago = today.replace(year=today.year-1)
+		old_survey = Survey.objects.create(
+										name='existing survey',
+										description = 'existing survey',
+										survey_series = survey_series,
+										date_created = today_one_year_ago
+										)
+		old_survey_section = Survey_Section.objects.create(
+														name = 'existing section',
+														survey = old_survey,
+														order = 10
+														)
+		survey_question_type = Survey_Question_Type.objects.create(
+															name = 'test question type',
+															options_required = True,
+															text_required = False
+															)
+		old_survey_question = Survey_Question.objects.create(
+													question = 'test question',
+													number = 1,
+													options = 5,
+													survey_section = old_survey_section,
+													survey_question_type = survey_question_type
+													)
+		# attempt to create the survey
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series/' + str(survey_series.pk))
+		# check that the survey series was created
+		survey = Survey.objects.get(name='test name')
+		# check that we got the right values
+		self.assertEqual(survey.survey_series,survey_series)
+		self.assertEqual(survey.name,'test name')
+		self.assertEqual(survey.description,'test description')
+		self.assertEqual(survey.date_created,today)
+		# now check the copied records
+		survey_section = Survey_Section.objects.get(survey=survey)
+		self.assertEqual(survey_section.name,old_survey_section.name)
+		self.assertEqual(survey_section.order,old_survey_section.order)
+		self.assertEqual(survey_section.order,old_survey_section.order)
+		survey_question = Survey_Question.objects.get(survey_section=survey_section)
+		self.assertEqual(survey_question.question,old_survey_question.question)
+		self.assertEqual(survey_question.survey_question_type,old_survey_question.survey_question_type)
+		self.assertEqual(survey_question.number,old_survey_question.number)
+		# check that we have the right number of records
+		self.assertEqual(Survey.objects.all().count(),2)
+		self.assertEqual(Survey_Section.objects.all().count(),2)
+		self.assertEqual(Survey_Question.objects.all().count(),2)
+
+	def test_survey_create_with_latest_survey(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the survey series
+		survey_series = Survey_Series.objects.get(name='test survey series')
+		# create an existing survey that the new survey will copy from
+		today = datetime.date.today()
+		today_one_year_ago = today.replace(year=today.year-1)
+		old_survey = Survey.objects.create(
+										name='existing survey',
+										description = 'existing survey',
+										survey_series = survey_series,
+										date_created = today_one_year_ago
+										)
+		old_survey_section = Survey_Section.objects.create(
+														name = 'existing section',
+														survey = old_survey,
+														order = 10
+														)
+		survey_question_type = Survey_Question_Type.objects.create(
+															name = 'test question type',
+															options_required = True,
+															text_required = False
+															)
+		old_survey_question = Survey_Question.objects.create(
+													question = 'test question',
+													number = 1,
+													options = 5,
+													survey_section = old_survey_section,
+													survey_question_type = survey_question_type
+													)
+		# create an existing survey that the new survey should not copy from
+		today_two_years_ago = today.replace(year=today.year-2)
+		very_old_survey = Survey.objects.create(
+										name='existing survey',
+										description = 'existing survey',
+										survey_series = survey_series,
+										date_created = today_two_years_ago
+										)
+		# attempt to create the survey
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series/' + str(survey_series.pk))
+		# check that the survey series was created
+		survey = Survey.objects.get(name='test name')
+		# check that we got the right values
+		self.assertEqual(survey.survey_series,survey_series)
+		self.assertEqual(survey.name,'test name')
+		self.assertEqual(survey.description,'test description')
+		self.assertEqual(survey.date_created,today)
+		# now check the copied records
+		survey_section = Survey_Section.objects.get(survey=survey)
+		self.assertEqual(survey_section.name,old_survey_section.name)
+		self.assertEqual(survey_section.order,old_survey_section.order)
+		self.assertEqual(survey_section.order,old_survey_section.order)
+		survey_question = Survey_Question.objects.get(survey_section=survey_section)
+		self.assertEqual(survey_question.question,old_survey_question.question)
+		self.assertEqual(survey_question.survey_question_type,old_survey_question.survey_question_type)
+		self.assertEqual(survey_question.number,old_survey_question.number)
+		# check that we have the right number of records
+		self.assertEqual(Survey.objects.all().count(),3)
+		self.assertEqual(Survey_Section.objects.all().count(),2)
+		self.assertEqual(Survey_Question.objects.all().count(),2)
+
+	def test_survey_create_duplicate_for_same_survey_series(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the survey series
+		survey_series = Survey_Series.objects.get(name='test survey series')
+		# attempt to create the survey
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series/' + str(survey_series.pk))
+		# check that the survey series was created
+		survey = Survey.objects.get(name='test name')
+		# check that we got the right values
+		self.assertEqual(survey.survey_series,survey_series)
+		self.assertEqual(survey.name,'test name')
+		self.assertEqual(survey.description,'test description')
+		# check that only one record was created
+		self.assertEqual(Survey.objects.all().count(),1)
+		# attempt to create another survey of the same name for the same series
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error
+		self.assertContains(response,'Survey with this name already exists for this series')
+		# check that only one record still exists
+		self.assertEqual(Survey.objects.all().count(),1)
+
+	def test_survey_create_duplicate_for_different_survey_series(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the survey series
+		survey_series = Survey_Series.objects.get(name='test survey series')
+		survey_series_2 = Survey_Series.objects.get(name='test survey series 2')
+		# attempt to create the survey
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series/' + str(survey_series.pk))
+		# check that the survey series was created
+		survey = Survey.objects.get(name='test name')
+		# check that we got the right values
+		self.assertEqual(survey.survey_series,survey_series)
+		self.assertEqual(survey.name,'test name')
+		self.assertEqual(survey.description,'test description')
+		# check that only one record was created
+		self.assertEqual(Survey.objects.all().count(),1)
+		# attempt to create another survey of the same name for the same series
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series_2.pk)]),
+									data = { 
+											'name' : 'test name',
+											'description' : 'test description',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/survey_series/' + str(survey_series_2.pk))
+		# check that the survey series was created
+		survey = Survey.objects.get(name='test name',survey_series=survey_series_2)
+		# check that we got the right values
+		self.assertEqual(survey.survey_series,survey_series_2)
+		self.assertEqual(survey.name,'test name')
+		self.assertEqual(survey.description,'test description')
+		# check that only one record was created
+		self.assertEqual(Survey.objects.all().count(),2)

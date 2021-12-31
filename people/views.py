@@ -436,7 +436,7 @@ def get_survey_list_for_person(person,project):
 	if project:
 		surveys = Survey.objects.filter(survey_series__project=project)
 	else:
-		surveys = Survey.objects.filter(project__in=person.projects.all())
+		surveys = Survey.objects.filter(survey_series__project__in=person.projects.all())
 	# go through the surveys and add the submissions
 	for survey in surveys:
 		survey_submission = Survey_Submission.try_to_get(

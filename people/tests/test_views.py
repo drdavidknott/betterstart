@@ -14653,3 +14653,186 @@ class SurveyQuestionViewTest(TestCase):
 		self.assertEqual(survey_question.survey_question_type,survey_question_type_2)
 		# check that only one record was created
 		self.assertEqual(Survey_Question.objects.all().count(),1)
+
+class SubmitSurveyViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		# set up a survey series
+		project = Project.objects.get(name='testproject')
+		survey_series = Survey_Series.objects.create(
+														project = project,
+														name = 'test survey series',
+														description = 'test description'
+														)
+		# set up a survey
+		today = datetime.date.today()
+		survey = Survey.objects.create(
+										name='test survey',
+										description = 'test survey',
+										survey_series = survey_series,
+										date_created = today
+										)
+		# set up two survey sections
+		survey_section_1 = Survey_Section.objects.create(
+										survey=survey,
+										name = 'test survey section',
+										order = 10
+										)
+		survey_section_2 = Survey_Section.objects.create(
+										survey=survey,
+										name = 'test survey section 2',
+										order = 20
+										)
+		# set up two question types
+		survey_question_type_1 = Survey_Question_Type.objects.create(
+											name = 'test question type 1',
+											options_required = True,
+											text_required = False,
+											)	
+		survey_question_type_2 = Survey_Question_Type.objects.create(
+											name = 'test question type 2',
+											options_required = False,
+											text_required = True,
+											)
+		# and two questions
+		Survey_Question.objects.create(
+										question = 'test question 1',
+										number = 1,
+										options = 5,
+										survey_question_type = survey_question_type_1,
+										survey_section = survey_section_1
+										)
+		Survey_Question.objects.create(
+										question = 'test question 2',
+										number = 2,
+										options = 0,
+										survey_question_type = survey_question_type_2,
+										survey_section = survey_section_2
+										)
+		# and a test person
+		set_up_people_base_data()
+		set_up_test_people('survey_',project=project)
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/submit_survey/1/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/submit_survey/1/1')
+
+	def test_invalid_survey_submission(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('submit_survey',args=[9999,9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_submit_survey(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the objects
+		survey = Survey.objects.get(name='test survey')
+		person = Person.objects.get(first_name='survey_0')
+		question_1 = Survey_Question.objects.get(question='test question 1')
+		question_1_field_name = 'survey_question_' + str(question_1.pk)
+		question_2 = Survey_Question.objects.get(question='test question 2')
+		question_2_field_name = 'survey_question_' + str(question_2.pk)
+		# attempt to create the survey question
+		response = self.client.post(
+									reverse('submit_survey',args=[str(person.pk),str(survey.pk)]),
+									data = { 
+											question_1_field_name : '3',
+											question_2_field_name : 'test',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/person/' + str(person.pk))
+		# check that the submission and answers were created
+		survey_submission = Survey_Submission.objects.get(survey=survey,person=person)
+		survey_answer_1 = Survey_Answer.objects.get(survey_submission=survey_submission,survey_question=question_1)
+		survey_answer_2 = Survey_Answer.objects.get(survey_submission=survey_submission,survey_question=question_2)
+		# check that we got the right values
+		self.assertEqual(survey_submission.date,datetime.date.today())
+		self.assertEqual(survey_answer_1.range_answer,3)
+		self.assertEqual(survey_answer_1.text_answer,'')
+		self.assertEqual(survey_answer_2.range_answer,0)
+		self.assertEqual(survey_answer_2.text_answer,'test')
+		# check that the right number of records were created
+		self.assertEqual(Survey_Submission.objects.all().count(),1)
+		self.assertEqual(Survey_Answer.objects.all().count(),2)
+
+	def test_submit_survey_update(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the objects
+		survey = Survey.objects.get(name='test survey')
+		person = Person.objects.get(first_name='survey_0')
+		question_1 = Survey_Question.objects.get(question='test question 1')
+		question_1_field_name = 'survey_question_' + str(question_1.pk)
+		question_2 = Survey_Question.objects.get(question='test question 2')
+		question_2_field_name = 'survey_question_' + str(question_2.pk)
+		# attempt to create the survey question
+		response = self.client.post(
+									reverse('submit_survey',args=[str(person.pk),str(survey.pk)]),
+									data = { 
+											question_1_field_name : '3',
+											question_2_field_name : 'test',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/person/' + str(person.pk))
+		# check that the submission and answers were created
+		survey_submission = Survey_Submission.objects.get(survey=survey,person=person)
+		survey_answer_1 = Survey_Answer.objects.get(survey_submission=survey_submission,survey_question=question_1)
+		survey_answer_2 = Survey_Answer.objects.get(survey_submission=survey_submission,survey_question=question_2)
+		# check that we got the right values
+		self.assertEqual(survey_submission.date,datetime.date.today())
+		self.assertEqual(survey_answer_1.range_answer,3)
+		self.assertEqual(survey_answer_1.text_answer,'')
+		self.assertEqual(survey_answer_2.range_answer,0)
+		self.assertEqual(survey_answer_2.text_answer,'test')
+		# check that the right number of records were created
+		self.assertEqual(Survey_Submission.objects.all().count(),1)
+		self.assertEqual(Survey_Answer.objects.all().count(),2)
+		# attempt to update the survey question
+		response = self.client.post(
+									reverse('submit_survey',args=[str(person.pk),str(survey.pk)]),
+									data = { 
+											question_1_field_name : '5',
+											question_2_field_name : 'test update',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/person/' + str(person.pk))
+		# check that the submission and answers were created
+		survey_submission = Survey_Submission.objects.get(survey=survey,person=person)
+		survey_answer_1 = Survey_Answer.objects.get(survey_submission=survey_submission,survey_question=question_1)
+		survey_answer_2 = Survey_Answer.objects.get(survey_submission=survey_submission,survey_question=question_2)
+		# check that we got the right values
+		self.assertEqual(survey_submission.date,datetime.date.today())
+		self.assertEqual(survey_answer_1.range_answer,5)
+		self.assertEqual(survey_answer_1.text_answer,'')
+		self.assertEqual(survey_answer_2.range_answer,0)
+		self.assertEqual(survey_answer_2.text_answer,'test update')
+		# check that the right number of records were created
+		self.assertEqual(Survey_Submission.objects.all().count(),1)
+		self.assertEqual(Survey_Answer.objects.all().count(),2)

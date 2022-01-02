@@ -2262,10 +2262,26 @@ class SurveyForm(forms.Form):
 									max_length=1500,
 									widget=forms.Textarea(attrs={'class' : 'form-control','rows' : 4})
 									)
+	action = forms.CharField(
+								initial='action',
+								widget=forms.HiddenInput(attrs={'class' : 'form-control',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
+		# pull the additional parameters
+		survey = kwargs.pop('survey') if 'survey' in kwargs.keys() else False
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
 		# call the built in constructor
 		super(SurveyForm, self).__init__(*args, **kwargs)
+		# set the buttons, including download iiiiiiif we have a survey and whether that survey has submissions
+		if user.is_superuser and survey and survey.survey_submission_set.all().exists():
+			button_row = FormActions(
+										Submit('action', 'Submit'),
+										Submit('action', 'Download')
+										)
+		else:
+			button_row = FormActions(
+										Submit('action', 'Submit'),
+										)
 		# build the crispy form
 		self.helper = FormHelper()
 		self.helper.layout = Layout(
@@ -2277,7 +2293,12 @@ class SurveyForm(forms.Form):
 										Column('description',css_class='form-group col-md-12 mb-0'),
 										css_class='form-row'	
 										),
-									Row(Column(Submit('submit', 'Submit'),css_class='col-md-12 mb-0'))
+									Row(
+										Column(
+												button_row,
+												css_class='col-md-12 mb-0'
+												)
+										)
 									)
 
 	# override the validation to provide additional checks	

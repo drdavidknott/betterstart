@@ -2762,6 +2762,15 @@ class Survey(DataAccessMixin,models.Model):
 		# return the results
 		return Survey_Question.objects.filter(survey_section__survey=self).exists()
 
+	# define a function to return a string or number showing the number of submissions
+	def submissions_text(self,):
+		submissions = self.survey_submission_set.all().count()
+		if submissions == 1:
+			submissions_text = ' submission'
+		else:
+			submissions_text = ' submissions'
+		return str(submissions) + submissions_text
+
 # Survey Section model: represents a section within a survey
 class Survey_Section(DataAccessMixin,models.Model):
 	survey = models.ForeignKey(Survey, on_delete=models.CASCADE)

@@ -7,7 +7,8 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Children_Centre, CC_Registration, Area, Ward, Post_Code, Event, Event_Type, \
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue, Venue_Type, \
-					Project, Membership, Membership_Type
+					Project, Membership, Membership_Type, Survey, Survey_Submission, Survey_Question_Type, \
+					Survey_Question, Survey_Answer
 
 class File_Field():
 	# this class defines a field witin a file
@@ -2495,3 +2496,90 @@ class People_Limited_Data_File_Handler(File_Handler):
 											])
 			self.ward.value = person.street.post_code.ward.ward_name
 
+class Survey_Submissions_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Survey_Submissions_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Survey_Submission
+		# set the file fields
+		self.first_name = File_Field(
+										name='first_name',
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
+		self.date = File_Datetime_Field(
+										name='date',
+										datetime_format='%d/%m/%Y',
+										)
+
+		# and a list of the fields
+		self.fields = [
+						'first_name',
+						'last_name',
+						'date'
+						]
+		# get the survey, then go through the survey questions and create the additional fields
+		survey = self.objects.first().survey
+		for survey_section in survey.survey_section_set.all():
+			for survey_question in survey_section.survey_question_set.all():
+				field_name = survey_question.question
+				survey_question_field = File_Field(
+											name = field_name,
+											set_download_from_object=False,
+											)
+				setattr(self,field_name,survey_question_field)
+				self.fields.append(field_name)
+				# add the survey question to the object
+				survey_question_field.survey_question = survey_question
+
+	def set_download_fields(self,survey_submission):
+		# call the built in field setter
+		super(Survey_Submissions_File_Handler, self).set_download_fields(survey_submission)
+		# set the survey question fields - these are the fields where we are not setting the download from the object
+		for field in self.fields:
+			field = getattr(self,field)
+			if not field.set_download_from_object:
+				# get the answer
+				survey_answer = Survey_Answer.try_to_get(
+															survey_submission = survey_submission,
+															survey_question = field.survey_question
+				)
+				# set the value, remmbering that we may not have an answer for all questions
+				if survey_answer:
+					if field.survey_question.survey_question_type.options_required:
+						field.value = str(survey_answer.range_answer)
+					else:
+						field.value = survey_answer.text_answer
+				else:
+					if field.survey_question.survey_question_type.options_required:
+						field.value = '0'
+					else:
+						field.value = ''
+
+	# modify download method to add question numbers to questions
+	def handle_download(self):
+		# call the built in download handler
+		super(Survey_Submissions_File_Handler, self).handle_download()
+		# build a new field list from the old field list
+		new_fields = []
+		for field_name in self.fields:
+			field = getattr(self,field_name)
+			if field.set_download_from_object:
+				new_field_name = field_name
+			else:
+				new_field_name = str(field.survey_question.number) + '. ' + field.survey_question.question
+			new_fields.append(new_field_name)
+		self.fields = new_fields
+
+	def label(self,record):
+		# return the label
+		return str(record['first_name']) + ' ' + str(record['last_name']) \
+							+ ' (' + str(record['age_status']) + ')' \
+							+ ' at ' + str(record['event_name'])

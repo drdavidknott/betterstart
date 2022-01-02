@@ -13840,6 +13840,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -13894,6 +13895,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -13968,6 +13970,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -14008,6 +14011,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -14026,6 +14030,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a valid response
@@ -14051,6 +14056,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -14069,6 +14075,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -14097,6 +14104,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name',
 											'description' : 'test description',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response
@@ -14115,6 +14123,7 @@ class SurveyViewTest(TestCase):
 									data = { 
 											'name' : 'test name update',
 											'description' : 'test description update',
+											'action' : 'Submit',
 											}
 									)
 		# check that we got a redirect response

@@ -39,7 +39,8 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Registrations_File_Handler, Questions_File_Handler, Options_File_Handler, \
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler, Events_And_Registrations_File_Handler, \
-							Venues_File_Handler, Venues_For_Events_File_Handler, People_Limited_Data_File_Handler
+							Venues_File_Handler, Venues_For_Events_File_Handler, People_Limited_Data_File_Handler, \
+							Survey_Submissions_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
 									Questions_Invitation_Handler, Introduction_Invitation_Handler, \
@@ -1393,7 +1394,7 @@ def verify_token(user,token):
 	# return the results
 	return verified, message
 
-def build_download_file(file_type,objects=None,project=False):
+def build_download_file(file_type,file_name=False,objects=None,project=False):
 	# takes a class name and optional queryset and returns a file download response
 	# initialise variables
 	file_handlers = {
@@ -1410,15 +1411,18 @@ def build_download_file(file_type,objects=None,project=False):
 						'Event Summary' : Event_Summary_File_Handler,
 						'Events and Registrations' : Events_And_Registrations_File_Handler,
 						'Venues' : Venues_File_Handler,
+						'Survey Submissions' : Survey_Submissions_File_Handler,
 					}
 	# create the file handler
 	file_handler = file_handlers[file_type](objects=objects,project=project)
 	# build the download records
 	file_handler.handle_download()
 	records = file_handler.download_records
+	# set the file name if we have one, otherwise use the file type
+	file_name = file_name if file_name else file_type
 	# create the http response
 	response = HttpResponse(content_type='text/csv')
-	response['Content-Disposition'] = 'attachment; filename="' + file_type + '.csv"'
+	response['Content-Disposition'] = 'attachment; filename="' + file_name + '.csv"'
 	# use the csv writer to write the keys and then the records to the response
 	writer = csv.writer(response)
 	writer.writerow(file_handler.fields + file_handler.additional_download_fields)
@@ -4440,22 +4444,34 @@ def survey(request,survey_series_id=0,survey_id=0):
 	template = loader.get_template('people/survey.html')
 	# if this is a post, validate the form and attempt to create the record
 	if request.method == 'POST':
-		surveyform = SurveyForm(request.POST)
+		surveyform = SurveyForm(request.POST,survey=survey,user=request.user)
 		if surveyform.is_valid(survey_series=survey_series,survey=survey):
-			name = surveyform.cleaned_data['name']
-			description = surveyform.cleaned_data['description']
-			if survey:
-				survey.name = name
-				survey.description = description
-				survey.save()
-			else:
-				survey = build_survey(
-										name = name,
-										survey_series = survey_series,
-										description = description,
-										)
-			# redirect to the survey series page
-			return redirect('/survey_series/' + str(survey_series.pk))
+			if surveyform.cleaned_data['action'] == 'Submit':
+				name = surveyform.cleaned_data['name']
+				description = surveyform.cleaned_data['description']
+				if survey:
+					survey.name = name
+					survey.description = description
+					survey.save()
+				else:
+					survey = build_survey(
+											name = name,
+											survey_series = survey_series,
+											description = description,
+											)
+				# redirect to the survey series page
+				return redirect('/survey_series/' + str(survey_series.pk))
+			# if we have a download request, also 
+			elif surveyform.cleaned_data['action'] == 'Download':
+				if not request.user.is_superuser:
+					personsearchform.add_error(None, 'You do not have permission to download files.')
+				else:
+					response = build_download_file(
+													'Survey Submissions',
+													file_name = str(survey),
+													objects=survey.survey_submission_set.all()
+													)
+					return response
 	# otherwise we didn't get a post
 	else:
 		# create a blank or filled form depending on whether we are editing or creating
@@ -4465,9 +4481,9 @@ def survey(request,survey_series_id=0,survey_id=0):
 								'name' : survey.name,
 								'description' : survey.description,
 								}
-			surveyform = SurveyForm(survey_dict)
+			surveyform = SurveyForm(survey_dict,survey=survey,user=request.user)
 		else:
-			surveyform = SurveyForm()
+			surveyform = SurveyForm(user=request.user)
 	# set the context
 	context = build_context(request,{
 										'surveyform' : surveyform,

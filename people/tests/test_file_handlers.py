@@ -6,7 +6,9 @@ from people.models import Person, Role_Type, Ethnicity, Capture_Type, Event, Eve
 							Panel_Column, Panel_Column_In_Panel, Filter_Spec, Column_In_Dashboard, \
 							Venue, Venue_Type, Site, Invitation, Invitation_Step, Invitation_Step_Type, \
 							Terms_And_Conditions, Profile, Chart, Document_Link, Project, Membership, \
-							Project_Permission, Membership_Type, Project_Event_Type
+							Project_Permission, Membership_Type, Project_Event_Type, \
+							Survey, Survey_Submission, Survey_Question_Type, Survey_Question, Survey_Answer, \
+							Survey_Section, Survey_Series
 import datetime
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -6647,3 +6649,139 @@ class UpdatePostCodesViewTest(TestCase):
 		self.assertEqual(test_postcode_2.ward,test_ward_2)
 		# check that we got a ward does not exist
 		self.assertContains(response,'ward does not exist')
+
+class SubmitSurveyViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		# set up a survey series
+		project = Project.objects.get(name='testproject')
+		survey_series = Survey_Series.objects.create(
+														project = project,
+														name = 'test survey series',
+														description = 'test description'
+														)
+		# set up a survey
+		survey_date = datetime.datetime.strptime('2022-01-01','%Y-%m-%d')
+		survey = Survey.objects.create(
+										name='test survey',
+										description = 'test survey',
+										survey_series = survey_series,
+										date_created = survey_date
+										)
+		# set up two survey sections
+		survey_section_1 = Survey_Section.objects.create(
+										survey=survey,
+										name = 'test survey section',
+										order = 10
+										)
+		survey_section_2 = Survey_Section.objects.create(
+										survey=survey,
+										name = 'test survey section 2',
+										order = 20
+										)
+		# set up two question types
+		survey_question_type_1 = Survey_Question_Type.objects.create(
+											name = 'test question type 1',
+											options_required = True,
+											text_required = False,
+											)	
+		survey_question_type_2 = Survey_Question_Type.objects.create(
+											name = 'test question type 2',
+											options_required = False,
+											text_required = True,
+											)
+		# and two questions
+		survey_question_1 = Survey_Question.objects.create(
+										question = 'test question 1',
+										number = 1,
+										options = 5,
+										survey_question_type = survey_question_type_1,
+										survey_section = survey_section_1
+										)
+		survey_question_2 = Survey_Question.objects.create(
+										question = 'test question 2',
+										number = 2,
+										options = 0,
+										survey_question_type = survey_question_type_2,
+										survey_section = survey_section_2
+										)
+		# and a test person
+		set_up_people_base_data()
+		set_up_test_people('survey_',project=project,number=2)
+		person_1 = Person.objects.get(first_name='survey_0')
+		person_2 = Person.objects.get(first_name='survey_1')
+		# and two survey submissions with answers for the first and none for the second - to test defaults
+		survey_submission_1 = Survey_Submission.objects.create(
+																person = person_1,
+																survey = survey,
+																date = survey_date
+																)
+		Survey_Answer.objects.create(
+										survey_submission = survey_submission_1,
+										survey_question = survey_question_1,
+										range_answer = 3,
+										text_answer = ''
+										)
+		Survey_Answer.objects.create(
+										survey_submission = survey_submission_1,
+										survey_question = survey_question_2,
+										range_answer = 0,
+										text_answer = 'test answer'
+										)
+		Survey_Submission.objects.create(
+											person = person_2,
+											survey = survey,
+											date = survey_date
+											)
+
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/submit_survey/1/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/submit_survey/1/1')
+
+	def test_invalid_survey_submission(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('submit_survey',args=[9999,9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_survey_download(self):
+		# log the user in and set the project
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		project = Project.objects.get(name='testproject')
+		session['project_id'] = project.pk
+		session.save()
+		# get the survey series
+		survey_series = Survey_Series.objects.get(name='test survey series')
+		survey = Survey.objects.get(name='test survey')
+		# attempt to download the survey
+		response = self.client.post(
+									reverse('survey',args=[str(survey_series.pk), str(survey.pk)]),
+									data = { 
+											'name' : 'test name update',
+											'description' : 'test description update',
+											'action' : 'Download',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'first_name,last_name,date,1. test question 1,2. test question 2')
+		self.assertContains(response,'survey_0,survey_0,01/01/2022,3,test answer')
+		self.assertContains(response,'survey_1,survey_1,01/01/2022,0,')

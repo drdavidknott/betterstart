@@ -46,7 +46,7 @@
 					<a href="{% url 'survey' survey_series.pk survey.pk %}">
 						<span class="glyphicon glyphicon-pencil"></span>
 					</a>
-					{{ survey.name }}
+					{{ survey.name }} ({{ survey.submissions_text }})
 				</div>
 			{% endfor %}
 		</div>

@@ -17,6 +17,9 @@
 					<span class="glyphicon glyphicon-list"></span>
                     <a href="{% url 'survey_series' survey_series.pk %}">
 					    {{ survey_series.name }}
+						{% if survey %}
+							({{ survey.submissions_text }})
+						{% endif %}
                     </a>
 				<h3>
 			</div>

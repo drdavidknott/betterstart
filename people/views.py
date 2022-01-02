@@ -4464,7 +4464,7 @@ def survey(request,survey_series_id=0,survey_id=0):
 			# if we have a download request, also 
 			elif surveyform.cleaned_data['action'] == 'Download':
 				if not request.user.is_superuser:
-					personsearchform.add_error(None, 'You do not have permission to download files.')
+					surveyform.add_error(None, 'You do not have permission to download files.')
 				else:
 					response = build_download_file(
 													'Survey Submissions',

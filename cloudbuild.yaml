@@ -4,10 +4,10 @@ steps:
   args: ['flake8','.','--count','--select=E9,F63,F7,F82','--show-source','--statistics']
   id: run_lint_check
 # run test locally
-#- name: gcr.io/$PROJECT_ID/test_runner
-#  args: ['python','manage.py','test','--verbosity=2','--noinput']
-#  env: ['BETTERSTART_DB=local']
-#  id: run_tests
+- name: gcr.io/$PROJECT_ID/test_runner
+  args: ['python','manage.py','test','--verbosity=2','--noinput']
+  env: ['BETTERSTART_DB=local']
+  id: run_tests
 # get settings file
 - name: gcr.io/cloud-builders/gsutil
   args: ['cp', '${_BETTERSTART_ENV_SCRIPT}', 'setenv']
@@ -30,7 +30,6 @@ steps:
    - -c
    - |
       . setenv
-      printenv
       python manage.py collectstatic --noinput
       python deployment/build_yaml.py
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &

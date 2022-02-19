@@ -23,6 +23,10 @@ steps:
   - --keyring=${_BETTERSTART_KEYRING}
   - --key=${_BETTERSTART_KEY}
   id: decrypt_settings_file
+# check environment variables
+- name: gcr.io/cloud-builders/test_runner
+  args: ['printenv']
+  id: check_variables
 # prep for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'

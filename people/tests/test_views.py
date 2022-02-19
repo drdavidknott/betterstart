@@ -546,13 +546,11 @@ class ForgotPasswordViewTest(TestCase):
 										username='test@test.com',
 										password='testword'
 										)
-		# get the outbound mail domain
-		mail_domain = os.getenv('SENDGRID_DOMAIN')
 		# set up a site
 		site = Site.objects.create(
 									name='Test Site',
 									password_reset_allowed=True,
-									password_reset_email_from='from@' + mail_domain,
+									password_reset_email_from='from@test.com',
 									password_reset_email_cc='bcc@test.com',
 									password_reset_email_title='Test Title',
 									password_reset_email_text='test email text',

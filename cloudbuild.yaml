@@ -23,10 +23,6 @@ steps:
   - --keyring=${_BETTERSTART_KEYRING}
   - --key=${_BETTERSTART_KEY}
   id: decrypt_settings_file
-# check environment variables
-- name: gcr.io/$PROJECT_ID/test_runner
-  args: ['printenv']
-  id: check_variables
 # prep for deployment
 - name: gcr.io/$PROJECT_ID/test_runner
   entrypoint: 'bash'
@@ -34,6 +30,7 @@ steps:
    - -c
    - |
       . setenv
+      printenv
       python manage.py collectstatic --noinput
       python deployment/build_yaml.py
       /cloud_sql_proxy -instances $$BETTERSTART_DB_INSTANCE=tcp:3306 &

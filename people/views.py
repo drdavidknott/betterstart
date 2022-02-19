@@ -1703,7 +1703,7 @@ def forgot_password(request):
 				# generate the url and mail text, then send the mail
 				reset_url = request.build_absolute_uri(reverse('reset_password',args=[profile.reset_code]))
 				email_text = site.password_reset_email_text + '\r' + reset_url
-				# use the sendgrid API to send the email
+				# use the sendgrid API to send this email
 				message = Mail(
 								from_email=site.password_reset_email_from,
 								to_emails=email_address,

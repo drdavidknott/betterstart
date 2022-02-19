@@ -537,6 +537,7 @@ class ChangePasswordViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
+
 class ForgotPasswordViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -586,34 +587,6 @@ class ForgotPasswordViewTest(TestCase):
 									reverse('forgot_password'),
 									data = {
 											'email_address' : 'invalid@invalid.com',
-											},
-									)
-		# check the response
-		self.assertEqual(response.status_code, 200)
-		# check that no mail was sent out
-		self.assertEqual(len(mail.outbox), 0)
-
-	def test_forgot_password(self):
-		# attempt to get the qrcode page
-		response = self.client.post(
-									reverse('forgot_password'),
-									data = {
-											'email_address' : 'test@test.com',
-											},
-									)
-		# check the response
-		self.assertEqual(response.status_code, 200)
-
-	def test_forgot_password_no_bcc(self):
-		# update the site
-		site = Site.objects.all().first()
-		site.password_reset_email_cc = ''
-		site.save()
-		# attempt to get the qrcode page
-		response = self.client.post(
-									reverse('forgot_password'),
-									data = {
-											'email_address' : 'test@test.com',
 											},
 									)
 		# check the response

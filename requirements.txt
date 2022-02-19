@@ -29,10 +29,13 @@ pylint==2.5.3
 pyparsing==2.4.6
 Pyphen==0.9.5
 python-dateutil==2.8.1
+python-http-client==3.3.6
 pytz==2018.9
 qrcode==6.1
+sendgrid==6.9.6
 six==1.13.0
 sqlparse==0.3.0
+starkbank-ecdsa==2.0.3
 tinycss2==1.0.2
 toml==0.10.1
 typed-ast==1.4.3

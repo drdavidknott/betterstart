@@ -58,6 +58,8 @@ from jsignature.utils import draw_signature
 from django.contrib.staticfiles import finders
 from django.views.generic import ListView
 from django.core import serializers
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 @login_required
 def index(request):
@@ -1701,23 +1703,21 @@ def forgot_password(request):
 				# generate the url and mail text, then send the mail
 				reset_url = request.build_absolute_uri(reverse('reset_password',args=[profile.reset_code]))
 				email_text = site.password_reset_email_text + '\r' + reset_url
-				'''
-				send_mail(
-							site.password_reset_email_title,
-							email_text,
-							site.password_reset_email_from,
-							[email_address],
-							fail_silently=False
-							)
-				'''
-				email = EmailMessage(
-										subject = site.password_reset_email_title,
-										body = email_text,
-										from_email = site.password_reset_email_from,
-										bcc = [site.password_reset_email_cc] if site.password_reset_email_cc else [],
-										to = [email_address]
-										)
-				email.send()
+				# use the sendgrid API to send a mail
+				message = Mail(
+								from_email=site.password_reset_email_from,
+								to_emails=email_address,
+								subject= site.password_reset_email_title,
+								html_content=email_text)
+				try:
+					api_key = os.getenv('SENDGRID_API_KEY')
+					sg = SendGridAPIClient(api_key)
+					response = sg.send(message)
+					print(response.status_code)
+					print(response.body)
+					print(response.headers)
+				except Exception as e:
+					print(e.message)
 				# log the request
 				auth_log(user=user,reset_requested=True)
 	# otherwise create a blank form

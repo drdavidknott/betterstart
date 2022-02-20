@@ -144,16 +144,33 @@
 		 				{% endif %}
 		 		</div>
 		 	{% endif %}
-	 		{% for trained_role in person.trained_role_set.all %}
-		 		<div class="row">
-					<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
-					{% if trained_role.date_trained %}
-						trained on {{ trained_role.date_trained|date:"M d Y" }}
-					{% endif %}
-				</div>
-			{% endfor %}
 		</div>
 	</div>
+
+	{% if person.trained_role_set.exists %}
+		<div class="row">
+			<div class="col-xs-12">
+				<hr>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class='col-xs-1 text-right'>
+					<span class="glyphicon glyphicon-education"></span>
+				</a>
+			</div>
+			<div class="col-xs-11">
+				{% for trained_role in person.trained_role_set.all %}
+					<div class="row">
+						<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
+						{% if trained_role.date_trained %}
+							- trained on {{ trained_role.date_trained|date:"M d Y" }}
+						{% endif %}
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+	{% endif %}
 
 	{% if memberships %}
 		<div class="row">

@@ -156,12 +156,14 @@
 
 		<div class="row">
 			<div class='col-xs-1 text-right'>
-					<span class="glyphicon glyphicon-education"></span>
+				<a href="{% url 'profile' person.pk %}">
+					<span class="glyphicon glyphicon-pencil"></span>
 				</a>
 			</div>
 			<div class="col-xs-11">
 				{% for trained_role in person.trained_role_set.all %}
 					<div class="row">
+						<span class="glyphicon glyphicon-education"></span>
 						<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
 						{% if trained_role.date_trained %}
 							- trained on {{ trained_role.date_trained|date:"M d Y" }}

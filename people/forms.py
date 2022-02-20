@@ -1581,7 +1581,7 @@ class EventForm(forms.Form):
 									widget=forms.TimeInput(attrs={'class' : 'form-control',}))
 	venue = forms.ChoiceField(
 									label="Venue",
-									widget=forms.Select())
+									widget=forms.Select(attrs={'placeholder' : 'Select venue',}))
 	# over-ride the __init__ method to set the choices
 	def __init__(self, *args, **kwargs):
 		# pull the project out of the parameters
@@ -1589,11 +1589,13 @@ class EventForm(forms.Form):
 		# call the built in constructor
 		super(EventForm, self).__init__(*args, **kwargs)
 		# build the choices
-		self.fields['venue'].choices = build_choices(choice_class=Venue,
-													choice_field='name',
-													default=True,
-													default_label='None')
-		self.fields['venue'].initial = 0
+		self.fields['venue'].choices = build_choices(
+														choice_class=Venue,
+														choice_field='name',
+														default=True,
+														default_value='',
+														default_label='Select venue',
+													)
 		# build event types, depending on whether we have a project or not
 		if project:
 			event_types = Event_Type.objects.filter(projects=project)

@@ -1821,14 +1821,14 @@ def people(request):
 					person.relationships_from = get_relationships_from(person,project)
 			# download summary data
 			elif personsearchform.cleaned_data['action'] == 'Download':
-				response = build_download_file('People Limited',objects=people)
+				response = build_download_file('People Limited',objects=people,project=project)
 				return response
 			# download full data if permitted
 			elif personsearchform.cleaned_data['action'] == 'Download Full Data':
 				if not request.user.is_superuser:
 					personsearchform.add_error(None, 'You do not have permission to download files.')
 				else:
-					response = build_download_file('People',objects=people)
+					response = build_download_file('People',objects=people,project=project)
 					return response
 	# otherwise set a blank form
 	else:

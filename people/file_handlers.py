@@ -1073,8 +1073,8 @@ class People_File_Handler(File_Handler):
 		if self.project:
 			membership = Membership.objects.get(person=person,project=self.project)
 			self.membership_type.value = membership.membership_type.name
-			self.date_joined.value = membership.date_joined
-			self.date_left.value = membership.date_left 
+			self.date_joined.value = membership.date_joined.strftime(self.date_joined.datetime_format) if membership.date_joined else ''
+			self.date_left.value = membership.date_left.strftime(self.date_left.datetime_format) if membership.date_left else ''
 
 	def add_project(self,person):
 		# create the membership

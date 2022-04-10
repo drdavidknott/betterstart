@@ -41,7 +41,7 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "test",
-                "people.tests.test_file_handlers.SubmitSurveyViewTest",
+                "people.tests.test_file_handlers.DownloadPeopleDataViewTest.test_download_people_with_projects_active",
                 "--verbosity=2",
             ],
             "django": true,

@@ -4259,13 +4259,16 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.pregnant = True
 		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
-		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
-		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')
 		person.membership_number = 12345
 		# save the record
 		person.save()
+		# update the membership record with joining dates and leaving dates
+		membership = Membership.objects.get(person=person,project=project)
+		membership.date_joined = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		membership.date_left = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		membership.save()
 		# submit the page to download the file
 		response = self.client.post(
 									reverse('downloaddata'),
@@ -4277,21 +4280,36 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
-		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,,,Test ward')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,01/01/2011,02/02/2012,Test ward')
 		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
 
 	def test_download_people_via_search(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
 		# create base data for addresses
 		set_up_address_base_data()
 		# create a bunch of post codes
 		set_up_test_post_codes('ABC')
 		# and a bunch of streets
 		set_up_test_streets('ABC streets 1','ABC0')
+		# create people in the project
+		set_up_test_people('test_project_adult_',number=2,age_status='Adult',project=project)
+		set_up_test_people('test_project_child_',number=1,age_status='Child under four',project=project)
 		# get the second test person
-		person = Person.objects.get(first_name='test_adult_1')
+		person = Person.objects.get(first_name='test_project_adult_1')
 		# set the values
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
@@ -4324,12 +4342,83 @@ class DownloadPeopleDataViewTest(TestCase):
 											'page' : '1'
 											}
 									)
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,,,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
+		self.assertNotContains(response,'test_adult_0')
+		self.assertNotContains(response,'test_adult_1')
+		self.assertNotContains(response,'test_child_0')
+
+	def test_download_people_via_search_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC')
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0')
+		# create people in the project
+		set_up_test_people('test_project_adult_',number=2,age_status='Adult',project=project)
+		set_up_test_people('test_project_child_',number=1,age_status='Child under four',project=project)
+		# get the second test person
+		person = Person.objects.get(first_name='test_project_adult_1')
+		# set the values
+		person.other_names = 'test other_names'
+		person.home_phone = '123456'
+		person.mobile_phone = '789012'
+		person.pregnant = True
+		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
+		person.house_name_or_number = '123'
+		person.emergency_contact_details = 'test ecd'
+		person.street = Street.objects.get(name='ABC streets 10')
+		person.membership_number = 12345
+		# save the record
+		person.save()
+		# update the membership record with joining dates and leaving dates
+		membership = Membership.objects.get(person=person,project=project)
+		membership.date_joined = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		membership.date_left = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		membership.save()
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit a Download request to the people search page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download Full Data',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'membership_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'include_people' : 'all',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right records
-		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_ABSS_type,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
-		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_ABSS_type,,,')
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
+		self.assertNotContains(response,'test_adult_0')
+		self.assertNotContains(response,'test_adult_1')
+		self.assertNotContains(response,'test_child_0')
 
 	def test_download_people_limited_via_search(self):
 		# create base data for addresses
@@ -4377,6 +4466,76 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,,')
 		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,123 ABC streets 10 ABC0,Test ward')
 		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,,')
+
+	def test_download_people_limited_via_search_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testsuper', password='superword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create base data for addresses
+		set_up_address_base_data()
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC')
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0')
+		# create people in the project
+		set_up_test_people('test_project_adult_',number=2,age_status='Adult',project=project)
+		set_up_test_people('test_project_child_',number=1,age_status='Child under four',project=project)
+		# get the second test person
+		person = Person.objects.get(first_name='test_project_adult_1')
+		# set the values
+		person.other_names = 'test other_names'
+		person.home_phone = '123456'
+		person.mobile_phone = '789012'
+		person.pregnant = True
+		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
+		person.house_name_or_number = '123'
+		person.emergency_contact_details = 'test ecd'
+		person.street = Street.objects.get(name='ABC streets 10')
+		person.membership_number = 12345
+		# save the record
+		person.save()
+		# update the membership record with joining dates and leaving dates
+		membership = Membership.objects.get(person=person,project=project)
+		membership.date_joined = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
+		membership.date_left = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
+		membership.save()
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit a Download request to the people search page
+		response = self.client.post(
+									reverse('listpeople'),
+									data = { 
+											'action' : 'Download',
+											'names' : '',
+											'keywords' : '',
+											'role_type' : '0',
+											'membership_type' : '0',
+											'age_status' : '0',
+											'trained_role' : 'none',
+											'include_people' : 'all',
+											'ward' : '0',
+											'page' : '1'
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,123 ABC streets 10 ABC0,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,,')
+		self.assertNotContains(response,'test_adult_0')
+		self.assertNotContains(response,'test_adult_1')
+		self.assertNotContains(response,'test_child_0')
+
 
 class DownloadEventsDataViewTest(TestCase):
 	@classmethod

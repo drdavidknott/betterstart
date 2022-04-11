@@ -2480,9 +2480,9 @@ class People_Limited_Data_File_Handler(File_Handler):
 						'address',
 						'ward',
 						]
-		# set a filtered set of objects if we have a project
+		# set a project filter if we have a project
 		if self.project:
-			self.objects = Person.search(projects=self.project,include_people='all')
+			self.project_filter = { 'projects' : self.project }
 
 	def set_download_fields(self,person):
 		# call the built in field setter

@@ -5330,8 +5330,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,False)
-		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -5379,8 +5377,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,False)
-		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -5446,8 +5442,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,False)
-		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -5500,8 +5494,6 @@ class AddPersonViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,False)
-		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -5610,8 +5602,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5643,8 +5633,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -5683,8 +5671,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5716,8 +5702,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -5748,8 +5732,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : '99',
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5780,8 +5762,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -5812,8 +5792,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5847,8 +5825,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5882,8 +5858,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='age_test_role').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5925,8 +5899,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -5958,8 +5930,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6002,8 +5972,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6036,8 +6004,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6083,8 +6049,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6130,8 +6094,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6175,8 +6137,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6208,8 +6168,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6252,8 +6210,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6285,8 +6241,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6330,8 +6284,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6364,8 +6316,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6409,8 +6359,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(ABSS_Type.objects.get(name='second_test_ABSS_type').pk),
@@ -6442,8 +6390,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6479,8 +6425,6 @@ class ProfileViewTest(TestCase):
 											'mobile_phone' : '678901',
 											'date_of_birth' : '01/01/2001',
 											'gender' : 'Male',
-											'pregnant' : True,
-											'due_date' : '01/01/2020',
 											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
 											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
 											'membership_type' : str(Membership_Type.objects.get(name='new_membership_type').pk),
@@ -6513,8 +6457,6 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
 		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
 		self.assertEqual(test_person.families.all().exists(),False)
@@ -6742,8 +6684,6 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.relationships.all().exists(),True)
 		self.assertEqual(test_new_person.children_centres.all().exists(),False)
 		self.assertEqual(test_new_person.events.all().exists(),False)
-		self.assertEqual(test_new_person.pregnant,False)
-		self.assertEqual(test_new_person.due_date,None)
 		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_new_person.families.all().exists(),False)
 		self.assertEqual(test_new_person.savs_id,None)
@@ -6806,8 +6746,6 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.relationships.all().exists(),True)
 		self.assertEqual(test_new_person.children_centres.all().exists(),False)
 		self.assertEqual(test_new_person.events.all().exists(),False)
-		self.assertEqual(test_new_person.pregnant,False)
-		self.assertEqual(test_new_person.due_date,None)
 		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_new_person.families.all().exists(),False)
 		self.assertEqual(test_new_person.savs_id,None)
@@ -7009,8 +6947,6 @@ class AddRelationshipViewTest(TestCase):
 		self.assertEqual(test_new_person.relationships.all().exists(),True)
 		self.assertEqual(test_new_person.children_centres.all().exists(),False)
 		self.assertEqual(test_new_person.events.all().exists(),False)
-		self.assertEqual(test_new_person.pregnant,False)
-		self.assertEqual(test_new_person.due_date,None)
 		self.assertEqual(test_new_person.ethnicity.description,'Prefer not to say')
 		self.assertEqual(test_new_person.families.all().exists(),False)
 		self.assertEqual(test_new_person.savs_id,None)

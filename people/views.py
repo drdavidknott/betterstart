@@ -154,12 +154,11 @@ def get_parents_without_children(request):
 	parents_with_no_children_under_four = []
 	today = datetime.date.today()
 	today_four_years_ago = today.replace(year=today.year-4)
-	# attempt to get parents with no children or who are not currently pregnant
+	# attempt to get parents with no children
 	parents = Person.search(
 							project=Project.current_project(request.session),
 							default_role__role_type_name__contains='Parent'
 							)
-	parents = parents.exclude(pregnant=True, due_date__gte=datetime.date.today())
 	parents = parents.order_by('last_name','first_name')
 	# now exclude those where we can find a child relationship
 	for parent in parents:
@@ -177,14 +176,6 @@ def get_parents_without_children(request):
 				parents_with_no_children_under_four.append(parent)
 	# return the results
 	return parents_with_no_children, parents_with_no_children_under_four
-
-def get_parents_with_overdue_children(request):
-	# return a list of parents with a pregnancy flag and a due date before today
-	return Person.search(
-							project=Project.current_project(request.session),
-							pregnant=True,
-							due_date__lt=datetime.date.today()
-							)
 
 def get_streets_by_name_and_post_code(name='',post_code=''):
 	# get the streets
@@ -777,8 +768,6 @@ def update_person(
 					emergency_contact_details,
 					date_of_birth,
 					gender,
-					pregnant,
-					due_date,
 					default_role_id,
 					ethnicity_id,
 					membership_type_id,
@@ -831,8 +820,6 @@ def update_person(
 	person.mobile_phone = mobile_phone
 	person.date_of_birth = date_of_birth
 	person.gender = gender
-	person.pregnant = pregnant
-	person.due_date = due_date
 	person.notes = notes
 	person.emergency_contact_details = emergency_contact_details
 	person.membership_number = membership_number
@@ -1903,9 +1890,6 @@ def exceptions(request, page=1):
 	elif 'parents_without_children_under_four' in path:
 		parents_with_no_children, parents = get_parents_without_children(request)
 		exceptions_template = loader.get_template('people/parents_without_children_under_four.html')
-	elif 'parents_with_overdue_children' in path:
-		parents = get_parents_with_overdue_children(request)
-		exceptions_template = loader.get_template('people/parents_with_overdue_children.html')
 	# set other variables
 	page_list = []
 	results_per_page = 25
@@ -2344,8 +2328,6 @@ def profile(request, person_id=0):
 								emergency_contact_details = profileform.cleaned_data['emergency_contact_details'],
 								date_of_birth = profileform.cleaned_data['date_of_birth'],
 								gender = profileform.cleaned_data['gender'],
-								pregnant = profileform.cleaned_data['pregnant'],
-								due_date = profileform.cleaned_data['due_date'],
 								default_role_id = profileform.cleaned_data['role_type'],
 								ethnicity_id = profileform.cleaned_data['ethnicity'],
 								membership_type_id = profileform.cleaned_data['membership_type'],
@@ -2398,8 +2380,6 @@ def profile(request, person_id=0):
 						'role_type' : person.default_role.pk,
 						'ethnicity' : person.ethnicity.pk,
 						'gender' : person.gender,
-						'pregnant' : person.pregnant,
-						'due_date' : person.due_date,
 						'membership_type' : membership_type,
 						'date_joined_project' : date_joined_project,
 						'date_left_project' : date_left_project,

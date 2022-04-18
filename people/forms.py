@@ -435,19 +435,6 @@ class ProfileForm(forms.Form):
 									required=False,
 									choices=gender_choices,
 									widget=forms.Select(attrs={'class' : 'form-control'}))
-	pregnant = forms.BooleanField(
-									label = "Pregnant (or partner is pregnant)",
-									required = False)
-	due_date = forms.DateField(
-									label="Pregnancy due date",
-									required=False,
-									widget=forms.DateInput(
-																format='%d/%m/%Y',
-																attrs={
-																	'class' : 'form-control datepicker',
-																	'autocomplete' : 'off'
-																	}),
-									input_formats=('%d/%m/%Y',))
 	notes = forms.CharField(
 								label="Notes",
 								required=False,
@@ -481,11 +468,6 @@ class ProfileForm(forms.Form):
 				self.fields['email_address'].widget = forms.HiddenInput()
 				self.fields['home_phone'].widget = forms.HiddenInput()
 				self.fields['mobile_phone'].widget = forms.HiddenInput()
-			# and the pregnancy fields
-			if not age_status.can_be_pregnant:
-				# hide the pregnancy fields
-				self.fields['pregnant'].widget = forms.HiddenInput()
-				self.fields['due_date'].widget = forms.HiddenInput()
 			# and the role type
 			if age_status.default_role_type_only:
 				# hide the role type field
@@ -564,13 +546,6 @@ class ProfileForm(forms.Form):
 						Column('date_of_birth',css_class='form-group col-md-3 mb-0'),
 						Column('ethnicity',css_class='form-group col-md-3 mb-0'),
 						Column('gender',css_class='form-group col-md-3 mb-0'),
-						css_class='form-row'	
-						)
-					)
-		rows.append(
-					Row(
-						Column('pregnant',css_class='form-group col-md-3 mb-0'),
-						Column('due_date',css_class='form-group col-md-9 mb-0'),
 						css_class='form-row'	
 						)
 					)

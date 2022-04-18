@@ -1865,7 +1865,6 @@ class Panel(DataAccessMixin,models.Model):
 	def build_parent_exceptions(self):
 		# initialise the variables
 		parents_with_no_children, parents_with_no_children_under_four = self.get_parents_without_children()
-		parents_with_overdue_children = self.get_parents_with_overdue_children()
 		self.rows=[]
 		# build the the rows
 		self.rows.append(
@@ -1881,14 +1880,6 @@ class Panel(DataAccessMixin,models.Model):
 												label = 'Parents with no children under four',
 												values = [len(parents_with_no_children_under_four)],
 												url = 'parents_without_children_under_four',
-												parameter = 1
-												)
-						)
-		self.rows.append(
-							Dashboard_Panel_Row(
-												label = 'Parents with overdue children',
-												values = [len(parents_with_overdue_children)],
-												url = 'parents_with_overdue_children',
 												parameter = 1
 												)
 						)
@@ -1936,14 +1927,6 @@ class Panel(DataAccessMixin,models.Model):
 					parents_with_no_children_under_four.append(parent)
 		# return the results
 		return parents_with_no_children, parents_with_no_children_under_four
-
-	def get_parents_with_overdue_children(self):
-		# return a list of parents with a pregnancy flag and a due date before today
-		return Person.search(
-								project=Project.current_project(self.request.session),
-								pregnant=True,
-								due_date__lt=date.today()
-								)
 
 	# function to build the row in the panel
 	def build_rows(self):

@@ -813,8 +813,6 @@ class People_File_Handler(File_Handler):
 		self.mobile_phone = File_Field(name='mobile_phone',max_length=50)
 		self.date_of_birth = File_Datetime_Field(name='date_of_birth',datetime_format='%d/%m/%Y')
 		self.gender = File_Field(name='gender',max_length=25)
-		self.pregnant = File_Boolean_Field(name='pregnant')
-		self.due_date = File_Datetime_Field(name='due_date',datetime_format='%d/%m/%Y')
 		self.default_role = File_Field(
 										name='default_role',
 										mandatory=True,
@@ -921,8 +919,6 @@ class People_File_Handler(File_Handler):
 						'mobile_phone',
 						'date_of_birth',
 						'gender',
-						'pregnant',
-						'due_date',
 						'default_role',
 						'ethnicity',
 						'age_status',
@@ -1007,14 +1003,6 @@ class People_File_Handler(File_Handler):
 			and self.date_of_birth.valid
 			and self.date_of_birth.value.date() < today.replace(year=today.year-self.age_status.value.maximum_age)):
 			self.add_record_errors(record,[' not created: too old for age status'])
-			valid = False
-		# now check whether we have a due date without a pregnancy flag
-		if self.due_date.value and not self.pregnant.value:
-			self.add_record_errors(record,[' not created: has due date but is not pregnant.'])
-			valid = False
-		# now check the other way around
-		if not self.due_date.value and self.pregnant.value:
-			self.add_record_errors(record,[' not created: has no due date but is pregnant.'])
 			valid = False
 		# check whether we have any address details
 		if (self.post_code.value or self.street.value or self.house_name_or_number.value) and not update:

@@ -1719,8 +1719,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'Address missing house number not created: all of post code, street and name/number needed for address')
 		self.assertContains(response,'Address missing street not created: all of post code, street and name/number needed for address')
 		self.assertContains(response,'Address missing post code not created: all of post code, street and name/number needed for address')
-		self.assertContains(response,'Pregnant missing due date not created: has no due date but is pregnant')
-		self.assertContains(response,'Not pregnant with due date not created: has due date but is not pregnant')
 		self.assertContains(response,'Role invalid for age status not created: role type is not valid for age status')
 		self.assertContains(response,'Too old for age status not created: too old for age status')
 		self.assertContains(response,'ABSS end date without start date not created: ABSS end date is provided but not ABSS start date')
@@ -1747,8 +1745,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertContains(response,'Address missing house number not created: all of post code, street and name/number needed for address')
 		self.assertContains(response,'Address missing street not created: all of post code, street and name/number needed for address')
 		self.assertContains(response,'Address missing post code not created: all of post code, street and name/number needed for address')
-		self.assertContains(response,'Pregnant missing due date not created: has no due date but is pregnant')
-		self.assertContains(response,'Not pregnant with due date not created: has due date but is not pregnant')
 		self.assertContains(response,'Role invalid for age status not created: role type is not valid for age status')
 		self.assertContains(response,'Too old for age status not created: too old for age status')
 		self.assertContains(response,'Date left without date joined not created: date left is provided but not date joined')
@@ -1773,7 +1769,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'Invalid date of birth not created: date_of_birth 01/01/19xx is invalid date or time')
-		self.assertContains(response,'Invalid due date not created: due_date 01/01/19xx is invalid date or time')
 		self.assertContains(response,'Invalid ABSS start date not created: ABSS_start_date 01/xx/2001 is invalid date or time')
 		self.assertContains(response,'Invalid ABSS end date not created: ABSS_end_date 01/xx/2005 is invalid date or time')
 		# check that no records have been created
@@ -1796,7 +1791,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'Invalid date of birth not created: date_of_birth 01/01/19xx is invalid date or time')
-		self.assertContains(response,'Invalid due date not created: due_date 01/01/19xx is invalid date or time')
 		self.assertContains(response,'Invalid date joined not created: date_joined 01/xx/2001 is invalid date or time')
 		self.assertContains(response,'Invalid date left not created: date_left 01/xx/2005 is invalid date or time')
 		# check that no records have been created
@@ -1879,8 +1873,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -1909,8 +1901,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -1939,8 +1929,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -1987,8 +1975,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2022,8 +2008,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2057,8 +2041,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2111,8 +2093,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2140,8 +2120,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2170,8 +2148,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2236,8 +2212,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2271,8 +2245,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2306,8 +2278,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2379,8 +2349,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2414,8 +2382,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2449,8 +2415,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2504,8 +2468,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2539,8 +2501,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2574,8 +2534,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2628,8 +2586,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2657,8 +2613,6 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,False)
-		self.assertEqual(test_person.due_date,None)
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2724,8 +2678,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2771,8 +2723,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2818,8 +2768,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2883,8 +2831,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2948,8 +2894,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -2993,8 +2937,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3040,8 +2982,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3085,8 +3025,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3132,8 +3070,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3162,8 +3098,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3192,8 +3126,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3238,8 +3170,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3270,8 +3200,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -3300,8 +3228,6 @@ class UpdatePeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)
 		self.assertEqual(test_person.events.all().exists(),False)
-		self.assertEqual(test_person.pregnant,True)
-		self.assertEqual(test_person.due_date.strftime('%d/%m/%Y'),'01/01/2020')
 		self.assertEqual(test_person.ethnicity.description,'test_ethnicity')
 		self.assertEqual(test_person.families.all().exists(),False)
 		self.assertEqual(test_person.savs_id,None)
@@ -4202,8 +4128,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
-		person.pregnant = True
-		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
 		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
 		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
@@ -4224,9 +4148,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right records
-		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_ABSS_type,,,')
-		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
-		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_0,test_adult_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_ABSS_type,,,')
+		self.assertContains(response,'test_adult_1,test_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_ABSS_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_child_0,test_child_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_ABSS_type,,,')
 
 	def test_download_people_with_projects_active(self):
 		# add the user to a project, and set projects active
@@ -4256,8 +4180,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
-		person.pregnant = True
-		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')
@@ -4279,9 +4201,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
-		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,01/01/2011,02/02/2012,Test ward')
-		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
@@ -4314,8 +4236,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
-		person.pregnant = True
-		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
 		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
 		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
@@ -4344,9 +4264,9 @@ class DownloadPeopleDataViewTest(TestCase):
 									)
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
-		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
-		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,,,Test ward')
-		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,,,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
@@ -4379,8 +4299,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
-		person.pregnant = True
-		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')
@@ -4413,9 +4331,9 @@ class DownloadPeopleDataViewTest(TestCase):
 		# check that we got a success response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the right records
-		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
-		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,True,01/01/2010,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,01/01/2011,02/02/2012,Test ward')
-		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,False,,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_0,test_project_adult_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,,,,test notes,,0,test_membership_type,,,')
+		self.assertContains(response,'test_project_adult_1,test_project_adult_1,test other_names,test@test.com,123456,789012,01/01/2000,Gender,test_role_type,test_ethnicity,Adult,123,ABC streets 10,ABC0,test notes,test ecd,12345,test_membership_type,01/01/2011,02/02/2012,Test ward')
+		self.assertContains(response,'test_project_child_0,test_project_child_0,,test@test.com,,,01/01/2000,Gender,test_role_type,test_ethnicity,Child under four,,,,test notes,,0,test_membership_type,,,')
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
@@ -4433,8 +4351,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
-		person.pregnant = True
-		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
 		person.ABSS_start_date = datetime.datetime.strptime('2011-01-01','%Y-%m-%d')
 		person.ABSS_end_date = datetime.datetime.strptime('2012-02-02','%Y-%m-%d')
@@ -4495,8 +4411,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		person.other_names = 'test other_names'
 		person.home_phone = '123456'
 		person.mobile_phone = '789012'
-		person.pregnant = True
-		person.due_date = datetime.datetime.strptime('2010-01-01','%Y-%m-%d')
 		person.house_name_or_number = '123'
 		person.emergency_contact_details = 'test ecd'
 		person.street = Street.objects.get(name='ABC streets 10')

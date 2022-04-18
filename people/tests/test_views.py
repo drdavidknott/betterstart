@@ -1359,8 +1359,8 @@ class PeopleViewTest(TestCase):
 		# check that we got a response
 		self.assertEqual(response.status_code, 200)
 		# check that we got the error message
-		self.assertContains(response,'Test_Role_1_0,Test_Role_1_0,,test@test.com,,,01/01/2000,Gender,False,,test role 1,')
-		self.assertContains(response,'Test_Role_1_49,Test_Role_1_49,,test@test.com,,,01/01/2000,Gender,False,,test role 1,')
+		self.assertContains(response,'Test_Role_1_0,Test_Role_1_0,,test@test.com,,,01/01/2000,Gender,test role 1,')
+		self.assertContains(response,'Test_Role_1_49,Test_Role_1_49,,test@test.com,,,01/01/2000,Gender,test role 1,')
 
 	def test_download_limited(self):
 		# log the user in

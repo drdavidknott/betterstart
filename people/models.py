@@ -851,7 +851,6 @@ class Person(DataAccessMixin,models.Model):
 		# create a dictionary of search terms and filters: each search term identifies a dictionary
 		# that will be used to build the filter
 		keyword_filters = {
-						'pregnant' : { 'pregnant' : True },
 						'in project' : { 'ABSS_end_date__isnull' : True },
 						'left project' : { 'ABSS_end_date__isnull' : False }
 						}

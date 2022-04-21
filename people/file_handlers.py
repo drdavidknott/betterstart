@@ -392,9 +392,10 @@ class File_Handler():
 					# do the validation
 					if self.existing_record:
 						fields_valid = self.fields_valid(record,update=True)
-						update_valid = self.update_validation_valid(record)
+						self.set_update_fields(record)
+						complex_valid = self.complex_validation_valid(record,update=True)
 						# update the record if all is valid; increment counts in either case
-						if (fields_valid and update_valid):
+						if fields_valid and complex_valid:
 							self.update_record(record)
 							self.records_updated += 1
 						else:
@@ -493,9 +494,7 @@ class File_Handler():
 		# placeholder function to be replaced in sub-classess
 		return True
 
-	def update_validation_valid(self,record):
-		# set the results
-		valid = True
+	def set_update_fields(self,record):
 		# set values for complex validation
 		for field_name in self.fields:
 			file_field = getattr(self,field_name)
@@ -507,10 +506,8 @@ class File_Handler():
 				file_field.value = value
 				file_field.exists = True
 				file_field.valid = True
-		# do the complex validation
-		valid = self.complex_validation_valid(record,update=True)
 		# return the result
-		return valid
+		return True
 
 	def get_existing_record(self,record):
 		# placeholder function to be replaced in sub-classess
@@ -1245,6 +1242,9 @@ class Events_File_Handler(File_Handler):
 		super(Events_File_Handler, self).__init__(*args, **kwargs)
 		# set the class
 		self.file_class = Event
+		# and the file attributes
+		self.update = True
+		self.existing_record = False
 		# set the file fields
 		self.name = File_Field(name='name',mandatory=True,max_length=50)
 		self.description = File_Field(name='description',mandatory=True,max_length=1500)
@@ -1291,6 +1291,7 @@ class Events_File_Handler(File_Handler):
 												delimiter=',',
 												corresponding_field='area_name',
 												include_in_create = False,
+												include_in_update = False,
 												corresponding_relationship_field='areas'
 												)
 		# and a list of the fields
@@ -1313,14 +1314,17 @@ class Events_File_Handler(File_Handler):
 	def complex_validation_valid(self,record,update=False):
 		# set the value
 		valid = True
+		# set the action verb
+		action = 'created' if not update else 'updated'
 		# now attempt to get a matching event
-		if self.name.valid and self.date.valid and Event.search(
-																name = self.name.value,
-																date = self.date.value,
-																project = self.project
-																).exists():
+		if not update and self.name.valid and self.date.valid and self.start_time.valid and Event.search(
+																											name = self.name.value,
+																											date = self.date.value,
+																											start_time = self.start_time.value,
+																											project = self.project
+																											).exists():
 			# set the message to show that it exists
-			self.add_record_errors(record,[' not created: event already exists.'])
+			self.add_record_errors(record,[' not ' + action + ': event already exists.'])
 			# and set the flag
 			valid = False
 		# now go through the areas
@@ -1328,7 +1332,7 @@ class Events_File_Handler(File_Handler):
 			# deal with the exception
 			if not Area.try_to_get(area_name = area_name):
 				# set the error
-				self.add_record_errors(record,[' not created: area ' + area_name + ' does not exist.'])
+				self.add_record_errors(record,[' not ' + action + ': area ' + area_name + ' does not exist.'])
 				# and the flag
 				valid = False
 		# return the result
@@ -1356,6 +1360,89 @@ class Events_File_Handler(File_Handler):
 		event.project = self.project
 		event.save()
 		return
+
+	def get_existing_record(self,record):
+		# initialise variables
+		self.existing_record = False
+		event = False
+		# set the fields
+		name = record['name']
+		date = record['date']
+		start_time = record['start_time']
+		# check the date value
+		try:
+			date = datetime.datetime.strptime(date, self.date.datetime_format)
+		# deal with the exception
+		except ValueError:
+			date = False
+			self.add_record_errors(
+									record,
+									[' not updated: date ' 
+										+ str(record['date']) + ' is invalid.'])
+		# and the time value
+		try:
+			start_time = datetime.datetime.strptime(start_time, self.start_time.datetime_format)
+		# deal with the exception
+		except ValueError:
+			start_time = False
+			self.add_record_errors(
+									record,
+									[' not updated: time ' 
+										+ str(record['start_time']) + ' is invalid.'])
+		# set the validity flag
+		self.valid = (not self.errors)
+		# attempt to get the person record
+		if name and date:
+			event, message, multiples  = Event.try_to_get_just_one(
+																		name = name,
+																		date = date,
+																		start_time = start_time
+																	)
+			# if we have a set the attribute, otherwise raise an error
+			if event:
+				self.existing_record = event
+			else:
+				self.add_record_errors(
+										record,
+										[' not updated: ' + message]
+										)
+		# print(self.errors)
+		return
+
+	def set_update_fields(self,record):
+		# store the areas
+		areas = self.areas.value
+		# call the built in method
+		super(Events_File_Handler, self).set_update_fields(record)
+		# now set the areas field to a string of area names
+		if not areas and self.existing_record:
+			areas = []
+			for area in self.existing_record.areas.all():
+				areas.append(area.area_name)
+			self.areas.value = areas
+		# return the result
+		return True
+
+	def update_record(self,record):
+		# over ride the built in method so that we can handle areas
+		# call the built in method
+		event = super(Events_File_Handler, self).update_record(record)
+		# handle the areas if we have a value for areas in the update
+		if self.areas.value:
+			# clear the existing areas
+			event.areas.clear()
+			self.add_record_results(record,[': old areas cleared.'])
+			# add the new areas
+			for area_name in self.areas.value:
+				area = Area.objects.get(area_name=area_name)
+				event.areas.add(area)
+				self.add_record_results(record,[': area ' + area_name + ' created.'])
+			# add the ward area if it isn't already in the set
+			if event.ward and event.ward.area.area_name not in self.areas.value:
+				event.areas.add(event.ward.area)
+				self.add_record_results(record,[': area ' + event.ward.area.area_name + ' created.'])
+		# return the updated record
+		return self.existing_record
 
 	def label(self,record):
 		# return the label

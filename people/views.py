@@ -3603,6 +3603,7 @@ def uploaddata(request):
 	# define the records that have update file handlers
 	update_file_handlers = {
 							'Update People' : People_File_Handler,
+							'Update Events' : Events_File_Handler,
 							'Update Answers' : Answers_File_Handler,
 							'Update Post Codes' : Post_Codes_File_Handler,
 							}

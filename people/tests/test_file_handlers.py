@@ -3447,6 +3447,278 @@ class UploadEventsDataViewTest(TestCase):
 		# check that we only have two events
 		self.assertEqual(Event.objects.all().count(),2)
 
+class UpdateEventsDataViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# set up base data for people
+		set_up_event_base_data()
+		# and other base data
+		set_up_address_base_data()
+		set_up_venue_base_data()
+		# and an update event type
+		# create an event category
+		test_event_category = Event_Category.objects.get(name='test_event_category')
+		# create an event type
+		Event_Type.objects.create(
+									name = 'update_test_event_type',
+									description = 'update_type desc',
+									event_category = test_event_category
+									)
+		# and an update venue
+		Venue.objects.create(
+								name = 'update_test_venue',
+								building_name_or_number = '123',
+								venue_type = Venue_Type.objects.get(name='test_venue_type'),
+								street = Street.objects.get(name='venue_street0')
+								)
+
+	def test_update_events(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+		# open the update file
+		valid_file = open('people/tests/data/update_events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'update test event description')
+		self.assertEqual(event.event_type.name,'update_test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'12:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'update_test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+
+	def test_update_events_with_area_change(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+		# open the update file
+		valid_file = open('people/tests/data/update_events_with_area_change.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'update test event description')
+		self.assertEqual(event.event_type.name,'update_test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'12:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'update_test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		self.assertTrue(event.areas.filter(area_name='Test area 3'))
+		self.assertFalse(event.areas.filter(area_name='Test area').exists())
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+
+	def test_update_events_new_record(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+		# open the update file
+		valid_file = open('people/tests/data/update_events_new_record.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event',start_time=datetime.datetime.strptime('11:00','%H:%M'))
+		# check the fields
+		self.assertEqual(event.description,'update test event description')
+		self.assertEqual(event.event_type.name,'update_test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'12:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'update_test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		self.assertTrue(event.areas.filter(area_name='Test area 3'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),2)
+
+	def test_update_events_invalid_area(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# open the file
+		valid_file = open('people/tests/data/events.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+		# open the update file
+		valid_file = open('people/tests/data/update_events_invalid_area.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Update Events',
+											'file' : valid_file
+											}
+									)
+		# check that we got a valid result
+		self.assertEqual(response.status_code, 200)
+		# check the error message
+		self.assertContains(response,'test event not updated: area Test area 4 does not exist')
+		# get the record
+		event = Event.objects.get(name='test event')
+		# check the fields have not been changed
+		self.assertEqual(event.description,'test event description')
+		self.assertEqual(event.event_type.name,'test_event_type')
+		self.assertEqual(event.date.strftime('%d/%m/%Y'),'01/01/2018')
+		self.assertEqual(event.start_time.strftime('%H:%M'),'10:00')
+		self.assertEqual(event.end_time.strftime('%H:%M'),'11:00')
+		self.assertEqual(event.location,'Test location')
+		self.assertEqual(event.venue.name,'test_venue')
+		self.assertEqual(event.ward.ward_name,'Test ward 2')
+		# check that the area connections exist
+		self.assertTrue(event.areas.filter(area_name='Test area'))
+		self.assertTrue(event.areas.filter(area_name='Test area 2'))
+		# check that we only have one event
+		self.assertEqual(Event.objects.all().count(),1)
+
+
+
 class UploadRelationshipsDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

@@ -157,6 +157,7 @@ def set_up_address_base_data():
 	# create records required for an post code and street
 	area = Area.objects.create(area_name='Test area',use_for_events=True)
 	area_2 = Area.objects.create(area_name='Test area 2',use_for_events=True)
+	area_3 = Area.objects.create(area_name='Test area 3',use_for_events=True)
 	ward = Ward.objects.create(ward_name='Test ward',area=area)
 	ward_2 = Ward.objects.create(ward_name='Test ward 2',area=area_2)
 	ward_3 = Ward.objects.create(ward_name='Unknown',area=area)

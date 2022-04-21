@@ -1,0 +1,2 @@
+name,description,event_type,date,start_time,end_time,location,venue,ward,areas
+test event,update test event description,update_test_event_type,01/01/2018,10:00,12:00,Test location,update_test_venue,Test ward 2,"Test area 4"

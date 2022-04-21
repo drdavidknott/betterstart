@@ -257,6 +257,7 @@ class UploadDataForm(forms.Form):
 						'Venues',
 						'Venues for Events',
 						'Update People',
+						'Update Events',
 						'Update Answers',
 						'Update Post Codes',
 						]

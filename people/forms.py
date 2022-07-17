@@ -2495,3 +2495,17 @@ class SubmitSurveyForm(forms.Form):
 								)
 					)			
 		self.helper.layout = Layout(*rows)
+
+class ResolveAgeExceptionsForm(forms.Form):
+	# over-ride the __init__ method
+	def __init__(self, *args, **kwargs):
+		# call the built in constructor
+		super(ResolveAgeExceptionsForm, self).__init__(*args, **kwargs)
+		# define the crispy form helper
+		self.helper = FormHelper()
+		# and define the layout
+		self.helper.layout = Layout(
+									Row(
+										Column(Submit('resolve', 'Apply Recommendations'),css_class='col-xs-12 mb-0')
+										),
+									)

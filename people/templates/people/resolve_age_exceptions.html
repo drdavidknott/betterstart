@@ -1,0 +1,112 @@
+{% extends "people/base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!-- Home page -->
+ 
+{% block title %}Better Start{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+	<div class="row">
+ 		<div class="col-xs-12">
+ 			<h3>
+	 			<span class="glyphicon glyphicon-user"></span>
+	 			<span class="glyphicon glyphicon-warning-sign"></span>
+	 			Age Exceptions:
+ 			</h3>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-xs-12">
+ 			<hr>
+	 	</div>
+	</div>
+
+    {% if results %}
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div>
+                    <h4>
+                        <span class="glyphicon glyphicon-user"></span>
+                        Results of Recommended Changes
+                    <h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="col-xs-12">
+                <table class="table table-striped">
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td>
+                                    {{ result }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+	{% endif %}
+
+	{% if people %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				<table class="table table-striped" id="people">
+					<tbody>
+				 		{% for person in people %}
+			 				<tr>
+			 					<td>
+			 						<a href="{% url 'person' person.pk %}">
+										{{ person }}
+									</a>
+								</td>
+								<td>
+									{{ person.age_status.status }}: 
+                                    maximum age {{ person.age_status.maximum_age}}, 
+                                    current age {{ person.age_in_years }}
+								</td>
+                                <td>
+                                    {% if person.recommended_age_status %}
+                                        Recommended: {{ person.recommended_age_status.status }} as 
+                                        {{ person.recommended_role_type.role_type_name }}
+                                    {% else %}
+                                        No recommendation: set manually
+                                    {% endif %}
+                                </td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+        <div class="row">
+            <div class="col-xs-12">
+                 {% crispy resolveageexceptionsform %}
+             </div>
+        </div>
+
+	{% else %}
+
+		<div class="form-row">
+			<div class="col-xs-12">
+				No age exceptions
+			</div>
+		</div>
+
+	{% endif %}
+
+</div>
+
+{% endblock %}
+

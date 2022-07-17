@@ -23,7 +23,8 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					VenueForm, VenueSearchForm, ChangePasswordForm, ForgotPasswordForm, \
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
 					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm, \
-					SurveySeriesForm, SurveyForm, SurveySectionForm, SurveyQuestionForm, SubmitSurveyForm
+					SurveySeriesForm, SurveyForm, SurveySectionForm, SurveyQuestionForm, SubmitSurveyForm, \
+					ResolveAgeExceptionsForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -1942,6 +1943,59 @@ def age_exceptions(request, age_status_id=0):
 	return HttpResponse(age_exceptions_template.render(context=context, request=request))
 
 @login_required
+def resolve_age_exceptions(request):
+	# initialise variables
+	project = Project.current_project(request.session)
+	results = []
+	# load the template
+	resolve_age_exceptions_template = loader.get_template('people/resolve_age_exceptions.html')
+	# create an empty Person queryset
+	all_age_exceptions = Person.objects.none()
+	# go through the age statuses
+	for age_status in Age_Status.objects.all():
+		# get today's date
+		today = datetime.date.today()
+		earliest_date = today.replace(year=today.year-(age_status.maximum_age + 1))
+		# get the exceptions
+		age_exceptions = Person.search(
+										age_status=age_status,
+										date_of_birth__lt=earliest_date,
+										project=project
+										)
+		# merge the exceptions with the previous queryset
+		all_age_exceptions = all_age_exceptions | age_exceptions
+	# if we got a POST, apply the recommendations, building a list of results
+	if request.method == 'POST':
+		for person in all_age_exceptions:
+			recommended_age_status = person.recommended_age_status()
+			recommended_role_type = person.recommended_role_type()
+			if recommended_age_status:
+				person.age_status = recommended_age_status
+				person.default_role = recommended_role_type
+				person.save()
+				results.append(
+								person.full_name() + 
+								' updated to ' + 
+								person.age_status.status + 
+								' as ' + 
+								person.default_role.role_type_name
+								)
+				# remove the person from the exceptions queryset
+				all_age_exceptions = all_age_exceptions.exclude(pk=person.pk)
+			else:
+				results.append(person.full_name() + ' not updated: resolve manually')
+	# create the form
+	resolveageexceptionsform = ResolveAgeExceptionsForm()
+	# set the context from the person based on person id
+	context = build_context(request,{
+				'people' : all_age_exceptions,
+				'resolveageexceptionsform' : resolveageexceptionsform,
+				'results' : results
+				})
+	# return the response
+	return HttpResponse(resolve_age_exceptions_template.render(context=context, request=request))
+
+@login_required
 def addperson(request):
 	# create a blank list of matching people
 	matching_people = []
@@ -3821,6 +3875,8 @@ def chart(request,name=''):
 
 @login_required
 def settings(request,):
+	# get the project
+	project = Project.current_project(request.session)
 	# get the profile
 	profile = Profile.try_to_get(user=request.user)
 	# load the template
@@ -3828,10 +3884,11 @@ def settings(request,):
 	# set the context
 	context = build_context(
 							request,
-							{
-								'profile' : Profile.try_to_get(user=request.user),
-								'site' : Site.objects.all().first()
-							}
+								{
+								'profile' : profile,
+								'site' : Site.objects.all().first(),
+								'project' : project,
+								}
 							)
 	# return the response
 	return HttpResponse(template.render(context=context, request=request))

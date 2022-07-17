@@ -185,6 +185,7 @@ class Age_Status(DataAccessMixin,models.Model):
 	can_be_parent_champion = models.BooleanField(default=False)
 	can_be_pregnant = models.BooleanField(default=False)
 	can_have_contact_details = models.BooleanField(default=False)
+	use_for_automated_categorisation = models.BooleanField(default=True)
 	minimum_age = models.IntegerField(default=0)
 	maximum_age = models.IntegerField(default=999)
 	# define the function that will return the person name as the object reference
@@ -534,9 +535,11 @@ class Person(DataAccessMixin,models.Model):
 	class Meta:
 		verbose_name_plural = 'people'
 		ordering = ('last_name','first_name')
+
 	# and a function to return the full name
 	def full_name(self):
 		return self.first_name + ' ' + self.last_name
+
 	# and a function to return an age description
 	def age_description(self):
 		# create a description
@@ -547,6 +550,35 @@ class Person(DataAccessMixin,models.Model):
 			desc += ', born on ' + self.date_of_birth.strftime('%b %d %Y')
 		# return the value
 		return desc
+
+	# and a function to return age in years on a given date, with a default of today
+	def age_in_years(self,age_date=date.today()):
+		born = self.date_of_birth
+		age_in_years = age_date.year - born.year - ((age_date.month, age_date.day) < (born.month, born.day))
+		return age_in_years
+
+	# and a function to get a recommended age status
+	def recommended_age_status(self):
+		# use current age to get the recommended age status
+		current_age = self.age_in_years()
+		age_status, message, multiples  = Age_Status.try_to_get_just_one(
+																			minimum_age__lte=current_age,
+																			maximum_age__gte=current_age,
+																			default_role_type__isnull = False,
+																			use_for_automated_categorisation = True,
+																			)
+		return age_status
+
+	# and a function to get a recommnended role type for the recommended age status
+	def recommended_role_type(self):
+		# get the recommended age status
+		age_status = self.recommended_age_status()
+		# if the current role type is allowed by the age status, recommend that, otherwise recommend the default
+		if self.default_role in age_status.role_types.all():
+			role_type = self.default_role
+		else:
+			role_type = age_status.default_role_type
+		return role_type
 
 	# and a function to return a description of membership in the project
 	def project_description(self):

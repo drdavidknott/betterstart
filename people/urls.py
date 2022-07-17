@@ -61,6 +61,7 @@ urlpatterns = [
     	views.exceptions, name='children_over_four'),
     url(r'^answer_questions/(?P<person_id>[0-9]+)$', views.answer_questions, name='answer_questions'),
     url(r'^age_exceptions/(?P<age_status_id>[0-9]+)$', views.age_exceptions, name='age_exceptions'),
+    url(r'^resolve_age_exceptions$', views.resolve_age_exceptions, name='resolve_age_exceptions'),
     url(r'^activities/(?P<person_id>[0-9]+)$', views.activities, name='activities'),
     url(r'^dashboard/(?P<name>[\w]+)$', views.dashboard, name='dashboard'),
     url(r'^dashboard$', views.dashboard, name='dashboard'),

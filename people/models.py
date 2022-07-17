@@ -185,6 +185,7 @@ class Age_Status(DataAccessMixin,models.Model):
 	can_be_parent_champion = models.BooleanField(default=False)
 	can_be_pregnant = models.BooleanField(default=False)
 	can_have_contact_details = models.BooleanField(default=False)
+	minimum_age = models.IntegerField(default=0)
 	maximum_age = models.IntegerField(default=999)
 	# define the function that will return the person name as the object reference
 	def __str__(self):

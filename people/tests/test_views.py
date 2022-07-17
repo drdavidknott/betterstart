@@ -537,7 +537,6 @@ class ChangePasswordViewTest(TestCase):
 		# check the response
 		self.assertEqual(response.status_code, 200)
 
-
 class ForgotPasswordViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -589,7 +588,6 @@ class ForgotPasswordViewTest(TestCase):
 									)
 		# check the response
 		self.assertEqual(response.status_code, 200)
-
 
 class ResetPasswordViewTest(TestCase):
 	@classmethod
@@ -14742,3 +14740,142 @@ class SubmitSurveyViewTest(TestCase):
 		# check that the right number of records were created
 		self.assertEqual(Survey_Submission.objects.all().count(),1)
 		self.assertEqual(Survey_Answer.objects.all().count(),2)
+
+class ResolveAgeExceptionsViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		superuser = set_up_test_superuser()
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testsuper',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# set up base data: first the ethnicity
+		test_ethnicity = Ethnicity.objects.create(description='test_ethnicity')
+		# and the capture type
+		test_capture_type = Capture_Type.objects.create(capture_type_name='test_capture_type')
+		# create roles
+		child_under_4_role = Role_Type.objects.create(role_type_name='Child under 4',use_for_events=True,use_for_people=True)
+		child_over_3_role = Role_Type.objects.create(role_type_name='Child over 3',use_for_events=True,use_for_people=True)
+		unknown_role = Role_Type.objects.create(role_type_name='UNKNOWN',use_for_events=True,use_for_people=True)
+		parent_role = Role_Type.objects.create(role_type_name='Parent',use_for_events=True,use_for_people=True)
+		# create test age statuses
+		child_under_4_age_status = Age_Status.objects.create(status='Child under 4',minimum_age=0,maximum_age=3,default_role_type=child_under_4_role)
+		child_under_4_age_status.role_types.add(child_under_4_role)
+		child_over_3_age_status = Age_Status.objects.create(status='Child over 3',minimum_age=4,maximum_age=17,default_role_type=child_over_3_role)
+		child_over_3_age_status.role_types.add(child_over_3_role)
+		adult_age_status = Age_Status.objects.create(status='Adult',minimum_age=18,maximum_age=999,default_role_type=unknown_role)
+		adult_age_status.role_types.add(parent_role)
+		adult_age_status.role_types.add(unknown_role)
+		adult_unknown_status = Age_Status.objects.create(status='Adult (unknown age)',minimum_age=18,maximum_age=999,default_role_type=unknown_role,use_for_automated_categorisation=False)
+		adult_unknown_status.role_types.add(parent_role)
+		adult_unknown_status.role_types.add(unknown_role)
+		# create test membership types
+		test_membership_type = Membership_Type.objects.create(name='test_membership_type',default=True)
+		second_test_membership_type = Membership_Type.objects.create(name='second_test_membership_type')
+		# create a test ABSS type
+		test_ABSS_type = ABSS_Type.objects.create(name='test_ABSS_type',membership_type=test_membership_type)
+		# create a second test ABSS type
+		second_test_ABSS_type = ABSS_Type.objects.create(name='second_test_ABSS_type',membership_type=second_test_membership_type)
+		# Create people
+		set_up_test_people('child_under_4_','Child under 4',1,test_ABSS_type,'Child under 4',project)
+		set_up_test_people('child_over_3_','Child under 4',1,test_ABSS_type,'Child under 4',project)
+		set_up_test_people('adult_','Parent',1,test_ABSS_type,'Child over 3',project)
+		set_up_test_people('adult_unknown_','UNKNOWN',1,test_ABSS_type,'Adult (unknown age)',project)
+		# modfy the dates so that two people are in the wrong category
+		today = datetime.date.today()
+		person = Person.objects.get(first_name='child_under_4_0')
+		person.date_of_birth = today.replace(year=today.year-2)
+		person.save()
+		person = Person.objects.get(first_name='child_over_3_0')
+		person.date_of_birth = today.replace(year=today.year-6)
+		person.save()
+		person = Person.objects.get(first_name='adult_0')
+		person.date_of_birth = today.replace(year=today.year-20)
+		person.save()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/resolve_age_exceptions')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/resolve_age_exceptions')
+
+	def test_redirect_if_not_superuser(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# get the response
+		response = self.client.get('/resolve_age_exceptions')
+		# check the response
+		self.assertRedirects(response, '/')
+
+	def test_review_age_exceptions(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.get(reverse('resolve_age_exceptions'))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		# the list of people passed in the context should be empty
+		self.assertEqual(len(response.context['people']),2)
+
+	def test_resolve_age_exceptions(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# attempt to get the events page
+		response = self.client.post(
+									reverse('resolve_age_exceptions'),
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of results
+		self.assertEqual(len(response.context['results']),2)
+		# check how many people we got
+		self.assertEqual(len(response.context['people']),0)
+		# check the results
+		person = Person.objects.get(first_name='child_under_4_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Child under 4'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='Child under 4'))
+		person = Person.objects.get(first_name='child_over_3_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Child over 3'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='Child over 3'))
+		person = Person.objects.get(first_name='adult_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Adult'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='Parent'))
+		person = Person.objects.get(first_name='adult_unknown_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Adult (unknown age)'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='UNKNOWN'))
+
+	def test_resolve_age_exceptions_manual_action(self):
+		# log the user in
+		self.client.login(username='testsuper', password='superword')
+		# add another adult age status
+		unknown_role = Role_Type.objects.get(role_type_name='UNKNOWN')
+		Age_Status.objects.create(status='Adult extra',minimum_age=18,maximum_age=999,default_role_type=unknown_role)
+		# attempt to get the age page
+		response = self.client.post(
+									reverse('resolve_age_exceptions'),
+									)
+		# check that we got a response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right number of results
+		self.assertEqual(len(response.context['results']),2)
+		# check how many people we got
+		self.assertEqual(len(response.context['people']),1)
+		# check the results
+		person = Person.objects.get(first_name='child_under_4_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Child under 4'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='Child under 4'))
+		person = Person.objects.get(first_name='child_over_3_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Child over 3'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='Child over 3'))
+		person = Person.objects.get(first_name='adult_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Child over 3'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='Parent'))
+		person = Person.objects.get(first_name='adult_unknown_0')
+		self.assertEqual(person.age_status,Age_Status.objects.get(status='Adult (unknown age)'))
+		self.assertEqual(person.default_role,Role_Type.objects.get(role_type_name='UNKNOWN'))
+		self.assertContains(response,'manual')

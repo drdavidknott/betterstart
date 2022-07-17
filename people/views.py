@@ -1943,6 +1943,7 @@ def age_exceptions(request, age_status_id=0):
 	return HttpResponse(age_exceptions_template.render(context=context, request=request))
 
 @login_required
+@user_passes_test(lambda user: user.is_superuser, login_url='/', redirect_field_name='')
 def resolve_age_exceptions(request):
 	# initialise variables
 	project = Project.current_project(request.session)
@@ -1968,10 +1969,9 @@ def resolve_age_exceptions(request):
 	if request.method == 'POST':
 		for person in all_age_exceptions:
 			recommended_age_status = person.recommended_age_status()
-			recommended_role_type = person.recommended_role_type()
 			if recommended_age_status:
 				person.age_status = recommended_age_status
-				person.default_role = recommended_role_type
+				person.default_role = person.recommended_role_type()
 				person.save()
 				results.append(
 								person.full_name() + 

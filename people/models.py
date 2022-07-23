@@ -1879,7 +1879,8 @@ class Panel(DataAccessMixin,models.Model):
 		self.rows = []
 		# now go through the age statuses and get the exceptions
 		for age_status in Age_Status.objects.all():
-			earliest_date = today.replace(year=today.year-age_status.maximum_age)
+			earliest_date = today.replace(year=today.year-(age_status.maximum_age))
+			earliest_date = earliest_date + timedelta(days=1)
 			age_exceptions = Person.search(
 											age_status=age_status,
 											date_of_birth__lt=earliest_date,

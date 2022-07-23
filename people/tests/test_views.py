@@ -6468,6 +6468,73 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_membership.date_joined.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_membership.date_left.strftime('%d/%m/%Y'),'01/01/2015')
 
+	def test_update_profile_with_projects_active_no_trained_roles(self):
+		# log the user in
+		project = project_login(self.client,username='testuser',password='testword')
+		# set no trained roles for the project
+		project.has_trained_roles = False
+		# create a person in a project
+		set_up_test_people('Person_','test_role_type',1,project=project)
+		# and an extra membership type
+		Membership_Type.objects.create(name='new_membership_type')
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('profile',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'first_name' : 'updated_first_name',
+											'middle_names' : 'updated_middle_names',
+											'last_name' : 'updated_last_name',
+											'other_names' : 'updated other_names',
+											'email_address' : 'updated_email_address@test.com',
+											'home_phone' : '123456',
+											'mobile_phone' : '678901',
+											'date_of_birth' : '01/01/2001',
+											'gender' : 'Male',
+											'role_type' : str(Role_Type.objects.get(role_type_name='second_test_role_type').pk),
+											'ethnicity' : str(Ethnicity.objects.get(description='second_test_ethnicity').pk),
+											'membership_type' : str(Membership_Type.objects.get(name='new_membership_type').pk),
+											'age_status' : str(Age_Status.objects.get(status='Default role age status').pk),
+											'notes' : 'updated notes',
+											'emergency_contact_details' : 'updated emergency contact details',
+											'date_joined_project' : '01/01/2010',
+											'date_left_project' : '01/01/2015',
+											'membership_number' : '0',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(first_name='updated_first_name')
+		test_membership = Membership.objects.get(person=test_person,project=project)
+		# check the record contents
+		self.assertEqual(test_person.first_name,'updated_first_name')
+		self.assertEqual(test_person.middle_names,'updated_middle_names')
+		self.assertEqual(test_person.last_name,'updated_last_name')
+		self.assertEqual(test_person.other_names,'updated other_names')
+		self.assertEqual(test_person.default_role.role_type_name,'age_test_role')
+		self.assertEqual(test_person.email_address,'updated_email_address@test.com')
+		self.assertEqual(test_person.home_phone,'123456')
+		self.assertEqual(test_person.mobile_phone,'678901')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2001')
+		self.assertEqual(test_person.gender,'Male')
+		self.assertEqual(test_person.notes,'updated notes')
+		self.assertEqual(test_person.relationships.all().exists(),False)
+		self.assertEqual(test_person.children_centres.all().exists(),False)
+		self.assertEqual(test_person.events.all().exists(),False)
+		self.assertEqual(test_person.ethnicity.description,'second_test_ethnicity')
+		self.assertEqual(test_person.capture_type.capture_type_name,'test_capture_type')
+		self.assertEqual(test_person.families.all().exists(),False)
+		self.assertEqual(test_person.savs_id,None)
+		self.assertEqual(test_person.age_status.status,'Default role age status')
+		self.assertEqual(test_person.house_name_or_number,'')
+		self.assertEqual(test_person.street,None)
+		self.assertEqual(test_person.emergency_contact_details,'updated emergency contact details')
+		self.assertEqual(test_person.membership_number,0)
+		self.assertEqual(test_membership.membership_type.name,'new_membership_type')
+		self.assertEqual(test_membership.date_joined.strftime('%d/%m/%Y'),'01/01/2010')
+		self.assertEqual(test_membership.date_left.strftime('%d/%m/%Y'),'01/01/2015')
+
 class AddRelationshipViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

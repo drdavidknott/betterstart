@@ -1957,6 +1957,7 @@ def resolve_age_exceptions(request):
 		# get today's date
 		today = datetime.date.today()
 		earliest_date = today.replace(year=today.year-(age_status.maximum_age + 1))
+		earliest_date = earliest_date + datetime.timedelta(days=1)
 		# get the exceptions
 		age_exceptions = Person.search(
 										age_status=age_status,

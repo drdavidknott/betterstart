@@ -52,6 +52,7 @@ class Project(DataAccessMixin,models.Model):
 	name = models.CharField(max_length=50)
 	navbar_background = models.CharField(max_length=50, blank=True)
 	navbar_text = models.CharField(max_length=50, blank=True, null=True, default=None)
+	has_trained_roles = models.BooleanField(default=True)
 	# define the function that will return the project name as the object reference
 	def __str__(self):
 		return self.name

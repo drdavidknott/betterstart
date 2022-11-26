@@ -142,7 +142,7 @@
 		</div>
 	</div>
 
-	{% if person.trained_role_set.exists %}
+	{% if not project or project.has_trained_roles %}
 		<div class="row">
 			<div class="col-xs-12">
 				<hr>
@@ -151,20 +151,24 @@
 
 		<div class="row">
 			<div class='col-xs-1 text-right'>
-				<a href="{% url 'profile' person.pk %}">
+				<a href="{% url 'trained_roles' person.pk %}">
 					<span class="glyphicon glyphicon-pencil"></span>
 				</a>
 			</div>
 			<div class="col-xs-11">
-				{% for trained_role in person.trained_role_set.all %}
-					<div class="row">
-						<span class="glyphicon glyphicon-education"></span>
-						<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
-						{% if trained_role.date_trained %}
-							- trained on {{ trained_role.date_trained|date:"M d Y" }}
-						{% endif %}
-					</div>
-				{% endfor %}
+				{% if person.trained_role_set.exists %}
+					{% for trained_role in person.trained_role_set.all %}
+						<div class="row">
+							<span class="glyphicon glyphicon-education"></span>
+							<strong>{{ trained_role.role_type.role_type_name }}: </strong>{{ trained_role.status_description }}
+							{% if trained_role.date_trained %}
+								- trained on {{ trained_role.date_trained|date:"M d Y" }}
+							{% endif %}
+						</div>
+					{% endfor %}
+				{% else %}
+					No trained roles
+				{% endif %}
 			</div>
 		</div>
 	{% endif %}

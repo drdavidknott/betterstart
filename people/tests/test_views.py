@@ -6535,6 +6535,327 @@ class ProfileViewTest(TestCase):
 		self.assertEqual(test_membership.date_joined.strftime('%d/%m/%Y'),'01/01/2010')
 		self.assertEqual(test_membership.date_left.strftime('%d/%m/%Y'),'01/01/2015')
 
+class TrainedRolesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_user()
+		# set up base data for people
+		set_up_people_base_data()
+
+	def test_redirect_if_not_logged_in(self):
+		# get the response
+		response = self.client.get('/trained_roles/1')
+		# check the response
+		self.assertRedirects(response, '/people/login?next=/trained_roles/1')
+
+	def test_successful_response_if_logged_in(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get the events page
+		response = self.client.get(reverse('trained_roles',args=[1]))
+		# check the response
+		self.assertEqual(response.status_code, 200)
+
+	def test_invalid_person(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# attempt to get an invalid event
+		response = self.client.get(reverse('trained_roles',args=[9999]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'ERROR')
+
+	def test_invalid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# submit a post for a person who is not in the project
+		response = self.client.get(reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person does not exist')
+
+	def test_valid_person_with_projects_active(self):
+		# add the user to a project, and set projects active
+		set_up_test_project_permission(username='testuser',project_name='testproject')
+		Site.objects.create(
+							name='Test site',
+							projects_active=True
+							)
+		project = Project.objects.get(name='testproject')
+		# log the user in and set the project session variable
+		self.client.login(username='testuser', password='testword')
+		session = self.client.session
+		session['project_id'] = project.pk
+		session.save()
+		# create a person
+		set_up_test_people('Person_','test_role_type',1,project=project)
+		# submit a post for a person who is not in the project
+		response = self.client.get(reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]))
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Person_0')
+
+	def test_update_profile_trained_role_with_date(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'trained_date_' + str(role_type.pk) : '01/01/2012',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the records
+		test_person = Person.objects.get(first_name='Person_0')
+		self.assertEqual(test_person.membership_number,0)
+		# get the trained role record
+		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
+		self.assertEqual(trained_role.date_trained.strftime('%d/%m/%Y'),'01/01/2012')
+		# check the active status
+		self.assertEqual(trained_role.active,False)
+
+	def test_update_profile_trained_role_with_future_date(self):
+		# set a future date
+		tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'trained_date_' + str(role_type.pk) : tomorrow.strftime('%d/%m/%Y'),
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Date must not be in the future.')
+
+	def test_update_profile_trained_date_not_trained(self):
+		# set a future date
+		tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'none',
+											'trained_date_' + str(role_type.pk) : '01/01/2010',
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response,'Person is not trained.')
+
+	def test_update_profile_trained_role_active(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'active',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the records
+		test_person = Person.objects.get(first_name='Person_0')
+		# get the trained role record
+		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
+		# check the active status
+		self.assertEqual(trained_role.active,True)
+
+	def test_update_profile_remove_trained_role(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'none',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the record
+		test_person = Person.objects.get(first_name='Person_0')
+		# check that no trained role records exist
+		self.assertEqual(test_person.trained_roles.all().exists(),False)
+
+	def test_update_trained_role_blank_date(self):
+		# log the user in
+		self.client.login(username='testuser', password='testword')
+		# create a person
+		set_up_test_people('Person_','test_role_type',1)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(
+									person=Person.objects.get(first_name='Person_0'),
+									date_trained=datetime.datetime.strptime('2012-01-01','%Y-%m-%d'),
+									role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'active',
+											'trained_date_' + str(role_type.pk) : '',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the records
+		test_person = Person.objects.get(first_name='Person_0')
+		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
+		self.assertEqual(trained_role.date_trained,None)
+		# check the active status
+		self.assertEqual(trained_role.active,True)
+
+	def test_update_trained_role_with_projects_active(self):
+		# log the user in
+		project = project_login(self.client,username='testuser',password='testword')
+		project.has_trained_roles = True
+		project.save()
+		# create a person in a project
+		set_up_test_people('Person_','test_role_type',1,project=project)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'trained_date_' + str(role_type.pk) : '01/01/2012',
+											'action' : 'Submit'
+											}
+									)
+		# check the response
+		self.assertEqual(response.status_code, 302)
+		# get the records
+		test_person = Person.objects.get(first_name='Person_0')
+		self.assertEqual(test_person.membership_number,0)
+		# get the trained role record
+		trained_role = Trained_Role.objects.get(person=test_person,role_type=role_type)
+		self.assertEqual(trained_role.date_trained.strftime('%d/%m/%Y'),'01/01/2012')
+		# check the active status
+		self.assertEqual(trained_role.active,False)
+
+	def test_update_trained_role_with_project_without_trained_roles(self):
+		# log the user in
+		project = project_login(self.client,username='testuser',password='testword')
+		project.has_trained_roles = False
+		project.save()
+		# create a person in a project
+		set_up_test_people('Person_','test_role_type',1,project=project)
+		# get the role type
+		role_type = Role_Type.objects.get(role_type_name='test_role_type')
+		# set the role type trained status
+		role_type.trained = True
+		# and save it
+		role_type.save()
+		# set up the trained role
+		Trained_Role.objects.create(person=Person.objects.get(first_name='Person_0'),role_type=role_type)
+		# submit a post for a person who doesn't exist
+		response = self.client.post(
+									reverse('trained_roles',args=[Person.objects.get(first_name='Person_0').pk]),
+									data = { 
+											'trained_role_' + str(role_type.pk) : 'trained',
+											'trained_date_' + str(role_type.pk) : '01/01/2012',
+											'action' : 'Submit'
+											}
+									)
+		# check that we got a valid response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an error in the page
+		self.assertContains(response,'Trained roles not available for this project')
+
+
 class AddRelationshipViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):

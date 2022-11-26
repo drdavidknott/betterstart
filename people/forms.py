@@ -649,6 +649,80 @@ class ProfileForm(forms.Form):
 		# return the result
 		return valid
 
+class TrainedRolesForm(forms.Form):
+	# set the choices for trained roles
+	trained_role_choices = (
+							('none','Not trained'),
+							('trained' , 'Trained'),
+							('active' , 'Trained and active'),
+							) 
+
+	def __init__(self, *args, **kwargs):
+		# over-ride the __init__ method to set the choices
+		# pop out the extra parameters if we have them
+		user = kwargs.pop('user') if 'user' in kwargs.keys() else False
+		person = kwargs.pop('person') if 'person' in kwargs.keys() else False
+		project = kwargs.pop('project') if 'project' in kwargs.keys() else False
+		# call the built in constructor
+		super(TrainedRolesForm, self).__init__(*args, **kwargs)
+		# get the trained roles and set up fields and rows for them
+		rows = []
+		for trained_role in person.age_status.role_types.filter(trained=True):
+			# create a field to capture whether the person is trained in a specific role
+			role_field_name = 'trained_role_' + str(trained_role.pk)
+			self.fields[role_field_name]= forms.ChoiceField(
+														label=trained_role.role_type_name,
+														widget=forms.Select(attrs={'class' : 'form-control'}),
+														choices=self.trained_role_choices,
+														required=False
+														)
+			# and an accompanying field to capture the date on which they were trained
+			date_field_name = 'trained_date_' + str(trained_role.pk)
+			self.fields[date_field_name] = forms.DateField(
+														label="Date trained",
+														required=False,
+														widget=forms.DateInput(	
+																				format='%d/%m/%Y',
+																				attrs={
+																					'class' : 'form-control datepicker',
+																					'autocomplete' : 'off',
+																					}),
+														input_formats=('%d/%m/%Y',))
+			# append the row
+			row = Row(
+						Column(role_field_name,css_class='form-group col-md-3 mb-0'),
+						Column(date_field_name,css_class='form-group col-md-3 mb-0'),
+						Column(css_class='form-group col-md-6 mb-0'),
+						css_class='form-row'	
+						)
+			rows.append(row)
+		# build the button row
+		rows.append(Row(Column(Submit('action', 'Submit'),css_class='col-md-12 mb-0')))
+		# build the rows into a crispy layout
+		self.helper = FormHelper()
+		self.helper.layout = Layout(*rows)
+
+	def is_valid(self):
+		# the validation function
+		# start by calling the built in validation function
+		valid = super(TrainedRolesForm, self).is_valid()
+		# now check trained dates
+		today = datetime.date.today()
+		for key in self.cleaned_data.keys():
+			if (
+				'trained_date' in key and 
+				self.cleaned_data[key] != None
+				):
+				if self.cleaned_data['trained_role_' + extract_id(key)] == 'none':
+					self.errors[key] = ['Person is not trained.']
+					valid = False
+				elif self.cleaned_data[key] > today:
+					self.errors[key] = ['Date must not be in the future.']
+					valid = False
+		# return the result
+		return valid
+
+
 class PersonSearchForm(forms.Form):
 	# Define the choices for who should be included in the search
 	include_people_choices = (

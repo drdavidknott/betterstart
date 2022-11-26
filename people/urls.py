@@ -42,6 +42,7 @@ urlpatterns = [
     url(r'^events_this_year$', views.event_group, name='events_this_year'),
     url(r'^events_all_time$', views.event_group, name='events_all_time'),
     url(r'^profile/(?P<person_id>[0-9]+)$', views.profile, name='profile'),
+    url(r'^trained_roles/(?P<person_id>[0-9]+)$', views.trained_roles, name='trained_roles'),
 	url(r'^edit_event/(?P<event_id>[0-9]+)$', views.edit_event, name='edit_event'),
     url(r'^venue/(?P<venue_id>[0-9]+)$', views.venue, name='venue'),
     url(r'^edit_venue/(?P<venue_id>[0-9]+)$', views.edit_venue, name='edit_venue'),

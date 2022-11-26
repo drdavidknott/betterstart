@@ -24,7 +24,7 @@ from .forms import AddPersonForm, ProfileForm, PersonSearchForm, AddRelationship
 					ResetForgottenPasswordForm, DashboardDatesForm, SelectProjectForm, \
 					ManageMembershipSearchForm, ManageProjectEventsSearchForm, CaseNotesForm, \
 					SurveySeriesForm, SurveyForm, SurveySectionForm, SurveyQuestionForm, SubmitSurveyForm, \
-					ResolveAgeExceptionsForm
+					ResolveAgeExceptionsForm, TrainedRolesForm
 from .utilities import get_page_list, make_banner, extract_id, build_page_list, Page, get_period_dates
 from django.contrib import messages
 from django.urls import reverse, resolve
@@ -2458,6 +2458,60 @@ def profile(request, person_id=0):
 				})
 	# return the response
 	return HttpResponse(profile_template.render(context, request))
+
+@login_required
+def trained_roles(request, person_id=0):
+	# get the project
+	project = Project.current_project(request.session)
+	# try to get the person
+	person = Person.try_to_get(projects=project,pk=person_id)
+	# if there isn't a person, crash to a banner
+	if not person:
+		return make_banner(request, 'Person does not exist.')
+	# if there is a project and the project does not have trained rolesm crash to a banner
+	if project and not project.has_trained_roles:
+		return make_banner(request, 'Trained roles not available for this project')
+	# get membership if we have a project
+	if project:
+		membership = Membership.objects.get(person=person,project=project)
+	else:
+		membership = False
+	# when the form is POSTed, validate it, then update the person
+	if request.method == 'POST':
+		trained_roles_form = TrainedRolesForm(request.POST,user=request.user,person=person,project=project)
+		if trained_roles_form.is_valid():
+			# process trained roles by deleting and then recreating
+			person.trained_role_set.all().delete()
+			for field_name in trained_roles_form.cleaned_data.keys():
+				if 'trained_role_' in field_name:
+					role_type_id = int(extract_id(field_name))
+					build_trained_role(
+										person=person,
+										role_type_id=role_type_id,
+										trained_status=trained_roles_form.cleaned_data[field_name],
+										date_trained=trained_roles_form.cleaned_data['trained_date_' + str(role_type_id)],
+										)
+			# send the user back to the main person page
+			return redirect('/person/' + str(person.pk))
+	else:
+		#  build a dictionary of values for the form
+		profile_dict = {}
+		# add the trained role values to the profile dictionary
+		for trained_role in Role_Type.objects.filter(trained=True):
+			# set the profile dictionary value
+			profile_dict['trained_role_' + str(trained_role.pk)] = get_trained_status(person,trained_role)
+			profile_dict['trained_date_' + str(trained_role.pk)] = get_trained_date(person,trained_role)
+		# create the form
+		trained_roles_form = TrainedRolesForm(profile_dict,user=request.user,person=person,project=project)
+	# load the template
+	trained_roles_template = loader.get_template('people/trained_roles.html')
+	# set the context
+	context = build_context(request,{
+				'trained_roles_form' : trained_roles_form,
+				'person' : person,
+				})
+	# return the response
+	return HttpResponse(trained_roles_template.render(context, request))
 
 @login_required
 def add_relationship(request,person_id=0):

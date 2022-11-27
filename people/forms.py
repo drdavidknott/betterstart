@@ -477,38 +477,6 @@ class ProfileForm(forms.Form):
 			# get the full set of role types
 			self.fields['role_type'].choices = role_type_choices(
 												Role_Type.objects.filter(use_for_people=True).order_by('role_type_name'))
-		# get the trained roles and set up fields and rows for them
-		if not project or (project and project.has_trained_roles):
-			trained_rows = []
-			for trained_role in age_status.role_types.filter(trained=True):
-				# create a field to capture whether the person is trained in a specific role
-				role_field_name = 'trained_role_' + str(trained_role.pk)
-				self.fields[role_field_name]= forms.ChoiceField(
-															label=trained_role.role_type_name,
-															widget=forms.Select(attrs={'class' : 'form-control'}),
-															choices=self.trained_role_choices,
-															required=False
-															)
-				# and an accompanying field to capture the date on which they were trained
-				date_field_name = 'trained_date_' + str(trained_role.pk)
-				self.fields[date_field_name] = forms.DateField(
-															label="Date trained",
-															required=False,
-															widget=forms.DateInput(	
-																					format='%d/%m/%Y',
-																					attrs={
-																						'class' : 'form-control datepicker',
-																						'autocomplete' : 'off',
-																						}),
-															input_formats=('%d/%m/%Y',))
-				# append the row
-				row = Row(
-							Column(role_field_name,css_class='form-group col-md-3 mb-0'),
-							Column(date_field_name,css_class='form-group col-md-3 mb-0'),
-							Column(css_class='form-group col-md-6 mb-0'),
-							css_class='form-row'	
-							)
-				trained_rows.append(row)
 		# build the crispy form
 		rows = []
 		rows.append(
@@ -554,14 +522,6 @@ class ProfileForm(forms.Form):
 		rows.append(
 					Row(
 						Column('role_type',css_class='form-group col-md-3 mb-0'),
-						css_class='form-row'	
-						)
-					)
-		if not project or (project and project.has_trained_roles):
-			rows += trained_rows
-		rows.append(
-					Row(
-						Column('notes',css_class='form-group col-md-12 mb-0'),
 						css_class='form-row'	
 						)
 					)
@@ -634,18 +594,6 @@ class ProfileForm(forms.Form):
 					and self.cleaned_data['date_left_project'] <= self.cleaned_data['date_joined_project'] ):
 				self._errors['date_left_project'] = ['Date left project must be after date joined project.']
 				valid = False
-		# go through the fields and check trained dates
-		for key in self.cleaned_data.keys():
-			if (
-				'trained_date' in key and 
-				self.cleaned_data[key] != None
-				):
-				if self.cleaned_data['trained_role_' + extract_id(key)] == 'none':
-					self.errors[key] = ['Person is not trained.']
-					valid = False
-				elif self.cleaned_data[key] > today:
-					self.errors[key] = ['Date must not be in the future.']
-					valid = False
 		# return the result
 		return valid
 

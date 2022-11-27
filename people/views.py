@@ -2084,6 +2084,7 @@ def person(request, person_id=0):
 	question_sections, answer_flag = get_question_sections_and_answers(person,project=project)
 	completed_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=True)
 	unvalidated_invitations = person.invitation_set.filter(datetime_completed__isnull=False,validated=False)
+	trained_roles_allowed = person.age_status.role_types.filter(trained=True).exists()
 	# get invitation data if an uncompleted invitation exists
 	invitation = Invitation.try_to_get(person=person,datetime_completed__isnull=True)
 	if invitation:
@@ -2122,6 +2123,7 @@ def person(request, person_id=0):
 				'case_notes' : case_notes,
 				'project' : project,
 				'surveys' : surveys,
+				'trained_roles_allowed' : trained_roles_allowed,
 				})
 	# return the response
 	return HttpResponse(person_template.render(context=context, request=request))
@@ -2392,17 +2394,6 @@ def profile(request, person_id=0):
 								notes = profileform.cleaned_data['notes'],
 								membership_number = profileform.cleaned_data['membership_number']
 									)
-			# process trained roles by deleting and then recreating
-			person.trained_role_set.all().delete()
-			for field_name in profileform.cleaned_data.keys():
-				if 'trained_role_' in field_name:
-					role_type_id = int(extract_id(field_name))
-					build_trained_role(
-										person=person,
-										role_type_id=role_type_id,
-										trained_status=profileform.cleaned_data[field_name],
-										date_trained=profileform.cleaned_data['trained_date_' + str(role_type_id)],
-										)
 			# generate an invitation if we have been asked
 			if 'Generate' in request.POST['action']:
 				generate_invitation(person)
@@ -2442,11 +2433,6 @@ def profile(request, person_id=0):
 						'notes' : person.notes,
 						'membership_number' : person.membership_number,
 						}
-		# add the trained role values to the profile dictionary
-		for trained_role in Role_Type.objects.filter(trained=True):
-			# set the profile dictionary value
-			profile_dict['trained_role_' + str(trained_role.pk)] = get_trained_status(person,trained_role)
-			profile_dict['trained_date_' + str(trained_role.pk)] = get_trained_date(person,trained_role)
 		# create the form
 		profileform = ProfileForm(profile_dict,user=request.user,person=person,project=project)
 	# load the template

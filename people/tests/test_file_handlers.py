@@ -2608,7 +2608,7 @@ class UploadPeopleDataViewTest(TestCase):
 		self.assertEqual(test_person.email_address,'test email')
 		self.assertEqual(test_person.home_phone,'123456')
 		self.assertEqual(test_person.mobile_phone,'789123')
-		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2019')
+		self.assertEqual(test_person.date_of_birth.strftime('%d/%m/%Y'),'01/01/2022')
 		self.assertEqual(test_person.gender,'Male')
 		self.assertEqual(test_person.relationships.all().exists(),False)
 		self.assertEqual(test_person.children_centres.all().exists(),False)

@@ -2434,11 +2434,14 @@ class Activities_File_Handler(File_Handler):
 								)
 		# set the values
 		activity.person = person
-		activity_type = self.activity_type.value
+		activity.activity_type = self.activity_type.value
 		activity.date = self.date.value
 		activity.hours = self.hours.value
 		# save the record
 		activity.save()
+		# add the project if we have one
+		if self.project:
+			self.add_project(activity)
 		# set a message
 		self.add_record_results(record,[' created.'])
 		# return the created record

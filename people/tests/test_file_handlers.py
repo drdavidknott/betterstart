@@ -22,7 +22,7 @@ from .test_functions import set_up_people_base_data, set_up_test_people, set_up_
 		set_up_test_project_permission, set_up_test_superuser, set_up_event_base_data, \
 		set_up_relationship_base_data, set_up_address_base_data, set_up_test_post_codes, \
 		set_up_test_streets, set_up_venue_base_data, set_up_test_events, set_up_test_questions, \
-		set_up_test_options, project_login, set_up_relationship
+		set_up_test_options, project_login, set_up_relationship, add_person_to_project
 
 class UploadDataViewTest(TestCase):
 	@classmethod
@@ -3717,8 +3717,6 @@ class UpdateEventsDataViewTest(TestCase):
 		# check that we only have one event
 		self.assertEqual(Event.objects.all().count(),1)
 
-
-
 class UploadRelationshipsDataViewTest(TestCase):
 	@classmethod
 	def setUpTestData(cls):
@@ -4721,7 +4719,6 @@ class DownloadPeopleDataViewTest(TestCase):
 		self.assertNotContains(response,'test_adult_0')
 		self.assertNotContains(response,'test_adult_1')
 		self.assertNotContains(response,'test_child_0')
-
 
 class DownloadEventsDataViewTest(TestCase):
 	@classmethod
@@ -6575,6 +6572,62 @@ class UploadActivitiesDataViewTest(TestCase):
 		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
 		# check the values
 		self.assertEqual(activity.hours,1)
+		# check the count
+		self.assertEqual(Activity.objects.all().count(),5)
+
+	def test_upload_activities_with_projects_active(self):
+		# log the user in as a superuser
+		project = project_login(self.client)
+		# get the people and add them each to the project
+		adult_0 = Person.objects.get(first_name='test_adult_0')
+		add_person_to_project(person=adult_0,project=project)
+		adult_1 = Person.objects.get(first_name='test_adult_1')
+		add_person_to_project(person=adult_1,project=project)
+		child_0 = Person.objects.get(first_name='test_child_0')
+		add_person_to_project(person=child_0,project=project)
+		# open the file
+		valid_file = open('people/tests/data/activities.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Activities',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# create the activity types
+		activity_type_1 = Activity_Type.objects.get(name='Test activity type 1')
+		activity_type_2 = Activity_Type.objects.get(name='Test activity type 2')
+		# set the dates
+		date_1 = datetime.datetime.strptime('2019-01-01','%Y-%m-%d')
+		date_2 = datetime.datetime.strptime('2019-02-01','%Y-%m-%d')
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,4)
+		self.assertEqual(activity.project,project)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_1,date=date_2)
+		# check the values
+		self.assertEqual(activity.hours,3)
+		self.assertEqual(activity.project,project)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_0,activity_type=activity_type_2,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,2)
+		self.assertEqual(activity.project,project)
+		# get the record to test
+		activity = Activity.objects.get(person=adult_1,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,5)
+		self.assertEqual(activity.project,project)
+		# get the record to test
+		activity = Activity.objects.get(person=child_0,activity_type=activity_type_1,date=date_1)
+		# check the values
+		self.assertEqual(activity.hours,1)
+		self.assertEqual(activity.project,project)
 		# check the count
 		self.assertEqual(Activity.objects.all().count(),5)
 

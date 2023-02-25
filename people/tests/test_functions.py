@@ -269,3 +269,12 @@ def project_login(client,username='testsuper',password='superword',project_name=
 	session.save()
 	# return the project
 	return project
+
+def add_person_to_project(person,project):
+	# add a person to a project by creating a membership
+	membership = Membership(
+							person=person,
+							project=project
+							)
+	membership.save()
+	return

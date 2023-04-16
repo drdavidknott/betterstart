@@ -1179,15 +1179,13 @@ def remove_existing_relationships(person_from, people):
 	return people_without_existing_relationships
 
 def remove_existing_registrations(event, people):
-	# this function takes an and a list of people, and returns a list of only those events where
+	# this function takes an and a list of people, and returns a list of only those people where
 	# the person does not have an existing registration for that event
 	# create an empty list
 	people_without_existing_registrations = []
-	# now got through the list
+	# now got through the people
 	for person in people:
-		# attempt to get the residence
 		if not Event_Registration.try_to_get(person=person,event=event):
-			# add the address to the list
 			people_without_existing_registrations.append(person)
 	# return the list
 	return people_without_existing_registrations

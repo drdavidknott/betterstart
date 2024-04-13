@@ -122,7 +122,13 @@ def set_up_test_project_permission(username,project_name,default=True):
 
 def set_up_test_superuser():
 	# create a test superuser and profile
-	test_superuser = User.objects.create_user(username='testsuper', password='superword', is_superuser=True)
+	test_superuser = User.objects.create_user(
+												username='testsuper',
+												first_name='test',
+												last_name='super',
+												password='superword',
+												is_superuser=True
+												)
 	profile = Profile.objects.create(user=test_superuser)
 	# return the user
 	return test_superuser

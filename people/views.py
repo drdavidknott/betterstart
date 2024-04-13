@@ -41,7 +41,7 @@ from .file_handlers import Event_Categories_File_Handler, Event_Types_File_Handl
 							Answers_File_Handler, Answer_Notes_File_Handler, Activities_File_Handler, \
 							Event_Summary_File_Handler, Events_And_Registrations_File_Handler, \
 							Venues_File_Handler, Venues_For_Events_File_Handler, People_Limited_Data_File_Handler, \
-							Survey_Submissions_File_Handler
+							Survey_Submissions_File_Handler, Case_Notes_File_Handler
 from .invitation_handlers import Terms_And_Conditions_Invitation_Handler, Personal_Details_Invitation_Handler, \
 									Address_Invitation_Handler, Children_Invitation_Handler, \
 									Questions_Invitation_Handler, Introduction_Invitation_Handler, \
@@ -1400,6 +1400,7 @@ def build_download_file(file_type,file_name=False,objects=None,project=False):
 						'Events and Registrations' : Events_And_Registrations_File_Handler,
 						'Venues' : Venues_File_Handler,
 						'Survey Submissions' : Survey_Submissions_File_Handler,
+						'Case Notes' : Case_Notes_File_Handler,
 					}
 	# create the file handler
 	file_handler = file_handlers[file_type](objects=objects,project=project)

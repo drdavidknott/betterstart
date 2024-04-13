@@ -284,6 +284,7 @@ class DownloadDataForm(forms.Form):
 							'Answer Notes',
 							'Activities',
 							'Venues',
+							'Case Notes',
 							]
 	# Define the fields that we need in the form.
 	file_type = forms.ChoiceField(

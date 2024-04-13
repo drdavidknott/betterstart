@@ -7141,7 +7141,6 @@ class SubmitSurveyViewTest(TestCase):
 											date = survey_date
 											)
 
-
 	def test_redirect_if_not_logged_in(self):
 		# get the response
 		response = self.client.get('/submit_survey/1/1')
@@ -7183,3 +7182,40 @@ class SubmitSurveyViewTest(TestCase):
 		self.assertContains(response,'first_name,last_name,date,1. test question 1,2. test question 2')
 		self.assertContains(response,'survey_0,survey_0,01/01/2022,3,test answer')
 		self.assertContains(response,'survey_1,survey_1,01/01/2022,0,')
+
+class DownloadCaseNotesViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test superuser
+		user = set_up_test_superuser()
+		# create a test person
+		set_up_people_base_data()
+		set_up_test_people('test_person_',number=1)
+
+	def test_download_case_notes(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# get the reference data
+		person = Person.objects.get(first_name='test_person_0')
+		# submit the request
+		response = self.client.post(
+									reverse('add_case_notes',args=[str(person.pk)]),
+									data = { 
+												'title' : 'Test title',
+												'date' : '01/01/2010',
+												'notes' : 'Test notes',
+											}
+									)
+		# check that we got a redirect response
+		self.assertRedirects(response, '/view_case_notes/' + str(person.pk))
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Case Notes',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'testsuper,test,super,test_person_0,test_person_0,Adult,Test title,Test notes,01/01/2010')

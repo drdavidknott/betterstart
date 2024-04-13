@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Assembler",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/dkoysta/nand2tetris/nand2tetris/nand2tetris/projects/06/assembler.py",
+            "args": [
+                "/max/Max.asm",
+            ],
+        },
+
+        {
             "name": "Runserver",
             "type": "python",
             "request": "launch",

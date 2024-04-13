@@ -8,7 +8,7 @@ from .models import Person, Relationship_Type, Relationship, Family, Ethnicity, 
 					Event_Category, Event_Registration, Capture_Type, Question, Answer, Option, Role_History, \
 					ABSS_Type, Age_Status, Street, Answer_Note, Activity, Activity_Type, Venue, Venue_Type, \
 					Project, Membership, Membership_Type, Survey, Survey_Submission, Survey_Question_Type, \
-					Survey_Question, Survey_Answer
+					Survey_Question, Survey_Answer, Case_Notes
 
 class File_Field():
 	# this class defines a field witin a file
@@ -370,7 +370,6 @@ class File_Handler():
 			self.set_download_fields(this_object)
 			# now append the record
 			self.download_records.append(self.get_download_record())
-		# placeholder for now
 		return
 
 	# process an uploaded file
@@ -2661,3 +2660,90 @@ class Survey_Submissions_File_Handler(File_Handler):
 		return str(record['first_name']) + ' ' + str(record['last_name']) \
 							+ ' (' + str(record['age_status']) + ')' \
 							+ ' at ' + str(record['event_name'])
+
+class Case_Notes_File_Handler(File_Handler):
+
+	def __init__(self,*args,**kwargs):
+		# call the built in constructor
+		super(Case_Notes_File_Handler, self).__init__(*args, **kwargs)
+		# set the class
+		self.file_class = Case_Notes
+		# set the file fields
+		self.username = File_Field(
+									name='username',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='user'
+									)
+		self.user_first_name = File_Field(
+											name='first_name',
+											mandatory=True,
+											use_corresponding_for_download=True,
+											corresponding_relationship_field='user'
+											)
+		self.user_last_name = File_Field(
+											name='last_name',
+											mandatory=True,
+											use_corresponding_for_download=True,
+											corresponding_relationship_field='user'
+											)
+		self.first_name = File_Field(
+										name='first_name',
+										mandatory=True,
+										use_corresponding_for_download=True,
+										corresponding_relationship_field='person'
+										)
+		self.last_name = File_Field(
+									name='last_name',
+									mandatory=True,
+									use_corresponding_for_download=True,
+									corresponding_relationship_field='person'
+									)
+		self.age_status = File_Field(
+									name='age_status',
+									mandatory=True,
+									corresponding_model=Age_Status,
+									corresponding_field='status',
+									corresponding_must_exist=True,
+									set_download_from_object=False
+									)
+		self.title = File_Field(
+								name='title',
+								mandatory=True,
+								)
+		self.notes = File_Field(
+								name='notes',
+								mandatory=True,
+								)
+		self.date = File_Datetime_Field(
+										name='date',
+										datetime_format='%d/%m/%Y',
+										)
+		# and a list of the fields
+		self.fields = [
+						'username',
+						'user_first_name',
+						'user_last_name',
+						'first_name',
+						'last_name',
+						'age_status',
+						'title',
+						'notes',
+						'date'
+						]
+		# set a project filter if we have a project
+		if self.project:
+			self.project_filter = { 'person__projects' : self.project }
+
+	def set_download_fields(self,case_notes):
+		# call the built in field setter
+		super(Case_Notes_File_Handler, self).set_download_fields(case_notes)
+		# set the special fields
+		self.age_status.value = case_notes.person.age_status.status
+
+	def label(self,record):
+		# return the label
+		return 'Case Notes: ' + str(record['username']) + str(record['user_first_name']) + ' ' + str(record['user_last_name']) \
+							+ str(record['first_name']) + ' ' + str(record['last_name']) \
+							+ ' (' + str(record['age_status']) + ')' \
+							+ ' - ' + record['title'] + ' - ' + record['notes'] + ' ' +str(record['date'])

@@ -1401,6 +1401,7 @@ def build_download_file(file_type,file_name=False,objects=None,project=False):
 						'Venues' : Venues_File_Handler,
 						'Survey Submissions' : Survey_Submissions_File_Handler,
 						'Case Notes' : Case_Notes_File_Handler,
+						'Streets' : Streets_File_Handler,
 					}
 	# create the file handler
 	file_handler = file_handlers[file_type](objects=objects,project=project)

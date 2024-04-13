@@ -7219,3 +7219,30 @@ class DownloadCaseNotesViewTest(TestCase):
 		self.assertEqual(response.status_code, 200)
 		# check that we got an already exists message
 		self.assertContains(response,'testsuper,test,super,test_person_0,test_person_0,Adult,Test title,Test notes,01/01/2010')
+
+class DownloadStreetsViewTest(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		# create a test user
+		user = set_up_test_superuser()
+		# create base data for addresses
+		set_up_address_base_data()
+
+	def test_download_streets(self):
+		# create a bunch of post codes
+		set_up_test_post_codes('ABC')
+		# and a bunch of streets
+		set_up_test_streets('ABC streets 1','ABC0')
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Streets',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got the right records
+		self.assertContains(response,'ABC streets 10,ABC0')

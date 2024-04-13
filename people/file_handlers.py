@@ -706,7 +706,8 @@ class Streets_File_Handler(File_Handler):
 								mandatory=True,
 								corresponding_model=Post_Code,
 								corresponding_field='post_code',
-								corresponding_must_exist=True
+								corresponding_must_exist=True,
+								set_download_from_object=False
 								)
 		# and a list of the fields
 		self.fields = ['name','post_code']
@@ -729,6 +730,12 @@ class Streets_File_Handler(File_Handler):
 				valid = False
 		# return the result
 		return valid
+
+	def set_download_fields(self,street):
+		# call the built in field setter
+		super(Streets_File_Handler, self).set_download_fields(street)
+		# set the special fields
+		self.post_code.value = street.post_code.post_code
 
 	def label(self,record):
 		# return the label

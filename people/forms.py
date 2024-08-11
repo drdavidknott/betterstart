@@ -281,6 +281,8 @@ class DownloadDataForm(forms.Form):
 							'Questions',
 							'Options',
 							'Answers',
+							'Answers (A-M)',
+							'Answers (N-Z)',
 							'Answer Notes',
 							'Activities',
 							'Venues',

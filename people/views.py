@@ -1394,6 +1394,8 @@ def build_download_file(file_type,file_name=False,objects=None,project=False):
 						'Questions' : Questions_File_Handler,
 						'Options' : Options_File_Handler,
 						'Answers' : Answers_File_Handler,
+						'Answers (A-M)' : Answers_File_Handler,
+						'Answers (N-Z)' : Answers_File_Handler,
 						'Answer Notes' : Answer_Notes_File_Handler,
 						'Activities' : Activities_File_Handler,
 						'Event Summary' : Event_Summary_File_Handler,
@@ -1403,6 +1405,14 @@ def build_download_file(file_type,file_name=False,objects=None,project=False):
 						'Case Notes' : Case_Notes_File_Handler,
 						'Streets' : Streets_File_Handler,
 					}
+	# if we are dealing with an subset of answers, pre-load the objects
+	if file_type in ('Answers (A-M)','Answers (N-Z)'):
+		if file_type == 'Answers (A-M)':
+			objects = Answer.objects.filter(person__last_name__iregex=r'^[a-m]')
+		elif file_type == 'Answers (N-Z)':
+			objects = Answer.objects.filter(person__last_name__iregex=r'^[n-z]')
+		if project:
+			objects = objects.filter(person__projects=project)
 	# create the file handler
 	file_handler = file_handlers[file_type](objects=objects,project=project)
 	# build the download records

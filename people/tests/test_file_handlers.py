@@ -5579,7 +5579,8 @@ class UploadDownloadAnswersViewTest(TestCase):
 		# set up base data for people
 		set_up_people_base_data()
 		# and create an adult
-		set_up_test_people('test_adult_',number=2,age_status='Adult')		
+		set_up_test_people('test_adult_',number=2,age_status='Adult')
+		set_up_test_people('an_adult_',number=2,age_status='Adult')		
 
 	def test_upload_answers_with_errors(self):
 		# log the user in as a superuser
@@ -5953,6 +5954,72 @@ class UploadDownloadAnswersViewTest(TestCase):
 									reverse('downloaddata'),
 									data = { 
 											'file_type' : 'Answers',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'test_adult_0,test_adult_0,Adult,test question with notes,test label')
+
+	def test_download_answers_alpha_split(self):
+		# log the user in as a superuser
+		self.client.login(username='testsuper', password='superword')
+		# load a file to create the questions
+		valid_file = open('people/tests/data/questions.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Questions',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/options.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Options',
+											'file' : valid_file
+											}
+									)
+		# close the file
+		valid_file.close()
+		# open the file
+		valid_file = open('people/tests/data/answers_with_alpha_split.csv')
+		# submit the page to load the file
+		response = self.client.post(
+									reverse('uploaddata'),
+									data = { 
+											'file_type' : 'Answers',
+											'file' : valid_file
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# and that we have two records
+		self.assertEqual(Answer.objects.all().count(),2)
+		# download the answer data we have just created for A-M
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answers (A-M)',
+											}
+									)
+		# check that we got a success response
+		self.assertEqual(response.status_code, 200)
+		# check that we got an already exists message
+		self.assertContains(response,'an_adult_0,an_adult_0,Adult,test question with notes,test label')
+		# download the answer data we have just created for N-Z
+		# submit the page to download the file
+		response = self.client.post(
+									reverse('downloaddata'),
+									data = { 
+											'file_type' : 'Answers (N-Z)',
 											}
 									)
 		# check that we got a success response
